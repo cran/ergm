@@ -17,6 +17,16 @@
 %
 \alias{check.ErgmTerm}
 \alias{InitErgmTerm.absdiff}
+\alias{InitErgmTerm.isolates}
+\alias{InitErgmTerm.nodematch}
+\alias{InitErgmTerm.match}
+\alias{check.ErgmTerm.summarystats}
+\alias{ergm.getglobalstats}
+\alias{get.InitErgm.fname}
+\alias{updatemodel.ErgmTerm}
+\alias{zerowarnings}
+
+
 %
 \alias{InitErgm.absdiff}
 \alias{InitErgm.absdiffcat}
@@ -182,6 +192,7 @@
 \alias{midarrow}
 \alias{newnw.extract}
 \alias{plot.mcmc.ergm}
+\alias{plot.network.ergm}
 \alias{print.raftery.diag.ergm}
 \alias{robust.inverse}
 \alias{rspartnerdist}
@@ -245,7 +256,7 @@
 \alias{license.statnet1}
 \alias{statnetShowDoc}
 \alias{statnetbrowseURL}
-\alias{ergm.boundDeg}
+\alias{ergm.bounddeg}
 \alias{is.invertible}
 \alias{ostar2deg}
 \alias{sufftoprob}

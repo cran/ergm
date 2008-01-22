@@ -621,17 +621,25 @@ network
     \code{nodefactor} entry. The \code{nodeifactor} term may only be used with
     directed networks.}
 
-    \item{\code{nodematch(attrname, diff=FALSE)}}{\emph{Uniform homophily and
-    differential homophily:} The \code{attrname} argument is a character string
-    giving the name of an attribute in the network's vertex attribute list. When
-    \code{diff=FALSE}, this term adds one network statistic to the model, which
-    counts the number of edges \eqn{(i,j)} for which
+    \item{\code{nodematch(attrname, diff=FALSE, keep=NULL)}}{\emph{Uniform
+    homophily and differential homophily:} The \code{attrname} argument is a
+    character string giving the name of an attribute in the network's vertex
+    attribute list. When \code{diff=FALSE}, this term adds one network statistic
+    to the model, which counts the number of edges \eqn{(i,j)} for which
     \code{attrname(i)==attrname(j)}. When \code{diff=TRUE}, \eqn{p} network
     statistics are added to the model, where \eqn{p} is the number of unique
     values of the \code{attrname} attribute. The \eqn{k}th such statistic counts
     the number of edges \eqn{(i,j)} for which \code{attrname(i) == attrname(j)
     == value(k)}, where \code{value(k)} is the \eqn{k}th smallest unique value
-    of the attrname attribute.}
+    of the attrname attribute. The optional \code{keep} argument determines
+    which values of \code{k} will be considered for matches; other values are
+    ignored. Default is that all values are considered. If \code{keep} is set to
+    non-NULL, it should be a vector of positive integers giving the values of
+    \code{k} to keep, or a vector of negative integers giving the (negative)
+    values of \code{k} to ignore. Note that this works for both
+    \code{diff=FALSE} and \code{diff=TRUE}. For example, to add two statistics,
+    counting the matches for just the 2nd and 4th categories, use
+    \code{nodematch} with \code{diff=TRUE} and \code{keep=c(2,4)}.}
 
     \item{\code{nodemix(attrname, contrast=FALSE)}}{\emph{Nodal attribute
     mixing:} The \code{attrname} argument is a character string giving the name

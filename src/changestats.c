@@ -3590,36 +3590,33 @@ ModelTerm *mtp, Network *nwp) {
 *****************/
 void d_nodematch (int ntoggles, Vertex *heads, Vertex *tails, 
 	      ModelTerm *mtp, Network *nwp) {
-  double matchval, checksum=0.0;
+  double matchval/*, checksum=0.0*/;
   Vertex h, t, ninputs;
   int i, j, edgeflag=0, matchflag;
   
   ninputs = mtp->ninputparams - nwp->nnodes;
   for (i=0; i < mtp->nstats; i++) 
     mtp->dstats[i] = 0.0;
-  for (i=0; i<ntoggles; i++) 
-    {
-      h=heads[i];
-      t=tails[i];
-      matchflag = ((matchval=mtp->attrib[h-1]) == mtp->attrib[t-1]);
-      if (matchflag) 
-	edgeflag=(EdgetreeSearch(h, t, nwp->outedges) != 0);
-      if (ninputs==0) /* diff=F in network statistic specification */
-	{
-	  *(mtp->dstats) += matchflag ? (edgeflag ? -1.0 : 1.0) : 0.0;
-	}
-      else /* diff=T (and more than one category?)  */
-	{
-	  for (checksum=0.0, j=0; j<ninputs; j++) 
-	    {
-	      mtp->dstats[j] += (matchflag && matchval==mtp->inputparams[j]) ? 
-		(edgeflag ? -1.0 : 1.0) : 0.0;
-	      checksum += mtp->dstats[j];
-	    }
-	}
-      if (i+1 < ntoggles)
-	ToggleEdge(heads[i], tails[i], nwp);  /* Toggle this edge if more to come */
+  for (i=0; i<ntoggles; i++) {
+    h=heads[i];
+    t=tails[i];
+    matchval = mtp->inputparams[h+ninputs-1];
+    matchflag = (matchval == mtp->inputparams[t+ninputs-1]);
+    if (matchflag) 
+      edgeflag=(EdgetreeSearch(h, t, nwp->outedges) != 0);
+    if (ninputs==0) {/* diff=F in network statistic specification */
+      *(mtp->dstats) += matchflag ? (edgeflag ? -1.0 : 1.0) : 0.0;
     }
+    else { /* diff=T (and more than one category?)  */
+      for (/*checksum=0.0,*/ j=0; j<ninputs; j++) {
+	      mtp->dstats[j] += (matchflag && matchval==mtp->inputparams[j]) ? 
+        (edgeflag ? -1.0 : 1.0) : 0.0;
+	      /*checksum += mtp->dstats[j];*/
+	    }
+    }
+    if (i+1 < ntoggles)
+      ToggleEdge(heads[i], tails[i], nwp);  /* Toggle this edge if more to come */
+  }
   i--; 
   while (--i>=0)  /*  Undo all previous toggles. */
     ToggleEdge(heads[i], tails[i], nwp); 
@@ -3945,28 +3942,29 @@ void d_receiver (int ntoggles, Vertex *heads, Vertex *tails,
   for (i=0; i < mtp->nstats; i++) 
     mtp->dstats[i] = 0.0;
   
-  for (i=0; i<ntoggles; i++)
-    {      
-      echange = (EdgetreeSearch(h=heads[i], t=tails[i], nwp->outedges) == 0) ? 1 : -1;
-      if(t == 1){
-       echange = -echange;
-       for (j=0; j < mtp->nstats; j++){ 
-         deg = (Vertex)mtp->inputparams[j];
-         if(deg != 1){mtp->dstats[j] += echange;}
-       }
-      }else{
-       j=0;
-       deg = (Vertex)mtp->inputparams[j];
-       while(deg != t && j < mtp->nstats){
-	j++;
-	deg = (Vertex)mtp->inputparams[j];
-       }
-       if(j < mtp->nstats){mtp->dstats[j] += echange;}
+  for (i=0; i<ntoggles; i++) {      
+    echange = (EdgetreeSearch(h=heads[i], t=tails[i], nwp->outedges) == 0) ? 1 : -1;
+    if(t == 1){
+      echange = -echange;
+      for (j=0; j < mtp->nstats; j++){ 
+        deg = (Vertex)mtp->inputparams[j];
+        if(deg != 1)
+          mtp->dstats[j] += echange;
       }
-      
-      if (i+1 < ntoggles)
-	ToggleEdge(heads[i], tails[i], nwp);  /* Toggle this edge if more to come */
+    }else{
+      j=0;
+      deg = (Vertex)mtp->inputparams[j];
+      while(deg != t && j < mtp->nstats){
+        j++;
+        deg = (Vertex)mtp->inputparams[j];
+      }
+      if(j < mtp->nstats)
+        mtp->dstats[j] += echange;
     }
+    
+    if (i+1 < ntoggles)
+      ToggleEdge(heads[i], tails[i], nwp);  /* Toggle this edge if more to come */
+  }
   
   i--; 
   while (--i>=0)  /*  Undo all previous toggles. */

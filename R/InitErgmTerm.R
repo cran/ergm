@@ -57,17 +57,18 @@
 #                This function takes two args:  theta and length(eta).
 
 
-# Prototype InitErgmTerm function
+# Prototype InitErgmTerm functions
+#########################################################
 InitErgmTerm.absdiff <- function(nw, arglist, ...) {
-  # Check the network and arguments to make sure they are appropriate.
+  ### Check the network and arguments to make sure they are appropriate.
   a <- check.ErgmTerm(nw, arglist, directed=NULL, bipartite=NULL,
-                             varnames = c("attrname"),
-                             vartypes = c("character"),
-                             defaultvalues = list(NULL),
-                             required = c(TRUE))  
-  # Process the arguments
-  nodecov <- get.node.attr(nw, a$attrname, "absdiff")
-  # Construct the output list
+                      varnames = c("attrname"),
+                      vartypes = c("character"),
+                      defaultvalues = list(NULL),
+                      required = c(TRUE))  
+  ### Process the arguments
+  nodecov <- get.node.attr(nw, a$attrname)
+  ### Construct the output list
   list(name="absdiff",                                     #name: required
        coef.names = paste("absdiff", a$attrname, sep="."), #coef.names: required
        inputs = nodecov,  # We need to include the nodal covariate for this term
@@ -75,4 +76,64 @@ InitErgmTerm.absdiff <- function(nw, arglist, ...) {
        )
 }
 
+#########################################################
+InitErgmTerm.isolates <- function(nw, arglist, drop=TRUE, ...) {
+  ### Check the network and arguments to make sure they are appropriate.
+  a <- check.ErgmTerm(nw, arglist, directed=NULL, bipartite=NULL,
+                     varnames = NULL,
+                     vartypes = NULL,
+                     defaultvalues = list(),
+                     required = NULL)
+  ### Process the arguments
+  if(drop) { # Check for zero statistics, print -Inf messages if applicable
+    if (!zerowarnings(check.ErgmTerm.summarystats(nw, arglist, ...))) {
+      return (NULL)  # Do not add this term at all
+    }
+  }
+  ### Construct the output list
+  list(name="isolates",                               #name: required
+       coef.names = "isolates",                       #coef.names: required
+       emptynwstats = network.size(nw) # When nw is empty, isolates=n, not 0
+       )
+}
+
+#########################################################
+InitErgmTerm.nodematch<-InitErgmTerm.match<-function (nw, arglist, drop=TRUE, ...) {
+  ### Check the network and arguments to make sure they are appropriate.
+  a <- check.ErgmTerm(nw, arglist, 
+                      varnames = c("attrname", "diff", "keep"),
+                      vartypes = c("character", "logical", "numeric"),
+                      defaultvalues = list(NULL, FALSE, NULL),
+                      required = c(TRUE, FALSE, FALSE))
+  ### Process the arguments
+  nodecov <- get.node.attr(nw, a$attrname)
+  u <- sort(unique(nodecov))
+  if (!is.null(a$keep)) {
+    u <- u[a$keep]
+  }
+  #   Recode to numeric
+  nodecov <- match(nodecov,u,nomatch=length(u)+1)
+  # All of the "nomatch" should be given unique IDs so they never match:
+  dontmatch <- nodecov==(length(u)+1)
+  nodecov[dontmatch] <- length(u) + (1:sum(dontmatch))
+  ui <- seq(along=u)
+  if(drop) { # Check for zero statistics, print -Inf messages if applicable
+    zw <- zerowarnings(check.ErgmTerm.summarystats(nw, arglist, ...))
+    u <- u[!zw]
+    ui <- ui[!zw]
+  }
+  ### Construct the output list
+  if (a$diff) {
+    coef.names <- paste("nodematch", a$attrname, u, sep=".")
+    inputs <- c(ui, nodecov)
+  } else {
+    coef.names <- paste("nodematch", a$attrname, sep=".")
+    inputs <- nodecov
+  }
+  list(name="nodematch",                                 #name: required
+       coef.names = coef.names,                          #coef.names: required
+       inputs =  inputs,
+       dependence = FALSE # So we don't use MCMC if not necessary
+       )
+}
 
