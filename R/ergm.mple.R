@@ -14,14 +14,14 @@
 ######################################################################
 ergm.mple<-function(Clist, Clist2, m, theta.offset=NULL,
                     MPLEtype="glm", family="binomial",
-                    MPLEsamplesize=50000,
+                    maxMPLEsamplesize=100000,
                     save.glm=TRUE,
                     maxNumDyadTypes=100000,
                     theta1=NULL, verbose=FALSE, ...)
 {
   pl <- ergm.pl(Clist=Clist, Clist.miss=Clist2, m=m,
                 theta.offset=theta.offset,
-                MPLEsamplesize=MPLEsamplesize,
+                maxMPLEsamplesize=maxMPLEsamplesize,
                 maxNumDyadTypes=maxNumDyadTypes,
                 verbose=verbose)
 
@@ -98,7 +98,7 @@ ergm.mple<-function(Clist, Clist2, m, theta.offset=NULL,
    }
 #
    options(warn=0)
-   if(nrow(pl$xmat) > pl$MPLEsamplesize){
+   if(nrow(pl$xmat) > pl$maxMPLEsamplesize){
 #
 #   fix aic and deviance for sampled data
 #
