@@ -1,20 +1,73 @@
-%  File ergm/man/ergm-terms.Rd
-%  Part of the statnet package, http://statnetproject.org
-%  This software is distributed under the GPL-3 license.  It is free,
-%  open source, and has the attribution requirements (GPL Section 7) in
-%    http://statnetproject.org/attribution
-%
-% Copyright 2003 Mark S. Handcock, University of Washington
-%                David R. Hunter, Penn State University
-%                Carter T. Butts, University of California - Irvine
-%                Steven M. Goodreau, University of Washington
-%                Martina Morris, University of Washington
-% Copyright 2007 The statnet Development Team
 \name{ergm-terms}
 \alias{ergm-terms}
 \alias{ergm.terms}
 \alias{terms-ergm}
 \alias{terms.ergm}
+\alias{absdiff}
+\alias{absdiffcat}
+\alias{altkstar}
+\alias{asymmetric}
+\alias{b1concurrent}
+\alias{b1degree}
+\alias{b1factor}
+\alias{b1star}
+\alias{b2concurrent}
+\alias{b2degree}
+\alias{b2factor}
+\alias{b2star}
+\alias{balance}
+\alias{concurrent}
+\alias{ctriple}
+\alias{cycle}
+\alias{degree}
+\alias{density}
+\alias{dsp}
+\alias{dyadcov}
+\alias{edgecov}
+\alias{edges}
+\alias{esp}
+\alias{gwb1degree}
+\alias{gwb2degree}
+\alias{gwdegree}
+\alias{gwdsp}
+\alias{gwesp}
+\alias{gwidegree}
+\alias{gwodegree}
+\alias{hamming}
+\alias{hammingmix}
+\alias{idegree}
+\alias{intransitive}
+\alias{isolates}
+\alias{istar}
+\alias{kstar}
+\alias{localtriangle}
+\alias{m2star}
+\alias{match}
+\alias{meandeg}
+\alias{mutual}
+\alias{nearsimmelian}
+\alias{nodecov}
+\alias{nodefactor}
+\alias{nodeicov}
+\alias{nodeifactor}
+\alias{nodematch}
+\alias{nodemix}
+\alias{nodeocov}
+\alias{nodeofactor}
+\alias{odegree}
+\alias{ostar}
+\alias{receiver}
+\alias{sender}
+\alias{simmelian}
+\alias{simmelianties}
+\alias{smalldiff}
+\alias{sociality}
+\alias{transitive}
+\alias{triadcensus}
+\alias{triangle}
+\alias{tripercent}
+\alias{ttriple}
+\alias{twopath}
 \docType{methods}
 \title{Terms used in Exponential Family Random Graph Models}
 \description{
@@ -399,7 +452,7 @@ network
     \item{\code{gwdsp(alpha, fixed=FALSE)}}{\emph{Geometrically weighted
     dyadwise shared partner distribution:} This term adds one network statistic
     to the model equal to the geometrically weighted dyadwise shared partner
-    distribution with weight parameter \code{alpha}. The optional argument
+    distribution with weight parameter \code{alpha} \eqn{> 0}. The optional argument
     \code{fixed} indicates whether the scale parameter \code{lambda} is to be
     fit as a curved exponential family model (see Hunter and Handcock, 2006).
     The default is \code{FALSE}, which means the scale parameter is not fixed
@@ -411,7 +464,7 @@ network
     \item{\code{gwesp(alpha, fixed=FALSE)}}{\emph{Geometrically weighted
     edgewise shared partner distribution:} This term adds one network statistic
     to the model equal to the geometrically weighted edgewise shared partner
-    distribution with weight parameter \code{alpha}. The optional argument
+    distribution with weight parameter \code{alpha} \eqn{> 0}. The optional argument
     \code{fixed} indicates whether the scale parameter \code{lambda} is to be
     fit as a curved exponential family model (see Hunter and Handcock, 2006).
     The default is \code{FALSE}, which means the scale parameter is not fixed

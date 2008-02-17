@@ -1,17 +1,3 @@
-#  File ergm/R/ergm.pl.R
-#  Part of the statnet package, http://statnetproject.org
-#
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnetproject.org/attribution
-#
-# Copyright 2003 Mark S. Handcock, University of Washington
-#                David R. Hunter, Penn State University
-#                Carter T. Butts, University of California - Irvine
-#                Steven M. Goodreau, University of Washington
-#                Martina Morris, University of Washington
-# Copyright 2007 The statnet Development Team
-######################################################################
 ergm.pl<-function(Clist, Clist.miss=NULL, m, theta.offset=NULL,
                     maxMPLEsamplesize=100000,
                     maxNumDyadTypes=100000,
@@ -20,7 +6,8 @@ ergm.pl<-function(Clist, Clist.miss=NULL, m, theta.offset=NULL,
   numobs <- Clist$ndyads
   z <- .C("MPLE_wrapper",
           as.integer(Clist$heads),    as.integer(Clist$tails),
-          as.integer(Clist$nedges),   as.integer(Clist$n), 
+          as.integer(Clist$nedges), as.integer(Clist$maxpossibleedges),
+          as.integer(Clist$n), 
           as.integer(Clist$dir),     as.integer(Clist$bipartite),
           as.integer(Clist$nterms), 
           as.character(Clist$fnamestring), as.character(Clist$snamestring),

@@ -1,17 +1,3 @@
-#  File ergm/R/ergm.mple.R
-#  Part of the statnet package, http://statnetproject.org
-#
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnetproject.org/attribution
-#
-# Copyright 2003 Mark S. Handcock, University of Washington
-#                David R. Hunter, Penn State University
-#                Carter T. Butts, University of California - Irvine
-#                Steven M. Goodreau, University of Washington
-#                Martina Morris, University of Washington
-# Copyright 2007 The statnet Development Team
-######################################################################
 ergm.mple<-function(Clist, Clist2, m, theta.offset=NULL,
                     MPLEtype="glm", family="binomial",
                     maxMPLEsamplesize=100000,
@@ -60,6 +46,7 @@ ergm.mple<-function(Clist, Clist2, m, theta.offset=NULL,
    if(is.null(theta1)){
     independent.terms <- 
        c("edges","match","nodecov","nodefactor","nodematch","absdiff",
+         "nodeofactor","nodeifactor","nodemain",
          "edgecov","dyadcov","sender","receiver","sociality", 
          "nodemix","mix",
          "b1","b2",

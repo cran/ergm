@@ -1,17 +1,3 @@
-#  File ergm/R/ergm.bounddeg.R
-#  Part of the statnet package, http://statnetproject.org
-#
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnetproject.org/attribution
-#
-# Copyright 2003 Mark S. Handcock, University of Washington
-#                David R. Hunter, Penn State University
-#                Carter T. Butts, University of California - Irvine
-#                Steven M. Goodreau, University of Washington
-#                Martina Morris, University of Washington
-# Copyright 2007 The statnet Development Team
-######################################################################
 ergm.bounddeg <- function(bounddeg,nw){    
   #  Resolve conditioning in ERGM call, as expressed in the
   #  argument bounddeg (a list, with item names as seen below)
@@ -57,7 +43,7 @@ ergm.bounddeg <- function(bounddeg,nw){
     maxin[is.na( maxin)] <- nnodes-1
     maxout[is.na(maxout)] <- nnodes-1
     if (any(outdeg>maxout | outdeg<minout) || (is.directed(nw) && any(indeg>maxin | indeg<minin))) {
-      cat("Warning!  Initial network does not satisfy degree constraints.\n",
+      cat("Warning:  Initial network does not satisfy degree constraints.\n",
           "Proceeding anyway, but final network may not satisfy constraints.\n")
     }
     attribs[is.na(attribs)] <- 0

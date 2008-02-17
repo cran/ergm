@@ -1,29 +1,16 @@
-#  File ergm/R/ergm.Cprepare.R
-#  Part of the statnet package, http://statnetproject.org
-#
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnetproject.org/attribution
-#
-# Copyright 2003 Mark S. Handcock, University of Washington
-#                David R. Hunter, Penn State University
-#                Carter T. Butts, University of California - Irvine
-#                Steven M. Goodreau, University of Washington
-#                Martina Morris, University of Washington
-# Copyright 2007 The statnet Development Team
-######################################################################
 ergm.Cprepare <- function(nw, m) 
 {
   # Build an object called Clist that contains all the necessary
   # ingredients to be passed to the C function.
-  Clist<-list(n=network.size(nw), dir=is.directed(nw))
+  n <- network.size(nw)
+  dir <- is.directed(nw)
+  Clist<-list(n=n, dir=dir)
   bip <- nw$gal$bipartite
   if (is.null(bip)) bip <- 0
   Clist$bipartite <- bip
+  Clist$ndyads <- n * (n-1) / (2-dir)
   e<-as.matrix.network(nw,matrix.type="edgelist")
-  if(nrow(e) > 1000000){
-   stop("The network has more than a million edges. The 'statnet'suite of packages have an (arbitrary) limit of one million edges. If you intended to model a network of over one million edges, contact the 'statnet' development team to find out how to increase the maximum size.", call.=FALSE)
-  }
+  Clist$maxpossibleedges <- min(max(1e+6, 2*nrow(e)), Clist$ndyads)
   if(length(e)==0){
     Clist$nedges<-0
     Clist$heads<-NULL
@@ -32,17 +19,13 @@ ergm.Cprepare <- function(nw, m)
     if(!is.matrix(e)){e <- matrix(e, ncol=2)}
     Clist$nedges<-dim(e)[1]
     # Ensure that for undirected networks, head<tail.
-    if(Clist$dir){
+    if(dir){
       Clist$heads<-e[,1]
       Clist$tails<-e[,2]
     }else{
       Clist$heads<-pmin(e[,1],e[,2])
       Clist$tails<-pmax(e[,1],e[,2])
     }
-  }
-  Clist$ndyads<-Clist$n * (Clist$n-1)
-  if (!Clist$dir) {
-    Clist$ndyads <- Clist$ndyads/2
   }
   mo<-m$terms 
   

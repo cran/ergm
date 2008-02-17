@@ -1,17 +1,3 @@
-#  File ergm/R/ergm.getglobalstats.R
-#  Part of the statnet package, http://statnetproject.org
-#
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnetproject.org/attribution
-#
-# Copyright 2003 Mark S. Handcock, University of Washington
-#                David R. Hunter, Penn State University
-#                Carter T. Butts, University of California - Irvine
-#                Steven M. Goodreau, University of Washington
-#                Martina Morris, University of Washington
-# Copyright 2007 The statnet Development Team
-######################################################################
 ergm.getglobalstats <- function(nw, m) {
   Clist <- ergm.Cprepare(nw, m)
   #
@@ -19,7 +5,8 @@ ergm.getglobalstats <- function(nw, m) {
   #
   gs <- -.C("MCMC_global",
            as.integer(Clist$heads), as.integer(Clist$tails), 
-           as.integer(Clist$nedges), as.integer(Clist$n),
+           as.integer(Clist$nedges), as.integer(Clist$maxpossibleedges),
+           as.integer(Clist$n),
            as.integer(Clist$dir), as.integer(Clist$bipartite), 
            as.integer(Clist$nterms), 
            as.character(Clist$fnamestring), as.character(Clist$snamestring), 
@@ -250,7 +237,7 @@ ergm.getglobalstats <- function(nw, m) {
        ng0 <-  m$terms[[i]]$inputs[4]
        nu <-  m$terms[[i]]$inputs[1]
        nw %v% "nodecov" <- m$terms[[i]]$inputs[-c(1:(2*ng0+4+2*nu))]
-       gs[tase] <- summary(nw ~ mix("nodecov"))+gs[tase]
+       gs[tase] <- summary(nw ~ mix("nodecov",directed=TRUE))+gs[tase]
      }
     }
   }

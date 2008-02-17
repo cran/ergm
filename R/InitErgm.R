@@ -1,17 +1,3 @@
-#  File ergm/R/InitErgm.R
-#  Part of the statnet package, http://statnetproject.org
-#
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnetproject.org/attribution
-#
-# Copyright 2003 Mark S. Handcock, University of Washington
-#                David R. Hunter, Penn State University
-#                Carter T. Butts, University of California - Irvine
-#                Steven M. Goodreau, University of Washington
-#                Martina Morris, University of Washington
-# Copyright 2007 The statnet Development Team
-######################################################################
 # Upon encountering a model term such as [name](args), ergm and related
 # routines will call a function of the form InitErgm.[name].  The specific
 # function call will be of the form
@@ -1854,7 +1840,7 @@ InitErgm.gwodegree<-function(nw, m, arglist, initialfit=FALSE, ...) {
       m$terms[[termnumber]] <- list(name="gwodegree", soname="ergm",
                                     inputs=c(0, 1, length(decay), decay))
       #   m$coef.names<-c(m$coef.names,paste("gwodegree.fixed.",decay,sep=""))
-      m$coef.names<-c(m$coef.names,"gwodegree")
+      m$coef.names<-c(m$coef.names,paste("gwodegree.fixed", decay, sep=""))
     }
   }
   m
@@ -1991,6 +1977,9 @@ InitErgm.hammingmix<-function (nw, m, arglist, ...) {
     mixmat <- mixingmatrix(nw,attrname)$mat
     u <- cbind(as.vector(row(mixmat)), 
                as.vector(col(mixmat)))
+#   if(!is.directed(nw)){
+#    u <- u[row(mixmat) >= col(mixmat)]
+#   }
     if(any(is.na(nodecov))){u<-rbind(u,NA)}
 #
 #   Recode to numeric if necessary
@@ -2682,18 +2671,23 @@ InitErgm.nodematch<-InitErgm.match<-function (nw, m, arglist, drop=TRUE, ...) {
 #########################################################
 InitErgm.nodemix<-InitErgm.mix<-function (nw, m, arglist, drop=TRUE, ...) {
   a <- ergm.checkargs("nodemix", arglist,
-    varnames = c("attrname","contrast"),
-    vartypes = c("character","logical"),
-    defaultvalues = list(NULL,FALSE),
+    varnames = c("attrname","contrast", "directed"),
+    vartypes = c("character","logical","logical"),
+    defaultvalues = list(NULL,FALSE,NULL),
     required = c(TRUE,FALSE))
   attach(a)
   attrname<-a$attrname
   contrast<-a$contrast
+  if (is.null(a$directed)){
+   directed <- is.directed(nw)
+  }else{
+   directed <- a$directed
+  }
   if(is.bipartite(nw)){
   # So two-mode
     if (is.directed(nw)){ 
       cat(" ")
-      cat("Warning!  Bipartite networks are currently\n",
+      cat("Warning:  Bipartite networks are currently\n",
           "automatically treated as undirected\n")
     }
     #  So undirected network storage but directed mixing
@@ -2755,7 +2749,7 @@ InitErgm.nodemix<-InitErgm.mix<-function (nw, m, arglist, drop=TRUE, ...) {
     urm <- t(sapply(ui,rep,length(ui)))   #This is the reverse of what you'd
     ucm <- sapply(ui,rep,length(ui))      #expect for r/c, but it's correct
     uun <- outer(u,u,paste,sep=".")
-    if (!is.directed(nw)) {
+    if (!directed) {
       uui <- uui[upper.tri(uui,diag=TRUE)]
       urm <- urm[upper.tri(urm,diag=TRUE)]  
       ucm <- ucm[upper.tri(ucm,diag=TRUE)]

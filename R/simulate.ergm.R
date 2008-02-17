@@ -1,17 +1,3 @@
-#  File ergm/R/simulate.ergm.R
-#  Part of the statnet package, http://statnetproject.org
-#
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnetproject.org/attribution
-#
-# Copyright 2003 Mark S. Handcock, University of Washington
-#                David R. Hunter, Penn State University
-#                Carter T. Butts, University of California - Irvine
-#                Steven M. Goodreau, University of Washington
-#                Martina Morris, University of Washington
-# Copyright 2007 The statnet Development Team
-######################################################################
 simulate.formula <- function(object, nsim=1, seed=NULL, ...,theta0,
                              burnin=1000, interval=1000,
                              basis=NULL,
@@ -60,7 +46,8 @@ simulate.formula <- function(object, nsim=1, seed=NULL, ...,theta0,
   
   if(!is.null(seed)) set.seed(as.integer(seed))
 
-  curstats<-summary.statistics.network(object)
+# curstats<-summary.statistics.network(object)
+  curstats<-summary(update(object,nw ~ .))
   MCMCparams <- list(samplesize=1,
       stats=curstats,
       burnin=burnin,
@@ -88,15 +75,22 @@ simulate.formula <- function(object, nsim=1, seed=NULL, ...,theta0,
      maxedges <- 10*maxedges
      if (verb) {
        cat("   ")
+       print("calling ergm.mcmcslave")
        #cat(paste("# ", i, " of ", nsim, ": ", sep=""))
      }
      z <- ergm.mcmcslave(Clist,MHproposal,eta0,MCMCparams,maxedges,verb) 
+     if (verb) {
+       print("returning from ergm.mcmcslave; entering newnw.extract")
+     }
     }
 #
 #   Next update the network to be the final (possibly conditionally)
 #   simulated one
 #
     out.list[[i]] <- newnw.extract(nw,z)
+    if (verb) {
+      print("returning from newnw.extract")
+    }
     curstats <- z$s
     out.mat <- rbind(out.mat,curstats)
     if(sequential){

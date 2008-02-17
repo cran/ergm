@@ -1,17 +1,3 @@
-#  File ergm/R/ergm.getMCMCsample.R
-#  Part of the statnet package, http://statnetproject.org
-#
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnetproject.org/attribution
-#
-# Copyright 2003 Mark S. Handcock, University of Washington
-#                David R. Hunter, Penn State University
-#                Carter T. Butts, University of California - Irvine
-#                Steven M. Goodreau, University of Washington
-#                Martina Morris, University of Washington
-# Copyright 2007 The statnet Development Team
-######################################################################
 ergm.getMCMCsample <- function(nw, model, MHproposal, eta0, MCMCparams, 
                                verbose) {
 # Note:  In reality, there should be many fewer arguments to this function,
@@ -56,7 +42,7 @@ ergm.getMCMCsample <- function(nw, model, MHproposal, eta0, MCMCparams,
 ergm.mcmcslave <- function(Clist,MHproposal,eta0,MCMCparams,maxedges,verbose) {
   z <- .C("MCMC_wrapper",
   as.integer(Clist$heads), as.integer(Clist$tails),
-  as.integer(Clist$nedges), as.integer(Clist$n),
+  as.integer(Clist$nedges), as.integer(Clist$maxpossibleedges), as.integer(Clist$n),
   as.integer(Clist$dir), as.integer(Clist$bipartite),
   as.integer(Clist$nterms),
   as.character(Clist$fnamestring),

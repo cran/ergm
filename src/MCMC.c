@@ -1,18 +1,3 @@
-/*
- *  File ergm/src/MCMC.c
- *  Part of the statnet package, http://statnetproject.org
- *
- *  This software is distributed under the GPL-3 license.  It is free,
- *  open source, and has the attribution requirements (GPL Section 7) in
- *    http://statnetproject.org/attribution
- *
- * Copyright 2003 Mark S. Handcock, University of Washington
- *                David R. Hunter, Penn State University
- *                Carter T. Butts, University of California - Irvine
- *                Steven M. Goodreau, University of Washington
- *                Martina Morris, University of Washington
- * Copyright 2007 The statnet Development Team
- */
 #include "MCMC.h"
 
 /*****************
@@ -27,6 +12,7 @@
  Wrapper for a call from R.
 *****************/
 void MCMC_wrapper (int *heads, int *tails, int *dnedges,
+                   int *maxpossibleedges,
                    int *dn, int *dflag, int *bipartite, 
                    int *nterms, char **funnames,
                    char **sonames, 
@@ -42,7 +28,7 @@ void MCMC_wrapper (int *heads, int *tails, int *dnedges,
                    int *mheads, int *mtails, int *mdnedges) {
   int directed_flag, hammingterm, formationterm;
   Vertex n_nodes, nmax, bip, hhead, htail;
-  Edge n_edges, n_medges, nddyads, kedge;
+  Edge n_edges, n_medges, nddyads, kedge, mpe=*maxpossibleedges;
   Network nw[2];
   DegreeBound *bd;
   Model *m;
@@ -61,9 +47,11 @@ void MCMC_wrapper (int *heads, int *tails, int *dnedges,
   m=ModelInitialize(*funnames, *sonames, inputs, *nterms);
 
   /* Form the missing network */
-  nw[0]=NetworkInitialize(heads, tails, n_edges, n_nodes, directed_flag, bip, 0);
+  nw[0]=NetworkInitialize(heads, tails, n_edges, mpe, 
+                          n_nodes, directed_flag, bip, 0);
   if (n_medges>0) {
-   nw[1]=NetworkInitialize(mheads, mtails, n_medges, n_nodes, directed_flag, bip, 0);
+   nw[1]=NetworkInitialize(mheads, mtails, n_medges, mpe,
+                           n_nodes, directed_flag, bip, 0);
   }
 
   hammingterm=ModelTermHamming (*funnames, *nterms);
@@ -73,10 +61,12 @@ void MCMC_wrapper (int *heads, int *tails, int *dnedges,
    thisterm = m->termarray + hammingterm - 1;
    nddyads = (Edge)(thisterm->inputparams[0]);
    nwhamming=NetworkInitializeD(thisterm->inputparams+1, 
-				thisterm->inputparams+1+nddyads, nddyads, n_nodes, directed_flag, bip,0);
+				thisterm->inputparams+1+nddyads, nddyads, mpe, 
+        n_nodes, directed_flag, bip,0);
    nddyads=0;
    nw[1]=NetworkInitializeD(thisterm->inputparams+1, 
-			   thisterm->inputparams+1+nddyads, nddyads, n_nodes, directed_flag, bip,0);
+			   thisterm->inputparams+1+nddyads, nddyads, mpe,
+         n_nodes, directed_flag, bip,0);
 /*	     Rprintf("made hw[1]\n"); */
    for (kedge=1; kedge <= nwhamming.nedges; kedge++) {
      FindithEdge(&hhead, &htail, kedge, &nwhamming);
@@ -103,10 +93,12 @@ void MCMC_wrapper (int *heads, int *tails, int *dnedges,
    thisterm = m->termarray + formationterm - 1;
    nddyads = (Edge)(thisterm->inputparams[0]);
    nwformation=NetworkInitializeD(thisterm->inputparams+1,
-				  thisterm->inputparams+1+nddyads, nddyads, n_nodes, directed_flag, bip,0);
+				  thisterm->inputparams+1+nddyads, nddyads, mpe,
+          n_nodes, directed_flag, bip,0);
    nddyads=0;
    nw[1]=NetworkInitializeD(thisterm->inputparams+1,
-			    thisterm->inputparams+1+nddyads, nddyads, n_nodes, directed_flag, bip,0);
+			    thisterm->inputparams+1+nddyads, nddyads, mpe,
+          n_nodes, directed_flag, bip,0);
 /*	     Rprintf("made hw[1]\n"); */
    for (kedge=1; kedge <= nwformation.nedges; kedge++) {
      FindithEdge(&hhead, &htail, kedge, &nwformation);
@@ -600,14 +592,15 @@ int CheckConstrainedTogglesValid(MHproposal *MHp, DegreeBound *bd, Network *nwp)
  (with a minus sign in front) gives the true global values for the
  observed graph.
 *****************/
-void MCMC_global (int *heads, int *tails, int *dnedges,
+void MCMC_global (int *heads, int *tails, int *dnedges, 
+      int *maxpossibleedges,
 		  int *dn, int *dflag,  int *bipartite,
 		  int *nterms, char **funnames,
 		  char **sonames, double *inputs,  double *stats)
 {	
   int directed_flag, hammingterm, formationterm;
   Vertex n_nodes, hhead, htail;
-  Edge n_edges, nddyads, kedge;
+  Edge n_edges, nddyads, kedge, mpe=*maxpossibleedges;
   Network nw[2];
   Model *m;
   ModelTerm *thisterm;
@@ -620,7 +613,8 @@ void MCMC_global (int *heads, int *tails, int *dnedges,
   bip = (Vertex)*bipartite;
   
   m=ModelInitialize(*funnames, *sonames, inputs, *nterms);
-  nw[0]=NetworkInitialize(heads, tails, n_edges, n_nodes, directed_flag, bip, 0);
+  nw[0]=NetworkInitialize(heads, tails, n_edges, mpe,
+                          n_nodes, directed_flag, bip, 0);
 
   hammingterm=ModelTermHamming (*funnames, *nterms);
 /*	     Rprintf("start with setup\n"); */
@@ -630,10 +624,12 @@ void MCMC_global (int *heads, int *tails, int *dnedges,
    nddyads = (Edge)(thisterm->inputparams[0]);
 
    nwhamming=NetworkInitializeD(thisterm->inputparams+1, 
-			       thisterm->inputparams+1+nddyads, nddyads, n_nodes, directed_flag, bip, 0);
+			       thisterm->inputparams+1+nddyads, nddyads, mpe,
+             n_nodes, directed_flag, bip, 0);
    nddyads=0;
    nw[1]=NetworkInitializeD(thisterm->inputparams+1, 
-			   thisterm->inputparams+1+nddyads, nddyads, n_nodes, directed_flag, bip, 0);
+			   thisterm->inputparams+1+nddyads, nddyads, mpe,
+         n_nodes, directed_flag, bip, 0);
    for (kedge=1; kedge <= nwhamming.nedges; kedge++) {
      FindithEdge(&hhead, &htail, kedge, &nwhamming);
      if(EdgetreeSearch(hhead, htail, nw[0].outedges) == 0){
@@ -657,10 +653,12 @@ void MCMC_global (int *heads, int *tails, int *dnedges,
    thisterm = m->termarray + formationterm - 1;
    nddyads = (Edge)(thisterm->inputparams[0]);
    nwformation=NetworkInitializeD(thisterm->inputparams+1,
-				  thisterm->inputparams+1+nddyads, nddyads, n_nodes, directed_flag, bip, 0);
+				  thisterm->inputparams+1+nddyads, nddyads, mpe,
+          n_nodes, directed_flag, bip, 0);
    nddyads=0;
    nw[1]=NetworkInitializeD(thisterm->inputparams+1,
-			   thisterm->inputparams+1+nddyads, nddyads, n_nodes, directed_flag, bip, 0);
+			   thisterm->inputparams+1+nddyads, nddyads, mpe,
+         n_nodes, directed_flag, bip, 0);
 /*	     Rprintf("made hw[1]\n"); */
    for (kedge=1; kedge <= nwformation.nedges; kedge++) {
      FindithEdge(&hhead, &htail, kedge, &nwformation);
@@ -692,7 +690,8 @@ void MCMC_global (int *heads, int *tails, int *dnedges,
     NetworkDestroy(&nw[1]);
 }
 
-void MCMCPhase12 (int *heads, int *tails, int *dnedges,
+void MCMCPhase12 (int *heads, int *tails, int *dnedges, 
+      int *maxpossibleedges,
 		  int *dn, int *dflag, int *bipartite, 
 		  int *nterms, char **funnames,
 		  char **sonames, 
@@ -711,7 +710,7 @@ void MCMCPhase12 (int *heads, int *tails, int *dnedges,
   int directed_flag, hammingterm, formationterm;
   int nphase1, nsubphases;
   Vertex n_nodes, nmax, bip, hhead, htail;
-  Edge n_edges, n_medges, nddyads, kedge;
+  Edge n_edges, n_medges, nddyads, kedge, mpe=*maxpossibleedges;
   Network nw[2];
   DegreeBound *bd;
   Model *m;
@@ -733,9 +732,11 @@ void MCMCPhase12 (int *heads, int *tails, int *dnedges,
   m=ModelInitialize(*funnames, *sonames, inputs, *nterms);
 
   /* Form the missing network */
-  nw[0]=NetworkInitialize(heads, tails, n_edges, n_nodes, directed_flag, bip,0);
+  nw[0]=NetworkInitialize(heads, tails, n_edges, mpe,
+                          n_nodes, directed_flag, bip,0);
   if (n_medges>0) {
-   nw[1]=NetworkInitialize(mheads, mtails, n_medges, n_nodes, directed_flag, bip,0);
+   nw[1]=NetworkInitialize(mheads, mtails, n_medges, mpe,
+                           n_nodes, directed_flag, bip,0);
   }
 
   hammingterm=ModelTermHamming (*funnames, *nterms);
@@ -746,10 +747,12 @@ void MCMCPhase12 (int *heads, int *tails, int *dnedges,
    nddyads = (Edge)(thisterm->inputparams[0]);
 
    nwhamming=NetworkInitializeD(thisterm->inputparams+1,
-			       thisterm->inputparams+1+nddyads, nddyads, n_nodes, directed_flag, bip, 0);
+			       thisterm->inputparams+1+nddyads, nddyads, mpe,
+             n_nodes, directed_flag, bip, 0);
    nddyads=0;
    nw[1]=NetworkInitializeD(thisterm->inputparams+1,
-			   thisterm->inputparams+1+nddyads, nddyads, n_nodes, directed_flag, bip,0);
+			   thisterm->inputparams+1+nddyads, nddyads, mpe,
+         n_nodes, directed_flag, bip,0);
 /*	     Rprintf("made hw[1]\n"); */
    for (kedge=1; kedge <= nwhamming.nedges; kedge++) {
      FindithEdge(&hhead, &htail, kedge, &nwhamming);
@@ -776,10 +779,12 @@ void MCMCPhase12 (int *heads, int *tails, int *dnedges,
    thisterm = m->termarray + formationterm - 1;
    nddyads = (Edge)(thisterm->inputparams[0]);
    nwformation=NetworkInitializeD(thisterm->inputparams+1, 
-				  thisterm->inputparams+1+nddyads, nddyads, n_nodes, directed_flag, bip, 0);
+				  thisterm->inputparams+1+nddyads, nddyads, mpe,
+          n_nodes, directed_flag, bip, 0);
    nddyads=0;
    nw[1]=NetworkInitializeD(thisterm->inputparams+1, 
-			   thisterm->inputparams+1+nddyads, nddyads, n_nodes, directed_flag, bip,0);
+			   thisterm->inputparams+1+nddyads, nddyads, mpe,
+         n_nodes, directed_flag, bip,0);
 /*	     Rprintf("made hw[1]\n"); */
    for (kedge=1; kedge <= nwformation.nedges; kedge++) {
      FindithEdge(&hhead, &htail, kedge, &nwformation);
