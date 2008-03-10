@@ -13,18 +13,27 @@
 \alias{InitConstraint.edges}
 \alias{InitConstraint.hamming}
 \alias{InitConstraint.indegreedist}
+\alias{InitConstraint.outdegreedist}
 \alias{InitConstraint.nodedegrees}
 %
 \alias{check.ErgmTerm}
 \alias{InitErgmTerm.absdiff}
+\alias{InitErgmTerm.absdiffcat}
+\alias{InitErgmTerm.altkstar}
+\alias{InitErgmTerm.asymmetric}
 \alias{InitErgmTerm.isolates}
-\alias{InitErgmTerm.nodematch}
 \alias{InitErgmTerm.match}
+\alias{InitErgmTerm.mutual}
+\alias{InitErgmTerm.nodefactor}
+\alias{InitErgmTerm.nodeifactor}
+\alias{InitErgmTerm.nodematch}
+\alias{InitErgmTerm.nodeofactor}
 \alias{check.ErgmTerm.summarystats}
 \alias{ergm.getglobalstats}
 \alias{get.InitErgm.fname}
 \alias{updatemodel.ErgmTerm}
 \alias{zerowarnings}
+\alias{extremewarnings}
 
 
 %
@@ -111,6 +120,7 @@
 \alias{InitMHP.CondDegree}
 \alias{InitMHP.CondDegreeDist}
 \alias{InitMHP.CondInDegreeDist}
+\alias{InitMHP.CondOutDegreeDist}
 \alias{InitMHP.ConstantEdges}
 \alias{InitMHP.dissolution}
 \alias{InitMHP.formation}
@@ -172,8 +182,6 @@
 \alias{espartnerdist}
 \alias{get.node.attr}
 \alias{is.ergm}
-\alias{is.latent}
-\alias{is.latent.cluster}
 \alias{is.matrixnetwork}
 \alias{llik.fun}
 \alias{llik.fun.miss}
