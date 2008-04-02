@@ -6,8 +6,8 @@
 }
 \usage{
 control.ergm(prop.weights = "default", prop.args = NULL,
-             nr.maxit = 100, calc.mcmc.se = TRUE, hessian = FALSE, compress = FALSE,
-             maxNumDyadTypes = 10000, maxedges = 20000, maxchanges = 1e+06,
+             nr.maxit = 100, calc.mcmc.se = TRUE, hessian = FALSE, compress = TRUE,
+             maxNumDyadTypes = 1e+6, maxedges = 20000, maxchanges = 1e+06,
              maxMPLEsamplesize = 100000, MPLEtype=c("glm", "penalized"), trace = 0,
              steplength = 0.5, drop = TRUE, force.mcmc = FALSE, check.degeneracy=TRUE, mcmc.precision =
              0.05, metric = c("Likelihood", "raw"), method = c("BFGS", "Nelder-Mead"),
@@ -51,7 +51,7 @@ control.ergm(prop.weights = "default", prop.args = NULL,
   \item{maxNumDyadTypes}{count; The maximum number of unique
     pseudolikelihood change statistics to be allowed if \code{compress=TRUE}.
     It is only relevant in that case.
-    Default is \code{10000}.}
+    Default is \code{1e+6}.}
   \item{maxedges}{ Maximum number of edges for which to allocate space. }
   \item{maxchanges}{ Maximum number of changes in dynamic network
     simulation for which to allocate space. }
