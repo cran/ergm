@@ -49,7 +49,7 @@ summary.ergm <- function (object, ...,
               offset = object$offset,
               drop = object$drop,
               covariance=covariance,
-              pseudolikelihood=is.na(object$samplesize) && !is.null(object$theta1$independent) && all(object$theta1$independent),
+              pseudolikelihood=is.na(object$samplesize) && !is.null(object$theta1$independent) && !all(object$theta1$independent),
               iterations=object$iterations[1])
 
   if(ans$pseudolikelihood){
@@ -124,15 +124,15 @@ summary.ergm <- function (object, ...,
   colnames(tempmatrix) <- c("Estimate", "Std. Error", "MCMC s.e.", "p-value")
   rownames(tempmatrix) <- names(object$coef)
 
- if(ans$pseudolikelihood){
-  ans$warning <- "  The standard errors are based on naive pseudolikelihood and are suspect.\n"
- }else{
-  if(any(is.na(object$mc.se)) &&
-     !is.null(object$theta1$independent) && !all(object$theta1$independent)){
-   ans$warning <- "  The standard errors are suspect due to possible poor convergence.\n"
+  if (!is.null(object$theta1$independent) && !all(object$theta1$independent)){
+    if(ans$pseudolikelihood) {
+      ans$warning <- "  The standard errors are based on naive pseudolikelihood and are suspect.\n"
+    }
+    else if(any(is.na(object$mc.se))) {
+      ans$warning <- "  The standard errors are suspect due to possible poor convergence.\n"
+    }
   }
- }
-
+  
   if(ans$pseudolikelihood){
     ans$devtable <- c("",apply(cbind(paste(format(c("    Null", 
             "Residual", ""), width = 8, flag = ""), "Pseudo-deviance:"), 

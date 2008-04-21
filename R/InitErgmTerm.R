@@ -35,7 +35,7 @@
 #                when using the old InitErgm specification; see the comment
 #                at the top of the InitErgm.R file for details.  This 
 #                ParamsBeforeCov value is only necessary for compatibility 
-#                with some of the existing d_xxx changestatistic functions.  
+#                with some of the existing d_xxx changestatistic functions.
 #        soname: This is the (text) name of the package containing the C function
 #                called d_[name].  Default is "ergm"
 #    dependence: Logical variable telling whether addition of this term to
@@ -275,6 +275,42 @@ InitErgmTerm.b1degree <- function(nw, arglist, drop=TRUE, ...) {
   }
   list(name=name, coef.names=coef.names, #name and coef.names: required
        inputs = inputs, emptynwstats=emptynwstats)
+}
+
+#########################################################
+InitErgmTerm.b1star <- function(nw, arglist, drop=TRUE, ...) {
+  ### Check the network and arguments to make sure they are appropriate.
+  a <- check.ErgmTerm (nw, arglist, directed=FALSE, bipartite=TRUE,
+                       varnames = c("k", "attrname"),
+                       vartypes = c("numeric", "character"),
+                       defaultvalues = list(NULL, NULL),
+                       required = c(TRUE, FALSE))
+  assignvariables(a) # create local variables from names in 'varnames'
+  ### Process the arguments
+  nb1 <- get.network.attribute(nw, "bipartite")
+  if(drop) { # Check for zero statistics, print -Inf messages if applicable
+    obsstats <- check.ErgmTerm.summarystats(nw, arglist, ...)
+    ew <- extremewarnings(obsstats)
+    # will process the ew variable later
+  } else {ew <- FALSE}
+  if (!is.null(attrname)) {
+    nodecov <- get.node.attr(nw, attrname)
+    u<-sort(unique(nodecov))
+    if(any(is.na(nodecov))){u<-c(u,NA)}
+    # Recode to numeric
+    nodecov <- match(nodecov,u,nomatch=length(u)+1)
+    name <- "ostar"
+    coef.names <- paste("b1star", k, ".", attrname, sep="")
+    inputs <- c(k, nodecov)
+    attr(inputs, "ParamsBeforeCov") <- length(k)
+  } 
+  else {
+    name <- "ostar"
+    coef.names <- paste("b1star",k,sep="")
+    inputs <- k
+  }
+  list(name = name, coef.names = coef.names, #name and coef.names: required
+       inputs = inputs)
 }
 
 #########################################################
@@ -600,11 +636,11 @@ InitErgmTerm.nodemix<-function (nw, arglist, drop=TRUE, ...) {
     b2namescov <- sort(unique(nodecov[(1+nb1):network.size(nw)]))
     namescov <- c(b1namescov, b2namescov)
     b1nodecov <- match(nodecov[1:nb1],b1namescov)
-    mixmat <- mixingmatrix(nw,attrname)$mat
-    nodecov <- c(b1nodecov, 
-     match(nodecov[(1+nb1):network.size(nw)],b2namescov)+nrow(mixmat))
-    u <- cbind(as.vector(row(mixmat)), 
-               as.vector(col(mixmat)+nrow(mixmat)))
+    b2nodecov <- match(nodecov[(1+nb1):network.size(nw)],b2namescov)
+    nr <- length(b1namescov)
+    nc <- length(b2namescov)
+    nodecov <- c(b1nodecov, b2nodecov + nr)
+    u <- cbind(rep(1:nr,nc), nr + rep(1:nc, each=nr))
     if(any(is.na(nodecov))){u<-rbind(u,NA)}    
     if (!is.null(base) && !identical(base,0)) {
       u <- u[-base,]
