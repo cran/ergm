@@ -1,3 +1,17 @@
+#  File ergm/R/gof.ergm.R
+#  Part of the statnet package, http://statnetproject.org
+#
+#  This software is distributed under the GPL-3 license.  It is free,
+#  open source, and has the attribution requirements (GPL Section 7) in
+#    http://statnetproject.org/attribution
+#
+# Copyright 2003 Mark S. Handcock, University of Washington
+#                David R. Hunter, Penn State University
+#                Carter T. Butts, University of California - Irvine
+#                Steven M. Goodreau, University of Washington
+#                Martina Morris, University of Washington
+# Copyright 2007 The statnet Development Team
+######################################################################
     gof <- function(object, ...){
       UseMethod("gof")
     }
@@ -14,7 +28,6 @@ gof.ergm <- function (object, ..., nsim=100,
                       seed=NULL,
                       theta0=NULL,
                       verbose=FALSE) {
-
   
   nw <- as.network(object$network)
 
@@ -97,7 +110,7 @@ gof.formula <- function(formula, ..., theta0=NULL, nsim=100,
   }
 
 # if(is.bipartite(nw)){
-#   formula <- update(formula, ~ . + bipartite)
+#   formula <- safeupdate.formula(formula, ~ . + bipartite)
 #   trms <- ergm.getterms(formula)
 #   termnames <- ergm.gettermnames(trms)
 # }
@@ -106,7 +119,7 @@ gof.formula <- function(formula, ..., theta0=NULL, nsim=100,
   Clist <- ergm.Cprepare(nw, m)
 
   if(is.null(theta0)){
-      theta0 <- rep(0,Clist$nparam)
+      theta0 <- rep(0,Clist$nstats)
       warning("No parameter values given, using 0\n\t")
   }
 # if(is.bipartite(nw)){
@@ -138,9 +151,9 @@ gof.formula <- function(formula, ..., theta0=NULL, nsim=100,
 #
 #  obs.ideg<-pobs.ideg<-sim.ideg<-psim.ideg<-pval.ideg<-bds.ideg<-pval.ideg<-NULL
 #  obs.odeg<-pobs.odeg<-sim.odeg<-psim.odeg<-pval.odeg<-bds.odeg<-pval.odeg<-NULL
-       
+
   n <- network.size(nw)
-                             
+
   # Calculate network statistics for the observed graph
   # Set up the output arrays of sim variables
   if(verbose)
@@ -245,7 +258,7 @@ gof.formula <- function(formula, ..., theta0=NULL, nsim=100,
     triadcensus <- 0:3
     namestriadcensus <- c("0","1","2", "3")
     triadcensus.formula <- "~ triadcensus(0:3)"
-   } 
+   }
    if(is.null(nw$gal$design) | !unconditional){
     obs.triadcensus <- summary(as.formula(paste('nw',triadcensus.formula,sep="")), drop=FALSE)
    }else{
@@ -258,7 +271,6 @@ gof.formula <- function(formula, ..., theta0=NULL, nsim=100,
  
   # Simulate an exponential family random graph model
 
-  
 #  SimNetworkSeriesObj <- simulate(formula, nsim=nsim, seed=seed,
 #                                  theta0=theta0,
 #                                  burnin=burnin, interval=interval,
@@ -274,7 +286,7 @@ gof.formula <- function(formula, ..., theta0=NULL, nsim=100,
 
   if(verbose)
     cat("Starting simulations.\n")
-  
+
   tempnet <- nw
   for (i in 1:nsim) {
     if(verbose){
@@ -295,7 +307,7 @@ gof.formula <- function(formula, ..., theta0=NULL, nsim=100,
 #     if ((i %% 10 == 0) || (i==nsim)) cat("\n")
 #    }
     if ('model' %in% all.gof.vars) {
-     sim.model[i,] <- summary(update(formula,tempnet ~ .))
+     sim.model[i,] <- summary(safeupdate.formula(formula,tempnet ~ .))
     }
     if ('distance' %in% all.gof.vars) {
      sim.dist[i,] <- ergm.geodistdist(tempnet)
@@ -362,7 +374,7 @@ gof.formula <- function(formula, ..., theta0=NULL, nsim=100,
     pobs.model <- pval.model.top
     psim.model <- apply(sim.model,2,rank)/nrow(sim.model)
     bds.model <- apply(psim.model,2,quantile,probs=c(0.025,0.975))
-    
+
     returnlist$summary.model <- returnlist$pval.model <- pval.model
     returnlist$pobs.model <- pobs.model
     returnlist$psim.model <- psim.model
@@ -503,7 +515,6 @@ gof.formula <- function(formula, ..., theta0=NULL, nsim=100,
     returnlist$obs.triadcensus <- obs.triadcensus
     returnlist$sim.triadcensus <- sim.triadcensus
   }
-                        
   class(returnlist) <- "gofobject"
   returnlist
 }
@@ -1105,6 +1116,6 @@ plot.gofobject <- function(x, ...,
 #}
 
 ergm.rhs.formula <- function(formula){
-#all.vars(update(formula, .~0)) 
+#all.vars(safeupdate.formula(formula, .~0)) 
  unlist(dimnames(attr(terms(formula),"factors"))[-1])
 }

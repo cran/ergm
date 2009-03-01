@@ -1,14 +1,28 @@
+#  File ergm/R/getMHproposal.R
+#  Part of the statnet package, http://statnetproject.org
+#
+#  This software is distributed under the GPL-3 license.  It is free,
+#  open source, and has the attribution requirements (GPL Section 7) in
+#    http://statnetproject.org/attribution
+#
+# Copyright 2003 Mark S. Handcock, University of Washington
+#                David R. Hunter, Penn State University
+#                Carter T. Butts, University of California - Irvine
+#                Steven M. Goodreau, University of Washington
+#                Martina Morris, University of Washington
+# Copyright 2007 The statnet Development Team
+######################################################################
 MHproposals<-
   #         Class Constraints      Weights        MHP
   rbind(I(c("c", "",              "default",      "TNT")),
           c("c", "",              "TNT",          "TNT"),
           c("c", "",              "random",       "randomtoggle"),
+          c("c", "",              "TNT10",        "TNT10"),
           c("c", "bd",            "default",       "TNT"),
           c("c", "bd",            "TNT",           "TNT"),
           c("c", "bd",            "random",       "randomtoggle"),
           c("c", "bd+edges",      "default",      "ConstantEdges"),
           c("c", "bd+edges",      "random",       "ConstantEdges"),          
-          c("c", "",              "nonobserved",  "randomtoggleNonObserved"),
           c("c", "degrees",       "default",      "CondDegree"),
           c("c", "degrees",       "random",       "CondDegree"),
 
@@ -28,12 +42,13 @@ MHproposals<-
           c("c", "hamming",       "default",      "HammingTNT"),
           c("c", "hamming",       "random",       "HammingTNT"),
           c("c", "edges+hamming", "default",      "HammingConstantEdges"),
-          c("c", "edges+hamming", "random",       "HammingConstantEdges")
+          c("c", "edges+hamming", "random",       "HammingConstantEdges"),
+          c("c", "observed",      "default",      "randomtoggleNonObserved"),
+          c("c", "observed",      "random",       "randomtoggleNonObserved")
         )
 MHproposals <- data.frame(I(MHproposals[,1]), I(MHproposals[,2]), 
                           I(MHproposals[,3]), I(MHproposals[,4]))  
 colnames(MHproposals)<-c("Class","Constraints","Weights","MHP")
-
 
 MHproposal<-function(object, ...) UseMethod("MHproposal")
 
@@ -116,3 +131,4 @@ MHproposal.ergm<-function(object,...,constraints=NULL, arguments=NULL, nw=NULL, 
   if(is.null(model)) model<-ergm.getmodel(object$formula,nw,...)
   MHproposal(constraints,arguments=arguments,nw=nw,model=model,weights=weights,class=class)
 }
+

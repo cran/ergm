@@ -1,4 +1,18 @@
-ergm.getnetwork <- function (formula) {
+#  File ergm/R/ergm.getnetwork.R
+#  Part of the statnet package, http://statnetproject.org
+#
+#  This software is distributed under the GPL-3 license.  It is free,
+#  open source, and has the attribution requirements (GPL Section 7) in
+#    http://statnetproject.org/attribution
+#
+# Copyright 2003 Mark S. Handcock, University of Washington
+#                David R. Hunter, Penn State University
+#                Carter T. Butts, University of California - Irvine
+#                Steven M. Goodreau, University of Washington
+#                Martina Morris, University of Washington
+# Copyright 2007 The statnet Development Team
+######################################################################
+ergm.getnetwork <- function (formula, loopswarning=TRUE) {
   current.warn <- options()$warn
 # options(warn=0)
   if ((dc<-data.class(formula)) != "formula")
@@ -15,6 +29,14 @@ ergm.getnetwork <- function (formula) {
   if(inherits(nw,"try-error")){
       stop("Invalid network. Is the left-hand-side of the formula correct?")
   }
-# options(warn=current.warn)
+  # options(warn=current.warn)
+  if (loopswarning) {
+    e <- as.matrix.network.edgelist(nw)
+    if(any(e[,1]==e[,2])) {
+      print("Warning:  This network contains loops")
+    } else if (has.loops(nw)) {
+      print("Warning:  This network is allowed to contain loops")
+    }
+  }
   nw
 }

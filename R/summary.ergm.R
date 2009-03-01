@@ -1,3 +1,17 @@
+#  File ergm/R/summary.ergm.R
+#  Part of the statnet package, http://statnetproject.org
+#
+#  This software is distributed under the GPL-3 license.  It is free,
+#  open source, and has the attribution requirements (GPL Section 7) in
+#    http://statnetproject.org/attribution
+#
+# Copyright 2003 Mark S. Handcock, University of Washington
+#                David R. Hunter, Penn State University
+#                Carter T. Butts, University of California - Irvine
+#                Steven M. Goodreau, University of Washington
+#                Martina Morris, University of Washington
+# Copyright 2007 The statnet Development Team
+######################################################################
 summary.ergm <- function (object, ..., 
                           digits = max(3, getOption("digits") - 3),
                           correlation=FALSE, covariance=FALSE,
@@ -23,7 +37,7 @@ summary.ergm <- function (object, ...,
   colnames(asycov) <- rownames(asycov)
   
   asyse <- diag(asycov)
-  asyse[asyse<0|is.infinite(object$coef)] <- NA
+  asyse[asyse<0|is.infinite(object$coef)|object$offset] <- NA
   asyse <- sqrt(asyse)
   if(any(is.na(asyse)&!object$offset) & !is.null(object$mplefit)){
    if(is.null(object$mplefit$covar)){

@@ -1,11 +1,28 @@
+#  File ergm/R/simulate.ergm.R
+#  Part of the statnet package, http://statnetproject.org
+#
+#  This software is distributed under the GPL-3 license.  It is free,
+#  open source, and has the attribution requirements (GPL Section 7) in
+#    http://statnetproject.org/attribution
+#
+# Copyright 2003 Mark S. Handcock, University of Washington
+#                David R. Hunter, Penn State University
+#                Carter T. Butts, University of California - Irvine
+#                Steven M. Goodreau, University of Washington
+#                Martina Morris, University of Washington
+# Copyright 2007 The statnet Development Team
+######################################################################
 simulate.formula <- function(object, nsim=1, seed=NULL, ...,theta0,
                              burnin=1000, interval=1000,
                              basis=NULL,
+                             statsonly=FALSE,
                              sequential=TRUE,
                              constraints=~.,
                              control=control.simulate.formula(),
                              verbose=FALSE) {
-  out.list <- list()
+  if (!statsonly) {
+    nw.list <- list()
+  }
   out.mat <- numeric(0)
   formula <- object
   
@@ -14,7 +31,7 @@ simulate.formula <- function(object, nsim=1, seed=NULL, ...,theta0,
     nw <- basis
 #   formula <- as.formula(paste(c("nw",as.character(formula)),
 #                               collapse=" "))
-    formula <- update(formula, nw ~ .)
+    formula <- safeupdate.formula(formula, nw ~ .)
     object <- formula
   } else {
     nw <- ergm.getnetwork(formula)
@@ -31,78 +48,88 @@ simulate.formula <- function(object, nsim=1, seed=NULL, ...,theta0,
 # m <- ergm.getmodel(formula, nw, drop=control$drop)
   m <- ergm.getmodel(formula, nw, drop=FALSE)
   MHproposal <- MHproposal(constraints,arguments=control$prop.args,
-     nw=nw, model=m, weights=control$prop.weights, class="c")
-
+                           nw=nw, model=m, weights=control$prop.weights, class="c")
+  
   Clist <- ergm.Cprepare(nw, m)
   
   verb <- match(verbose,
                 c("FALSE","TRUE", "very"), nomatch=1)-1
   if(missing(theta0)) {
-    theta0 <- rep(0,Clist$nparam)
+    theta0 <- rep(0,Clist$nstats)
     warning("No parameter values given, using Bernouli network\n\t")
   }
   eta0 <- theta0
   eta0[is.infinite(eta0)] <- -10000
   
   if(!is.null(seed)) set.seed(as.integer(seed))
-
+    
 # curstats<-summary.statistics.network(object)
-  curstats<-summary(update(object,nw ~ .))
+  curstats<-summary(safeupdate.formula(object,nw ~ .))
   MCMCparams <- list(samplesize=1,
-      stats=curstats,
-      burnin=burnin,
-      interval=interval,
-      Clist.miss=list(heads=0,tails=0,nedges=0))
-
+                     stats=curstats,
+                     burnin=burnin,
+                     interval=interval,
+                     parallel=control$parallel,
+                     packagenames=control$packagenames,
+                     Clist.miss=ergm.design(nw, m, verbose=verbose))
+  
   if (verb) {
     cat(paste("Starting ",nsim," MCMC iteration", ifelse(nsim>1,"s",""),
-        " of ", burnin+interval*(MCMCparams$samplesize-1), 
-        " steps", ifelse(nsim>1, " each", ""), ".\n", sep=""))
+              " of ", burnin+interval*(MCMCparams$samplesize-1), 
+              " steps", ifelse(nsim>1, " each", ""), ".\n", sep=""))
   }
-  for(i in 1:nsim){
-    Clist <- ergm.Cprepare(nw, m)
-    maxedges <- max(2000, Clist$nedges)
-    if(i==1 | !sequential){
-      MCMCparams$burnin <- burnin
-    }else{
-      MCMCparams$burnin <- interval
+  if(sequential){
+    for(i in 1:nsim){
+      Clist <- ergm.Cprepare(nw, m)
+      maxedges <- max(2000, Clist$nedges)
+      if(i==1 | !sequential){
+        MCMCparams$burnin <- burnin
+      }else{
+        MCMCparams$burnin <- interval
+      }
+      #
+      #   Check for truncation of the returned edge list
+      #
+      z <- list(newnwheads=maxedges+1)
+      while(z$newnwheads[1] > maxedges){
+        maxedges <- 10*maxedges
+        z <- ergm.mcmcslave(Clist,MHproposal,eta0,MCMCparams,maxedges,verb) 
+      }
+      #
+      #   Next update the network to be the final (possibly conditionally)
+      #   simulated one
+      #
+      if (!statsonly) {
+        nw.list[[i]] <- newnw.extract(nw,z)
+      }
+      curstats <- z$s
+      names(curstats) <- m$coef.names
+      out.mat <- rbind(out.mat,curstats)
+      if (sequential){
+        if (!statsonly)
+          nw <-  nw.list[[i]]
+        else 
+          nw <- newnw.extract(nw, z)
+        MCMCparams$stats<-curstats
+      }
     }
-#
-#   Check for truncation of the returned edge list
-#
-    z <- list(newnwheads=maxedges+1)
-    while(z$newnwheads[1] > maxedges){
-     maxedges <- 10*maxedges
-#     if (verb) {
-#       cat("   ")
-#       print("calling ergm.mcmcslave")
-#       #cat(paste("# ", i, " of ", nsim, ": ", sep=""))
-#     }
-     z <- ergm.mcmcslave(Clist,MHproposal,eta0,MCMCparams,maxedges,verb) 
-#     if (verb) {
-#       print("returning from ergm.mcmcslave; entering newnw.extract")
-#     }
-    }
-#
-#   Next update the network to be the final (possibly conditionally)
-#   simulated one
-#
-    out.list[[i]] <- newnw.extract(nw,z)
-#    if (verb) {
-#      print("returning from newnw.extract")
-#    }
-    curstats <- z$s
-    out.mat <- rbind(out.mat,curstats)
-    if(sequential){
-      nw <-  out.list[[i]]
-    }
+  }else{
+    stop("Parallelization not currently enabled.")
   }
   if(nsim > 1){
-    out.list <- list(formula = formula, networks = out.list, 
-                     stats = out.mat, coef=theta0)
-    class(out.list) <- "network.series"
-  }else{
-    out.list <- out.list[[1]]
+    rownames(out.mat) <- NULL
+    if (statsonly) {
+      out.list <- as.matrix(out.mat)
+    } else {
+      out.list <- list(formula = formula, networks = nw.list, 
+                       stats = out.mat, coef=theta0)
+      class(out.list) <- "network.series"
+    }
+  } else if (statsonly) {
+    out.list <- as.vector(out.mat)
+    names(out.list) <- colnames(out.mat)
+  } else {
+    out.list <- nw.list[[1]]
   }
   return(out.list)
 }
@@ -110,11 +137,14 @@ simulate.formula <- function(object, nsim=1, seed=NULL, ...,theta0,
 
 simulate.ergm <- function(object, nsim=1, seed=NULL, ..., theta0=NULL,
                           burnin=1000, interval=1000, 
+                          statsonly=FALSE,
                           sequential=TRUE, 
                           constraints=NULL,
                           control=control.simulate.ergm(),
                           verbose=FALSE) {
-  out.list <- vector("list", nsim)
+  if (!statsonly) {
+    nw.list <- vector("list", nsim)
+  }
   out.mat <- numeric(0)
   
 #  if(missing(multiplicity) & !is.null(object$multiplicity)){
@@ -122,7 +152,7 @@ simulate.ergm <- function(object, nsim=1, seed=NULL, ..., theta0=NULL,
 #  }
   if(!is.null(seed)) set.seed(as.integer(seed))
   
-  nw <- object$network  
+  nw <- object$newnetwork  
   
 # m <- ergm.getmodel(object$formula, nw, drop=control$drop)
   m <- ergm.getmodel(object$formula, nw, drop=FALSE)
@@ -138,73 +168,87 @@ simulate.ergm <- function(object, nsim=1, seed=NULL, ..., theta0=NULL,
   eta0 <- ergm.eta(theta0, m$etamap)
 
   MCMCparams <- list(samplesize=1,
-      stats=eta0-eta0,
+      stats=summary(safeupdate.formula(object$formula,nw ~ .)),
       burnin=burnin,
       interval=interval,
-      Clist.miss=list(heads=0,tails=0,nedges=0))
+      parallel=control$parallel,
+      packagenames=control$packagenames,
+      Clist.miss=ergm.design(nw, m, verbose=verbose))
 
   if (verb) {
     cat(paste("Starting ",nsim," MCMC iteration", ifelse(nsim>1,"s",""),
         " of ", burnin+interval*(MCMCparams$samplesize-1), 
         " steps", ifelse(nsim>1, " each", ""), ".\n", sep=""))
   }
-  for(i in 1:nsim){
-    Clist <- ergm.Cprepare(nw, m)
-    maxedges <- max(5000, Clist$nedges)
-    if(i==1 | !sequential){
-      MCMCparams$burnin <- burnin
-    }else{
-      MCMCparams$burnin <- interval
-    }
-    
+  if(sequential){
+    for(i in 1:nsim){
+      Clist <- ergm.Cprepare(nw, m)
+      maxedges <- max(5000, Clist$nedges)
+      if(i==1 | !sequential){
+        MCMCparams$burnin <- burnin
+      }else{
+        MCMCparams$burnin <- interval
+      }
 #
 #   Check for truncation of the returned edge list
 #
-    z <- list(newnwheads=maxedges+1)
-    while(z$newnwheads[1] > maxedges){
-     maxedges <- 10*maxedges
-     if (verb) {
-       cat("   ")
-       #cat(paste("  #", i, " of ", nsim, ": ", sep=""))
-     }
-     z <- ergm.mcmcslave(Clist,MHproposal,eta0,MCMCparams,maxedges,verb) 
-    }
-    #   summarize stats
-    if(control$summarizestats){
-      class(Clist) <- "networkClist"
-      if(i==1){
-        globalstatsmatrix <- summary(Clist)
-        statsmatrix <- matrix(z$s, MCMCparams$samplesize, Clist$nparam, byrow = TRUE)
-        colnames(statsmatrix) <- m$coef.names
-      }else{
-        globalstatsmatrix <- rbind(globalstatsmatrix, summary(Clist))
-        statsmatrix <- rbind(statsmatrix,
-                             matrix(z$s, MCMCparams$samplesize,
-                                    Clist$nparam, byrow = TRUE))
+      z <- list(newnwheads=maxedges+1)
+      while(z$newnwheads[1] > maxedges){
+        maxedges <- 10*maxedges
+        if (verb) {
+          cat("   ")
+          #cat(paste("  #", i, " of ", nsim, ": ", sep=""))
+        }
+        z <- ergm.mcmcslave(Clist,MHproposal,eta0,MCMCparams,maxedges,verb) 
+      }
+      #   summarize stats
+      if(control$summarizestats){
+        class(Clist) <- "networkClist"
+        if(i==1){
+          globalstatsmatrix <- summary(Clist)
+          statsmatrix <- matrix(z$s, MCMCparams$samplesize, Clist$nstats, byrow = TRUE)
+          colnames(statsmatrix) <- m$coef.names
+        }else{
+          globalstatsmatrix <- rbind(globalstatsmatrix, summary(Clist))
+          statsmatrix <- rbind(statsmatrix,
+                               matrix(z$s, MCMCparams$samplesize,
+                                      Clist$nstats, byrow = TRUE))
+        }
+      }
+      #
+      #   Next update the network to be the final (possibly conditionally)
+      #   simulated one
+      if (!statsonly) {
+        nw.list[[i]] <- newnw.extract(nw, z)
+      }
+      curstats <- z$s[(1):(Clist$nstats)]
+      names(curstats) <- m$coef.names
+      out.mat <- rbind(out.mat,curstats)
+      if(sequential){
+        if (!statsonly) 
+          nw <-  nw.list[[i]]
+        else 
+          nw <- newnw.extract(nw, z)
+        MCMCparams$stats<-curstats
       }
     }
-    #
-    #   Next update the network to be the final (possibly conditionally)
-    #   simulated one
-
-    out.list[[i]] <- newnw.extract(nw, z)
-    out.mat <- rbind(out.mat,z$s[(1):(Clist$nparam)])
-    if(sequential){
-      nw <-  out.list[[i]]
-    }
+  }else{
+    stop("Parallelization not currently enabled.")   
   }
   if(nsim > 1){
-    out.list <- list(formula = object$formula, networks = out.list, 
-                     stats = out.mat, coef=theta0)
-    class(out.list) <- "network.series"
-  }else{
-    out.list <- out.list[[1]]
-  }
-  if(control$summarizestats){
-    colnames(globalstatsmatrix) <- colnames(statsmatrix)
-    print(globalstatsmatrix)
-    print(apply(globalstatsmatrix,2,summary.statsmatrix.ergm),scipen=6)
-    print(apply(statsmatrix,2,summary.statsmatrix.ergm),scipen=6)
+    rownames(out.mat) <- NULL
+    if (statsonly) {
+      out.list <- as.matrix(out.mat)
+    } else {
+      out.list <- list(formula = object$formula, networks = nw.list, 
+                       stats = out.mat, coef=theta0)
+      class(out.list) <- "network.series"
+    }
+  } else if (statsonly) {
+    out.list <- as.vector(out.mat)
+    names(out.list) <- colnames(out.mat)
+  } else {
+    out.list <- nw.list[[1]]
   }
   return(out.list)
 }

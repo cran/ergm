@@ -1,3 +1,18 @@
+/*
+ *  File ergm/src/MPLE.c
+ *  Part of the statnet package, http://statnetproject.org
+ *
+ *  This software is distributed under the GPL-3 license.  It is free,
+ *  open source, and has the attribution requirements (GPL Section 7) in
+ *    http://statnetproject.org/attribution
+ *
+ * Copyright 2003 Mark S. Handcock, University of Washington
+ *                David R. Hunter, Penn State University
+ *                Carter T. Butts, University of California - Irvine
+ *                Steven M. Goodreau, University of Washington
+ *                Martina Morris, University of Washington
+ * Copyright 2007 The statnet Development Team
+ */
 #include "MPLE.h"
 
 /* *****************
@@ -90,7 +105,7 @@ Uses Jenkins One-at-a-Time hash.
 
 numRows should, ideally, be a power of 2, but doesn't have to be.
 **************/
-R_INLINE unsigned int hashCovMatRow(double *newRow, unsigned int rowLength, unsigned int numRows,
+/*R_INLINE*/ unsigned int hashCovMatRow(double *newRow, unsigned int rowLength, unsigned int numRows,
 				    int response, double offset){
   /* Cast all pointers to unsigned char pointers, since data need to 
      be fed to the hash function one byte at a time. */
@@ -114,7 +129,7 @@ R_INLINE unsigned int hashCovMatRow(double *newRow, unsigned int rowLength, unsi
   return(hash % numRows);
 }
 
-R_INLINE unsigned int insCovMatRow(double *newRow, double *matrix, unsigned int rowLength, unsigned int numRows,
+/*R_INLINE*/ unsigned int insCovMatRow(double *newRow, double *matrix, unsigned int rowLength, unsigned int numRows,
 			  int response, int *responsevec,
 			  double offset, double *compressedOffset, int *weights ){
   unsigned int hash_pos = hashCovMatRow(newRow, rowLength, numRows, response, offset), pos, round;

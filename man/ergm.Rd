@@ -1,3 +1,16 @@
+%  File ergm/man/ergm.Rd
+%  Part of the statnet package, http://statnetproject.org
+%  This software is distributed under the GPL-3 license.  It is free,
+%  open source, and has the attribution requirements (GPL Section 7) in
+%    http://statnetproject.org/attribution
+%
+% Copyright 2003 Mark S. Handcock, University of Washington
+%                David R. Hunter, Penn State University
+%                Carter T. Butts, University of California - Irvine
+%                Steven M. Goodreau, University of Washington
+%                Martina Morris, University of Washington
+% Copyright 2007 The statnet Development Team
+%
 \name{ergm}
 \alias{ergm}
 \alias{ergm.object}
@@ -17,6 +30,7 @@ ergm(formula, theta0="MPLE",
      MPLEonly=FALSE, MLestimate=!MPLEonly, seed=NULL,
      burnin=10000, MCMCsamplesize=10000, interval=100, maxit=3,
      constraints=~.,
+     meanstats = NULL,
      control=control.ergm(),
      verbose=FALSE, \dots)
 }
@@ -31,7 +45,8 @@ Hunter (2008).  To create a
     then add nodal attributes to it using the \code{\%v\%}
     operator if necessary.}
   \item{theta0}{vector; the parameter value used to generate
-    the MCMC sample and as a starting value for the estimation. By default the MPLE is used (\code{theta0="MPLE"}).}
+    the MCMC sample and as a starting value for the estimation.
+    By default the MPLE is used (\code{theta0="MPLE"}).}
   \item{MPLEonly}{logical; \code{TRUE} if the maximum
     pseudo-likelihood estimate is to be computed and returned.
     Note that \code{MPLEonly=TRUE} will render moot most other parameters in this list.}
@@ -52,23 +67,25 @@ Hunter (2008).  To create a
     on the support of the distribution of the networks being modeled,
     using syntax similar to the \code{formula} argument. Multiple constraints
     may be given, separated by \dQuote{+} operators.
-    Together with the model terms in the formula, the constraints define the distribution of networks being modeled.
-        
-    It is also possible to specify a proposal function directly by
-    passing a string with the function's name. In that case, arguments
-    to the proposal should be specified through the \code{prop.args}
-    argument to \code{\link{control.ergm}}.
-    
+    Together with the model terms in the formula, the constraints
+    define the distribution of networks being modeled.
+
+    It is also possible to specify a proposal function directly
+    by passing a string with the function's name. In that case,
+    arguments to the proposal should be specified through the
+    \code{prop.args} argument to \code{\link{control.ergm}}.
+
     The default is \code{~.}, for an unconstrained model.
-    
-    The constraint terms currently implemented are
-    \describe{
+
+    The constraint terms currently implemented are \describe{
       \item{\code{.} or \code{NULL}}{
-	A placeholder for no constraints: all networks of a particular size and type have
-	non-zero probability. Cannot be combined with other constraints.
+	A placeholder for no constraints: all networks of a
+  particular size and type have non-zero probability.
+  Cannot be combined with other constraints.
       }
       \item{\code{bd(attribs,maxout,maxin,minout,minin)}}{
-	Constrain maximum and minimum vertex degree. See \dQuote{Placing Bounds
+  Constrain maximum and minimum vertex degree. See
+  \dQuote{Placing Bounds
     on Degrees} section for more information.
       }
       \item{\code{degrees} and \code{nodedegrees}}{
@@ -90,21 +107,31 @@ Hunter (2008).  To create a
 	having the same number of edges as the network passed
 	in the model formula have non-zero probability.
       }
+      
+      \item{\code{observed}}{
+	Preserve the observed dyads of the given network.
+      }
+      
 %      \item{\code{hamming}}{
 %	No clue.
 %      }
     }
     Not all combinations of the above are supported.
   }
+  \item{meanstats}{vector; the mean-value parameter value for the
+    model.  If this is given the algorithm finds the natural
+    parameter value corresponding to this mean-value parameter
+    If it is missing then mean-value parameter used are the observed
+    statistics of the network in the formula.}
   \item{control}{A list of control parameters for algorithm
     tuning. Constructed using \code{\link{control.ergm}}. }
-  \item{seed}{integer; random number integer seed. Defaults to \code{NULL} to
-    use whatever the state of the random number generator is at the time
-    of the call.
+  \item{seed}{integer; random number integer seed.  Defaults to
+   \code{NULL} to use whatever the state of the random number
+   generator is at the time of the call.
   }
   \item{verbose}{logical; if this is
-    \code{TRUE}, the program will print out additional information,
-    including goodness of fit statistics.
+    \code{TRUE}, the program will print out additional
+    information, including goodness of fit statistics.
   }
   \item{\dots}{Additional
     arguments, to be passed to lower-level functions in the future.
@@ -452,48 +479,48 @@ of social networks.} Version 1.4. Groningen: ProGAMMA / ICS
 %Network Conference in New Orleans, LA.
 
 Admiraal R, Handcock MS (2007).
- {\pkg{networksis}: Simulate bipartite graphs with fixed
-  marginals through sequential importance sampling}.
+ \pkg{networksis}: Simulate bipartite graphs with fixed
+  marginals through sequential importance sampling.
  Statnet Project, Seattle, WA.
- Version 1.\newline\url{http://statnetproject.org}.
+ Version 1. \url{http://statnetproject.org}.
 
 Bender-deMoll S, Morris M, Moody J (2008).
- {Prototype Packages for Managing and Animating Longitudinal
-  Network Data: \pkg{dynamicnetwork} and \pkg{rSoNIA}.}
- {Journal of Statistical Software}, \textbf{24}(7).
+ Prototype Packages for Managing and Animating Longitudinal
+  Network Data: \pkg{dynamicnetwork} and \pkg{rSoNIA}.
+ \emph{Journal of Statistical Software}, 24(7).
  \url{http://www.jstatsoft.org/v24/i07/}.
 
 Boer P, Huisman M, Snijders T, Zeggelink E (2003).
- {StOCNET: an open software system for the advanced statistical
-  analysis of social networks}.
+ StOCNET: an open software system for the advanced statistical
+  analysis of social networks.
  Groningen: ProGAMMA / ICS, version 1.4 edition.
 
 Butts CT (2006).
- {\pkg{netperm}: Permutation Models for Relational Data}.
+ \pkg{netperm}: Permutation Models for Relational Data.
  Version 0.2, \url{http://erzuli.ss.uci.edu/R.stuff}.
 
 Butts CT (2007).
- {\pkg{sna}: Tools for Social Network Analysis}.
+ \pkg{sna}: Tools for Social Network Analysis.
  Version 1.5, \url{http://erzuli.ss.uci.edu/R.stuff}.
 
 Butts CT (2008).
- {\pkg{network}: {A} Package for Managing Relational Data in \R.}
- {Journal of Statistical Software}, \textbf{24}(2).
+ \pkg{network}: A Package for Managing Relational Data in \R.
+ \emph{Journal of Statistical Software}, 24(2).
  \url{http://www.jstatsoft.org/v24/i02/}.
 
 Butts CT, with help~from David~Hunter, Handcock MS (2007).
- {\pkg{network}: Classes for Relational Data}.
+ \pkg{network}: Classes for Relational Data.
  Version 1.2, \url{http://erzuli.ss.uci.edu/R.stuff}.
 
 Goodreau SM, Handcock MS, Hunter DR, Butts CT, Morris M (2008a).
- {A \pkg{statnet} Tutorial.}
- {Journal of Statistical Software}, \textbf{24}(8).
+ A \pkg{statnet} Tutorial.
+ \emph{Journal of Statistical Software}, 24(8).
  \url{http://www.jstatsoft.org/v24/i08/}.
 
-Goodreau SM, Kitts J, Morris M (2008{{b}}).
- {Birds of a Feather, or Friend of a Friend? Using Exponential
-  Random Graph Models to Investigate Adolescent Social Networks.}
- {Demography}, \textbf{45}, in press.
+Goodreau SM, Kitts J, Morris M (2008b).
+ Birds of a Feather, or Friend of a Friend? Using Exponential
+  Random Graph Models to Investigate Adolescent Social Networks.
+ \emph{Demography}, 45, in press.
 
 Handcock, M. S. (2003)
     \emph{Assessing Degeneracy in Statistical Models of Social Networks},
@@ -502,21 +529,21 @@ Center for Statistics and the Social Sciences,
 University of Washington.
 \url{www.csss.washington.edu/Papers/wp39.pdf}
 
-Handcock MS (2003{{b}}).
- {\pkg{degreenet}: Models for Skewed Count Distributions Relevant
-  to Networks}.
+Handcock MS (2003b).
+ \pkg{degreenet}: Models for Skewed Count Distributions Relevant
+  to Networks.
  Statnet Project, Seattle, WA.
  Version 1.0, \url{http://statnetproject.org}.
 
-Handcock MS, Hunter DR, Butts CT, Goodreau SM, Morris M (2003{{a}}).
- {\pkg{ergm}: {A} Package to Fit, Simulate and Diagnose
-  Exponential-Family Models for Networks}.
+Handcock MS, Hunter DR, Butts CT, Goodreau SM, Morris M (2003a).
+ \pkg{ergm}: A Package to Fit, Simulate and Diagnose
+  Exponential-Family Models for Networks.
  Statnet Project, Seattle, WA.
  Version 2, \url{http://statnetproject.org}.
 
-Handcock MS, Hunter DR, Butts CT, Goodreau SM, Morris M (2003{{b}}).
- {\pkg{statnet}: Software Tools for the Statistical Modeling of
-  Network Data}.
+Handcock MS, Hunter DR, Butts CT, Goodreau SM, Morris M (2003b).
+ \pkg{statnet}: Software Tools for the Statistical Modeling of
+  Network Data.
  Statnet Project, Seattle, WA.
  Version 2, \url{http://statnetproject.org}.
 
@@ -524,22 +551,22 @@ Hunter, D. R. and Handcock, M. S. (2006)
     \emph{Inference in curved exponential family models for networks},
    Journal of Computational and Graphical Statistics.
 
-Hunter DR, Handcock MS, Butts CT, Goodreau SM, Morris M (2008{{b}}).
- {\pkg{ergm}: {A} Package to Fit, Simulate and Diagnose
-  Exponential-Family Models for Networks.}
- {Journal of Statistical Software}, \textbf{24}(3).
+Hunter DR, Handcock MS, Butts CT, Goodreau SM, Morris M (2008b).
+ \pkg{ergm}: A Package to Fit, Simulate and Diagnose
+  Exponential-Family Models for Networks.
+ \emph{Journal of Statistical Software}, 24(3).
  \url{http://www.jstatsoft.org/v24/i03/}.
 
 Krivitsky PN, Handcock MS (2007).
- {\pkg{latentnet}: Latent position and cluster models for
-  statistical networks}.
+ \pkg{latentnet}: Latent position and cluster models for
+  statistical networks.
  Seattle, WA.
  Version 2, \url{http://statnetproject.org}.
 
 Morris M, Handcock MS, Hunter DR (2008).
- {Specification of Exponential-Family Random Graph Models:
-  Terms and Computational Aspects.}
- {Journal of Statistical Software}, \textbf{24}(4).
+ Specification of Exponential-Family Random Graph Models:
+  Terms and Computational Aspects.
+ \emph{Journal of Statistical Software}, 24(4).
  \url{http://www.jstatsoft.org/v24/i04/}.
 }
 

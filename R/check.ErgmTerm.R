@@ -1,3 +1,17 @@
+#  File ergm/R/check.ErgmTerm.R
+#  Part of the statnet package, http://statnetproject.org
+#
+#  This software is distributed under the GPL-3 license.  It is free,
+#  open source, and has the attribution requirements (GPL Section 7) in
+#    http://statnetproject.org/attribution
+#
+# Copyright 2003 Mark S. Handcock, University of Washington
+#                David R. Hunter, Penn State University
+#                Carter T. Butts, University of California - Irvine
+#                Steven M. Goodreau, University of Washington
+#                Martina Morris, University of Washington
+# Copyright 2007 The statnet Development Team
+######################################################################
 check.ErgmTerm <- function(nw, arglist, directed=NULL, bipartite=NULL,
                            varnames=NULL, vartypes=NULL,
                            defaultvalues=list(), required=NULL) {
@@ -90,21 +104,34 @@ check.ErgmTerm <- function(nw, arglist, directed=NULL, bipartite=NULL,
   out
 }
 
+######
+## As of ergm version 2.2, the assignvariables function is deprecated.
+## This is so that there are no "mysterious" variable assignments in the
+## InitErgmTerm functions, which is prehaps better programming style
+## and which also prevents a whole raft of warnings when using
+## R CMD build.
+## However, assignvariables will still function so as not to break 
+## code.  It will simply produce a warning when called.
+######
 # The following short function takes a list as an argument and creates a variable
 # out of each of its elements *in the calling environment*.  In this way, it
 # sort of works like "attach" but without creating a new environment and
 # without all of the headaches that "attach" can give because the variables
 # it creates are not in the correct frame.
 assignvariables <- function(a) {
+  cat("The assignvariables function has been deprecated.  Please modify\n",
+       "the", get.InitErgm.fname(), "function so that it does not rely on\n",
+       "this function.  For instance, instead of 'assignvariables(a)'\n",
+       "followed by using 'attrname' throughout, use 'a$attrname' throughout.\n ")
   if(length(a)>0)
     for(i in 1:length(a)) 
       assign(names(a)[i], a[[i]], envir=parent.frame())
 }
 
-check.ErgmTerm.summarystats <- function(nw, args, ...) {
+check.ErgmTerm.summarystats <- function(nw, arglist, ...) {
   fname <- get.InitErgm.fname() # From what InitErgm function was this called?
   Initfn <- get(fname,envir=.GlobalEnv)
-  outlist <- Initfn(nw, args, drop=FALSE, ...)
+  outlist <- Initfn(nw, arglist, drop=FALSE, ...)
   m <- updatemodel.ErgmTerm(list(), outlist)
   gs <- ergm.getglobalstats(nw, m)
 }

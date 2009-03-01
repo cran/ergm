@@ -1,7 +1,21 @@
+#  File ergm/R/control.ergm.R
+#  Part of the statnet package, http://statnetproject.org
+#
+#  This software is distributed under the GPL-3 license.  It is free,
+#  open source, and has the attribution requirements (GPL Section 7) in
+#    http://statnetproject.org/attribution
+#
+# Copyright 2003 Mark S. Handcock, University of Washington
+#                David R. Hunter, Penn State University
+#                Carter T. Butts, University of California - Irvine
+#                Steven M. Goodreau, University of Washington
+#                Martina Morris, University of Washington
+# Copyright 2007 The statnet Development Team
+######################################################################
 control.ergm<-function(prop.weights="default",prop.args=NULL,
-                       nr.maxit=100, nr.reltol=sqrt(.Machine$double.eps),
-                       calc.mcmc.se=TRUE, hessian=FALSE,
+                       nr.maxit=100, calc.mcmc.se=TRUE, hessian=FALSE,
                        compress=TRUE,
+                       SAN.burnin=NULL,
                        maxNumDyadTypes=1e+6, 
                        maxedges=20000,
                        maxchanges=1000000,
@@ -11,7 +25,7 @@ control.ergm<-function(prop.weights="default",prop.args=NULL,
                        steplength=0.5,
                        drop=TRUE,
                        force.mcmc=FALSE,
-                       check.degeneracy=TRUE,
+                       check.degeneracy=FALSE,
                        mcmc.precision=0.05,
                        metric=c("Likelihood","raw"),
                        method=c("BFGS","Nelder-Mead"),
@@ -24,7 +38,7 @@ control.ergm<-function(prop.weights="default",prop.args=NULL,
                        RobMon.phase1n_base=7,
                        RobMon.phase2n_base=7,
                        RobMon.phase2sub=4,
-                       RobMon.init_gain=0.4,
+                       RobMon.init_gain=0.1,
                        RobMon.phase3n=500,
                        dyninterval=1000,
                        packagenames="ergm",

@@ -1,7 +1,21 @@
+#  File ergm/R/ergm.mainfitloop.R
+#  Part of the statnet package, http://statnetproject.org
+#
+#  This software is distributed under the GPL-3 license.  It is free,
+#  open source, and has the attribution requirements (GPL Section 7) in
+#    http://statnetproject.org/attribution
+#
+# Copyright 2003 Mark S. Handcock, University of Washington
+#                David R. Hunter, Penn State University
+#                Carter T. Butts, University of California - Irvine
+#                Steven M. Goodreau, University of Washington
+#                Martina Morris, University of Washington
+# Copyright 2007 The statnet Development Team
+######################################################################
 ergm.mainfitloop <- function(theta0, nw, model, Clist,
                              initialfit, 
                              MCMCparams, 
-                             MHproposal, 
+                             MHproposal, MHproposal.miss,
                              verbose=FALSE,
                              epsilon=1e-10,
                              sequential=TRUE,
@@ -16,9 +30,9 @@ ergm.mainfitloop <- function(theta0, nw, model, Clist,
   theta.original=theta0
   thetaprior=theta0-theta0
 
-  stats <- matrix(0,ncol=Clist$nparam,nrow=MCMCparams$samplesize)
+  stats <- matrix(0,ncol=Clist$nstats,nrow=MCMCparams$samplesize)
   stats[1,] <- Clist$obs - Clist$meanstats
-# stats[,]<-  rep(Clist$obs - Clist$meanstats,rep(nrow(stats),Clist$nparam))
+# stats[,]<-  rep(Clist$obs - Clist$meanstats,rep(nrow(stats),Clist$nstats))
   MCMCparams$stats <- stats
   MCMCparams$meanstats <- Clist$meanstats
 
@@ -36,8 +50,26 @@ ergm.mainfitloop <- function(theta0, nw, model, Clist,
     }
     z <- ergm.getMCMCsample(nw, model, MHproposal, eta0, MCMCparams, verbose)
     statsmatrix=z$statsmatrix
-    statsmatrix.miss <- NULL
-    if(verbose){cat("Back from unconstrained MCMC...\n")}
+#    if(verbose && FALSE){
+#      sm<-statsmatrix[,!model$offset,drop=FALSE]
+#      cat("Deviation: ",apply(sm,2,mean),"\n")
+#      require(coda,quiet=TRUE)
+#      cat("Studentized deviation: ",
+#          apply(sm,2,mean)/sqrt(apply(sm^2,2,mean)/effectiveSize(as.mcmc(sm))),
+#          "\n")
+#      effSize<-effectiveSize(as.mcmc(sm))
+#      stats.cov<-t(cov(sm)/effSize)/effSize
+#      cat("Mahalanobis distance: ",
+#          mahalanobis(apply(sm,2,mean),0,stats.cov),
+#          "\n")
+#    }
+    if(MCMCparams$Clist.miss$nedges > 0){
+      statsmatrix.miss <- ergm.getMCMCsample(nw, model, MHproposal.miss, eta0, MCMCparams, verbose)$statsmatrix
+      if(verbose){cat("Back from constrained MCMC...\n")}
+    }else{
+      statsmatrix.miss <- NULL
+      if(verbose){cat("Back from unconstrained MCMC...\n")}
+    }
     if(sequential & MCMCparams$Clist.miss$nedges == 0){
       nw <- z$newnetwork
       nw.obs <- summary(model$formula, basis=nw)
@@ -47,8 +79,12 @@ ergm.mainfitloop <- function(theta0, nw, model, Clist,
 #
     iteration <- iteration + 1
     if(MCMCparams$steplength<1 && iteration < MCMCparams$maxit ){
+      if(!is.null(statsmatrix.miss)){
+        statsmatrix.miss <- statsmatrix.miss*MCMCparams$steplength+statsmatrix*(1-MCMCparams$steplength)
+      }else{
         statsmean <- apply(statsmatrix,2,mean)
         statsmatrix <- sweep(statsmatrix,2,(1-MCMCparams$steplength)*statsmean,"-")
+      }
     }
     if(z$nedges >= 50000-1 || ergm.checkdegeneracy(statsmatrix, statsmatrix.miss, verbose=verbose)){
      if(iteration <= MCMCparams$maxit){
@@ -84,6 +120,8 @@ ergm.mainfitloop <- function(theta0, nw, model, Clist,
       cat("Summary of simulation, relative to observed network:\n")
       print(apply(statsmatrix,2,summary.statsmatrix.ergm),scipen=6)
       degreedist(nw)
+      cat("Meanstats of simulation, relative to observed network:\n")
+      print(summary(model$formula, basis=nw)-Clist$meanstats)
     }
     if(verbose){cat("Calling optimization routines...\n")}
 
@@ -93,7 +131,7 @@ ergm.mainfitloop <- function(theta0, nw, model, Clist,
   if(!estimate){
     if(verbose){cat("Skipping optimization routines...\n")}
     l <- list(coef=theta0, mc.se=rep(NA,length=length(theta0)),
-              sample=statsmatrix, # sample.miss=statsmatrix.miss,
+              sample=statsmatrix, sample.miss=statsmatrix.miss,
               iterations=1, MCMCtheta=theta0,
               loglikelihood=NA, #mcmcloglik=NULL, 
               mle.lik=NULL,
@@ -117,7 +155,8 @@ ergm.mainfitloop <- function(theta0, nw, model, Clist,
                     nr.reltol=MCMCparams$nr.reltol,
                     calc.mcmc.se=MCMCparams$calc.mcmc.se, hessian=MCMCparams$hessian,
                     trustregion=MCMCparams$trustregion, method=MCMCparams$method, metric="Likelihood",
-                    compress=MCMCparams$compress, verbose=verbose, estimateonly=TRUE)
+                    compress=MCMCparams$compress, verbose=verbose,
+                    estimateonly=TRUE)
   }
 #
 # End main loop
@@ -160,6 +199,7 @@ ergm.mainfitloop <- function(theta0, nw, model, Clist,
     v$interval <- MCMCparams$interval
     v$theta.original <- theta.original
     v$mplefit <- initialfit
+    v$parallel <- MCMCparams$parallel
          
     if(!v$failure & !any(is.na(v$coef))){
 #     asyse <- sqrt(diag(robust.inverse(-v$hessian)))

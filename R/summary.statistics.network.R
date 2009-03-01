@@ -1,3 +1,17 @@
+#  File ergm/R/summary.statistics.network.R
+#  Part of the statnet package, http://statnetproject.org
+#
+#  This software is distributed under the GPL-3 license.  It is free,
+#  open source, and has the attribution requirements (GPL Section 7) in
+#    http://statnetproject.org/attribution
+#
+# Copyright 2003 Mark S. Handcock, University of Washington
+#                David R. Hunter, Penn State University
+#                Carter T. Butts, University of California - Irvine
+#                Steven M. Goodreau, University of Washington
+#                Martina Morris, University of Washington
+# Copyright 2007 The statnet Development Team
+######################################################################
 summary.formula <- function(object, ...){
   current.warn <- options()$warn
   options(warn=0)
@@ -28,6 +42,7 @@ summary.statistics.ergm <- function(object, ..., drop=FALSE, basis=NULL)
   summary.statistics.network(object$formula, ..., drop=drop, basis=basis)
 }
 
+summary.statistics.default <-
 summary.statistics.matrix <- 
 summary.statistics.network <- function(object,...,drop=FALSE, basis=NULL) {
   current.warn <- options()$warn
@@ -46,6 +61,9 @@ summary.statistics.network <- function(object,...,drop=FALSE, basis=NULL) {
       while(inherits(nw,"try-error") & parent > 1){
         parent <- parent - 1
         nw <- try(eval(trms[[2]],parent), silent = TRUE)
+      }
+      if (inherits(nw, "try-error")) {
+        stop(trms[[2]], " is not a network or network.series object")
       }
       if(class(nw) =="network.series")
         nw <- nw$networks[[1]]

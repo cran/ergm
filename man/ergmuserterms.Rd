@@ -1,3 +1,15 @@
+%  File ergm/man/ergmuserterms.Rd
+%  Part of the statnet package, http://statnetproject.org
+%  This software is distributed under the GPL-3 license.  It is free,
+%  open source, and has the attribution requirements (GPL Section 7) in
+%    http://statnetproject.org/attribution
+%
+% Copyright 2003 Mark S. Handcock, University of Washington
+%                David R. Hunter, Penn State University
+%                Carter T. Butts, University of California - Irvine
+%                Steven M. Goodreau, University of Washington
+%                Martina Morris, University of Washington
+% Copyright 2007 The statnet Development Team
 \name{ergmuserterms-package}
 \alias{ergmuserterms}
 \alias{ergmuserterms}
@@ -43,23 +55,24 @@
 
     The code contains some simple examples and templates.
     These include:
-    \item{\code{m2star}}{\emph{Mixed 2-stars, a.k.a. 2-paths.} 
-    This option can only be 
-    specified with a directed network; for undirected graphs 
-    see \code{kstar(2)}. This 
-    option adds one statistic to the model, equal to the 
-    number of mixed-2-stars in the network, defined as a 
-    pair of edges \eqn{\{(i{\rightarrow}j), (j{\rightarrow}k)\}.}
+    \itemize{
+      \item{\code{m2star}}{\emph{Mixed 2-stars, a.k.a. 2-paths.} 
+      This option can only be 
+      specified with a directed network; for undirected graphs 
+      see \code{kstar(2)}. This 
+      option adds one statistic to the model, equal to the 
+      number of mixed-2-stars in the network, defined as a 
+      pair of edges \eqn{\{(i{\rightarrow}j), (j{\rightarrow}k)\}.}
+      }
+
+      \item{\code{testme}}{\emph{A clone of Edges.} 
+      This is included for purposes of an example.
+      This option adds one graph statistic
+      equal to the number of edges in the graph.  For undirected
+      graphs, \code{edges} is isomorphic to \code{kstar(1)}; for
+      directed networks, \code{edges} is isomorphic to both \code{ostar(1)}
+      and \code{istar(1)}.  }
     }
-
-    \item{\code{testme}}{\emph{A clone of Edges.} 
-    This is included for purposes of an example.
-    This option adds one graph statistic
-    equal to the number of edges in the graph.  For undirected
-    graphs, \code{edges} is isomorphic to \code{kstar(1)}; for
-    directed networks, \code{edges} is isomorphic to both \code{ostar(1)}
-    and \code{istar(1)}.  }
-
   In the implementation of \code{\link{ergm}}, the model is initialized in \R,
   then all the model information is passed to a \code{C} program that generates
   the sample of graph statistics using MCMC.  This sample is then returned

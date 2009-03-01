@@ -1,3 +1,18 @@
+/*
+ *  File ergm/src/MHproposals.c
+ *  Part of the statnet package, http://statnetproject.org
+ *
+ *  This software is distributed under the GPL-3 license.  It is free,
+ *  open source, and has the attribution requirements (GPL Section 7) in
+ *    http://statnetproject.org/attribution
+ *
+ * Copyright 2003 Mark S. Handcock, University of Washington
+ *                David R. Hunter, Penn State University
+ *                Carter T. Butts, University of California - Irvine
+ *                Steven M. Goodreau, University of Washington
+ *                Martina Morris, University of Washington
+ * Copyright 2007 The statnet Development Team
+ */
 #include "MHproposals.h"
 
 /* Shorthand. */
@@ -854,7 +869,7 @@ void MH_randomnode (MHproposal *MHp, DegreeBound *bd, Network *nwp) {
 }
 
 void MH_randomtoggleNonObserved (MHproposal *MHp, DegreeBound *bd, Network *nwp)  {  
-  Edge rane;
+  Edge rane, nmissing = nwp[1].nedges;
   
   if(MHp->ntoggles == 0) { /* Initialize randomtoggle */
     MHp->ntoggles=1;
@@ -862,7 +877,12 @@ void MH_randomtoggleNonObserved (MHproposal *MHp, DegreeBound *bd, Network *nwp)
   }
   MHp->ratio = 1.0;
 
-  rane = 1 + unif_rand() * nwp[1].nedges;
+  if(nmissing==0){
+    *MHp->togglehead = MH_FAILED;
+    *MHp->toggletail = MH_IMPOSSIBLE;
+  }
+
+  rane = 1 + unif_rand() * nmissing;
   FindithEdge(MHp->togglehead, MHp->toggletail, rane, &nwp[1]);
 }
 
@@ -1318,7 +1338,7 @@ void MH_ConstrainedCondDegDist (MHproposal *MHp, DegreeBound *bd, Network *nwp) 
   int k0, j0, j1, k1;
   int j0h, j1h;
   Vertex *outedges, *inedges;
-  Vertex e, alter, head, tail;
+  Vertex e, alter, head=0, tail;
   MHp->ratio=1.0;
   
   /* select a node at random */

@@ -1,11 +1,26 @@
-ergm.mple<-function(Clist, Clist2, m, theta.offset=NULL,
+#  File ergm/R/ergm.mple.R
+#  Part of the statnet package, http://statnetproject.org
+#
+#  This software is distributed under the GPL-3 license.  It is free,
+#  open source, and has the attribution requirements (GPL Section 7) in
+#    http://statnetproject.org/attribution
+#
+# Copyright 2003 Mark S. Handcock, University of Washington
+#                David R. Hunter, Penn State University
+#                Carter T. Butts, University of California - Irvine
+#                Steven M. Goodreau, University of Washington
+#                Martina Morris, University of Washington
+# Copyright 2007 The statnet Development Team
+######################################################################
+ergm.mple<-function(Clist, Clist.miss, m, theta0=NULL, theta.offset=NULL,
                     MPLEtype="glm", family="binomial",
                     maxMPLEsamplesize=1e+6,
                     save.glm=TRUE,
                     maxNumDyadTypes=1e+6,
                     theta1=NULL, verbose=FALSE, compressflag=TRUE,
                     ...) {
-  pl <- ergm.pl(Clist=Clist, Clist.miss=Clist2, m=m,
+  if(is.numeric(theta0)){theta.offset=theta0}
+  pl <- ergm.pl(Clist=Clist, Clist.miss=Clist.miss, m=m,
                 theta.offset=theta.offset,
                 maxMPLEsamplesize=maxMPLEsamplesize,
                 maxNumDyadTypes=maxNumDyadTypes,
@@ -15,21 +30,21 @@ ergm.mple<-function(Clist, Clist2, m, theta.offset=NULL,
    if(verbose) cat("Using penalized MPLE.\n")
    mplefit <- ergm.pen.glm(
                   pl$zy ~ pl$xmat -1 + offset(pl$foffset),
-                  data=data.frame(pl$xmat), weights=pl$wend)
+                  data=data.frame(pl$xmat), weights=pl$wend,
+                  start=theta0[!m$etamap$offsettheta])
+#  mple$deviance <- 2 * (mplefit$loglik-mplefit$loglik[1])[-1]
    mplefit$deviance <- -2*mplefit$loglik
    mplefit$cov.unscaled <- mplefit$var
    mplefit.summary <- mplefit
   }else{
    options(warn=-1)
    if(MPLEtype=="logitreg"){
-    mplefit <- model.matrix(terms(pl$zy ~ .-1,data=data.frame(pl$xmat)),
-                           data=data.frame(pl$xmat))
-    mplefit <- ergm.logitreg(x=mplefit, y=pl$zy, offset=pl$foffset, wt=pl$wend)
-    mplefit.summary <- list(cov.unscaled=mplefit$cov.unscaled)
+    # Getting rid of logitreg MPLEtype;  all of this is now gone
    }else{
     mplefit <- try(
           glm(pl$zy ~ .-1 + offset(pl$foffset), data=data.frame(pl$xmat),
-                    weights=pl$wend, family=family),
+               weights=pl$wend, family=family,
+               start=theta0[!m$etamap$offsettheta]),
                     silent = TRUE)
     if (inherits(mplefit, "try-error")) {
       mplefit <- list(coef=pl$theta.offset, deviance=0,
@@ -85,6 +100,7 @@ ergm.mple<-function(Clist, Clist2, m, theta.offset=NULL,
    }
 #
    options(warn=0)
+#  options(warn=2)
    if(nrow(pl$xmat) > pl$maxMPLEsamplesize){
 #
 #   fix aic and deviance for sampled data
@@ -100,7 +116,12 @@ ergm.mple<-function(Clist, Clist2, m, theta.offset=NULL,
   real.coef <- mplefit$coef
   real.cov <- mplefit.summary$cov.unscaled
   theta[!m$etamap$offsettheta] <- real.coef
+# theta[is.na(theta)] <- 0
   names(theta) <- m$coef.names
+
+#
+# Old end
+#
   gradient <- rep(NA, length(theta))
 #
 # Calculate the (global) log-likelihood
@@ -113,15 +134,20 @@ ergm.mple<-function(Clist, Clist2, m, theta.offset=NULL,
   }else{
    covar <- diag(rep(0,length(theta)))
   }
+# covar <- as.matrix(covar[!m$etamap$offsettheta,!m$etamap$offsettheta])
+# covar[!is.na(real.coef),!is.na(real.coef)] <- real.cov
   covar[!is.na(theta)&!m$etamap$offsettheta,!is.na(theta)&!m$etamap$offsettheta] <- real.cov
 #
   iteration <-  mplefit$iter 
   samplesize <- NA
+
+# mplefit <- call(MPLEtype, pl$zy ~ 1, family=binomial)
 #
   if(MPLEtype=="penalized"){
     mplefit.null <- ergm.pen.glm(pl$zy ~ 1, weights=pl$wend)
   }else{
     options(warn=-1)
+    #  options(warn=2)
     if(MPLEtype=="logitreg"){
       mplefit.null <- ergm.logitreg(x=matrix(1,ncol=1,nrow=length(pl$zy)),
                                     y=pl$zy, offset=pl$foffset, wt=pl$wend)
@@ -134,6 +160,7 @@ ergm.mple<-function(Clist, Clist2, m, theta.offset=NULL,
       }
     }
     options(warn=0)
+    #  options(warn=2)
   }
 
   null.deviance <- mplefit$null.deviance

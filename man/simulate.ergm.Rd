@@ -1,3 +1,15 @@
+%  File ergm/man/simulate.ergm.Rd
+%  Part of the statnet package, http://statnetproject.org
+%  This software is distributed under the GPL-3 license.  It is free,
+%  open source, and has the attribution requirements (GPL Section 7) in
+%    http://statnetproject.org/attribution
+%
+% Copyright 2003 Mark S. Handcock, University of Washington
+%                David R. Hunter, Penn State University
+%                Carter T. Butts, University of California - Irvine
+%                Steven M. Goodreau, University of Washington
+%                Martina Morris, University of Washington
+% Copyright 2007 The statnet Development Team
 \name{simulate.ergm}
 \alias{simulate.ergm}
 \alias{simulate.formula}
@@ -6,12 +18,14 @@
 \method{simulate}{formula}(object, nsim=1, seed=NULL, \dots, theta0,
                           burnin=1000, interval=1000,
                           basis=NULL,
+                          statsonly=FALSE,
                           sequential=TRUE,
                           constraints = ~.,
                           control = control.simulate.formula(),
                           verbose=FALSE)
-\method{simulate}{ergm}(object, nsim=1, seed=NULL, \dots, theta0,
+\method{simulate}{ergm}(object, nsim=1, seed=NULL, \dots, theta0=NULL,
                        burnin=1000, interval=1000, 
+                       statsonly=FALSE,
                        sequential=TRUE,
                        constraints = NULL,
                        control = control.simulate.ergm(),
@@ -92,6 +106,8 @@
 %  returned for the degree terms are their natural parameterization
 %  estimates conditional on the non-degree term statistics.
 %  }
+ \item{statsonly}{If TRUE, return only the network statistics (not the 
+   network(s) themselves)}
  \item{sequential}{Should the returned draws use the prior draw 
    as the starting network or always use the initially passed network?
    For random draws the results should be similar (stochastically), but the

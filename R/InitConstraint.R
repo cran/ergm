@@ -1,3 +1,17 @@
+#  File ergm/R/InitConstraint.R
+#  Part of the statnet package, http://statnetproject.org
+#
+#  This software is distributed under the GPL-3 license.  It is free,
+#  open source, and has the attribution requirements (GPL Section 7) in
+#    http://statnetproject.org/attribution
+#
+# Copyright 2003 Mark S. Handcock, University of Washington
+#                David R. Hunter, Penn State University
+#                Carter T. Butts, University of California - Irvine
+#                Steven M. Goodreau, University of Washington
+#                Martina Morris, University of Washington
+# Copyright 2007 The statnet Development Team
+######################################################################
 ## List of which constraints make which constraints redundant.
 ConstraintImplications<-list(edges=character(0),
                              degrees=c("edges","indegrees","outdegrees","degreedist","bd"),
@@ -7,7 +21,8 @@ ConstraintImplications<-list(edges=character(0),
                              bd=character(0),
                              indegrees=c("edges"),
                              outdegrees=c("edges"),
-                             hamming=character(0))
+                             hamming=character(0),
+                             observed=character(0))
 
 InitConstraint.edges<-function(conlist){
    if (nargs()>1)
@@ -70,4 +85,11 @@ InitConstraint.hamming<-function(conlist){
      stop(paste("Hamming distance constraint does not take arguments at this time."), call.=FALSE)
    conlist$hamming<-list()
    conlist
+}
+
+InitConstraint.observed <- function(conlist){
+  if(nargs()>1)
+    stop(paste("Toggle non-observed constraint does not take arguments at this time."), call.=FALSE)
+  conlist$observed<-list()
+  conlist
 }
