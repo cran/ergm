@@ -6,14 +6,8 @@
  *  open source, and has the attribution requirements (GPL Section 7) in
  *    http://statnetproject.org/attribution
  *
- * Copyright 2003 Mark S. Handcock, University of Washington
- *                David R. Hunter, Penn State University
- *                Carter T. Butts, University of California - Irvine
- *                Steven M. Goodreau, University of Washington
- *                Martina Morris, University of Washington
- * Copyright 2007 The statnet Development Team
+ *  Copyright 2010 the statnet development team
  */
-
 #include "edgetree.h"
 
 /*******************
@@ -59,7 +53,8 @@ Network NetworkInitialize(Vertex *heads, Vertex *tails, Edge nedges,
       AddEdgeToTrees(t,h,&nw); /* Undir edges always have head < tail */ 
     else 
       AddEdgeToTrees(h,t,&nw);
-  }  
+  }
+  PutRNGstate();
   return nw;
 }
 
@@ -95,6 +90,41 @@ void NetworkDestroy(Network *nwp) {
     free (nwp->duration_info.lasttoggle);
     nwp->duration_info.lasttoggle=NULL;
   }
+}
+
+/******************
+ Network NetworkCopy
+*****************/
+Network *NetworkCopy(Network *dest, Network *src){
+  Vertex nnodes = dest->nnodes = src->nnodes;
+  dest->next_inedge = src->next_inedge;
+  dest->next_outedge = src->next_outedge;
+
+  dest->outdegree = (Vertex *) malloc((nnodes+1)*sizeof(Vertex));
+  memcpy(dest->outdegree, src->outdegree, (nnodes+1)*sizeof(Vertex));
+  dest->indegree = (Vertex *) malloc((nnodes+1)*sizeof(Vertex));
+  memcpy(dest->indegree, src->indegree, (nnodes+1)*sizeof(Vertex));
+
+  Vertex maxedges = dest->maxedges = src->maxedges;
+
+  dest->inedges = (TreeNode *) malloc(maxedges*sizeof(TreeNode));
+  memcpy(dest->inedges, src->inedges, maxedges*sizeof(TreeNode));
+  dest->outedges = (TreeNode *) malloc(maxedges*sizeof(TreeNode));
+  memcpy(dest->outedges, src->outedges, maxedges*sizeof(TreeNode));
+
+  int directed_flag = dest->directed_flag = src->directed_flag;
+
+  if(src->duration_info.lasttoggle){
+    dest->duration_info.MCMCtimer=src->duration_info.MCMCtimer;
+    dest->duration_info.lasttoggle = (int *) calloc(directed_flag? nnodes*(nnodes-1) : (nnodes*(nnodes-1))/2, sizeof(int));
+    memcpy(dest->duration_info.lasttoggle, src->duration_info.lasttoggle,(directed_flag? nnodes*(nnodes-1) : (nnodes*(nnodes-1))/2) * sizeof(int));
+  }
+  else dest->duration_info.lasttoggle = NULL;
+
+  dest->nedges = src->nedges;
+  dest->bipartite = src->bipartite;
+
+  return dest;
 }
 
 /*****************

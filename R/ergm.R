@@ -5,12 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) in
 #    http://statnetproject.org/attribution
 #
-# Copyright 2003 Mark S. Handcock, University of Washington
-#                David R. Hunter, Penn State University
-#                Carter T. Butts, University of California - Irvine
-#                Steven M. Goodreau, University of Washington
-#                Martina Morris, University of Washington
-# Copyright 2007 The statnet Development Team
+#  Copyright 2010 the statnet development team
 ######################################################################
 ergm <- function(formula, theta0="MPLE",
                  MPLEonly=FALSE, MLestimate=!MPLEonly, seed=NULL,
@@ -44,7 +39,7 @@ ergm <- function(formula, theta0="MPLE",
             if(is.null(control$SAN.burnin)) burnin
             else control$SAN.burnin,
             interval=interval)
-    formula<-safeupdate.formula(formula,nw~.)
+    formula<-ergm.update.formula(formula,nw~.)
     if (verbose) {
      cat("Original meanstats:\n")
      print(meanstats)
@@ -147,9 +142,9 @@ ergm <- function(formula, theta0="MPLE",
    }
   }
 
-  MCMCparams=c(control,
-   list(samplesize=MCMCsamplesize, burnin=burnin, interval=interval,
-        maxit=maxit,Clist.miss=Clist.miss, mcmc.precision=control$mcmc.precision))
+  MCMCparams=c(control, list(samplesize=MCMCsamplesize, burnin=burnin,
+  interval=interval, stepMCMCsize=control$stepMCMCsize, gridsize=control$gridsize,
+  maxit=maxit,Clist.miss=Clist.miss, mcmc.precision=control$mcmc.precision))
 
    if (verbose) cat("Fitting ERGM.\n")
    v <- switch(control$style,
@@ -159,7 +154,15 @@ ergm <- function(formula, theta0="MPLE",
                                  Clist, 
                                  MCMCparams=MCMCparams, MHproposal=MHproposal,
                                  verbose),
-                      ergm.mainfitloop(theta0, nw,
+    "Stepping" = ergm.stepping(theta0, nw, model, Clist, initialfit, 
+				#nstats=nstats, 
+				#approx=lognormapprox, filename.prefix=NULL, 
+				#control=control.ergm(nsim1=100, nsim2=1000, gridsize=100),  # simulation parameters
+				#plots=FALSE,  # currently useless, but plots can be reimplemented
+				MCMCparams=MCMCparams, 
+				MHproposal=MHproposal, MHproposal.miss=MHproposal.miss, 
+				verbose=verbose,...),
+     ergm.mainfitloop(theta0, nw,
                           model, Clist, 
                           initialfit,
                           MCMCparams=MCMCparams, MHproposal=MHproposal,

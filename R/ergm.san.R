@@ -1,3 +1,12 @@
+#  File ergm/R/ergm.san.R
+#  Part of the statnet package, http://statnetproject.org
+#
+#  This software is distributed under the GPL-3 license.  It is free,
+#  open source, and has the attribution requirements (GPL Section 7) in
+#    http://statnetproject.org/attribution
+#
+#  Copyright 2010 the statnet development team
+######################################################################
 san <- function(object, ...){
  UseMethod("san")
 }
@@ -23,7 +32,7 @@ san.formula <- function(object, nsim=1, seed=NULL, ...,theta0=NULL,
   if(!is.null(seed)) set.seed(as.integer(seed))
   if(!is.null(basis)) {
     nw <- basis
-    formula <- safeupdate.formula(formula, nw ~ .)
+    formula <- ergm.update.formula(formula, nw ~ .)
     object <- formula
   } else {
     nw <- ergm.getnetwork(formula)

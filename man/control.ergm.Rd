@@ -1,15 +1,12 @@
 %  File ergm/man/control.ergm.Rd
 %  Part of the statnet package, http://statnetproject.org
+%
 %  This software is distributed under the GPL-3 license.  It is free,
 %  open source, and has the attribution requirements (GPL Section 7) in
 %    http://statnetproject.org/attribution
 %
-% Copyright 2003 Mark S. Handcock, University of Washington
-%                David R. Hunter, Penn State University
-%                Carter T. Butts, University of California - Irvine
-%                Steven M. Goodreau, University of Washington
-%                Martina Morris, University of Washington
-% Copyright 2007 The statnet Development Team
+%  Copyright 2010 the statnet development team
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{control.ergm}
 \alias{control.ergm}
 \title{ Auxiliary for Controlling ERGM Fitting }
@@ -18,20 +15,22 @@
 }
 \usage{
 control.ergm(prop.weights = "default", prop.args = NULL,
-             nr.maxit = 100,  
+             nr.maxit = 1000,  
              calc.mcmc.se = TRUE, hessian = FALSE, compress = TRUE,
              SAN.burnin=NULL,
              maxNumDyadTypes = 1e+06, maxedges = 20000, maxchanges = 1e+06,
              maxMPLEsamplesize = 1e+05, MPLEtype=c("glm", "penalized"), trace = 0,
              steplength = 0.5, drop = TRUE, force.mcmc = FALSE, check.degeneracy=FALSE, mcmc.precision =
-             0.05, metric = c("Likelihood", "raw"), method = c("BFGS", "Nelder-Mead"),
+             0.05, metric = c("lognormal", "naive"), method = c("BFGS", "Nelder-Mead"),
              trustregion = 20, initial.loglik = NULL, initial.network = NULL,
              style = c("Newton-Raphson", "Robbins-Monro",
-             "Stochastic-Approximation"), phase1_n = NULL, initial_gain = NULL,
+             "Stochastic-Approximation", "Stepping"), 
+             phase1_n = NULL, initial_gain = NULL,
              nsubphases = "maxit", niterations = NULL, phase3_n = NULL,
              RobMon.phase1n_base = 7, RobMon.phase2n_base = 7, RobMon.phase2sub
-             = 4, RobMon.init_gain = 0.1, RobMon.phase3n = 500, dyninterval =
-             1000, packagenames="ergm", parallel = 0, returnMCMCstats = TRUE)
+             = 4, RobMon.init_gain = 0.1, RobMon.phase3n = 500, 
+             stepMCMCsize=100, gridsize=100, dyninterval=1000, 
+             packagenames="ergm", parallel = 0, returnMCMCstats = TRUE)
              }
 \details{
     This function is only used within a call to the \code{\link{ergm}} function.
@@ -47,7 +46,7 @@ control.ergm(prop.weights = "default", prop.args = NULL,
     }
   \item{prop.args}{ An alternative, direct way of specifying additional arguments to proposal. }
   \item{nr.maxit}{ count; The maximum number of iterations in the
-    Newton-Raphson optimization.  Defaults to \code{100}.
+    Newton-Raphson optimization.  Defaults to \code{1000}.
     \code{maxit} gives the total number of likelihood
     function evaluations. }
   \item{calc.mcmc.se}{logical; should the contribution to the 
@@ -104,7 +103,8 @@ control.ergm(prop.weights = "default", prop.args = NULL,
     standard errors induced by the MCMC algorithm.
     Defaults to \code{0.05}.}
   \item{metric}{character; The name of the optimization metric
-    to use. Defaults to \code{"Likelihood"}.}
+    to use. Defaults to \code{"lognormal"}.  See Hummel et al (2010)
+    for an explanation of "lognormal" and "naive".}
   \item{method}{character; The name of the optimization method
     to use. See \code{\link[stats]{optim}} for the options. The default method
     \code{"BFGS"} is a quasi-Newton method (also known as a variable
@@ -122,6 +122,8 @@ control.ergm(prop.weights = "default", prop.args = NULL,
     likelihood estimation to use. The default is optimization of an
     MCMC estimate of the log-likelihood. An alternative is to use 
     a form of stochastic approximation (\code{"Robbins-Monro"}).
+    Another alternative is a partial stepping algorithm
+    (\code{"Stepping"}) as in Hummel et al. (2010).
     The direct use of the likelihood function has many theoretical
     advantages over stochastic approximation, but the choice will
     depend on the model and data being fit. See Handcock (2000) and 
@@ -157,6 +159,12 @@ control.ergm(prop.weights = "default", prop.args = NULL,
     This matrix is actually an object of class \code{mcmc} and can be 
     used directly in the \code{CODA} package to assess MCMC
     convergence.}
+  \item{stepMCMCsize}{MCMC sample size for the preliminary steps of the
+  "Stepping" style of optimization.  This is usually chosen to be smaller
+  than the final MCMC sample size (which equals \code{MCMCsamplesize}).}
+  \item{gridsize}{Integer \eqn{N} such that the "Stepping" style of
+  optimization chooses a step length equal to the largest possible multiple
+  of \eqn{1/N}; see Hummel et al. (2010) for details.}
   \item{dyninterval}{ Number of Metropolis-Hastings proposal for each
     phase in the dynamic network simulation. }
   \item{packagenames}{Names of packages in which changestatistics are found.}
@@ -185,6 +193,10 @@ similar function for \code{\link{gof}}.   }
     \item Hunter, D. R. and M. S. Handcock (2006), Inference in curved
     exponential family models for networks. Journal of Computational
     and Graphical Statistics, 15: 565-583.
+    
+    \item Hummel, R. M., Hunter, D. R., and Handcock, M. S. (2010),
+    A Steplength Algorithm for Fitting ERGMs, Penn State Department
+    of Statistics Technical Report.
   }
 }
 \keyword{ models }

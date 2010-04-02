@@ -1,8 +1,17 @@
+#  File ergm/R/ergm.llik.miss.R
+#  Part of the statnet package, http://statnetproject.org
+#
+#  This software is distributed under the GPL-3 license.  It is free,
+#  open source, and has the attribution requirements (GPL Section 7) in
+#    http://statnetproject.org/attribution
+#
+#  Copyright 2010 the statnet development team
+######################################################################
 #
 #   missing data code
 #
 llik.fun.miss <- function(theta, xobs, xsim, probs, xsim.miss=NULL, probs.miss=NULL,
-                     penalty=0.5, trustregion=20, eta0, etamap){
+                     varweight=0.5, trustregion=20, eta0, etamap){
   theta.offset <- etamap$theta0
   theta.offset[!etamap$offsettheta] <- theta
   eta <- ergm.eta(theta.offset, etamap)
@@ -25,7 +34,7 @@ llik.fun.miss <- function(theta, xobs, xsim, probs, xsim.miss=NULL, probs.miss=N
 # 
 # This is the log-likelihood ratio (and not its negative)
 #
-  llr <- sum(xobs * x) + (mm + penalty*vm) - (mb + penalty*vb)
+  llr <- sum(xobs * x) + (mm + varweight*vm) - (mb + varweight*vb)
   if(is.infinite(llr) | is.na(llr)){llr <- -800}
 #
 # Penalize changes to trustregion
@@ -39,7 +48,7 @@ llik.fun.miss <- function(theta, xobs, xsim, probs, xsim.miss=NULL, probs.miss=N
   llr
 }
 llik.grad.miss <- function(theta, xobs, xsim, probs,  xsim.miss=NULL, probs.miss=NULL,
-                      penalty=0.5, trustregion=20, eta0, etamap){
+                      varweight=0.5, trustregion=20, eta0, etamap){
   theta.offset <- etamap$theta0
   theta.offset[!etamap$offsettheta] <- theta
   eta <- ergm.eta(theta.offset, etamap)
@@ -71,17 +80,20 @@ llik.grad.miss <- function(theta, xobs, xsim, probs,  xsim.miss=NULL, probs.miss
 }
 
 llik.hessian.miss <- function(theta, xobs, xsim, probs, xsim.miss=NULL, probs.miss=NULL,
-                         penalty=0.5, eta0, etamap){
-# theta.offset <- etamap$theta0
-# theta.offset[!etamap$offsettheta] <- theta
+                         varweight=0.5, eta0, etamap){
   namesx <- names(theta)
-  xsim[,etamap$offsetmap] <- 0
+  xsim <- xsim[,!etamap$offsettheta, drop=FALSE]
+  xsim.miss <- xsim.miss[,!etamap$offsettheta, drop=FALSE]
+  xobs <- xobs[!etamap$offsettheta]
 #
 #    eta transformation
 #
   eta <- ergm.eta(theta, etamap)
   etagrad <- ergm.etagrad(theta, etamap)
   x <- eta-eta0
+  x <- x[!etamap$offsettheta]
+  etagrad <- etagrad[,!etamap$offsettheta]
+  etagrad <- etagrad[!etamap$offsettheta,]
   basepred <- xsim %*% x
   prob <- max(basepred)
   prob <- probs*exp(basepred - prob)
@@ -92,15 +104,60 @@ llik.hessian.miss <- function(theta, xobs, xsim, probs, xsim.miss=NULL, probs.mi
   prob.miss <- probs.miss*exp(misspred - prob.miss)
   prob.miss <- prob.miss/sum(prob.miss)
   E.miss <- apply(sweep(xsim.miss, 1, prob.miss, "*"), 2, sum)
-  llr <- xobs + E.miss-E
+  llr <- xobs + E.miss - E
 # 
   htmp <- sweep(sweep(xsim, 2, E, "-"), 1, sqrt(prob), "*")
   htmp <- htmp %*% t(etagrad)
   H <- t(htmp) %*% htmp
+  H <- etagrad %*% H %*% t(etagrad)
   htmp <- sweep(sweep(xsim.miss, 2, E.miss, "-"), 1, sqrt(prob.miss), "*")
   htmp <- htmp %*% etagrad
   H.miss <- t(htmp) %*% htmp
+  H.miss <- etagrad %*% H.miss %*% t(etagrad)
   H <- H.miss-H
-  dimnames(H) <- list(namesx, namesx)
-  -H
+  He <- matrix(NA, ncol = length(theta), nrow = length(theta))
+  He[!etamap$offsettheta, !etamap$offsettheta] <- H
+  dimnames(He) <- list(namesx, namesx)
+  He
+}
+#
+#  robust missing data code
+#
+llik.fun.miss.robust<- function(theta, xobs, xsim, probs, xsim.miss=NULL, probs.miss=NULL,
+                     varweight=0.5, trustregion=20, eta0, etamap){
+  theta.offset <- etamap$theta0
+  theta.offset[!etamap$offsettheta] <- theta
+  eta <- ergm.eta(theta.offset, etamap)
+  x <- eta-eta0
+# The next line is right!
+# aaa <- sum(xobs * x) - log(sum(probs*exp(xsim %*% x)))
+# These lines standardize:
+  basepred <- xsim %*% x
+  misspred <- xsim.miss %*% x
+#
+# maxbase <- max(basepred)
+# llr <- sum(xobs * x) - maxbase - log(sum(probs*exp(basepred-maxbase)))
+#
+# alternative based on log-normal approximation
+  mb <- wtd.median(basepred, weight=probs)
+  vb <- 1.4826*wtd.median(abs(basepred-mb), weight=probs)
+# print(c(mean(probs),mean(probs.miss),var(probs),var(probs.miss)))
+  mm <- wtd.median(misspred, weight=probs.miss)
+  vm <- 1.4826*wtd.median(abs(misspred-mm), weight=probs.miss)
+# 
+# This is the log-likelihood ratio (and not its negative)
+#
+  llr <- sum(xobs * x) + (mm + varweight*vm*vm) - (mb + varweight*vb*vb)
+  if(is.infinite(llr) | is.na(llr)){llr <- -800}
+#
+# Penalize changes to trustregion
+#
+  llr <- llr - 2*(llr-trustregion)*(llr>trustregion)
+#
+# cat(paste("max, log-lik",maxbase,llr,"\n"))
+# aaa <- sum(xobs * x) - log(sum(probs*exp(xsim %*% x)))
+# cat(paste("log-lik",llr,aaa,"\n"))
+# aaa
+# print(c(llr,mb,mm,vb,vm))
+  llr
 }

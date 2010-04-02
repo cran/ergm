@@ -5,12 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) in
 #    http://statnetproject.org/attribution
 #
-# Copyright 2003 Mark S. Handcock, University of Washington
-#                David R. Hunter, Penn State University
-#                Carter T. Butts, University of California - Irvine
-#                Steven M. Goodreau, University of Washington
-#                Martina Morris, University of Washington
-# Copyright 2007 The statnet Development Team
+#  Copyright 2010 the statnet development team
 ######################################################################
 ergm.phase12 <- function(g, model,
                         MHproposal, eta0,
@@ -48,7 +43,8 @@ ergm.phase12 <- function(g, model,
             as.double(Clist$inputs),
             eta=as.double(eta0),
             as.integer(MCMCparams$samplesize),
-            as.double(MCMCparams$gain), as.double(MCMCparams$stats),
+            as.double(MCMCparams$gain), 
+            double(MCMCparams$samplesize * Clist$nterms),#as.double(MCMCparams$stats),
             as.integer(MCMCparams$phase1),
             as.integer(MCMCparams$nsub),
             s = double(MCMCparams$samplesize * Clist$nstats),

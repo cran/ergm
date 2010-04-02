@@ -6,12 +6,7 @@
  *  open source, and has the attribution requirements (GPL Section 7) in
  *    http://statnetproject.org/attribution
  *
- * Copyright 2003 Mark S. Handcock, University of Washington
- *                David R. Hunter, Penn State University
- *                Carter T. Butts, University of California - Irvine
- *                Steven M. Goodreau, University of Washington
- *                Martina Morris, University of Washington
- * Copyright 2007 The statnet Development Team
+ *  Copyright 2010 the statnet development team
  */
 #include "MHproposals.h"
 
@@ -88,10 +83,16 @@ void MH_TNT (MHproposal *MHp, DegreeBound *bd, Network *nwp)
         MHp->togglehead[0] = head;
         MHp->toggletail[0] = tail;
       }
+/* Thanks to Robert Goudie for pointing out an error in the previous version of 
+   this sampler when proposing to go from nedges==0 to nedges==1 or vice versa.
+   Note that this happens extremely rarely unless the graph is small or the
+   parameter values lead to extremely sparse networks.  */
       if(EdgetreeSearch(MHp->togglehead[0],MHp->toggletail[0],nwp->outedges)!=0){
-        MHp->ratio = nedges / (odds*ndyads + nedges);
+        MHp->ratio = (nedges==1 ? 1.0/(comp*ndyads + (1.0-comp)) :
+                                  nedges / (odds*ndyads + nedges));
       }else{
-        MHp->ratio = 1.0 + (odds*ndyads)/(nedges + 1);
+        MHp->ratio = (nedges==0 ? comp*ndyads + (1.0-comp) :
+                                  1.0 + (odds*ndyads)/(nedges + 1));
       }
     }
     if(CheckTogglesValid(MHp,bd,nwp)) break;

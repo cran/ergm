@@ -5,12 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) in
 #    http://statnetproject.org/attribution
 #
-# Copyright 2003 Mark S. Handcock, University of Washington
-#                David R. Hunter, Penn State University
-#                Carter T. Butts, University of California - Irvine
-#                Steven M. Goodreau, University of Washington
-#                Martina Morris, University of Washington
-# Copyright 2007 The statnet Development Team
+#  Copyright 2010 the statnet development team
 ######################################################################
 ergm.robmon <- function(theta0, nw, model, Clist,
                         burnin, interval, MHproposal,
@@ -34,17 +29,22 @@ ergm.robmon <- function(theta0, nw, model, Clist,
   eta0 <- ergm.eta(theta0, model$etamap)
   cat("Robbins-Monro algorithm with theta_0 equal to:\n")
   print(theta0)
-  stats <- matrix(0,ncol=Clist$nstats,nrow=n1)
-  stats[1,] <- Clist$obs - Clist$meanstats
-# stats[,]<-  rep(Clist$obs - Clist$meanstats,rep(nrow(stats),Clist$nstats))
-# MCMCparams$stats <- stats
+#  stats <- matrix(0,ncol=Clist$nstats,nrow=n1)
+#  stats[1,] <- Clist$obs - Clist$meanstats
+## stats[,]<-  rep(Clist$obs - Clist$meanstats,rep(nrow(stats),Clist$nstats))
+## MCMCparams$stats <- stats
   MCMCparams <- list(samplesize=n1, burnin=burnin, interval=interval,
-                     stats=stats, parallel=control$parallel)
+                     nmatrixentries = n1* Clist$nstats, #stats=stats, 
+                     parallel=control$parallel)
   cat(paste("Phase 1: ",n1,"iterations"))
   cat(paste(" (interval=",MCMCparams$interval,")\n",sep=""))
-  z <- ergm.getMCMCsample(nw, model, MHproposal, eta0, MCMCparams, verbose)
+  z <- ergm.getMCMCsample(Clist, MHproposal, eta0, MCMCparams, verbose)
   steplength <- control$steplength
-  statsmatrix <- z$statsmatrix
+  # post-processing of sample statistics:  Shift each row by the
+  # matrix Clist$obs - Clist$meanstats, attach column names
+  statsmatrix <- sweep(z$statsmatrix, 2, Clist$obs - Clist$meanstats, "+")
+  colnames(statsmatrix) <- model$coef.names
+
   if(steplength<1){
     statsmean <- apply(statsmatrix,2,mean)
     statsmatrix <- sweep(statsmatrix,2,(1-steplength*0.1)*statsmean,"-")
@@ -85,12 +85,19 @@ ergm.robmon <- function(theta0, nw, model, Clist,
 #cat(paste("theta:",theta,"\n"))
       eta <- ergm.eta(theta, model$etamap)
 #cat(paste("eta:",eta,"\n"))
-      z <- ergm.getMCMCsample(nw, model, MHproposal, eta, MCMCparams, verbose=FALSE)
+
       # MCMCparams$burnin should perhaps be increased here, since
       # each iteration begins from the observed network, which must be 
       # "forgotten".
+      MCMCparams$nmatrixentries = MCMCparams$samplesize * Clist$nstats
+      z <- ergm.getMCMCsample(Clist, MHproposal, eta, MCMCparams, verbose=FALSE)
+      # post-processing of sample statistics:  Shift each row by the
+      # matrix Clist$obs - Clist$meanstats, attach column names
+      statsmatrix <- sweep(z$statsmatrix, 2, Clist$obs - Clist$meanstats, "+")
+      colnames(statsmatrix) <- model$coef.names
+
       thetamatrix <- rbind(thetamatrix,theta)
-      statsmean <- apply(z$statsmatrix,2,mean)
+      statsmean <- apply(statsmatrix,2,mean)
       if(steplength<1 && subphase < n_sub ){
         statsmean <- steplength*statsmean
       }
@@ -114,7 +121,13 @@ cat(paste("theta new:",theta,"\n"))
   cat(paste("Phase 3: ",n3,"iterations"))
   cat(paste(" (interval=",MCMCparams$interval,")\n",sep=""))
   eta <- ergm.eta(theta, model$etamap)
-  z <- ergm.getMCMCsample(nw, model, MHproposal, eta, MCMCparams, verbose)
+  MCMCparams$nmatrixentries = MCMCparams$samplesize * Clist$nstats
+  z <- ergm.getMCMCsample(Clist, MHproposal, eta, MCMCparams, verbose=FALSE)
+  # post-processing of sample statistics:  Shift each row by the
+  # matrix Clist$obs - Clist$meanstats, attach column names
+  statsmatrix <- sweep(z$statsmatrix, 2, Clist$obs - Clist$meanstats, "+")
+  colnames(statsmatrix) <- model$coef.names
+
 # ubar <- apply(z$statsmatrix, 2, mean)
 # hessian <- (t(z$statsmatrix) %*% z$statsmatrix)/n3 - outer(ubar,ubar)
 # covar <- robust.inverse(covar)
@@ -123,12 +136,12 @@ cat(paste("theta new:",theta,"\n"))
   if(verbose){cat("Using Newton-Raphson Step ...\n")}
 
   ve<-ergm.estimate(theta0=theta, model=model,
-                   statsmatrix=z$statsmatrix,
+                   statsmatrix=statsmatrix,
                    statsmatrix.miss=NULL,
                    nr.maxit=control$nr.maxit, 
                    nr.reltol=control$nr.reltol,
                    calc.mcmc.se=control$calc.mcmc.se,
-                   hessian=control$hessian,
+                   hessianflag=control$hessian,
                    method=control$method,
                    metric=control$metric,
                    compress=control$compress, verbose=verbose)

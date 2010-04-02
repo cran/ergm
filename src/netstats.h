@@ -6,12 +6,7 @@
  *  open source, and has the attribution requirements (GPL Section 7) in
  *    http://statnetproject.org/attribution
  *
- * Copyright 2003 Mark S. Handcock, University of Washington
- *                David R. Hunter, Penn State University
- *                Carter T. Butts, University of California - Irvine
- *                Steven M. Goodreau, University of Washington
- *                Martina Morris, University of Washington
- * Copyright 2007 The statnet Development Team
+ *  Copyright 2010 the statnet development team
  */
 #ifndef NETSTATS_H
 #define NETSTATS_H

@@ -1,15 +1,12 @@
 %  File ergm/man/ergm-internal.Rd
 %  Part of the statnet package, http://statnetproject.org
+%
 %  This software is distributed under the GPL-3 license.  It is free,
 %  open source, and has the attribution requirements (GPL Section 7) in
 %    http://statnetproject.org/attribution
 %
-% Copyright 2003 Mark S. Handcock, University of Washington
-%                David R. Hunter, Penn State University
-%                Carter T. Butts, University of California - Irvine
-%                Steven M. Goodreau, University of Washington
-%                Martina Morris, University of Washington
-% Copyright 2007 The statnet Development Team
+%  Copyright 2010 the statnet development team
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{ergm-internal}
 \title{Internal ergm Objects}
 % terms
@@ -60,7 +57,8 @@
 \alias{get.InitErgm.fname}
 \alias{updatemodel.ErgmTerm}
 \alias{copy.named}
-\alias{safeupdate.formula}
+\alias{ergm.update.formula}
+\alias{term.list.formula}
 \alias{model.matrix.pen.glm}
 \alias{zerowarnings}
 \alias{extremewarnings}
@@ -163,6 +161,9 @@
 \alias{InitMHP.randomtoggle}
 \alias{InitMHP.randomtoggleNonObserved}
 \alias{InitMHP.TNT}
+\alias{InitMHP.TNT10}
+\alias{InitMHP.CondDegreeHexad}
+\alias{InitMHP.CondDegreeTetrad}
 \alias{MHproposal}
 \alias{MHproposal.character}
 \alias{MHproposal.ergm}
@@ -210,6 +211,7 @@
 \alias{ergm.raftery.diag}
 \alias{ergm.revisetheta0}
 \alias{ergm.rhs.formula} 
+\alias{ergm.stepping}
 \alias{ergm.stocapprox}
 \alias{ergm.t.summary}
 \alias{espartnerdist}
@@ -229,6 +231,10 @@
 \alias{llik.hessian2}
 \alias{llik.info3}
 \alias{llik.mcmcvar3}
+\alias{llik.fun.EF}
+\alias{llik.fun.median}
+\alias{llik.fun.miss.robust}
+\alias{llik.hessian.naive}
 \alias{mcmc.diagnostics.default}
 \alias{midarrow}
 \alias{newnw.extract}
@@ -274,6 +280,7 @@
 %\alias{symmetrize}
 %
 \alias{ergm.MCMCse}
+\alias{ergm.MCMCse.lognormal}
 %\alias{ergm.latentplot}
 %\alias{mlpY.grad.plot}
 %\alias{mlpY.plot}
@@ -286,7 +293,6 @@
 \alias{ergm.mainloop}
 \alias{ergm.robmon}
 %
-\alias{InitMHP.TNT10}
 
 %
 % These need to be documented!

@@ -5,15 +5,10 @@
 #  open source, and has the attribution requirements (GPL Section 7) in
 #    http://statnetproject.org/attribution
 #
-# Copyright 2003 Mark S. Handcock, University of Washington
-#                David R. Hunter, Penn State University
-#                Carter T. Butts, University of California - Irvine
-#                Steven M. Goodreau, University of Washington
-#                Martina Morris, University of Washington
-# Copyright 2007 The statnet Development Team
+#  Copyright 2010 the statnet development team
 ######################################################################
 control.ergm<-function(prop.weights="default",prop.args=NULL,
-                       nr.maxit=100, calc.mcmc.se=TRUE, hessian=FALSE,
+                       nr.maxit=1000, calc.mcmc.se=TRUE, hessian=FALSE,
                        compress=TRUE,
                        SAN.burnin=NULL,
                        maxNumDyadTypes=1e+6, 
@@ -27,12 +22,12 @@ control.ergm<-function(prop.weights="default",prop.args=NULL,
                        force.mcmc=FALSE,
                        check.degeneracy=FALSE,
                        mcmc.precision=0.05,
-                       metric=c("Likelihood","raw"),
+                       metric=c("lognormal","naive"),
                        method=c("BFGS","Nelder-Mead"),
                        trustregion=20,
                        initial.loglik=NULL,
                        initial.network=NULL,
-                       style=c("Newton-Raphson","Robbins-Monro","Stochastic-Approximation"),
+                       style=c("Newton-Raphson","Robbins-Monro","Stochastic-Approximation","Stepping"),
                        phase1_n=NULL, initial_gain=NULL, 
                        nsubphases="maxit", niterations=NULL, phase3_n=NULL,
                        RobMon.phase1n_base=7,
@@ -40,6 +35,8 @@ control.ergm<-function(prop.weights="default",prop.args=NULL,
                        RobMon.phase2sub=4,
                        RobMon.init_gain=0.1,
                        RobMon.phase3n=500,
+                       stepMCMCsize=100,
+                       gridsize=100,
                        dyninterval=1000,
                        packagenames="ergm",
                        parallel=0,

@@ -5,12 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) in
 #    http://statnetproject.org/attribution
 #
-# Copyright 2003 Mark S. Handcock, University of Washington
-#                David R. Hunter, Penn State University
-#                Carter T. Butts, University of California - Irvine
-#                Steven M. Goodreau, University of Washington
-#                Martina Morris, University of Washington
-# Copyright 2007 The statnet Development Team
+#  Copyright 2010 the statnet development team
 ######################################################################
 ergm.degeneracy <- function(object, 
                           control=control.ergm(),
@@ -141,7 +136,7 @@ ergm.compute.degeneracy<-function(xobs, theta0, etamap, statsmatrix,
 #
 # Log-Likelihood and gradient functions
 #
-  penalty <- 0.5
+  varweight <- 0.5
   if (verbose) cat("Optimizing loglikelihood\n")
   Lout <- try(optim(par=guess, 
                     fn=llik.fun, #  gr=llik.grad,
@@ -152,7 +147,7 @@ ergm.compute.degeneracy<-function(xobs, theta0, etamap, statsmatrix,
                     xobs=xobs,
                     xsim=xsim, probs=probs,
                     xsim.miss=xsim.miss, probs.miss=probs.miss,
-                    penalty=0.5, trustregion=trustregion,
+                    varweight=varweight, trustregion=trustregion,
                     eta0=eta0, etamap=etamap),silent=TRUE)
   if(verbose){cat("the change in the log-likelihood is", Lout$value,"\n")}
   if(inherits(Lout,"try-error") || Lout$value > 199 ||
@@ -168,7 +163,7 @@ ergm.compute.degeneracy<-function(xobs, theta0, etamap, statsmatrix,
 # c0  <- llik.fun(theta=Lout$par, xobs=xobs,
 #                 xsim=xsim, probs=probs,
 #                 xsim.miss=xsim.miss, probs.miss=probs.miss,
-#                 penalty=0.5, eta0=eta0, etamap=etamap)
+#                 varweight=0.5, eta0=eta0, etamap=etamap)
   loglikelihood <- Lout$value
   names(loglikelihood) <- "delta.log.lik"
 

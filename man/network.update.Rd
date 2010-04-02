@@ -1,20 +1,17 @@
 %  File ergm/man/network.update.Rd
 %  Part of the statnet package, http://statnetproject.org
+%
 %  This software is distributed under the GPL-3 license.  It is free,
 %  open source, and has the attribution requirements (GPL Section 7) in
 %    http://statnetproject.org/attribution
 %
-% Copyright 2003 Mark S. Handcock, University of Washington
-%                David R. Hunter, Penn State University
-%                Carter T. Butts, University of California - Irvine
-%                Steven M. Goodreau, University of Washington
-%                Martina Morris, University of Washington
-% Copyright 2007 The statnet Development Team
+%  Copyright 2010 the statnet development team
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{network.update}
 \alias{network.update}
 \title{Replaces the sociomatrix in a network object}
 \usage{
-network.update(nw, newmatrix, matrix.type=NULL)
+network.update(nw, newmatrix, matrix.type=NULL, output="network")
 }
 \description{
   Replaces the sociomatrix in a network object with the sociomatrix specified by
@@ -31,6 +28,7 @@ network.update(nw, newmatrix, matrix.type=NULL)
   \item{matrix.type}{One of "adjacency" or "edgelist" telling which type of
   matrix \code{newmatrix} is.  Default is to use the 
   \code{\link[network]{which.matrix.type}} function.}
+  \item{output}{Currently unused.}
 }
 
 \value{\code{\link{network.update}} returns a \code{\link[network]{network}} object.
