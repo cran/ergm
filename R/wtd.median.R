@@ -7,7 +7,7 @@
 #
 #  Copyright 2010 the statnet development team
 ######################################################################
- "wtd.median"<- function(x, na.rm = FALSE, weight=FALSE) {
+wtd.median <- function(x, na.rm = FALSE, weight=FALSE) {
  	if(mode(x) != "numeric")
  		stop("need numeric data")
  	x <- as.vector(x)
@@ -42,3 +42,5 @@
  	  }
  	}
  }
+
+# Got rid of wtd.mean function because weighted.mean already exists in R

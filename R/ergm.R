@@ -78,6 +78,7 @@ ergm <- function(formula, theta0="MPLE",
                                 verbose=verbose, compressflag = control$compress, 
                                 maxNumDyadTypes=control$maxNumDyadTypes,
                                 force.MPLE=(ergm.independencemodel(model.initial)
+                                            && !control$force.mcmc
                                             && constraints==(~.)),
                                 ...)
   MCMCflag <- ((MLestimate && (!ergm.independencemodel(model.initial)
@@ -142,9 +143,12 @@ ergm <- function(formula, theta0="MPLE",
    }
   }
 
-  MCMCparams=c(control, list(samplesize=MCMCsamplesize, burnin=burnin,
-  interval=interval, stepMCMCsize=control$stepMCMCsize, gridsize=control$gridsize,
-  maxit=maxit,Clist.miss=Clist.miss, mcmc.precision=control$mcmc.precision))
+  MCMCparams <- c(control, 
+                  list(samplesize=MCMCsamplesize, burnin=burnin,
+                       interval=interval, stepMCMCsize=control$stepMCMCsize,
+                       gridsize=control$gridsize, maxit=maxit,
+                       Clist.miss=Clist.miss, nr.reltol=control$reltol,
+                       mcmc.precision=control$mcmc.precision))
 
    if (verbose) cat("Fitting ERGM.\n")
    v <- switch(control$style,

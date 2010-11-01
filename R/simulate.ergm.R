@@ -8,7 +8,7 @@
 #  Copyright 2010 the statnet development team
 ######################################################################
 simulate.ergm <- function(object, nsim=1, seed=NULL, theta0=object$coef,
-                          burnin=NULL, interval=NULL,
+                          burnin=1000, interval=1000,
                           statsonly=FALSE,
                           sequential=TRUE,
                           constraints=NULL,
@@ -64,7 +64,10 @@ simulate.formula <- function(object, nsim=1, seed=NULL, theta0,
     theta0 <- rep(0,Clist$nstats)
     warning("No parameter values given, using Bernouli network\n\t")
   }
-  if (any(is.infinite(theta0) | is.nan(theta0) | is.na(theta0)))
+  if (any(is.infinite(theta0))){
+   theta0[is.infinite(theta0)] <- sign(theta0[is.infinite(theta0)])*10000 
+  }
+  if (any(is.nan(theta0) | is.na(theta0)))
     stop("Illegal value of theta0 passed to simulate.formula")
     
   # Create vector of current statistics
@@ -73,7 +76,7 @@ simulate.formula <- function(object, nsim=1, seed=NULL, theta0,
 
   # prepare MCMCparams object
   MCMCparams <- list(samplesize=1,
-                     maxedges = 1+max(20000, Clist$nedges),
+                     maxedges = 1+max(control$maxedges, Clist$nedges),
 #                     stats=curstats, # deprecated as of version 2.2-3
                      burnin=burnin,
                      interval=interval,
@@ -91,7 +94,7 @@ simulate.formula <- function(object, nsim=1, seed=NULL, theta0,
   #########################
   ## Main part of function:
   if(sequential && statsonly){ 
-    # Call MCMC_wrapper only one time, using the C function to generate the whole
+    # Call ergm.getMCMCsample only one time, using the C function to generate the whole
     # matrix of network statistics.
     MCMCparams$samplesize <- nsim
     MCMCparams$nmatrixentries <- nsim * length(curstats)
@@ -111,13 +114,14 @@ simulate.formula <- function(object, nsim=1, seed=NULL, theta0,
   out.mat <- matrix(nrow=nsim, ncol=length(curstats), 
                     dimnames = list(NULL, m$coef.names)) 
   
-  # Call MCMC_wrapper once for each network desired.  This is much slower
+  # Call ergm.getMCMCsample once for each network desired.  This is much slower
   # than when sequential==TRUE and statsonly==TRUE, but here we have a 
   # more complicated situation:  Either we want a network for each
   # MCMC iteration (statsonly=FALSE) or we want to restart each chain
   # at the original network (sequential=FALSE).
   MCMCparams$nmatrixentries <- length(curstats)
-  for(i in 1:nsim){
+  if(sequential){
+   for(i in 1:nsim){
     MCMCparams$burnin <- ifelse(i==1 || !sequential, burnin, interval)
     z <- ergm.getMCMCsample(Clist, MHproposal, theta0, MCMCparams, verbose)
 
@@ -139,6 +143,7 @@ simulate.formula <- function(object, nsim=1, seed=NULL, theta0,
   if (statsonly)
     return(out.mat[1:nsim,]) # If nsim==1, this will return a vector, not a matrix
   
+  }
   # If we get here, statsonly==FALSE.
   if (nsim==1) {
     return(nw.list[[1]])

@@ -89,7 +89,7 @@ san.formula <- function(object, nsim=1, seed=NULL, theta0=NULL,
   for(i in 1:nsim){
     Clist <- ergm.Cprepare(nw, model)
 #   Clist.miss <- ergm.design(nw, model, verbose=verbose)
-    maxedges <- max(20000, Clist$nedges)
+    maxedges <- max(control$maxedges, Clist$nedges)
     if (verb) {
        cat(paste("#", i, " of ", nsim, ": ", sep=""))
      }
@@ -125,9 +125,18 @@ san.formula <- function(object, nsim=1, seed=NULL, theta0=NULL,
     eta0[is.na(eta0)]<-0
     while(z$newnwheads[1] > maxedges){
      maxedges <- 10*maxedges
+     nedges <- c(Clist$nedges,0)
+     heads <- Clist$heads
+     tails <- Clist$tails
+     if(!is.null(MCMCparams$Clist.miss)){
+       nedges[2] <- MCMCparams$Clist.miss$nedges
+       heads <- c(heads, MCMCparams$Clist.miss$heads)
+       tails <- c(tails, MCMCparams$Clist.miss$tails)
+     }
      z <- .C("SAN_wrapper",
-             as.integer(Clist$heads), as.integer(Clist$tails), 
-             as.integer(Clist$nedges), as.integer(Clist$maxpossibleedges),
+             as.integer(length(nedges)), as.integer(nedges),
+             as.integer(heads), as.integer(tails),
+             as.integer(Clist$maxpossibleedges),
              as.integer(Clist$n),
              as.integer(Clist$dir), as.integer(Clist$bipartite),
              as.integer(Clist$nterms), 
@@ -151,18 +160,16 @@ san.formula <- function(object, nsim=1, seed=NULL, theta0=NULL,
              as.integer(MHproposal$bd$condAllDegExact),
              as.integer(length(MHproposal$bd$attribs)), 
              as.integer(maxedges), 
-             as.integer(0.0), as.integer(0.0), 
-             as.integer(0.0),
              PACKAGE="ergm")
     }
 #
 #   Next update the network to be the final (possibly conditionally)
 #   simulated one
 #
-    out.list[[i]] <- newnw.extract(nw, z)
+    out.list[[i]] <- newnw.extract(nw, z, output=control$network.output)
     out.mat <- rbind(out.mat,z$s[(Clist$nstats+1):(2*Clist$nstats)])
     if(sequential){
-      nw <-  out.list[[i]]
+      nw <-  as.network.uncompressed(out.list[[i]])
     }
   }
   if(nsim > 1){
