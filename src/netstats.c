@@ -8,9 +8,7 @@
  *
  *  Copyright 2010 the statnet development team
  */
-
 #include "netstats.h"
-#include "MCMC.h"
 /*****************
  void network_stats_wrapper
 

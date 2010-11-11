@@ -8,7 +8,6 @@
  *
  *  Copyright 2010 the statnet development team
  */
-
 #include "geodist.h"
 
 /* The geodist functions are based on breadth-first search.

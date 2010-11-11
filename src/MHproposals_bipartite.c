@@ -9,7 +9,6 @@
  *  Copyright 2010 the statnet development team
  */
 #include "MHproposals_bipartite.h" 
-#include "MHproposals.h" 
 
 /* Shorthand. */
 #define Mhead (MHp->togglehead)

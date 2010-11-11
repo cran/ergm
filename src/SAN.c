@@ -8,7 +8,6 @@
  *
  *  Copyright 2010 the statnet development team
  */
-#include "MCMC.h"
 #include "SAN.h"
 
 

@@ -8,7 +8,6 @@
  *
  *  Copyright 2010 the statnet development team
  */
-
 #ifndef GEODIST_H
 #define GEODIST_H
 
