@@ -1,12 +1,20 @@
-#  File ergm/R/summary.network.series.R
-#  Part of the statnet package, http://statnetproject.org
+###############################################################################
+# The <summary.network.series> function provides a summary of the first
+# network in the given series
 #
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnetproject.org/attribution
+# --PARAMETERS--
+#   object: a network.series object
 #
-#  Copyright 2010 the statnet development team
-######################################################################
+# --IGNORED PARAMETERS--
+#   ...:  additional parameters passed from within
+#   wmt:  which matrix type is used to describe the networks;
+#         default=which.matrix.type(objects$networks[[1]])) 
+#
+# --RETURNED--
+#   the summary of the first network in the series    
+# 
+###############################################################################
+
 "summary.network.series" <-
   function (object, ..., wmt = which.matrix.type(objects$networks[[1]])) 
 {

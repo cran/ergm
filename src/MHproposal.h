@@ -1,13 +1,3 @@
-/*
- *  File ergm/src/MHproposal.h
- *  Part of the statnet package, http://statnetproject.org
- *
- *  This software is distributed under the GPL-3 license.  It is free,
- *  open source, and has the attribution requirements (GPL Section 7) in
- *    http://statnetproject.org/attribution
- *
- *  Copyright 2010 the statnet development team
- */
 #ifndef MHproposal_H
 #define MHproposal_H
 
@@ -63,11 +53,15 @@ void DegreeBoundDestroy(DegreeBound *bd);
    the value of ntoggles to be the largest possible number of toggles
    required, so that this amount of memory can be allocated.
 */
+
+
+/* *** don't forget tail-> head */
+
 typedef struct MHproposalstruct {
   void (*func)(struct MHproposalstruct*, DegreeBound*, Network*);
   Edge ntoggles;
-  Vertex *togglehead;
   Vertex *toggletail;
+  Vertex *togglehead;
   double ratio;
   int status;
   double *inputs; /* may be used if needed, ignored if not. */

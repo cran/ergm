@@ -1,12 +1,61 @@
-#  File ergm/R/simulate.ergm.R
-#  Part of the statnet package, http://statnetproject.org
+#========================================================================
+# This file contains the following 2 functions for simulating ergms
+#           <simulate.ergm>
+#           <simulate.formula>
+#========================================================================
+
+
+########################################################################
+# Each of the <simulate.X> functions collects a given number of networks
+# drawn from the given distribution on the set of all networks; these
+# may be returned as only the vector/matrix of sufficient statistics or
+# as the networks and their statistics
 #
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnetproject.org/attribution
+# --PARAMETERS--
+#   object     : either an ergm or a formula of the form 'nw ~ term(s)'
+#   nsim       : the number of networks to draw; default=1
+#   basis      : optionally, a network to start the MCMC algorithm from;
+#                if provided, this overrides the network given in
+#                'object's formula; default=NULL
+#   seed       : an integer at which to set the random generator;
+#                default=NULL
+#   theta0     : the set of parameters from which the sample is to be
+#                drawn; default='object$coef' if 'object' is an ergm or
+#                0 if a formula
+#   burnin     : the number of proposals to disregard before any MCMC
+#                sampling is done; default=1000
+#   interval   : the number of proposals between sampled networks;
+#                default=1000
+#   statsonly  : whether to return only the network statistics;
+#                default=FALSE
+#   sequential : whether subsequent draws should use the prior draw
+#                as the starting network in the MCMC algorithm (T or F);
+#                if FALSE, the initial network is always used as the
+#                starting network; default=TRUE
+#   constraints: a one-sided formula specifying the constraints on the
+#                support of the distribution of networks being simulated;
+#                default=NULL
+#   control    : a list of control parameters for algorithm tuning, as
+#                returned by <control.simulate.ergm> or
+#                <control.simulate.formula>; default=<control.simulate.X>
+#   verbose    : whether to print out information on the status of
+#                the simulations; default=FALSE
 #
-#  Copyright 2010 the statnet development team
-######################################################################
+# --RETURNED--
+#   if 'statsonly'=TRUE  -- the vector of summary statistics for the
+#      'nsim'=1             drawn network
+#   if 'statsonly'=TRUE  -- the matrix of summary statistics for each
+#                           drawn network; each row corresponds to a network
+#   if 'statsonly'=FALSE -- the drawn network
+#      'nsim'=1
+#   if 'statsonly'=FALSE -- a list with the following components:
+#      'nsim'>1              formula : 'object'
+#                            networks: the list of drawn networks
+#                            stats   : the matrix of summary stats
+#                            coef    : 'theta0'
+#
+###############################################################################
+
 simulate.ergm <- function(object, nsim=1, seed=NULL, theta0=object$coef,
                           burnin=1000, interval=1000,
                           statsonly=FALSE,
@@ -22,6 +71,8 @@ simulate.ergm <- function(object, nsim=1, seed=NULL, theta0=object$coef,
                    sequential=sequential, constraints=constraints,
                    control=control, verbose=verbose, ...)
 }
+
+
 
 simulate.formula <- function(object, nsim=1, seed=NULL, theta0,
                              burnin=1000, interval=1000,
@@ -50,10 +101,10 @@ simulate.formula <- function(object, nsim=1, seed=NULL, theta0,
   }
 
   # New formula (no longer use 'object'):
-  formula <- ergm.update.formula(object, nw ~ .)
+  form <- ergm.update.formula(object, nw ~ .)
   
   # Prepare inputs to ergm.getMCMCsample
-  m <- ergm.getmodel(formula, nw, drop=FALSE)
+  m <- ergm.getmodel(form, nw, drop=FALSE)
   Clist <- ergm.Cprepare(nw, m)
   MHproposal <- MHproposal(constraints,arguments=control$prop.args,
                            nw=nw, model=m, weights=control$prop.weights, class="c")  
@@ -71,7 +122,7 @@ simulate.formula <- function(object, nsim=1, seed=NULL, theta0,
     stop("Illegal value of theta0 passed to simulate.formula")
     
   # Create vector of current statistics
-  curstats<-summary(formula)
+  curstats<-summary(form)
   names(curstats) <- m$coef.names
 
   # prepare MCMCparams object
@@ -86,9 +137,8 @@ simulate.formula <- function(object, nsim=1, seed=NULL, theta0,
   
   # Explain how many iterations and steps will ensue if verbose==TRUE
   if (verbose) {
-    cat(paste("Starting ",nsim," MCMC iteration", ifelse(nsim>1,"s",""),
-              " of ", burnin+interval*(MCMCparams$samplesize-1), 
-              " steps", ifelse(nsim>1, " each", ""), ".\n", sep=""))
+    cat (paste ("Starting MCMC iterations to generate ", nsim,
+                " network", ifelse(nsim>1,"s",""), sep=""))
   }
   
   #########################
@@ -120,9 +170,8 @@ simulate.formula <- function(object, nsim=1, seed=NULL, theta0,
   # MCMC iteration (statsonly=FALSE) or we want to restart each chain
   # at the original network (sequential=FALSE).
   MCMCparams$nmatrixentries <- length(curstats)
-  if(sequential){
-   for(i in 1:nsim){
-    MCMCparams$burnin <- ifelse(i==1 || !sequential, burnin, interval)
+  for(i in 1:nsim){
+    MCMCparams$burnin <- ifelse(i==1, burnin, interval)
     z <- ergm.getMCMCsample(Clist, MHproposal, theta0, MCMCparams, verbose)
 
     # Create a network object if statsonly==FALSE
@@ -143,15 +192,14 @@ simulate.formula <- function(object, nsim=1, seed=NULL, theta0,
   if (statsonly)
     return(out.mat[1:nsim,]) # If nsim==1, this will return a vector, not a matrix
   
-  }
   # If we get here, statsonly==FALSE.
   if (nsim==1) {
     return(nw.list[[1]])
   } else {  
-  out.list <- list(formula = object, networks = nw.list, 
-                   stats = out.mat, coef=theta0)
-  class(out.list) <- "network.series"
-  return(out.list)
+    out.list <- list(formula = object, networks = nw.list, 
+                     stats = out.mat, coef=theta0)
+    class(out.list) <- "network.series"
+    return(out.list)
   }
 }
 

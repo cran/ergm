@@ -1,15 +1,19 @@
-#  File ergm/R/ergm.etagradmult.R
-#  Part of the statnet package, http://statnetproject.org
+##############################################################################
+# The <ergm.etagradmult> function calculates and returns the product of the
+# gradient of eta with a vector v
 #
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnetproject.org/attribution
+# --PARAMETERS--
+#   theta :  the curved model parameters
+#   v     :  a vector of the same length as the vector of mapped eta parameters
+#   etamap:  the list constituting the theta-> eta mapping returned by <ergm.etamap>
 #
-#  Copyright 2010 the statnet development team
-######################################################################
+# --RETURNED--
+#   ans: the vector that is the product of the gradient of eta and v; infinite
+#        values are replaced by (+-)10000
+#
+#################################################################################
+
 ergm.etagradmult <- function(theta, v, etamap) {
-# This function returns g %*% v, where g is the gradient of eta(theta)
-# based on the etamap object created by ergm.etamap.
   v <- as.matrix(v)
   ans <- matrix(0, length(theta), dim(v)[2])
   if(dim(v)[1] != etamap$etalength)
@@ -22,7 +26,8 @@ ergm.etagradmult <- function(theta, v, etamap) {
   if(length(etamap$curved)>0) {
     for(i in 1:length(etamap$curved)) {
       cm <- etamap$curved[[i]]
-      ans[cm$from,] <- cm$gradient(theta[cm$from], length(cm$to), cm$cov)%*%v[cm$to,]  #cov added by CTB on 1/28/06
+      #cov added by CTB on 1/28/06
+      ans[cm$from,] <- cm$gradient(theta[cm$from], length(cm$to), cm$cov)%*%v[cm$to,]  
     }
   }
   ans[is.infinite(ans)] <- 10000*sign(ans)[is.infinite(ans)]

@@ -1,12 +1,3 @@
-%  File ergm/man/ergm-package.Rd
-%  Part of the statnet package, http://statnetproject.org
-%
-%  This software is distributed under the GPL-3 license.  It is free,
-%  open source, and has the attribution requirements (GPL Section 7) in
-%    http://statnetproject.org/attribution
-%
-%  Copyright 2010 the statnet development team
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{ergm-package}
 \alias{ergm-package}
 \docType{package}
@@ -60,13 +51,14 @@ go to the \code{\link{ergm}} website:
 A tutorial, support newsgroup, references and links to further resources are provided there.
 }
 \author{
-Mark S. Handcock \email{handcock@stat.washington.edu},\cr
+Mark S. Handcock \email{handcock@stat.ucla.edu},\cr
 David R. Hunter \email{dhunter@stat.psu.edu},\cr
 Carter T. Butts \email{buttsc@uci.edu},\cr
-Steven M. Goodreau \email{goodreau@u.washington.edu}, and\cr
+Steven M. Goodreau \email{goodreau@u.washington.edu}
+Pavel N. Krivitsky \email{pavel@stat.cmu.edu}, and\cr
 Martina Morris \email{morrism@u.washington.edu}
 
-Maintainer: Mark S. Handcock \email{handcock@stat.washington.edu}
+Maintainer: David R. Hunter \email{dhunter@stat.psu.edu}
 }
 \references{
 Admiraal R, Handcock MS (2007).

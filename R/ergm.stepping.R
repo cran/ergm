@@ -1,12 +1,32 @@
-#  File ergm/R/ergm.stepping.R
-#  Part of the statnet package, http://statnetproject.org
+############################################################################
+# The <ergm.stepping> function provides one of the styles of maximum
+# likelihood estimation that can be used. This one is attributed to ?? and
+# uses ?? approach. The other  MLE styles are found in functions <ergm.robmon>
+# <ergm.stocapprox> and <ergm.mainfitloop>
 #
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnetproject.org/attribution
+# --PARAMETERS--
+#   theta0         : the initial theta values
+#   nw             : the network
+#   model          : the model, as returned by <ergm.getmodel>
+#   Clist          : a list of several network and model parameters,
+#                    as returned by <ergm.Cprepare>
+#   initialfit     : an ergm object, as the initial fit
+#   MCMCparams     : a list of parameters for controlling the MCMC sampling
+#   MHproposal     : an MHproposal object for 'nw', as returned by
+#                    <getMHproposal>
+#   MHproposal.miss: an MHproposal object for the missing network of'nw',
+#                    as returned by <getMHproposal>
+#   verbose        : whether the MCMC sampling should be verbose AND
+#                    the diagnostic plots should be printed ; default=FALSE
+#   ...            : additional paramters that are passed onto
+#                    <ergm.estimate> and <simulate.formula>
 #
-#  Copyright 2010 the statnet development team
-######################################################################
+# --RETURNED--
+#   v: an ergm object as a list containing several items; for details see
+#      the return list in the <ergm> function header (<ergm.stepping>=@)
+#
+###########################################################################      
+
 ergm.stepping = function(theta0, nw, model, Clist, initialfit, 
                          MCMCparams, MHproposal, MHproposal.miss, 
                          verbose=FALSE, ...){
@@ -35,14 +55,19 @@ ergm.stepping = function(theta0, nw, model, Clist, initialfit,
 	while (!finished) { # Iterate until gamma==1
 		iter=iter+1
     ## Generate an mcmc sample from the probability distribution determined by orig.mle
-		samples[[iter]]=simulate.formula(formula, nsim=MCMCparams$stepMCMCsize,       
+		samples[[iter]]=simulate.formula(formula, nsim=MCMCparams$stepMCMCsize,
                                      theta0=eta[[iter]], burnin=MCMCparams$burnin, 
-                                     interval=MCMCparams$interval, statsonly=TRUE)
+                                     interval=MCMCparams$interval, statsonly=TRUE,
+                                     ...)
 		sampmeans[[iter]]=colMeans(samples[[iter]])
 		
 		hi <- MCMCparams$gridsize  # Goal: Let gamma be largest possible multiple of .01
 		lo <- gamm <- 0
 		cat("Iteration #",iter, ". ")
+    if (verbose) {
+      cat("Current canonical parameter:\n")
+      print(eta[[iter]])
+    }
 		while (hi-lo>1 || hi > gamm) {
       gamm<-ceiling((hi+lo)/2)
 			gamma[[iter]] = gamm/MCMCparams$gridsize
@@ -144,7 +169,8 @@ ergm.stepping = function(theta0, nw, model, Clist, initialfit,
 	iter=iter+1
     finalsample=simulate.formula(formula, nsim=MCMCparams$samplesize,
                                      theta0=eta[[iter]], burnin=MCMCparams$burnin, 
-                                     interval=MCMCparams$interval, statsonly=TRUE)
+                                     interval=MCMCparams$interval, statsonly=TRUE, 
+                                     ...)
 	sampmeans[[iter]]=colMeans(finalsample)
   # Using the large sample from xi=.95*obsstats+.05*sampmeans we now find the MLE for the original problem:		
 	xi[[iter]] = obsstats
@@ -154,13 +180,13 @@ ergm.stepping = function(theta0, nw, model, Clist, initialfit,
 									 metric=MCMCparams$metric,
 									 verbose=verbose,
                    trace=0,  # suppress 'optim' output
-									 estimateonly=TRUE, 
+									 #estimateonly=TRUE,
                    #statsmatrix.miss=statsmatrix.miss, 
-                   #epsilon=MCMCparams$epsilon,
-                   # nr.reltol=MCMCparams$nr.reltol,
-                   #calc.mcmc.se=MCMCparams$calc.mcmc.se, hessianflag=MCMCparams$hessian,
-                   # trustregion=MCMCparams$trustregion, method=MCMCparams$method, 
-                   #compress=MCMCparams$compress, 
+                   epsilon=MCMCparams$epsilon,
+                    nr.reltol=MCMCparams$nr.reltol,
+                   calc.mcmc.se=MCMCparams$calc.mcmc.se, hessianflag=MCMCparams$hessian,
+                    trustregion=MCMCparams$trustregion, method=MCMCparams$method, 
+                   compress=MCMCparams$compress, 
 									 ...)
 	eta[[iter+1]]<-v$coef 
 	
@@ -173,49 +199,49 @@ ergm.stepping = function(theta0, nw, model, Clist, initialfit,
 #					 "Green = mean, Yellow=observed", sep=""),
           cex.main=1.5, cex.axis=1.5, cex.lab=1.5)
 	} #ends if(verbose)
-############# END PLOT #################		
-					
-  # Here is the second "larger sample size" loop, using the new (true) MLE as eta0.  The idea is
-  # to both get a slightly better MLE and to get a much better Hessian.
-
-	iter=iter+1
-	finalsample2=simulate.formula(formula, nsim=MCMCparams$samplesize,
-									 theta0=eta[[iter]], burnin=MCMCparams$burnin, 
-									 interval=MCMCparams$interval, statsonly=TRUE)			
-					
-	sampmeans[[iter]]=colMeans(finalsample2)
-
-############# FINAL PLOT 2 prints if VERBOSE=TRUE #################
-		if(verbose){		
-	pairs(rbind(finalsample2, obsstats, sampmeans[[iter]]), 
-		  col=c(rep(1, nrow(finalsample2)), 7, 3), 
-		  pch=c(rep(46, nrow(finalsample2)),4 ,4 ),
-		  main=paste("Final Estimation"),#:  Green = mean, Yellow=observed", sep=""),
-          cex.main=1.5, cex.axis=1.5, cex.lab=1.5)
-		} #ends if(verbose)
-############# END PLOT #################		
-
-  inCH=is.inCH(obsstats, finalsample2)
-	if (!inCH) {
-    stop("Observed statistics are not in final sample convex hull.")
-  }
-
-  # ergm.estimate requires that the simulated stats be "centered" in the sense that the
-  # observed statistics would be exactly zero on the same scale.  In this case, the
-  # "observed statistics" equal obsstats.
-	v<-ergm.estimate(theta0=eta[[iter]], model=model, 
-                   statsmatrix=sweep(finalsample2, 2, obsstats, '-'),
-                   #statsmatrix.miss=statsmatrix.miss, 
-                   epsilon=MCMCparams$epsilon,
-                   nr.maxit=MCMCparams$nr.maxit,
-                   nr.reltol=MCMCparams$nr.reltol,
-                   calc.mcmc.se=MCMCparams$calc.mcmc.se, hessianflag=MCMCparams$hessian,
-                   trustregion=MCMCparams$trustregion, method=MCMCparams$method, 
-                   metric=MCMCparams$metric,
-                   compress=MCMCparams$compress, 
-                   verbose=verbose, 
-                   trace=0,  # suppress 'optim' output
-                   ...)
+############## END PLOT #################		
+#					
+#  # Here is the second "larger sample size" loop, using the new (true) MLE as eta0.  The idea is
+#  # to both get a slightly better MLE and to get a much better Hessian.
+#
+#	iter=iter+1
+#	finalsample2=simulate.formula(formula, nsim=MCMCparams$samplesize,
+#									 theta0=eta[[iter]], burnin=MCMCparams$burnin, 
+#									 interval=MCMCparams$interval, statsonly=TRUE, ...)
+#					
+#	sampmeans[[iter]]=colMeans(finalsample2)
+#
+############## FINAL PLOT 2 prints if VERBOSE=TRUE #################
+#		if(verbose){		
+#	pairs(rbind(finalsample2, obsstats, sampmeans[[iter]]), 
+#		  col=c(rep(1, nrow(finalsample2)), 7, 3), 
+#		  pch=c(rep(46, nrow(finalsample2)),4 ,4 ),
+#		  main=paste("Final Estimation"),#:  Green = mean, Yellow=observed", sep=""),
+#          cex.main=1.5, cex.axis=1.5, cex.lab=1.5)
+#		} #ends if(verbose)
+############## END PLOT #################		
+#
+#  inCH=is.inCH(obsstats, finalsample2)
+#	if (!inCH) {
+#    stop("Observed statistics are not in final sample convex hull.")
+#  }
+#
+#  # ergm.estimate requires that the simulated stats be "centered" in the sense that the
+#  # observed statistics would be exactly zero on the same scale.  In this case, the
+#  # "observed statistics" equal obsstats.
+#	v<-ergm.estimate(theta0=eta[[iter]], model=model, 
+#                   statsmatrix=sweep(finalsample2, 2, obsstats, '-'),
+#                   #statsmatrix.miss=statsmatrix.miss, 
+#                   epsilon=MCMCparams$epsilon,
+#                   nr.maxit=MCMCparams$nr.maxit,
+#                   nr.reltol=MCMCparams$nr.reltol,
+#                   calc.mcmc.se=MCMCparams$calc.mcmc.se, hessianflag=MCMCparams$hessian,
+#                   trustregion=MCMCparams$trustregion, method=MCMCparams$method, 
+#                   metric=MCMCparams$metric,
+#                   compress=MCMCparams$compress, 
+#                   verbose=verbose, 
+#                   trace=0,  # suppress 'optim' output
+#                   ...)
 
   #####	final.mle
 	mle.lik <- mle.lik + abs(v$loglikelihood)

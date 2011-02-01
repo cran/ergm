@@ -1,12 +1,29 @@
-#  File ergm/R/statnetShowDoc.R
-#  Part of the statnet package, http://statnetproject.org
+#================================================================================
+# This file contains the following 2 functions for displaying documents
+#        <statnetShowDoc>
+#        <statnetbrowseURL>
+#===============================================================================
+
+
+
+
+
+###############################################################################
+# The <statnetShowDoc> function shows a given document in its appropriate
+# environment (i.e. a page viewer for .txt files, a browser for .html files) 
 #
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnetproject.org/attribution
+# --PARAMETERS--
+#   what   : the name of the document to show; default="LICENSE"
+#   type   : the type of document 'what' is, as "html" or "txt";
+#            default=c("html", "txt")
+#   package: the package containing 'what'; default="statnet"
+#   title  : the title to give the opened document
 #
-#  Copyright 2010 the statnet development team
-######################################################################
+# --RETURNED--
+#   the path to 'what'
+#
+###############################################################################
+
 statnetShowDoc <- function (what="LICENSE", type = c("html", "txt"),
                             package="statnet", title="License Information") 
 {
@@ -41,6 +58,24 @@ statnetShowDoc <- function (what="LICENSE", type = c("html", "txt"),
     stop(gettextf("no documentation for '%s' found in package '%s'", 
          what, package), domain = NA)
 }
+
+
+
+
+
+###############################################################################
+# The <statnetbrowseURL> function envokes the given brower to open the given
+# URL
+#
+# --PARAMETERS--
+#   url    : a url
+#   browser: the (full?) path to the browser's main directory?? 
+#
+# --RETURNED--
+#   an error code where 0 indicates success and -1 indicates failure
+#
+###############################################################################
+
 statnetbrowseURL <- function (url, browser = getOption("browser")) 
 {
     shQuote <- function(string) paste("\"", gsub("\\$", "\\\\$", 

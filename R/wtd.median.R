@@ -1,12 +1,18 @@
-#  File ergm/R/wtd.median.R
-#  Part of the statnet package, http://statnetproject.org
+#################################################################################
+# The <wtd.median> function determines and returns the weighted median of a
+# vector x
 #
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnetproject.org/attribution
+# --PARAMETERS--
+#   x     : a numeric vector
+#   na.rm : whether missing values should be removed (T or F); default=FALSE
+#   weight: a vector of weights for each value in x
 #
-#  Copyright 2010 the statnet development team
-######################################################################
+# --RETURNED--
+#   NA                     if x has missing values and 'na.rm'=FALSE
+#   the weighted median    otherwise  
+#
+################################################################################
+
 wtd.median <- function(x, na.rm = FALSE, weight=FALSE) {
  	if(mode(x) != "numeric")
  		stop("need numeric data")

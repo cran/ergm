@@ -1,19 +1,22 @@
-#  File ergm/R/ergm.getglobalstats.R
-#  Part of the statnet package, http://statnetproject.org
+###########################################################################
+# The <ergm.getglobalstats> function calculates and returns the global
+# statistics for a given network via <network_stats_wrapper.C>
 #
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnetproject.org/attribution
+# --PARAMETERS--
+#   nw:  a network object
+#   m :  the model in use with network nw, as returned by <ergm.getmodel>
 #
-#  Copyright 2010 the statnet development team
-######################################################################
+#
+# --RETURNED--
+#   gs:  a vector of the global statistics
+#
+#############################################################################
+
 ergm.getglobalstats <- function(nw, m) {
   Clist <- ergm.Cprepare(nw, m)
-  #
-  #    Calculate the global statistics
-  #
+  # *** don't forget, tails are passes in first now, notheads
   gs <- .C("network_stats_wrapper",
-           as.integer(Clist$heads), as.integer(Clist$tails), 
+           as.integer(Clist$tails), as.integer(Clist$heads), 
            as.integer(Clist$nedges),
            as.integer(Clist$n),
            as.integer(Clist$dir), as.integer(Clist$bipartite), 
@@ -24,10 +27,8 @@ ergm.getglobalstats <- function(nw, m) {
            PACKAGE="ergm"
            )$gs
   names(gs) <- m$coef.names
-  
-  #
+
   # Adjust to global values
-  #
                                                                 
   # New method:  Use $emptynwstats added to m$terms by the InitErgm function
   # Read the comments at the top of InitErgm.R or InitErgmTerm.R for 

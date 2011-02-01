@@ -1,16 +1,19 @@
-#  File ergm/R/ergm.eta.R
-#  Part of the statnet package, http://statnetproject.org
+##############################################################################
+# The <ergm.eta> function calculates and returns eta, mapped from
+# theta using the etamap object created by <ergm.etamap>.
 #
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnetproject.org/attribution
+# --PARAMETERS--
+#   theta :  the curved model parameters  
+#   etamap:  the list of values that constitutes the theta-> eta mapping
+#            and is returned by <ergm.etamap>
 #
-#  Copyright 2010 the statnet development team
-######################################################################
+# --RETURNED--
+#   eta:  the canonical eta parameters as mapped from theta; infinite parameters
+#         are replaced by -10000
+#
+###############################################################################
+
 ergm.eta <- function(theta, etamap) {
-# This function maps theta to eta based on the etamap object created
-# by ergm.etamap.
-#eta.cov added by CTB on 1/28/06
   eta <- rep(0,etamap$etalength)
   ec <- etamap$canonical
   eta[ec[ec>0]] <- theta[ec>0]

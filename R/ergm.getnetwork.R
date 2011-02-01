@@ -1,24 +1,31 @@
-#  File ergm/R/ergm.getnetwork.R
-#  Part of the statnet package, http://statnetproject.org
+#################################################################################
+# The <ergm.getnetwork> function ensures that the network in a given formula
+# is valid; if so, the network is returned; if not, execution is halted with
+# warnings
 #
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnetproject.org/attribution
+# --PARAMETERS--
+#   formula     :  the formula as 'network ~ model.term(s)'
+#   loopswarning:  whether warnings about loops should be printed (T or F);
+#                  default=TRUE
 #
-#  Copyright 2010 the statnet development team
-######################################################################
-ergm.getnetwork <- function (formula, loopswarning=TRUE) {
+# --RETURNED--
+#   nw: the network from the formula IF (i) the formula was correctly structured
+#       and (ii) the network is found within the formula's enviornment
+#
+###################################################################################
+
+ergm.getnetwork <- function (form, loopswarning=TRUE) {
   current.warn <- options()$warn
 # options(warn=0)
-  if ((dc<-data.class(formula)) != "formula")
+  if ((dc<-data.class(form)) != "formula")
     stop (paste("Invalid formula of class ",dc))
-  trms<-terms(formula)
+  trms<-terms(form)
   if (trms[[1]]!="~")
     stop ("Formula must be of the form 'network ~ model'.")
 
-  nw.env<-environment(formula)
+  nw.env<-environment(form)
   if(!exists(x=paste(trms[[2]]),envir=nw.env)){
-    stop(paste("The network in the formula '",capture.output(print(formula)),"' can not be found.",sep=""))
+    stop(paste("The network in the formula '",capture.output(print(form)),"' can not be found.",sep=""))
   }
   nw <- try(as.network(eval(trms[[2]],envir=nw.env), silent = TRUE))  
   if(inherits(nw,"try-error")){

@@ -1,12 +1,17 @@
-#  File ergm/R/print.ergm.R
-#  Part of the statnet package, http://statnetproject.org
+###############################################################################
+# The <print.ergm> function prints summary information for a given ergm
 #
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnetproject.org/attribution
+# --PARAMETERS--
+#   x     :  an ergm object
+#   digits:  the number of significant digits for the coefficients;
+#            default=max(3, getOption("digits")-3)
+#   ...   :  additional parameters passed from within; these will be ignored
 #
-#  Copyright 2010 the statnet development team
-######################################################################
+# --RETURNED--
+#   x
+# 
+###############################################################################
+
 print.ergm <- function (x, digits = max(3, getOption("digits") - 3), ...) {
 #  if(!is.latent(x) || is.null(x$Z.mle)) {                             
   if(is.null(x$Z.mle)) {

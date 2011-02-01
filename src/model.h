@@ -1,13 +1,3 @@
-/*
- *  File ergm/src/model.h
- *  Part of the statnet package, http://statnetproject.org
- *
- *  This software is distributed under the GPL-3 license.  It is free,
- *  open source, and has the attribution requirements (GPL Section 7) in
- *    http://statnetproject.org/attribution
- *
- *  Copyright 2010 the statnet development team
- */
 #ifndef MODEL_H
 #define MODEL_H
 
@@ -43,7 +33,10 @@ int ModelTermHamming (char *fnames, int n_terms);
 int ModelTermFormation (char *fnames, int n_terms);
 int ModelTermDissolve (char *fnames, int n_terms);
 
-void ChangeStats(unsigned int ntoggles, Vertex *togglehead, Vertex *toggletail, Network *nwp, Model *m);
+
+/* *** don't forget tail-> head, so this function accepts toggletail first, not togglehead  */
+
+void ChangeStats(unsigned int ntoggles, Vertex *toggletail, Vertex *togglehead, Network *nwp, Model *m);
 
 #endif
 

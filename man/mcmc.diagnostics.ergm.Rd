@@ -1,12 +1,3 @@
-%  File ergm/man/mcmc.diagnostics.ergm.Rd
-%  Part of the statnet package, http://statnetproject.org
-%
-%  This software is distributed under the GPL-3 license.  It is free,
-%  open source, and has the attribution requirements (GPL Section 7) in
-%    http://statnetproject.org/attribution
-%
-%  Copyright 2010 the statnet development team
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{mcmc.diagnostics.ergm}
 \alias{mcmc.diagnostics.ergm}
 \alias{mcmc.diagnostics}
@@ -85,7 +76,7 @@ More information can be found by looking at the documentation of
   Practical Markov Chain Monte Carlo (W.R. Gilks, D.J. Spiegelhalter and
   S. Richardson, eds.). London, U.K.: Chapman and Hall.
 }
-\author{Mark S. Handcock, \email{handcock@stat.washington.edu}
+\author{Mark S. Handcock, \email{handcock@stat.ucla.edu}
   based on the \code{coda} package and also ideas
   from \code{mcgibbsit} by 
   Gregory R. Warnes \email{gregory\_r\_warnes@groton.pfizer.com}.

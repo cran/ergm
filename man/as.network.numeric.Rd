@@ -1,12 +1,3 @@
-%  File ergm/man/as.network.numeric.Rd
-%  Part of the statnet package, http://statnetproject.org
-%
-%  This software is distributed under the GPL-3 license.  It is free,
-%  open source, and has the attribution requirements (GPL Section 7) in
-%    http://statnetproject.org/attribution
-%
-%  Copyright 2010 the statnet development team
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{as.network.numeric}
 \alias{as.network.numeric}
 %- Also NEED an '\alias' for EACH other topic documented here.
@@ -15,7 +6,7 @@
   \code{\link{as.network.numeric}} creates a random Bernoulli network of the given size as an object of class \code{\link[network]{network}}.
 }
 \usage{
-\method{as}{network.numeric}(x, directed = TRUE, 
+\method{as.network}{numeric}(x, directed = TRUE, 
     hyper = FALSE, loops = FALSE, multiple = FALSE, bipartite = FALSE,
     ignore.eval = TRUE, names.eval = NULL,
     edge.check = FALSE,
@@ -48,7 +39,7 @@ divided by the number of dyads (so the expected number of ties is the same as th
   An object of class \code{\link[network]{network}}
 }
 \references{ Butts, C.T.  2002.  ``Memory Structures for Relational Data in R: Classes and Interfaces''  Working Paper. }
-\author{ Carter T. Butts \email{buttsc@uci.edu} and Mark S. Handcock \email{handcock@stat.washington.edu} }
+\author{ Carter T. Butts \email{buttsc@uci.edu} and Mark S. Handcock \email{handcock@stat.ucla.edu} }
 %\note{ ~~further notes~~ }
 %
 % ~Make other sections like Warning with \section{Warning }{....} ~

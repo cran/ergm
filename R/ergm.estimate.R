@@ -1,17 +1,50 @@
-#  File ergm/R/ergm.estimate.R
-#  Part of the statnet package, http://statnetproject.org
+##################################################################################
+# The <ergm.estimate> function searches for and returns a maximizer of the
+# log-likelihood function. This function is missing-data capable.
 #
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnetproject.org/attribution
+# --PARAMETERS--
+#   theta0          : the vector of theta parameters that produced 'statsmatrix'
+#   model           : the model, as returned by <ergm.getmodel>
+#   statsmatrix     : the matrix of observed statistics that has already had the
+#                     "observed statistics" vector subtracted out (i.e., the
+#                     "observed stats" are assumed to be zero here)
+#   statsmatrix.miss: the corresponding statsmatrix for the missing edges;
+#                     default=NULL
+#   nr.maxit        : the maximum number of iterations to use within the <optim>
+#                     rountine; default=1000
+#   nr.reltol       : the relative tolerance to use within the <optim> rountine;
+#                     default=sqrt(.Machine$double.eps)
+#   metric          : the name of a metric to use, as either "Likelihood",
+#                     "lognormal", "Median.Likelihood", or "EF.Likelihood";
+#                     default="lognormal"
+#   method          : the method to be used by the <optim> routine;
+#                     default="Nelder-Mead"
+#   compress        : whether the matrix of statistics should be compressed
+#                     via <ergm.sufftoprob>; default=FALSE
+#   calc.mcmc.se    : whether to calculate the standard errors induced by the
+#                     MCMC algorithm; default=TRUE
+#   hessainflag     : whether the Hessian matrix of the likelihood function
+#                     should be computed; default=TRUE
+#   verbose         : whether the progress of the estimation should be printed;
+#                     default=FALSE
+#   trace           : a non-negative interger specifying how much tracing
+#                     information should be printed by the <optim> routine;
+#                     default=6*'verbose'
+#   trustregion     : the trust region parameter for the likelihood functions
+#   estimateonly    : whether only the estimates (vs. the estimates and the
+#                     standard errors) should be calculated; default=FALSE
 #
-#  Copyright 2010 the statnet development team
-######################################################################
-# Search for a maximizer of the loglikelihood function, given a matrix of
-# observed statistics that has already had the "observed statistics" vector
-# subtracted out (i.e., the "observed stats" are assumed to be zero here)
-# and the value of the theta0 vector that produced this matrix of statistics.
-# This function is missing-data capable.
+#
+# --IGNORED PARAMETERS--
+#   epsilon         : ??; default=1e-10
+#
+#
+# --RETURNED--
+#   an ergm object as a list containing several components; for details
+#   see the return list in the <ergm> function header (<ergm.estimate>=^)
+#
+###################################################################################         
+
 ergm.estimate<-function(theta0, model, statsmatrix, statsmatrix.miss=NULL,
                         epsilon=1e-10, nr.maxit=1000, nr.reltol=sqrt(.Machine$double.eps),
                         metric="lognormal",
@@ -56,18 +89,19 @@ ergm.estimate<-function(theta0, model, statsmatrix, statsmatrix.miss=NULL,
   # of center (e.g., the column means).  Since this shifts the scale, the
   # value of xobs (playing the role of "observed statistics") must be
   # adjusted accordingly.
-  av <- apply(sweep(statsmatrix0,1,probs,"*"), 2, sum)
-  V=cov.wt(statsmatrix0[,!model$etamap$offsetmap,drop=FALSE], wt=probs)$cov
+# av <- apply(sweep(statsmatrix0,1,probs,"*"), 2, sum)
+   av <- apply(statsmatrix0, 2, weighted.mean, w=probs)
+   V=cov(statsmatrix0[,!model$etamap$offsetmap,drop=FALSE])
   xsim <- sweep(statsmatrix0, 2, av,"-")
   xobs <-  -av 
   # Do the same recentering for the statsmatrix0.miss matrix, if appropriate.
   # Note that xobs must be adjusted too.
   if(missingflag) {
-    av.miss <- apply(sweep(statsmatrix0.miss,1,probs.miss,"*"), 2, sum)
+     V.miss=cov(statsmatrix0.miss[, !model$etamap$offsetmap, drop=FALSE])
+     av.miss <- apply(statsmatrix0.miss, 2, weighted.mean, w=probs.miss)
+#   av.miss <- apply(sweep(statsmatrix0.miss,1,probs.miss,"*"), 2, sum)
     xsim.miss <- sweep(statsmatrix0.miss, 2, av.miss,"-")
     xobs <- av.miss-av
-    V.miss=cov.wt(statsmatrix0.miss[, !model$etamap$offsetmap, drop=FALSE], 
-                  wt=probs.miss)$cov
   }
   
   # Convert theta0 (possibly "curved" parameters) to eta0 (canonical parameters)
@@ -132,19 +166,21 @@ ergm.estimate<-function(theta0, model, statsmatrix, statsmatrix.miss=NULL,
       if (verbose) { cat("Using log-normal approx (no optim)\n") }
       Lout <- list(hessian = -V)
     }
-    Lout$par <- try(eta0[!model$etamap$offsetmap] - solve(Lout$hessian, xobs[!model$etamap$offsetmap]))
+    Lout$par <- try(eta0[!model$etamap$offsetmap] 
+                    - solve(Lout$hessian, xobs[!model$etamap$offsetmap]),
+                    silent=TRUE)
     # If there's an error, first try a robust matrix inverse.  This can often
     # happen if the matrix of simulated statistics does not ever change for one
     # or more statistics.
     if(inherits(Lout$par,"try-error")){
-      Lout$par <- try(eta0[!model$etamap$offsetmap] - 
-                      robust.inverse(Lout$hessian) %*% 
-                      xobs[!model$etamap$offsetmap])
+      Lout$par <- try(eta0[!model$etamap$offsetmap] 
+                      - robust.inverse(Lout$hessian) %*% 
+                      xobs[!model$etamap$offsetmap],
+                      silent=TRUE)
     }
     # If there's still an error, use the Matrix package to try to find an 
-    # alternative Hessian approximant that has no zero eigenvalues.    
-    if(inherits(Lout$par,"try-error")){
-      library(Matrix)
+    # alternative Hessian approximant that has no zero eigenvalues.
+    if(inherits(Lout$par,"try-error") && !inherits(try(library(Matrix)), "try-error")){
       if (missingflag) {
         Lout <- list(hessian = -(as.matrix(nearPD(V-V.miss)$mat)))
       }else{
@@ -175,16 +211,17 @@ ergm.estimate<-function(theta0, model, statsmatrix, statsmatrix.miss=NULL,
                       xsim=xsim, probs=probs,
                       xsim.miss=xsim.miss, probs.miss=probs.miss,
                       varweight=varweight, trustregion=trustregion,
-                      eta0=eta0, etamap=model$etamap))
-    if(Lout$value < trustregion-0.001){
-      current.scipen <- options()$scipen
-      options(scipen=3)
-      cat("the log-likelihood improved by",
-          format.pval(Lout$value,digits=4,eps=1e-4),"\n")
-      options(scipen=current.scipen)
-    }else{
-      cat("the log-likelihood did not improve.\n")
-    }
+                      eta0=eta0, etamap=model$etamap),
+            silent=FALSE)
+#   if(Lout$value < trustregion-0.001){
+#     current.scipen <- options()$scipen
+#     options(scipen=3)
+#     cat("the log-likelihood improved by",
+#         format.pval(Lout$value,digits=4,eps=1e-4),"\n")
+#     options(scipen=current.scipen)
+#   }else{
+#     cat("the log-likelihood did not improve.\n")
+#   }
     if(inherits(Lout,"try-error") || Lout$value > 199 || Lout$value < -790) {
       cat("MLE could not be found. Trying Nelder-Mead...\n")
       Lout <- try(optim(par=guess, 
@@ -197,7 +234,8 @@ ergm.estimate<-function(theta0, model, statsmatrix, statsmatrix.miss=NULL,
                         xsim=xsim, probs=probs, 
                         xsim.miss=xsim.miss, probs.miss=probs.miss,
                         varweight=varweight, trustregion=trustregion,
-                        eta0=eta0, etamap=model$etamap))
+                        eta0=eta0, etamap=model$etamap),
+              silent=FALSE)
       if(inherits(Lout,"try-error") || Lout$value > 500 ){
         cat(paste("No direct MLE exists!\n"))
       }
@@ -263,10 +301,16 @@ ergm.estimate<-function(theta0, model, statsmatrix, statsmatrix.miss=NULL,
                                        H=V, H.miss=V.miss,
                                        model=model)
       } else {
-        mc.se <- ergm.MCMCse(theta=theta,theta0=theta0, 
+        MCMCse <- ergm.MCMCse(theta=theta,theta0=theta0, 
                              statsmatrix=statsmatrix0,
                              statsmatrix.miss=statsmatrix.miss,
                              model=model)
+        mc.se <- MCMCse$mc.se
+#       The next line forces the s.e. in summary.ergm to combine
+#       the hessian of the likelihood plus the MCMC s.e.
+#       covar <- MCMCse$mc.cov+covar
+#       If the above line is commented out only the hessian of the likelihood 
+#       is used.
       }
     }
     c0  <- loglikelihoodfn(theta=Lout$par, xobs=xobs,

@@ -1,12 +1,20 @@
-#  File ergm/R/ergm.degenerate.R
-#  Part of the statnet package, http://statnetproject.org
+##########################################################################
+# The <ergm.degenerate> function ensures that the given formula specifies
+# a valid network on its left hand side (by halting if not) and determines 
+# which of the model terms would be dropped because of their degeneracy
+# status
 #
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnetproject.org/attribution
+# --PARAMETERS--
+#   formula:  the ergm formula
+#   ...    :  addtional parameters that may be passed from within;
+#             these are ignored
 #
-#  Copyright 2010 the statnet development team
-######################################################################
+# --RETURNED--
+#   a logical vector of whether each model term would be dropped
+#   because it is deemed degenerate
+#
+#########################################################################
+
 ergm.degenerate <- function(formula, ...)
 {
     trms <- ergm.getterms(formula)
@@ -20,9 +28,7 @@ ergm.degenerate <- function(formula, ...)
     if(inherits(g,"try-error")){
      stop("Invalid graph. Is the left-hand-side of the formula correct?")
     }
-#
 #   Check for degenerate specifications
-#
     m.all <- ergm.getmodel(trms, g, drop=FALSE)
     m <- ergm.getmodel(trms, g, drop=TRUE)
     degenerate <- is.na(match(m.all$coef.names, m$coef.names))

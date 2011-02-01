@@ -1,12 +1,16 @@
-#  File ergm/R/as.directed.R
-#  Part of the statnet package, http://statnetproject.org
+#################################################################
+# The <as.directed> function, rather unituitivetly, takes a
+# network and returns its *undirected* counterpart
 #
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnetproject.org/attribution
+# --PARAMETERS--
+#   x: a network object
 #
-#  Copyright 2010 the statnet development team
-######################################################################
+# --RETURNED--
+#   unw: the undirected version of network x if previously directed
+#   x  : if x is already undirected
+#
+#################################################################
+
 as.directed<-function(x){
   if(!is.network(x))
     stop("as.directed requires an argument of class network.\n")
@@ -28,7 +32,7 @@ as.directed<-function(x){
      delete.edges(unw,eid)
      unw %n% "directed" <- FALSE
      if(nrow(newmatrix)>0){
-      add.edges(unw,head=newmatrix[,2],tail=newmatrix[,1])
+      add.edges(unw,tail=newmatrix[,2],head=newmatrix[,1])
      }
      unw
     }else{

@@ -1,16 +1,45 @@
-#  File ergm/R/ergm.getmodel.R
-#  Part of the statnet package, http://statnetproject.org
+#===================================================================================
+# This file contains the following 2 functions for creating the 'ergm.model' object
+#             <ergm.getmodel>
+#             <updatemodel.ErgmTerm>
+#===================================================================================
+
+
+
+
+
+###################################################################################
+# The <ergm.getmodel> function parses the given formula, and initiliazes each ergm
+# term via the <InitErgmTerm> functions to create a 'model.ergm' object for the
+# given network
 #
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnetproject.org/attribution
+# --PARAMETERS--
+#   formula:  a formula of the form 'network ~ model.term(s)'
+#   nw     :  the network of interest
+#   silent :  whether to print the warning messages from the initialization of each
+#             model term (T or F); default=FALSE
+#   ...    :  additional parameters for model formulation;
+#             recognized parameters include
+#               drop      : whether to drop degenerate terms (T or F)
+#               initialfit: whether curved exponential terms have been initially fit
+#                           by MPLE (T or F)
 #
-#  Copyright 2010 the statnet development team
-######################################################################
+#
+# --RETURNED--
+#   a 'model.ergm' object as a list containing:
+#     formula       :  the formula inputted to <ergm.getmodel>
+#     coef.names    :  a vector of coefficient names
+#     offset        :  a logical vector of whether each term was "offset", i.e. fixed
+#     terms         :  a list of terms and 'term components' initialized by the 
+#                      appropriate <InitErgmTerm.X> function.  See the <InitErgm> 
+#                      function header for details about the 'terms' list
+#     network.stats0:  NULL always??
+#     etamap        :  the theta -> eta mapping as a list returned from <ergm.etamap> 
+#     class         :  the character string "model.ergm" 
+#
+#####################################################################################
+
 ergm.getmodel <- function (formula, nw, silent=FALSE, ...) {
-  # Parse the formula, create an object of class "model.ergm" that contains
-  # all relevant information about the model.  As part of this job, call the
-  # appropriate InitErgm functions.
   if ((dc<-data.class(formula)) != "formula")
     stop (paste("Invalid formula of class ",dc), call.=FALSE)
 
@@ -24,7 +53,7 @@ ergm.getmodel <- function (formula, nw, silent=FALSE, ...) {
   
   formula.env<-environment(formula)
   
-  model <- structure(list(formula=formula, node.attrib = NULL, coef.names = NULL,
+  model <- structure(list(formula=formula, coef.names = NULL,
                       offset = NULL,
                       terms = NULL, networkstats.0 = NULL, etamap = NULL),
                  class = "model.ergm")
@@ -102,10 +131,25 @@ ergm.getmodel <- function (formula, nw, silent=FALSE, ...) {
   model
 }
 
-# Take the output of an InitErgmTerm.xxx function and add it correctly
-# to an existing model object.  If outlist is NULL, then simply return
-# original model object.  This is sometimes important, if for example
-# a term is to be eliminated because it gives only zero statistics.
+
+
+#######################################################################
+# The <updatemodel.ErgmTerm> function updates an existing model object
+# to include an initialized ergm term, X;
+#
+# --PARAMETERS--
+#   model  : the pre-existing model, as created by <ergm.getmodel>
+#   outlist: the list describing term X, as returned by <InitErgmTerm.X>
+#
+# --RETURNED--
+#   model: the updated model (with the obvious changes seen below) if
+#            'outlist'!=NULL, else
+#          the original model; (note that this return is necessary,
+#            since terms may be eliminated by giving only 0 statistics,
+#            and consequently returning a NULL 'outlist')
+#
+#######################################################################
+
 updatemodel.ErgmTerm <- function(model, outlist) { 
   if (!is.null(outlist)) { # Allow for no change if outlist==NULL
     model$coef.names <- c(model$coef.names, outlist$coef.names)

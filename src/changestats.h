@@ -1,13 +1,3 @@
-/*
- *  File ergm/src/changestats.h
- *  Part of the statnet package, http://statnetproject.org
- *
- *  This software is distributed under the GPL-3 license.  It is free,
- *  open source, and has the attribution requirements (GPL Section 7) in
- *    http://statnetproject.org/attribution
- *
- *  Copyright 2010 the statnet development team
- */
 #ifndef CHANGESTATS_H
 #define CHANGESTATS_H
 
@@ -45,7 +35,10 @@ D_CHANGESTAT_FN(d_boundedistar);
 D_CHANGESTAT_FN(d_boundedkstar);
 D_CHANGESTAT_FN(d_boundedostar);
 D_CHANGESTAT_FN(d_boundedtriangle);
-  Vertex CountTriangles (Vertex h, Vertex t, int outcount, 
+
+/* *** don't forget tail-> head, so this function accepts tail first, not head */
+
+  Vertex CountTriangles (Vertex tail, Vertex head, int outcount, 
                          int incount, Network *nwp);
 /********************  changestats:  C    ***********/
 D_CHANGESTAT_FN(d_concurrent);
@@ -55,7 +48,11 @@ D_CHANGESTAT_FN(d_cycle);
   void edgewise_path_recurse(Network *g, Vertex dest, 
      Vertex curnode, Vertex *availnodes, long int availcount, 
      long int curlen, double *countv, long int maxlen);
-  void edgewise_cycle_census(Network *g, Vertex t, Vertex h, 
+
+/* *** I didn't swap heads and tails here, since these already 
+   seem in line with the tails->heads naming convenction*/
+       
+  void edgewise_cycle_census(Network *g, Vertex tail, Vertex head, 
      double *countv, long int maxlen);
 /********************  changestats:  D    ***********/
 D_CHANGESTAT_FN(d_degree);
@@ -137,6 +134,7 @@ D_CHANGESTAT_FN(d_tesp);
 D_CHANGESTAT_FN(d_threepath);
 D_CHANGESTAT_FN(d_tnsp);
 D_CHANGESTAT_FN(d_transitive);
+D_CHANGESTAT_FN(d_transitiveties); S_CHANGESTAT_FN(s_transitiveties);
 D_CHANGESTAT_FN(d_triadcensus);
 D_CHANGESTAT_FN(d_triangle);
 D_CHANGESTAT_FN(d_tripercent);

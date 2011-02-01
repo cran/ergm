@@ -1,23 +1,48 @@
-#  File ergm/R/ergm.initialfit.R
-#  Part of the statnet package, http://statnetproject.org
+####################################################################################
+# The <ergm.initialfit> function fits an initial ergm object using either ML or MPL
+# estimation.  If initial parameters are provided in 'theta0' and 'MLestimate' is 
+# TRUE, the number of parameters in 'theta0' is checked for correctness.
+# 
+# --PARAMETERS--
+#   theta0        :  either a vector whose first entry is "MPLE" or a vector
+#                    of initial coefficients
+#   MLestimate    :  whether a MLestimate should be used (T or F); 
+#                       if TRUE, this may be overriden by 'force.MPLE'=TRUE  or
+#                                theta0=c("MPLE", ...)
+#                       if FALSE, 'theta0' must have "MPLE" as its 1st entry to 
+#                                  avoid an error
+#   Clist         :  the list of parameters needed for ML or MPL estimation and 
+#                    returned by <ergm.Cprepare>
+#   Clist.miss    :  the list of parameters for the network of missing edges
+#                    needed for ML or MPL estimation and returned by <ergm.design> 
+#   m             :  the model as returned by <ergm.getmodel>
+#   MPLEtype      :  the method for MPL estimation as either "glm", "penalized",
+#                    or "logitreg"; this is ignored if ML estimation is used;
+#                    default="glm" 
+#   initial.loglik:  the initial log likelihood; default=NULL
+#   force.MPLE    :  whether MPL estimation should be forced instead of ML 
+#                    estimation (T or F); this is ignored if 'MLestimate'=FALSE
+#                    or "MPLE" is an entry into 'theta0'; default=FALSE
+#   verbose       :  whether the MPL estimation should be verbose (T or F); 
+#                    default=FALSE
+#   ...           :  addtional parameters that are used with MPL estimation;
+#                    the only recognized parameeter is 'compressflag' which
+#                    compresses the design matrix used by <ergm.mple>        
 #
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnetproject.org/attribution
+# --RETURNED--
+#    an ergm object as one of the following lists
+#     if MLE  -- a list with 2 components
+#                  coef   : 'theta0'
+#                  mle.lik:  the MLE likelihood
+#    if MPLE -- the list returned by <ergm.mple>
 #
-#  Copyright 2010 the statnet development team
-######################################################################
+######################################################################################
+
 ergm.initialfit<-function(theta0, MLestimate, Clist, Clist.miss, m, 
                           MPLEtype="glm", initial.loglik=NULL,
                           conddeg=NULL, MCMCparams=NULL, MHproposal=NULL,
                           force.MPLE=FALSE,
                           verbose=FALSE, ...) {
-# Process input for call to ergm.mple or some other alternative fitting
-# method.  If the user wishes only to obtain the fit from this method
-# (MLestimate==FALSE), this fit is returned immediately upon return to
-# ergm function and the function terminates.  Otherwise (MLestimate==TRUE),
-# we also check to see whether the theta0 value is a valid vector of
-# initial parameters.
   fitmethod <- match("MPLE", theta0)
   if (is.na(fitmethod) && MLestimate) { # theta0 should be a start vector
     

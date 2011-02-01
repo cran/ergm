@@ -1,12 +1,16 @@
-#  File ergm/R/ergm.MCMCacf.R
-#  Part of the statnet package, http://statnetproject.org
+##########################################################################
+# The <ergm.MCMCacf> function computes and returns the auto correlation
+# matrix of the MCMC sample
 #
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnetproject.org/attribution
+# --PARAMETERS--
+#   statsmatrix:  the matrix of network statistics
+#   lag.max    :  the maximum lag at which to calculate the acf
 #
-#  Copyright 2010 the statnet development team
-######################################################################
+# --RETURNED--
+#   corV:  the correlation among the statsmatrix
+#
+##########################################################################
+
 ergm.MCMCacf<-function(statsmatrix, lag.max=50)
 {
   if(ncol(statsmatrix)==1){

@@ -1,12 +1,19 @@
-#  File ergm/R/print.network.series.R
-#  Part of the statnet package, http://statnetproject.org
+###############################################################################
+# The <print.network.series> function prints the summary information for the
+# first network in the given series along with the number of networks in the
+# series, and the formula and coefficients associated with the series
 #
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnetproject.org/attribution
+# --PARAMETERS--
+#   x  :  a network.series object
+#   ...:  additional parameters; these will be ignored 
+#   wmt:  which matrix type is used to describe the networks;
+#         default=which.matrix.type(objects$networks[[1]])) 
 #
-#  Copyright 2010 the statnet development team
-######################################################################
+# --RETURNED--
+#   the first network in x
+#
+###############################################################################
+
 "print.network.series" <-
   function (x, ..., wmt = which.matrix.type(x$networks[[1]])) 
 {

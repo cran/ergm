@@ -1,12 +1,64 @@
-#  File ergm/R/ergm.pl.R
-#  Part of the statnet package, http://statnetproject.org
+###############################################################################
+# The <ergm.pl> function prepares many of the components needed by <ergm.mple>
+# for the regression rountines that are used to find the MPLE estimated ergm;
+# this is largely done through <MPLE_wrapper.C> or <MPLEconddeg_wrapper>
 #
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnetproject.org/attribution
+# --PARAMETERS--
+#   Clist            : a list of parameters used for fitting and returned
+#                      by <ergm.Cprepare>
+#   Clist.miss       : the corresponding 'Clist' for the network of missing
+#                      edges returned by <ergm.design>
+#   m                : the model, as returned by <ergm.getmodel>
+#   theta.offset     : a logical vector specifying which of the model
+#                      coefficients are offset, i.e. fixed
+#   maxMPLEsamplesize: the sample size to use for endogenous sampling in the
+#                      pseudolikelihood computation; default=1e6
+#   maxNumDyadTypes  : the maximum number of unique pseudolikelihood
+#                      change statistics to be allowed if 'compressflag'=TRUE;
+#                      if this is less than the networks maximum count of
+#                      unique change stats, these will be sampled to attain
+#                      the correct size; default=1e6
+#   conddeg          : an indicator of whether the MPLE should be conditional
+#                      on degree; non-NULL values indicate yes, NULL no;
+#                      default=NULL 
+#   MCMCparams       : a list of MCMC related parameters; recognized variables
+#                      include:
+#         samplesize : the number of networks to sample, which will inform the size
+#                      of the returned 'xmat'
+#         Clist.miss : see 'Clist.miss' above; some of the code uses this Clist.miss,
+#                      some uses the one above, does this seem right?
+#   MHproposal       : an MHproposal object, as returned by <ergm.getMHproposal>
+#   verbose          : whether this and the C routines should be verbose (T or F);
+#                      default=FALSE
+#   compressflag     : whether to compress the design matrix of change stats by
+#                      tabulating the unique rows (T or F); default=TRUE
 #
-#  Copyright 2010 the statnet development team
-######################################################################
+#
+# --RETURNED--
+#   a list containing
+#     xmat     : the possibly compressed and possibly sampled matrix of change
+#                statistics
+#     zy       : the corresponding vector of responses, i.e. tie values
+#     foffset  : ??
+#     wend     : the vector of weights for 'xmat' and 'zy'
+#     numobs   : the number of dyads 
+#     xmat.full: the 'xmat' before sampling; if no sampling is needed, this
+#                is NULL
+#     zy.full  : the 'zy' before  sampling; if no sampling is needed, this
+#                is NULL
+#     foffset.full     : ??
+#     theta.offset     : a numeric vector whose ith entry tells whether the
+#                        the ith curved coefficient?? was offset/fixed; -Inf
+#                        implies the coefficient was fixed, 0 otherwise; if
+#                        the model hasn't any curved terms, the first entry
+#                        of this vector is one of
+#                           log(Clist$nedges/(Clist$ndyads-Clist$nedges))
+#                           log(1/(Clist$ndyads-1))
+#                        depending on 'Clist$nedges'
+#     maxMPLEsamplesize: the 'maxMPLEsamplesize' inputted to <ergm.pl>
+#    
+###############################################################################
+
 ergm.pl<-function(Clist, Clist.miss, m, theta.offset=NULL,
                     maxMPLEsamplesize=1e+6,
                     maxNumDyadTypes=1e+6,
@@ -35,7 +87,7 @@ ergm.pl<-function(Clist, Clist.miss, m, theta.offset=NULL,
       base <- matrix(t(base),ncol=2,byrow=TRUE)
     }
     ubase <- base[,1] + n*base[,2]
-    offset <- !is.na(match(ubase, Clist.miss$heads+Clist.miss$tails*n))
+    offset <- !is.na(match(ubase, Clist.miss$tails+Clist.miss$heads*n))
     offset <- 1*offset
     numobs <- Clist$ndyads - sum(offset)
   }else{
@@ -49,8 +101,9 @@ ergm.pl<-function(Clist, Clist.miss, m, theta.offset=NULL,
   # May have to think harder about what maxNumDyadTypes should be if we 
   # implement a hash-table approach to compression.
   if(is.null(conddeg)){
+  # *** don't forget, pass in tails first now, not heads
   z <- .C("MPLE_wrapper",
-          as.integer(Clist$heads),    as.integer(Clist$tails),
+          as.integer(Clist$tails),    as.integer(Clist$heads),
           as.integer(Clist$nedges),   as.integer(Clist$maxpossibleedges),
           as.integer(n), 
           as.integer(Clist$dir),     as.integer(bip),
@@ -87,8 +140,9 @@ ergm.pl<-function(Clist, Clist.miss, m, theta.offset=NULL,
     MCMCparams$stats <- stats
     maxedges <- max(5000, conddeg$Clist$nedges)
     flush.console()
+    # *** don't forget, pass in tails first now, not heads    
     z <- .C("MPLEconddeg_wrapper",
-            as.integer(conddeg$Clist$heads), as.integer(conddeg$Clist$tails),
+            as.integer(conddeg$Clist$tails), as.integer(conddeg$Clist$heads),
             as.integer(conddeg$Clist$nedges), as.integer(conddeg$Clist$maxpossibleedges), 
             as.integer(conddeg$Clist$n),
             as.integer(conddeg$Clist$dir), as.integer(conddeg$Clist$bipartite),
@@ -101,20 +155,20 @@ ergm.pl<-function(Clist, Clist.miss, m, theta.offset=NULL,
             s = as.double(t(MCMCparams$stats)),
             as.integer(0), 
             as.integer(1),
-            newnwheads = integer(maxedges),
             newnwtails = integer(maxedges),
+            newnwheads = integer(maxedges),
             as.integer(verbose), as.integer(MHproposal$bd$attribs),
             as.integer(MHproposal$bd$maxout), as.integer(MHproposal$bd$maxin),
             as.integer(MHproposal$bd$minout), as.integer(MHproposal$bd$minin),
             as.integer(MHproposal$bd$condAllDegExact), as.integer(length(MHproposal$bd$attribs)),
             as.integer(maxedges),
-            as.integer(MCMCparams$Clist.miss$heads), as.integer(MCMCparams$Clist.miss$tails),
+            as.integer(MCMCparams$Clist.miss$tails), as.integer(MCMCparams$Clist.miss$heads),
             as.integer(MCMCparams$Clist.miss$nedges),
             PACKAGE="ergm")
     # save the results
-    z <- list(s=z$s, newnwheads=z$newnwheads, newnwtails=z$newnwtails)
+    z <- list(s=z$s, newnwtails=z$newnwtails, newnwheads=z$newnwheads)
     
-    nedges <- z$newnwheads[1]
+    nedges <- z$newnwtails[1]
     statsmatrix <- matrix(z$s, nrow=MCMCparams$samplesize+1,
                           ncol=conddeg$Clist$nstats,
                           byrow = TRUE)

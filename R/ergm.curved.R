@@ -1,12 +1,37 @@
-#  File ergm/R/ergm.curved.R
-#  Part of the statnet package, http://statnetproject.org
+##########################################################################
+# The <ergm.curved> function returns a list of parameters for use with
+# the <ergm.curved.update> function.
 #
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnetproject.org/attribution
+# --PARAMETERS--
+#   theta0    :  the vector of model coefficients
+#   m         :  the model, as returned by <ergm.getmodel> 
+#   m.expanded:  an expanded version of model??
+#   nw        :  the network object (only needed for size?)
+#   theta1    :  ??; default=NULL
 #
-#  Copyright 2010 the statnet development team
-######################################################################
+#
+# --RETURNED--
+#   a list of the parameters needed by who?? to do what ?? and containing
+#     parms.curved: a list of the input parameters for each curved term
+#     eta0  : the vector of canonical eta parameters mapped from 'theta0'
+#     theta0: 'theta0' concatenated with the input parameters of the curved
+#             terms
+#     theta1: a vector of FALSE's for each class of curved terms represented
+#             in the model; this vector thus has a variable length and
+#             it's not immediate to me how one would index this vector
+#     geodf : a logical vector of which coefficients in 'm.expanded' are
+#             from a geodegree term
+#     geosdf: a logical vector of which coefficients in 'm.expanded' are
+#             from a geospartner term
+#     wdegf : a logical vector of which coefficients in 'm.expanded' are
+#             from a gwdegree term
+#     wodegf: a logical vector of which coefficients in 'm.expanded' are
+#             from a gwodegree term
+#     gwespf: a logical vector of which coefficients in 'm.expanded' are
+#             from a gwesp term
+#
+#############################################################################
+
 "ergm.curved" <- function(theta0,m,m.expanded,nw,theta1=NULL){
   geodf <- rep(FALSE, length(m.expanded$coef.names))
   geod <- grep("geodegree#",m.expanded$coef.names)     
