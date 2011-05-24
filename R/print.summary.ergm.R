@@ -1,3 +1,12 @@
+#  File ergm/R/print.summary.ergm.R
+#  Part of the statnet package, http://statnetproject.org
+#
+#  This software is distributed under the GPL-3 license.  It is free,
+#  open source, and has the attribution requirements (GPL Section 7) in
+#    http://statnetproject.org/attribution
+#
+#  Copyright 2011 the statnet development team
+######################################################################
 ###############################################################################
 # The <print.summary.ergm> function prints a subset of the information given
 # by <summary.ergm>
@@ -12,7 +21,7 @@
 #                 should be printed (T or F); default=FALSE
 #   signif.stars: whether stars are to be printed on summary tables of
 #                 coefficients (T or F); default=getOption("show.signif.stars")
-#   eps         : the tolerance to be passed to the R <printCoefmat> function;
+#   eps.Pvalue  : the tolerance to be passed to the R <printCoefmat> function;
 #                 default=.0001
 #   ...         : additional parameters to be passed to <printCoefmat> 
 #
@@ -25,7 +34,7 @@ print.summary.ergm <- function (x,
               digits = max(3, getOption("digits") - 3),
               correlation=FALSE, covariance=FALSE,
               signif.stars= getOption("show.signif.stars"),
-              eps=0.0001, ...)
+              eps.Pvalue=0.0001, ...)
 {
   cat("\n==========================\n")
   cat("Summary of model fit\n")
@@ -65,18 +74,19 @@ print.summary.ergm <- function (x,
 
   printCoefmat(x$coefs, digits=digits, signif.stars=signif.stars,
                P.values=TRUE, has.Pvalue=TRUE, na.print="NA",
-               eps=eps, ...)
+               eps.Pvalue=eps.Pvalue, ...)
   
   if(!is.null(x$message)){ 
      cat(x$message)
   }
 
   cat("\n")
-  cat(x$devtable)
+  if(!is.null(x$devtable)){
+    cat(x$devtable)
 
-  cat(paste("AIC:", format(x$aic, digits = 5), "  ", 
-            "BIC:", format(x$bic, digits = 5), "\n", sep=" "))
-  
+    cat(paste("AIC:", format(x$aic, digits = 5), "  ", 
+              "BIC:", format(x$bic, digits = 5), "\n", sep=" "))
+  } else cat(nologLik.message(x$objname))
 
   if(any(x$drop)){
     cat("\n Warning: The following terms have infinite coefficient estimates:\n  ")

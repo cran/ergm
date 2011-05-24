@@ -1,3 +1,13 @@
+/*
+ *  File ergm/src/wtedgetree.h
+ *  Part of the statnet package, http://statnetproject.org
+ *
+ *  This software is distributed under the GPL-3 license.  It is free,
+ *  open source, and has the attribution requirements (GPL Section 7) in
+ *    http://statnetproject.org/attribution
+ *
+ *  Copyright 2011 the statnet development team
+ */
 #ifndef WTEDGETREE_H
 #define WTEDGETREE_H
 
@@ -54,7 +64,7 @@ typedef struct WtNetworkstruct {
   Edge next_outedge;
   Vertex *indegree;
   Vertex *outdegree;
-  double *value;  
+  double *value;
   Dur_Inf duration_info;
   Edge maxedges;
 } WtNetwork;
@@ -100,7 +110,6 @@ Edge WtDesignMissing (Vertex a, Vertex b, WtNetwork *mnwp);
 Edge EdgeTree2EdgeList(Vertex *tails, Vertex *heads, Network *nwp, Edge nmax);
 
 /* Below are some functions that only exist for weighted (valued) networks */
-
 double EdgeWeight (Vertex tail, Vertex head, WtNetwork *nwp);
 #endif
 

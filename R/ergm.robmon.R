@@ -1,3 +1,12 @@
+#  File ergm/R/ergm.robmon.R
+#  Part of the statnet package, http://statnetproject.org
+#
+#  This software is distributed under the GPL-3 license.  It is free,
+#  open source, and has the attribution requirements (GPL Section 7) in
+#    http://statnetproject.org/attribution
+#
+#  Copyright 2011 the statnet development team
+######################################################################
 ############################################################################
 # The <ergm.robmon> function provides one of the styles of maximum
 # likelihood estimation that can be used. This one is based on Snijders
@@ -57,7 +66,6 @@ ergm.robmon <- function(theta0, nw, model, Clist, Clist.miss,
 ## MCMCparams$stats <- stats
   MCMCparams <- c(control, 
                   list(samplesize=n1, burnin=burnin, interval=interval,
-                       nmatrixentries = n1* Clist$nstats, #stats=stats, 
                        parallel=control$parallel, Clist.miss=Clist.miss))
   cat(paste("Phase 1: ",n1,"iterations"))
   cat(paste(" (interval=",MCMCparams$interval,")\n",sep=""))
@@ -112,7 +120,6 @@ ergm.robmon <- function(theta0, nw, model, Clist, Clist.miss,
       # MCMCparams$burnin should perhaps be increased here, since
       # each iteration begins from the observed network, which must be 
       # "forgotten".
-      MCMCparams$nmatrixentries = MCMCparams$samplesize * Clist$nstats
       z <- ergm.getMCMCsample(Clist, MHproposal, eta, MCMCparams, verbose=FALSE)
       # post-processing of sample statistics:  Shift each row by the
       # matrix Clist$obs - Clist$meanstats, attach column names
@@ -144,7 +151,6 @@ cat(paste("theta new:",theta,"\n"))
   cat(paste("Phase 3: ",n3,"iterations"))
   cat(paste(" (interval=",MCMCparams$interval,")\n",sep=""))
   eta <- ergm.eta(theta, model$etamap)
-  MCMCparams$nmatrixentries = MCMCparams$samplesize * Clist$nstats
   z <- ergm.getMCMCsample(Clist, MHproposal, eta, MCMCparams, verbose=FALSE)
   # post-processing of sample statistics:  Shift each row by the
   # matrix Clist$obs - Clist$meanstats, attach column names

@@ -1,3 +1,12 @@
+#  File ergm/R/getMHproposal.R
+#  Part of the statnet package, http://statnetproject.org
+#
+#  This software is distributed under the GPL-3 license.  It is free,
+#  open source, and has the attribution requirements (GPL Section 7) in
+#    http://statnetproject.org/attribution
+#
+#  Copyright 2011 the statnet development team
+######################################################################
 #=======================================================================================
 # This file contains the following 6 files for creating MHproposal objects
 #          <MHproposal>                <MHproposal.character>
@@ -128,7 +137,7 @@ MHproposal.character <- function(object, arguments, nw, model, ...){
 #   constraints:  the constraints as a one sided formula '~ term(s)'
 #   weights    :  specifies the method used to allocate probabilities of being proposed
 #                 to dyads; options are "TNT", "TNT10", "random", "nonobserved" and
-#                 "default"; default="default"                                           
+#                 "default"; default="default"
 #   class      :  "c", otherwise execution will halt
 #
 ########################################################################################
@@ -208,12 +217,12 @@ MHproposal.formula <- function(object, arguments, nw, model, weights="default", 
 #   arguments  :  a list of parameters used by the <Init.MHP> routines  possibly including
 #                  bd: a list of parameters used to bound degree via <ergm.bounddeg>
 #   nw         :  a network object; default=object.network
-#   model      :  a model object; default=<ergm.getmodel(object$formula,nw,...)>  
+#   model      :  a model object; default=<ergm.getmodel(object$formula,nw,...)>
 #   weights    :  the proposal weights component of <control.ergm> as either
 #                 "TNT", "random", "TNT10", or "default"; default="default"
 #                 (these options don't agree with the prop.weights of <control.ergm>)
 #   class      :  "c", otherwise execution will halt
-#   
+#
 ########################################################################################
 
 MHproposal.ergm<-function(object,...,constraints=NULL, arguments=NULL, nw=NULL, model=NULL,weights=NULL,class="c"){

@@ -1,3 +1,12 @@
+#  File ergm/R/ergm.curved.R
+#  Part of the statnet package, http://statnetproject.org
+#
+#  This software is distributed under the GPL-3 license.  It is free,
+#  open source, and has the attribution requirements (GPL Section 7) in
+#    http://statnetproject.org/attribution
+#
+#  Copyright 2011 the statnet development team
+######################################################################
 ##########################################################################
 # The <ergm.curved> function returns a list of parameters for use with
 # the <ergm.curved.update> function.
@@ -137,12 +146,22 @@
     for(i in 1:length(m$terms)){
       if(m$terms[[i]]$name=="gwesp"){
         parms.curved$gwesp.alpha <-  m$terms[[i]]$inputs[4] 
+#  MSH: I am not sure the next line correctly connect up with the components
+#       of m$terms
+        parms.curved$gwesp.cutoff <-  m$terms[[i]]$inputs[5] 
       }
     }
     names(parms.curved$gwesp.alpha) <- "gwesp.alpha"
     theta0 <- c(theta0, parms.curved$gwesp.alpha)
     theta1 <- c(theta1, FALSE)
-    iseq <- (1:(network.size(nw)-2))
+#   iseq <- (1:(network.size(nw)-2))
+    maxesp <- network.size(nw)-2
+    if(maxesp > m$terms[[i]]$inputs[5]){
+     maxesp <- summary(nw ~ esp(1:maxesp))
+     maxesp <- 2*max(seq(along=maxesp)[maxesp>0])
+     maxesp <- min(max(maxesp,m$terms[[i]]$inputs[5]),network.size(nw)-2)
+    }
+    iseq <- 1:maxesp
     eta0[gwespf] <- theta0["gwesp"]*
       exp(theta0["gwesp.alpha"])*(1-(1-exp(-theta0["gwesp.alpha"]))^iseq)
   }

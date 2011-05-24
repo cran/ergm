@@ -1,3 +1,12 @@
+#  File ergm/R/ergm.MCMCse.lognormal.R
+#  Part of the statnet package, http://statnetproject.org
+#
+#  This software is distributed under the GPL-3 license.  It is free,
+#  open source, and has the attribution requirements (GPL Section 7) in
+#    http://statnetproject.org/attribution
+#
+#  Copyright 2011 the statnet development team
+######################################################################
 #############################################################################
 # The <ergm.MCMCse.lognormal> function computes and returns the MCMC lognormal
 # standard errors 
@@ -53,7 +62,7 @@ ergm.MCMCse.lognormal<-function(theta, theta0, statsmatrix, statsmatrix.miss,
 
   # Take any theta offsets (values fixed at theta0) into consideration
   theta.offset <- etamap$theta0
-  theta.offset[!offsettheta] <- theta
+  theta.offset[!offsettheta] <- theta[!offsettheta]
 
   #  Calculate the auto-covariance of the MCMC suff. stats.
   #  and hence the MCMC s.e.
@@ -121,6 +130,11 @@ ergm.MCMCse.lognormal<-function(theta, theta0, statsmatrix, statsmatrix.miss,
   cov.zbar <- cov.zbar[,!novar,drop=FALSE] 
   mc.se <- rep(NA,length=length(theta))
   mc.se0 <- try(solve(H, cov.zbar), silent=TRUE)
+  if(length(novar)==length(offsettheta)){
+   novar <- novar | offsettheta
+  }else{
+   novar <- novar[!offsettheta]
+  }
   if(!(inherits(mc.se0,"try-error"))){
     mc.se0 <- try(diag(solve(H, t(mc.se0))), silent=TRUE)
     if(!(inherits(mc.se0,"try-error"))){
@@ -129,15 +143,15 @@ ergm.MCMCse.lognormal<-function(theta, theta0, statsmatrix, statsmatrix.miss,
         if(!(inherits(mc.se.miss0,"try-error"))){
           mc.se.miss0 <- try(diag(solve(H.miss, t(mc.se.miss0))), silent=TRUE)
           if(!inherits(mc.se.miss0,"try-error")){
-            mc.se[!offsettheta][!novar] <- sqrt(mc.se0 + mc.se.miss0)
+            mc.se[!novar] <- sqrt(mc.se0 + mc.se.miss0)
           }else{
-            mc.se[!offsettheta][!novar] <- sqrt(mc.se0)
+            mc.se[!novar] <- sqrt(mc.se0)
           }
         }else{
-          mc.se[!offsettheta][!novar] <- sqrt(mc.se0)
+          mc.se[!novar] <- sqrt(mc.se0)
         }
       }else{
-        mc.se[!offsettheta][!novar] <- sqrt(mc.se0)
+        mc.se[!novar] <- sqrt(mc.se0)
       }
     }
   }

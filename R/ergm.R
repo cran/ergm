@@ -1,3 +1,12 @@
+#  File ergm/R/ergm.R
+#  Part of the statnet package, http://statnetproject.org
+#
+#  This software is distributed under the GPL-3 license.  It is free,
+#  open source, and has the attribution requirements (GPL Section 7) in
+#    http://statnetproject.org/attribution
+#
+#  Copyright 2011 the statnet development team
+######################################################################
 ###############################################################################
 # The <ergm> function fits ergms from a specified formula returning either
 # MPLEs or approximate MLE's based on MCMC estimation.
@@ -11,7 +20,7 @@
 #   MPLEonly      :  whether MPL estimation should be used (T or F); this is
 #                    ignored if 'MLestimate' is set; default=FALSE
 #   MLestimate    :  whether ML estimation should be used (T or F);
-#                    default='MPLEonly'
+#                    default='!MPLEonly'
 #   seed          :  an integer starting value for the random number generator;
 #                    default=NULL
 #   burnin        :  the number of proposals to ignore before MCMC sampling
@@ -120,6 +129,7 @@ ergm <- function(formula, theta0="MPLE",
                  constraints=~.,
                  meanstats=NULL,
                  control=control.ergm(),
+                 eval.loglik=FALSE,
                  verbose=FALSE, ...) {
   current.warn <- options()$warn
   options(warn=0)
@@ -149,7 +159,7 @@ ergm <- function(formula, theta0="MPLE",
     if (verbose) {
      cat("Original meanstats:\n")
      print(meanstats)
-     cat("Original meanstats - SAN meanstats:\n")
+     cat("SAN meanstats - Original meanstats:\n")
      print(summary(formula, basis=nw)-meanstats)
     }
   }
@@ -177,15 +187,17 @@ ergm <- function(formula, theta0="MPLE",
   if (verbose) { cat("Fitting initial model.\n") }
   Clist.initial$meanstats=meanstats
   theta0copy <- theta0
-  initialfit <- ergm.initialfit(theta0copy, MLestimate, Clist.initial,
+  initialfit <- ergm.initialfit(theta0=theta0copy, MLestimate=MLestimate, 
+                                Clist.initial,
                                 Clist.miss.initial, model.initial,
                                 type=control$MPLEtype, 
                                 initial.loglik=control$initial.loglik,
-                                verbose=verbose, compressflag = control$compress, 
-                                maxNumDyadTypes=control$maxNumDyadTypes,
                                 force.MPLE=(ergm.independencemodel(model.initial)
                                             && !control$force.mcmc
                                             && constraints==(~.)),
+                                verbose=verbose, 
+                                compressflag = control$compress, 
+                                maxNumDyadTypes=control$maxNumDyadTypes,
                                 ...)
   MCMCflag <- ((MLestimate && (!ergm.independencemodel(model.initial)
                                || !is.null(meanstats)
@@ -204,6 +216,7 @@ ergm <- function(formula, theta0="MPLE",
     initialfit$constraints <- constraints
     initialfit$prop.args <- control$prop.args
     initialfit$prop.weights <- control$prop.weights
+    initialfit<-logLik.ergm(initialfit, nsteps=control$loglik.nsteps, add=TRUE)
     return(initialfit)
   } 
   if(control$drop){
@@ -212,6 +225,7 @@ ergm <- function(formula, theta0="MPLE",
    theta0 <- ergm.revisetheta0(model, theta0)
    model.drop <- ergm.getmodel(formula, nw, drop=TRUE, expanded=TRUE, silent=TRUE)
 #            silent="MPLE" %in% theta0copy)
+   eta0 <- ergm.eta(theta0, model$etamap)
    namesdrop <- model$coef.names[is.na(match(model$coef.names, model.drop$coef.names))]
    names(model$etamap$offsettheta) <- names(theta0)
    droppedterms <- rep(FALSE, length=length(model$etamap$offsettheta))
@@ -227,7 +241,7 @@ ergm <- function(formula, theta0="MPLE",
   }
 
   Clist <- ergm.Cprepare(nw, model)
-  Clist.miss <- ergm.design(nw, model, verbose=verbose)
+  Clist.miss <- ergm.design(nw, model, verbose=FALSE)
   Clist$obs <- summary(model$formula, drop=FALSE)
 # Clist$obs <- summary(model$formula, drop=control$drop)
   Clist$meanstats <- Clist$obs
@@ -249,11 +263,14 @@ ergm <- function(formula, theta0="MPLE",
    }
   }
 
-  MCMCparams <- c(control, 
+  MCMCparams <- c(control,
                   list(samplesize=MCMCsamplesize, burnin=burnin,
-                       interval=interval, stepMCMCsize=control$stepMCMCsize,
-                       gridsize=control$gridsize, maxit=maxit,
-                       Clist.miss=Clist.miss, nr.reltol=control$reltol,
+                       interval=interval,
+                       stepMCMCsize=control$stepMCMCsize,
+                       gridsize=control$gridsize, 
+                       maxit=maxit,
+                       Clist.miss=Clist.miss,
+                       nr.reltol=control$reltol,
                        mcmc.precision=control$mcmc.precision))
 
    if (verbose) cat("Fitting ERGM.\n")
@@ -282,6 +299,7 @@ ergm <- function(formula, theta0="MPLE",
                           verbose=verbose, 
                           ...)
               )
+
   if(!is.null(MCMCparams$check.degeneracy) && MCMCparams$check.degeneracy && (is.null(v$theta1$independent) || !all(v$theta1$independent))){
     if(verbose) {
       cat("Checking for degeneracy.\n")
@@ -292,7 +310,13 @@ ergm <- function(formula, theta0="MPLE",
   }
   v$degeneracy.value <- degeneracy$degeneracy.value
   v$degeneracy.type <- degeneracy$degeneracy.type
-  v$formula <- formula
+
+  #if(exists("formula.passed")){ # deprecated
+  #  v$formula <- formula.passed
+  #}else{
+    v$formula <- formula
+  #}
+  
   v$constraints <- constraints
   v$prop.args <- control$prop.args
   v$prop.weights <- control$prop.weights
@@ -307,5 +331,7 @@ ergm <- function(formula, theta0="MPLE",
     cat("\nThis model was fit using MCMC.  To examine model diagnostics", 
         "and check for degeneracy, use the mcmc.diagnostics() function.\n")
   }
+  if(eval.loglik)
+    v<-logLik.ergm(v, nsteps=control$loglik.nsteps, add=TRUE)
   v
 }

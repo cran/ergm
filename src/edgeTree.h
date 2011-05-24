@@ -1,3 +1,13 @@
+/*
+ *  File ergm/src/edgetree.h
+ *  Part of the statnet package, http://statnetproject.org
+ *
+ *  This software is distributed under the GPL-3 license.  It is free,
+ *  open source, and has the attribution requirements (GPL Section 7) in
+ *    http://statnetproject.org/attribution
+ *
+ *  Copyright 2011 the statnet development team
+ */
 #ifndef EDGETREE_H
 #define EDGETREE_H
 
@@ -57,7 +67,7 @@ typedef struct Dur_Infstruct {
      the smallest index of an edge object not being used.  
    outdegree[] and indegree[] are continually updated to give
      the appropriate degree values for each vertex.  These should
-     point to Vertex-vectors of length nnodes.  
+     point to Vertex-vectors of length nnodes+1.  
    value:  optional value(s) associated with this network 
 */
 typedef struct Networkstruct {

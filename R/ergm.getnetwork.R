@@ -1,3 +1,12 @@
+#  File ergm/R/ergm.getnetwork.R
+#  Part of the statnet package, http://statnetproject.org
+#
+#  This software is distributed under the GPL-3 license.  It is free,
+#  open source, and has the attribution requirements (GPL Section 7) in
+#    http://statnetproject.org/attribution
+#
+#  Copyright 2011 the statnet development team
+######################################################################
 #################################################################################
 # The <ergm.getnetwork> function ensures that the network in a given formula
 # is valid; if so, the network is returned; if not, execution is halted with

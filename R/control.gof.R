@@ -1,3 +1,12 @@
+#  File ergm/R/control.gof.R
+#  Part of the statnet package, http://statnetproject.org
+#
+#  This software is distributed under the GPL-3 license.  It is free,
+#  open source, and has the attribution requirements (GPL Section 7) in
+#    http://statnetproject.org/attribution
+#
+#  Copyright 2011 the statnet development team
+######################################################################
 #=================================================================
 # This file contains the 2 following functions for controlling
 # goodness-of-fit computations
@@ -13,7 +22,7 @@
 #
 # --PARAMETERS--
 #   prop.weights  : specifies the method used to allocate probabilities
-#                   if being proposed to dyads; options are "TNT",
+#                  of being proposed to dyads; options are "TNT",
 #                   "random", "nonobserved" and "default"; default=
 #                   NULL if X is an ergm (which then uses the weights
 #                   that the ergm was fit by); default="default" if

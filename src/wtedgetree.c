@@ -1,3 +1,13 @@
+/*
+ *  File ergm/src/wtedgetree.c
+ *  Part of the statnet package, http://statnetproject.org
+ *
+ *  This software is distributed under the GPL-3 license.  It is free,
+ *  open source, and has the attribution requirements (GPL Section 7) in
+ *    http://statnetproject.org/attribution
+ *
+ *  Copyright 2011 the statnet development team
+ */
 #include "wtedgetree.h"
 
 /*######################################################################
@@ -83,8 +93,8 @@ WtNetwork WtNetworkInitialize(Vertex *tails, Vertex *heads, double *weights,
 /* *** don't forget tail->head, so this function now accepts tails before heads */
 
 WtNetwork WtNetworkInitializeD(double *tails, double *heads, double *weights, Edge nedges,
-			     Vertex nnodes, int directed_flag, Vertex bipartite,
-			     int lasttoggle_flag) {
+           Vertex nnodes, int directed_flag, Vertex bipartite,
+           int lasttoggle_flag) {
 
   Vertex *itails=malloc(sizeof(Vertex)*nedges);
   Vertex *iheads=malloc(sizeof(Vertex)*nedges);
@@ -116,7 +126,7 @@ void WtNetworkDestroy(WtNetwork *nwp) {
 }
 
 /*****************
- Edge EdgetreeSearch
+ Edge WtEdgetreeSearch
 
  Check to see if there's a WtTreeNode with value b 
  in the tree rooted at edges[a].  Return i such that 
@@ -184,7 +194,7 @@ Wtprintedge(x, edges);
 }
 
 /*****************
- Edge ToggleEdge
+ int WtToggleEdge
 
  Toggle an edge:  Set it to the opposite of its current
  value.  Return 1 if edge added, 0 if deleted.
@@ -346,7 +356,7 @@ void WtAddHalfedgeToTree (Vertex a, Vertex b, double weight, WtTreeNode *edges, 
 void UpdateNextedge
 *****************/
 void WtUpdateNextedge (WtTreeNode *edges, Edge *nextedge, WtNetwork *nwp) {
-  int mult=2;
+  const unsigned int mult=2;
   
   while (++*nextedge < nwp->maxedges) {
     if (edges[*nextedge].value==0) return;
@@ -478,7 +488,7 @@ void WtInOrderTreeWalk(WtTreeNode *edges, Edge x) {
   if (x != 0) {
     WtInOrderTreeWalk(edges, (edges+x)->left);
     /*    printedge(x, edges); */
-    Rprintf(" %d ",(edges+x)->value); 
+    Rprintf(" %d:%f ",(edges+x)->value, (edges+x)->weight); 
     WtInOrderTreeWalk(edges, (edges+x)->right);
   }
 }
@@ -496,11 +506,12 @@ Edge WtDesignMissing (Vertex a, Vertex b, WtNetwork *mnwp) {
 }
 
 /*****************
-  int FindithEdge
+  int WtFindithEdge
 
-  Find the ith edge in the Network *nwp and
-  update the values of tail and head appropriately.  Return
-  1 if successful, 0 otherwise.  
+  Find the ith edge in the WtNetwork *nwp and update the values of
+  tail, head, and weight appropriately. If the value passed to tail,
+  head, or weight is NULL, it is not updated, so it is possible to
+  only obtain what is needed. Return 1 if successful, 0 otherwise.
   Note that i is numbered from 1, not 0.  Thus, the maximum possible
   value of i is nwp->nedges.
 ******************/
@@ -561,7 +572,7 @@ Edge WtEdgeTree2EdgeList(Vertex *tails, Vertex *heads, double *weights, WtNetwor
       e = WtEdgetreeSuccessor(nwp->outedges, e)){
         tails[nextedge] = v;
         heads[nextedge] = nwp->outedges[e].value;
-	if(weights) weights[nextedge] = EdgeWeight(tails[nextedge],heads[nextedge],nwp);
+	if(weights) weights[nextedge] = nwp->outedges[e].weight;
         nextedge++;
       }
     }
@@ -574,12 +585,12 @@ Edge WtEdgeTree2EdgeList(Vertex *tails, Vertex *heads, double *weights, WtNetwor
         if(v < k){
           tails[nextedge] = k;
           heads[nextedge] = v;
-	  if(weights) weights[nextedge] = EdgeWeight(k,v,nwp);
+	  if(weights) weights[nextedge] = nwp->outedges[e].weight;
           nextedge++;
         }else{
           tails[nextedge] = v;
           heads[nextedge] = k;
-	  if(weights) weights[nextedge] = EdgeWeight(v,k,nwp);
+	  if(weights) weights[nextedge] = nwp->outedges[e].weight;
           nextedge++;
         }
       }
@@ -608,6 +619,7 @@ void WtShuffleEdges(Vertex *tails, Vertex *heads, double *weights, Edge nedges){
  long int EdgeWeight
 
  Return weight of (tail,head) in a WtNetwork
+ Probably obsolete.
  *****************/
 double EdgeWeight (Vertex tail, Vertex head, WtNetwork *nwp) 
 {

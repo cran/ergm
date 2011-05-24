@@ -1,6 +1,16 @@
+%  File ergm/man/simulate.ergm.Rd
+%  Part of the statnet package, http://statnetproject.org
+%
+%  This software is distributed under the GPL-3 license.  It is free,
+%  open source, and has the attribution requirements (GPL Section 7) in
+%    http://statnetproject.org/attribution
+%
+%  Copyright 2011 the statnet development team
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{simulate.ergm}
 \alias{simulate.ergm}
 \alias{simulate.formula}
+\alias{simulate.formula.ergm}
 \title{Draw from the distribution of an Exponential Family Random Graph Model}
 \usage{
 \method{simulate}{formula}(object, nsim=1, seed=NULL, theta0,
@@ -41,11 +51,9 @@
     returned by the Metropolis-Hastings algorithm.}
  \item{seed}{Random number integer seed.
    The default is \code{sample(10000000, size=1)}.}
- \item{theta0}{For Bernoulli networks this is the log-odds of a tie,
-    however it is only used if \code{prob} is not specified.  When given either
-    a \code{\link{formula}} or an object of class \code{ergm}, 
-    \code{theta0} are the parameters
-    from which the sample is drawn.}
+ \item{theta0}{Vector of parameters for the model from which the sample is
+   to be drawn.  If \code{object} is of class \code{ergm}, the default value
+   is the vector of estimated coefficients.}
  \item{burnin}{The number of proposals before any MCMC sampling
     is done.  If NULL in simulate.ergm, the value of object$burnin is used.}
  \item{interval}{The number of proposals between sampled statistics.
@@ -96,11 +104,10 @@
 %  }
  \item{statsonly}{If TRUE, return only the network statistics (not the 
    network(s) themselves)}
- \item{sequential}{Should the returned draws use the prior draw 
-   as the starting network or always use the initially passed network?
-   For random draws the results should be similar (stochastically), but the
-   \code{sequential=TRUE} option is useful for dynamic draws.
-   }
+ \item{sequential}{If FALSE, each new simulation (of \code{nsim})
+   is always started at the initial network.  If TRUE, the end of one simulation
+   is used as the start of the next.
+   Irrelevant when \code{nsim=1}.}
 % \item{proposal}{The structure containing information about the
 %  Metropolis-Hasting proposal used.}
  \item{verbose}{If this is \code{TRUE}, we will print out more information as 

@@ -1,3 +1,12 @@
+%  File ergm/man/ergm-terms.Rd
+%  Part of the statnet package, http://statnetproject.org
+%
+%  This software is distributed under the GPL-3 license.  It is free,
+%  open source, and has the attribution requirements (GPL Section 7) in
+%    http://statnetproject.org/attribution
+%
+%  Copyright 2011 the statnet development team
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{ergm-terms}
 \alias{ergm-terms}
 \alias{ergm.terms}
@@ -479,51 +488,61 @@ of the degrees of all pairs of nodes in the network which are tied.
     homogeneous shared partners only (i.e., only partners on a directed two-path
     connecting the nodes in the edge and in the same direction).}
     
-    \item{\code{gwb1degree(decay, fixed=FALSE)}}{\emph{Geometrically weighted
+    \item{\code{gwb1degree(decay, fixed=FALSE, cutoff=30)}}{\emph{Geometrically weighted
     degree distribution for the first mode in a bipartite (aka two-mode)
     network:} 
     This term adds one network statistic to the model equal to the weighted
-    degree distribution with weight parameter \code{decay}, for nodes in the
+    degree distribution with decay controlled by the \code{decay} parameter,
+    for nodes in the
     first mode of a bipartite network. The first mode of a bipartite network
-    object is sometimes known as the "actor" mode. This statistic is based on
-    the version given as equation (14) in Hunter (2007). See the "Remark" in
-    section 3 of that paper to see why it is used rather than the version given
-    in Snijders et al. (2006). The optional argument \code{fixed} indicates
-    whether the scale parameter \code{lambda} is to be fit as a curved
-    exponential family model (see Hunter and Handcock, 2006). The default is
-    \code{FALSE}, which means the scale parameter is not fixed and thus the
-    model is a CEF model. This term can only be used with undirected bipartite
+    object is sometimes known as the "actor" mode. 
+    The \code{decay} parameter is the same as theta_s in
+    equation (14) in Hunter (2007).  The value supplied for
+    this parameter may be fixed (if \code{fixed=TRUE}),
+    or it may be used as merely the starting value for the estimation
+    in a curved exponential family model (the default).
+    The optional argument \code{cutoff}
+    is only relevant if \code{fixed=FALSE}. In that case it only uses this 
+    number of terms in computing the statistics to reduce the computational
+    burden.
+    This term can only be used with undirected bipartite
     networks.}
     
-    \item{\code{gwb2degree(decay, fixed=FALSE)}}{\emph{Geometrically weighted
+    \item{\code{gwb2degree(decay, fixed=FALSE, cutoff=30)}}{\emph{Geometrically weighted
     degree distribution for the second mode in a bipartite (aka two-mode)
     network:} 
     This term adds one network statistic to the model equal to the weighted
-    degree distribution with weight parameter \code{decay}, for nodes in the
+    degree distribution with decay controlled by the \code{decay} parameter,
+    for nodes in the
     second mode of a bipartite network. The second mode of a bipartite network
-    object is sometimes known as the "event" mode. This statistic is based on
-    the version given as equation (14) in Hunter (2007). See the "Remark" in
-    section 3 of that paper to see why it is used rather than the version given
-    in Snijders et al. (2006). The optional argument \code{fixed} indicates
-    whether the scale parameter \code{lambda} is to be fit as a curved
-    exponential family model (see Hunter and Handcock, 2006). The default is
-    \code{FALSE}, which means the scale parameter is not fixed and thus the
-    model is a CEF model. This term can only be used with undirected bipartite
+    object is sometimes known as the "event" mode. 
+    The \code{decay} parameter is the same as theta_s in
+    equation (14) in Hunter (2007).  The value supplied for
+    this parameter may be fixed (if \code{fixed=TRUE}),
+    or it may be used as merely the starting value for the estimation
+    in a curved exponential family model (the default).
+    The optional argument \code{cutoff}
+    is only relevant if \code{fixed=FALSE}. In that case it only uses this 
+    number of terms in computing the statistics to reduce the computational
+    burden.
+    This term can only be used with undirected bipartite
     networks.}
     
-    \item{\code{gwdegree(decay, fixed=FALSE)}}{\emph{Geometrically weighted
+    \item{\code{gwdegree(decay, fixed=FALSE, cutoff=30)}}{\emph{Geometrically weighted
     degree distribution:} 
     This term adds one network statistic to the model equal to the weighted
-    degree distribution with weight parameter \code{decay}. This is the version
-    given as equation (14) in Hunter (2007). See the \dQuote{Remark} in section
-    3 of that paper to see why it is used rather than the version given in
-    Snijders et al. (2006). The optional argument \code{fixed} indicates whether
-    the scale parameter \code{lambda} is to be fit as a curved exponential
-    family model (see Hunter and Handcock, 2006). The default is \code{FALSE},
-    which means the scale parameter is not fixed and thus the model is a CEF
-    model. This term can only be used with undirected networks.}
-    
-    \item{\code{gwdsp(alpha, fixed=FALSE)}}{\emph{Geometrically weighted
+    degree distribution with decay controlled by the \code{decay} parameter.
+    The \code{decay} parameter is the same as theta_s in
+    equation (14) in Hunter (2007).  The value supplied for
+    this parameter may be fixed (if \code{fixed=TRUE}),
+    or it may be used as merely the starting value for the estimation
+    in a curved exponential family model (the default).
+    The optional argument \code{cutoff}
+    is only relevant if \code{fixed=FALSE}. In that case it only uses this 
+    number of terms in computing the statistics to reduce the computational
+    burden.    This term can only be used with undirected networks.}
+
+    \item{\code{gwdsp(alpha, fixed=FALSE, cutoff=30)}}{\emph{Geometrically weighted
     dyadwise shared partner distribution:} 
     This term adds one network statistic to the model equal to the geometrically
     weighted dyadwise shared partner distribution with weight parameter
@@ -533,9 +552,13 @@ of the degrees of all pairs of nodes in the network which are tied.
     which means the scale parameter is not fixed and thus the model is a CEF
     model. This term can be used with directed and undirected networks. For
     directed networks the count is over homogeneous shared partners only (i.e.,
-    only partners on a directed two-path connecting the nodes in the dyad).}
+    only partners on a directed two-path connecting the nodes in the dyad).
+    The optional argument \code{cutoff}
+    is only relevant if \code{fixed=FALSE}. In that case it only uses this 
+    number of terms in computing the statistics to reduce the computational
+    burden.}
     
-    \item{\code{gwesp(alpha, fixed=FALSE)}}{\emph{Geometrically weighted
+    \item{\code{gwesp(alpha, fixed=FALSE, cutoff=30)}}{\emph{Geometrically weighted
     edgewise shared partner distribution:} 
     This term is just like \code{gwdsp} except it adds a statistic equal to the
     geometrically weighted \emph{edgewise} (not dyadwise) shared partner
@@ -546,18 +569,26 @@ of the degrees of all pairs of nodes in the network which are tied.
     and thus the model is a CEF model. This term can be used with directed and
     undirected networks. For directed networks the geometric weighting is over
     homogeneous shared partners only (i.e., only partners on a directed two-path
-    connecting the nodes in the edge and in the same direction).}
+    connecting the nodes in the edge and in the same direction).
+    The optional argument \code{cutoff}
+    is only relevant if \code{fixed=FALSE}. In that case it only uses this 
+    number of terms in computing the statistics to reduce the computational
+    burden.}
  
-    \item{\code{gwidegree(decay, fixed=FALSE)}}{\emph{Geometrically weighted
+    \item{\code{gwidegree(decay, fixed=FALSE, cutoff=30)}}{\emph{Geometrically weighted
     in-degree distribution:} This term adds one network statistic to the model
     equal to the weighted in-degree distribution with weight parameter
     \code{decay}. The optional argument \code{fixed} indicates whether the scale
     parameter \code{lambda} is to be fit as a curved exponential family model
     (see Hunter and Handcock, 2006). The default is \code{FALSE}, which means
     the scale parameter is not fixed and thus the model is a CEF model. This
-    term can only be used with directed networks.}
+    term can only be used with directed networks.
+    The optional argument \code{cutoff}
+    is only relevant if \code{fixed=FALSE}. In that case it only uses this 
+    number of terms in computing the statistics to reduce the computational
+    burden.}
 
-    \item{\code{gwnsp(alpha, fixed=FALSE)}}{\emph{Geometrically weighted
+    \item{\code{gwnsp(alpha, fixed=FALSE, cutoff=30)}}{\emph{Geometrically weighted
     nonedgewise shared partner distribution:} This term is just like
     \code{gwesp} and \code{gwdsp} except it adds a statistic equal to
     the geometrically weighted \emph{nonedgewise} (that is, over dyads
@@ -570,16 +601,24 @@ of the degrees of all pairs of nodes in the network which are tied.
     directed and undirected networks. For directed networks the
     geometric weighting is over homogeneous shared partners only (i.e.,
     only partners on a directed two-path connecting the nodes in the
-    non-edge and in the same direction).}
+    non-edge and in the same direction).
+    The optional argument \code{cutoff}
+    is only relevant if \code{fixed=FALSE}. In that case it only uses this 
+    number of terms in computing the statistics to reduce the computational
+    burden.}
   
-    \item{\code{gwodegree(decay, fixed=FALSE)}}{\emph{Geometrically weighted
+    \item{\code{gwodegree(decay, fixed=FALSE, cutoff=30)}}{\emph{Geometrically weighted
     out-degree distribution:} This term adds one network statistic to the model
     equal to the weighted out-degree distribution with weight parameter
     \code{decay}. The optional argument \code{fixed} indicates whether the scale
     parameter \code{lambda} is to be fit as a curved exponential family model
     (see Hunter and Handcock, 2006). The default is \code{FALSE}, which means
     the scale parameter is not fixed and thus the model is a CEF model. This
-    term can only be used with directed networks.}
+    term can only be used with directed networks.
+    The optional argument \code{cutoff}
+    is only relevant if \code{fixed=FALSE}. In that case it only uses this 
+    number of terms in computing the statistics to reduce the computational
+    burden.}
     
     \item{\code{hamming(x, cov, attrname=NULL)}}{\emph{Hamming distance:} 
     This term adds one statistic to the model equal to the weighted or

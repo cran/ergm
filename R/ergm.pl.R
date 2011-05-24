@@ -1,3 +1,12 @@
+#  File ergm/R/ergm.pl.R
+#  Part of the statnet package, http://statnetproject.org
+#
+#  This software is distributed under the GPL-3 license.  It is free,
+#  open source, and has the attribution requirements (GPL Section 7) in
+#    http://statnetproject.org/attribution
+#
+#  Copyright 2011 the statnet development team
+######################################################################
 ###############################################################################
 # The <ergm.pl> function prepares many of the components needed by <ergm.mple>
 # for the regression rountines that are used to find the MPLE estimated ergm;
@@ -213,6 +222,7 @@ ergm.pl<-function(Clist, Clist.miss, m, theta.offset=NULL,
     zy <- zy[!shouldoffset]
     wend <- wend[!shouldoffset]
     foffset <- foffset[!shouldoffset]
+    dmiss <- dmiss[!shouldoffset]
 #   theta.offset <- theta.offset[!m$etamap$offsettheta]
   }else{
     foffset <- rep(0, length=length(zy))

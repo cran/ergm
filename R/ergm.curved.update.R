@@ -1,3 +1,12 @@
+#  File ergm/R/ergm.curved.update.R
+#  Part of the statnet package, http://statnetproject.org
+#
+#  This software is distributed under the GPL-3 license.  It is free,
+#  open source, and has the attribution requirements (GPL Section 7) in
+#    http://statnetproject.org/attribution
+#
+#  Copyright 2011 the statnet development team
+######################################################################
 ###############################################################################
 # The <ergm.curved.update> function ....
 #
@@ -58,7 +67,14 @@
         }
         if(any(gwespf)){
          parms.curved$gwesp.alpha <- theta0["gwesp.alpha"]
-         iseq <- (1:(network.size(g)-2))
+#        iseq <- (1:(network.size(g)-2))
+         maxesp <- network.size(g)-2
+         if(maxesp > parms.curved$gwesp.cutoff){
+          maxesp <- summary(g ~ esp(1:maxsp))
+          maxesp <- 2*max(seq(along=maxesp)[maxesp>0])
+          maxesp <- min(max(maxesp,parms.curved$gwesp.cutoff),network.size(g)-2)
+         }
+         iseq <- 1:maxesp
          eta0[gwespf] <- theta0["gwesp"]*
           exp(theta0["gwesp.alpha"])*(1-(1-exp(-theta0["gwesp.alpha"]))^iseq)
         }

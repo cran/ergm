@@ -1,3 +1,12 @@
+#  File ergm/R/ergm.utility.R
+#  Part of the statnet package, http://statnetproject.org
+#
+#  This software is distributed under the GPL-3 license.  It is free,
+#  open source, and has the attribution requirements (GPL Section 7) in
+#    http://statnetproject.org/attribution
+#
+#  Copyright 2011 the statnet development team
+######################################################################
 #==============================================================
 # This file contains the following 21 utility functions:
 #      <ostar2deg>                  
@@ -326,6 +335,7 @@ summary.statsmatrix.ergm <- function(object, ...){
 # --IGNORED PARAMETERS--
 #   var.equal : whether the variance of ?? is ??; default=FALSE
 #   conf.level: the confidence level; default=0.95
+#   ...       : ??
 #
 # --RETURNED--
 #   rval: a vetor of the standard error, the t statistic, the p value, and the
@@ -386,45 +396,6 @@ function(x, alternative = c("two.sided", "less", "greater"),
 }
 
 
-
-
-##
-## Return TRUE iff object x is a latentfit object
-## or a latent model
-##
-#is.latent<-function(x){
-#  out <- is.list(x)
-#  if(out){
-#   out <- is.logical(x$latent)
-#   if(out){
-#    out <- x$latent
-#   }
-#  }
-#  out
-#}
-
-
-
-##
-## Return TRUE iff object x is a latentfit object
-## or a latent model and a "latentcluster" model or fit
-##
-#is.latent.cluster<-function(x){
-#  out <- FALSE
-#  if(is.latent(x)){
-#   out <- is.list(x)
-#   if(out){
-#    out <- is.logical(x$cluster)
-#    if(out){
-#     out <- x$cluster
-#    }
-#   }
-#  }
-#  out
-#}
-
-
-
 newnw.extract<-function(oldnw,z,output="network"){
   nedges<-z$newnwtails[1]
   # *** don't forget - edgelists are cbind(tails, heads) now
@@ -459,30 +430,3 @@ statnet.edit <- function(name,package=c("statnet","ergm","network")){
 
 
 
-ergm.update.formula<-function (object, new, ...){
-  tmp <- as.formula(.Internal(update.formula(as.formula(object), as.formula(new))))
-  # Ensure that the formula's environment gets set to the network's
-  # environment.
-  if(new[[2]]==".")
-    environment(tmp)<-environment(object)
-  else
-    environment(tmp)<-environment(new)
-  return(tmp)
-}
-
-
-
-term.list.formula<-function(rhs){
-  if(length(rhs)==1) list(rhs)
-  else if(rhs[[1]]=="+") c(term.list.formula(rhs[[2]]),term.list.formula(rhs[[3]]))
-  else if(rhs[[1]]=="(") term.list.formula(rhs[[2]])
-  else list(rhs)
-}
-
-
-
-copy.named<-function(x){
-  y<-list()
-  for(name in names(x)) y[[name]]<-x[[name]]
-  y
-}

@@ -1,3 +1,12 @@
+%  File ergm/man/ergm-internal.Rd
+%  Part of the statnet package, http://statnetproject.org
+%
+%  This software is distributed under the GPL-3 license.  It is free,
+%  open source, and has the attribution requirements (GPL Section 7) in
+%    http://statnetproject.org/attribution
+%
+%  Copyright 2011 the statnet development team
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{ergm-internal}
 \title{Internal ergm Objects}
 % terms
@@ -86,6 +95,7 @@
 \alias{InitErgmTerm.odegree}
 \alias{InitErgmTerm.ostar}
 \alias{InitErgmTerm.outdegreepopularity}
+\alias{InitErgmTerm.pdegcor}
 \alias{InitErgmTerm.rdegcor}
 \alias{InitErgmTerm.receiver}
 \alias{InitErgmTerm.sender}
@@ -114,6 +124,12 @@
 \alias{copy.named}
 \alias{ergm.update.formula}
 \alias{term.list.formula}
+\alias{append.rhs.formula}
+\alias{ergm.bridge.preproc}
+\alias{nologLik.message}
+\alias{theta.length.model}
+\alias{theta.sublength.model}
+\alias{model.transform.formula}
 \alias{model.matrix.pen.glm}
 \alias{zerowarnings}
 \alias{extremewarnings}
@@ -267,7 +283,6 @@
 % These need to be documented!
 %
 
-\alias{as.directed}
 \alias{as.edgelist}
 \alias{ergm.degeneracy} % At least this needs to be documented in summary.ergm and/or mcmc.diagnostics.ergm
 \alias{print.network.series}

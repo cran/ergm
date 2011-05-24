@@ -1,3 +1,12 @@
+#  File ergm/R/summary.statistics.network.R
+#  Part of the statnet package, http://statnetproject.org
+#
+#  This software is distributed under the GPL-3 license.  It is free,
+#  open source, and has the attribution requirements (GPL Section 7) in
+#    http://statnetproject.org/attribution
+#
+#  Copyright 2011 the statnet development team
+######################################################################
 #==========================================================================
 # This file contains the following 5 functions for computing summary stats
 #      <summary.statistics>           <summary.statistics.formula>

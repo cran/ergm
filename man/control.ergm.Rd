@@ -1,3 +1,12 @@
+%  File ergm/man/control.ergm.Rd
+%  Part of the statnet package, http://statnetproject.org
+%
+%  This software is distributed under the GPL-3 license.  It is free,
+%  open source, and has the attribution requirements (GPL Section 7) in
+%    http://statnetproject.org/attribution
+%
+%  Copyright 2011 the statnet development team
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{control.ergm}
 \alias{control.ergm}
 \title{ Auxiliary for Controlling ERGM Fitting }
@@ -19,7 +28,9 @@ control.ergm(prop.weights = "default", prop.args = NULL,
              metric = c("lognormal", "Median.Likelihood",
              "EF.Likelihood", "naive"),
              method = c("BFGS", "Nelder-Mead"),
-             trustregion = 20, initial.loglik = NULL, initial.network = NULL,
+             trustregion = 20, initial.loglik = NULL, loglik.nsteps =
+20,
+             initial.network = NULL,
              style = c("Newton-Raphson", "Robbins-Monro",
              "Stochastic-Approximation", "Stepping","PILA"),
              style.dyn = c("Robbins-Monro", "SPSA", "SPSA2"),
@@ -132,6 +143,8 @@ control.ergm(prop.weights = "default", prop.args = NULL,
     Defaults to 20.
     See Snijders (2002) for details.}
   \item{initial.loglik}{Initial value of loglikelihood, if known.}
+  \item{loglik.nsteps}{Number of bridges to use to evaluate
+    dyad-dependent log-likelihood if \code{eval.loglik=TRUE}.}
   \item{initial.network}{Initial network for MCMC, if different from observed
   network.}
   \item{style}{character; The style of maximum 

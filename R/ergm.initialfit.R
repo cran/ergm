@@ -1,3 +1,12 @@
+#  File ergm/R/ergm.initialfit.R
+#  Part of the statnet package, http://statnetproject.org
+#
+#  This software is distributed under the GPL-3 license.  It is free,
+#  open source, and has the attribution requirements (GPL Section 7) in
+#    http://statnetproject.org/attribution
+#
+#  Copyright 2011 the statnet development team
+######################################################################
 ####################################################################################
 # The <ergm.initialfit> function fits an initial ergm object using either ML or MPL
 # estimation.  If initial parameters are provided in 'theta0' and 'MLestimate' is 
@@ -38,7 +47,9 @@
 #
 ######################################################################################
 
-ergm.initialfit<-function(theta0, MLestimate, Clist, Clist.miss, m, 
+ergm.initialfit<-function(theta0, MLestimate, 
+                          Clist, Clist.miss, 
+                          m, 
                           MPLEtype="glm", initial.loglik=NULL,
                           conddeg=NULL, MCMCparams=NULL, MHproposal=NULL,
                           force.MPLE=FALSE,
@@ -51,7 +62,9 @@ ergm.initialfit<-function(theta0, MLestimate, Clist, Clist.miss, m,
         length(theta0)!=length(m$coef.names)) {
       cat("theta0 is", theta0, "\n", "Clist$nstats is",Clist$nstats, "\n")
       stop(paste("Invalid starting parameter vector theta0;",
-                 "unrecognized option or wrong number of parameters."))
+                 "unrecognized option or wrong number of parameters.",
+                 "If you are passing output from another ergm run as theta0,",
+                 "in a model with curved terms, see help(enformulate.curved)."))
     }
 
     if(force.MPLE){

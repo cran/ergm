@@ -1,3 +1,12 @@
+#  File ergm/R/control.ergm.R
+#  Part of the statnet package, http://statnetproject.org
+#
+#  This software is distributed under the GPL-3 license.  It is free,
+#  open source, and has the attribution requirements (GPL Section 7) in
+#    http://statnetproject.org/attribution
+#
+#  Copyright 2011 the statnet development team
+######################################################################
 ###########################################################################
 # The <control.ergm> function allows the ergm fitting process to be tuned
 # by returning a list of several control parameters
@@ -123,6 +132,7 @@ control.ergm<-function(prop.weights="default",prop.args=NULL,
                        method=c("BFGS","Nelder-Mead"),
                        trustregion=20,
                        initial.loglik=NULL,
+                       loglik.nsteps=20,
                        initial.network=NULL,
                        style=c("Newton-Raphson","Robbins-Monro",
                                "Stochastic-Approximation","Stepping","PILA"),

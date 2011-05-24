@@ -1,3 +1,12 @@
+#  File ergm/R/ergm.mainfitloop.R
+#  Part of the statnet package, http://statnetproject.org
+#
+#  This software is distributed under the GPL-3 license.  It is free,
+#  open source, and has the attribution requirements (GPL Section 7) in
+#    http://statnetproject.org/attribution
+#
+#  Copyright 2011 the statnet development team
+######################################################################
 ############################################################################
 # The <ergm.mainfitloop> function provides one of the styles of maximum
 # likelihood estimation that can be used. This one is the default and uses
@@ -20,6 +29,7 @@
 #       maxit      : the maximum number of iterations to use
 #       Clist.miss : the 'Clist' for the network of missing edges, as
 #                    returned by <ergm.design>
+#
 #        epsilon   : ??, this is passed to <ergm.estimate>, which ignores it;
 #   MHproposal     : an MHproposal object for 'nw', as returned by
 #                    <getMHproposal>
@@ -34,7 +44,6 @@
 #                    <ergm.estimate>; default=TRUE
 #   ...            : additional parameters that may be passed from within;
 #                    all are ignored
-#
 #
 # --RETURNED--
 #   v: an ergm object as a list containing several items; for details see
@@ -53,7 +62,6 @@ ergm.mainfitloop <- function(theta0, nw, model, Clist,
                              sequential=MCMCparams$sequential,
                              estimate=TRUE, ...) {
   # Store information about original network, which will be returned at end
-  null.deviance <- 2*network.dyadcount(nw)*log(2)
   nw.orig <- network.copy(nw)
 
   # Calculate the amount by which all of the MCMC statistics should be adjusted
@@ -62,7 +70,6 @@ ergm.mainfitloop <- function(theta0, nw, model, Clist,
   # is simply the observed statistics, which means statshift equals zero
   # most of the time.
   statshift <- Clist$obs - Clist$meanstats
-  MCMCparams$nmatrixentries = MCMCparams$samplesize * Clist$nstats
   MCMCparams$meanstats <- Clist$meanstats
 
   # Initialize MCMCparams.miss in case there are missing edges
@@ -117,7 +124,8 @@ ergm.mainfitloop <- function(theta0, nw, model, Clist,
         nw <- nw.returned
         nw.obs <- summary(model$formula, basis=nw)
         namesmatch <- match(names(MCMCparams$meanstats), names(nw.obs))
-        statshift <- nw.obs[namesmatch]-Clist$meanstats
+        statshift <- -Clist$meanstats
+        statshift[!is.na(namesmatch)] <- statshift[!is.na(namesmatch)] + nw.obs[namesmatch[!is.na(namesmatch)]]
       }
     }
     
@@ -129,7 +137,6 @@ ergm.mainfitloop <- function(theta0, nw, model, Clist,
                 sample=statsmatrix, sample.miss=statsmatrix.miss,
                 iterations=1, MCMCtheta=mcmc.theta0,
                 loglikelihood=NA, #mcmcloglik=NULL, 
-                mle.lik=NULL,
                 gradient=rep(NA,length=length(mcmc.theta0)), #acf=NULL,
                 samplesize=MCMCparams$samplesize, failure=TRUE,
                 newnetwork = nw.returned)
@@ -178,7 +185,7 @@ ergm.mainfitloop <- function(theta0, nw, model, Clist,
   # object returned by ergm.estimate.  Instead, it is more transparent
   # if we build the output object (v) from scratch, of course using 
   # some of the info returned from ergm.estimate.
-  v$sample <- statsmatrix
+  v$sample <- statsmatrix.0
   v$burnin <- MCMCparams$burnin
   v$samplesize <- MCMCparams$samplesize
   v$interval <- MCMCparams$interval
@@ -193,7 +200,6 @@ ergm.mainfitloop <- function(theta0, nw, model, Clist,
   attr(v$sample, "mcpar") <- c(MCMCparams$burnin+1, endrun, MCMCparams$interval)
   attr(v$sample, "class") <- "mcmc"
   v$null.deviance <- 2*network.dyadcount(nw.orig)*log(2)
-  v$mle.lik <- initialfit$mle.lik + abs(v$loglikelihood)
   v$etamap <- model$etamap
   v
 }

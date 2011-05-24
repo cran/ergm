@@ -1,3 +1,12 @@
+%  File ergm/man/summary.ergm.Rd
+%  Part of the statnet package, http://statnetproject.org
+%
+%  This software is distributed under the GPL-3 license.  It is free,
+%  open source, and has the attribution requirements (GPL Section 7) in
+%    http://statnetproject.org/attribution
+%
+%  Copyright 2011 the statnet development team
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{summary.ergm}
 \alias{summary.ergm}
 %\alias{print.summary.lm}
@@ -18,7 +27,7 @@
   \item{covariance}{logical; if \code{TRUE}, the covariance matrix of
     the estimated parameters is returned and printed.}
   \item{eps}{number; indicates the smallest p-value. See \code{\link{printCoefmat}}.}
-  \item{\dots}{further arguments passed to or from other methods.}
+  \item{\dots}{Arguments to \code{\link{logLik.ergm}}}
 }
 \description{
 \code{\link[base]{summary}} method for class \code{"ergm"}.

@@ -1,3 +1,12 @@
+%  File ergm/man/ergm-package.Rd
+%  Part of the statnet package, http://statnetproject.org
+%
+%  This software is distributed under the GPL-3 license.  It is free,
+%  open source, and has the attribution requirements (GPL Section 7) in
+%    http://statnetproject.org/attribution
+%
+%  Copyright 2011 the statnet development team
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{ergm-package}
 \alias{ergm-package}
 \docType{package}
@@ -6,7 +15,7 @@ Fit, Simulate and Diagnose Exponential-Family Models for Networks
 }
 \description{
 \code{\link{ergm}} is a collection of functions to plot, fit, diagnose, and simulate from random 
-graph models. For a list of functions type: help(package='ergm')
+graph models. For a list of functions type: \code{help(package='ergm')}
 
 For a complete list of the functions, use \code{library(help="ergm")} 
 or read the rest of the manual. For a simple demonstration,
@@ -54,7 +63,7 @@ A tutorial, support newsgroup, references and links to further resources are pro
 Mark S. Handcock \email{handcock@stat.ucla.edu},\cr
 David R. Hunter \email{dhunter@stat.psu.edu},\cr
 Carter T. Butts \email{buttsc@uci.edu},\cr
-Steven M. Goodreau \email{goodreau@u.washington.edu}
+Steven M. Goodreau \email{goodreau@u.washington.edu},\cr
 Pavel N. Krivitsky \email{pavel@stat.cmu.edu}, and\cr
 Martina Morris \email{morrism@u.washington.edu}
 

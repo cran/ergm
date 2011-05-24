@@ -1,3 +1,12 @@
+#  File ergm/R/ergm.phase12.R
+#  Part of the statnet package, http://statnetproject.org
+#
+#  This software is distributed under the GPL-3 license.  It is free,
+#  open source, and has the attribution requirements (GPL Section 7) in
+#    http://statnetproject.org/attribution
+#
+#  Copyright 2011 the statnet development team
+######################################################################
 ###############################################################################
 # The <ergm.phase12> function is a wrapper for the <MCMC.phase12.C> method,
 # which collects a sample of networks and returns the matrix of summary

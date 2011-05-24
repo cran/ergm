@@ -1,3 +1,13 @@
+/*
+ *  File ergm/src/MHproposal.c
+ *  Part of the statnet package, http://statnetproject.org
+ *
+ *  This software is distributed under the GPL-3 license.  It is free,
+ *  open source, and has the attribution requirements (GPL Section 7) in
+ *    http://statnetproject.org/attribution
+ *
+ *  Copyright 2011 the statnet development team
+ */
 #include "MHproposal.h"
 
 
@@ -156,10 +166,9 @@ int CheckTogglesValid(MHproposal *MHp, DegreeBound *bd, Network *nwp) {
   fvalid = 1;
   
   /* Make proposed toggles */
-  for (i=0; i<MHp->ntoggles; i++) {
+  for (i=0; i<MHp->ntoggles; i++)
     ToggleEdge(MHp->toggletail[i], MHp->togglehead[i], nwp);
-  }
-  
+
   /*  Rprintf("fvalid %d bd->fBoundDegByAttr %d\n", fvalid, bd->fBoundDegByAttr); */
 
   /* if we're bounding degrees by attribute */
@@ -177,7 +186,7 @@ int CheckTogglesValid(MHproposal *MHp, DegreeBound *bd, Network *nwp) {
         /* calculate tail outdegree totals for each attribute
         for each outedge of the tail 	      */
 	      
-        for(e = EdgetreeMinimum(nwp->outedges, MHp->toggletail[i]); 
+        for(e = EdgetreeMinimum(nwp->outedges, MHp->toggletail[i]);
         (v = nwp->outedges[e].value) != 0;
         e = EdgetreeSuccessor(nwp->outedges, e)) {
           for (k=0; k < bd->attrcount; k++)
@@ -193,9 +202,9 @@ int CheckTogglesValid(MHproposal *MHp, DegreeBound *bd, Network *nwp) {
           for (k=0; k < bd->attrcount; k++)
             if (bd->attribs[v-1 + k*nwp->nnodes]) headattr[k]++;
         }
-        
+
         /* for each attribute */
-        
+
         for (k=0; k < bd->attrcount && fvalid; k++){
           fvalid=!((tailattr[k]>bd->maxout[MHp->toggletail[i]-1+k*nwp->nnodes])||
           (tailattr[k] < bd->minout[MHp->toggletail[i]-1+k*nwp->nnodes]) || 
@@ -246,8 +255,7 @@ int CheckTogglesValid(MHproposal *MHp, DegreeBound *bd, Network *nwp) {
             if (bd->attribs[v-1 + k*nwp->nnodes])
               headattr[k]++;
         }
-        
-        
+
 	      /* for each attribute
         check tails' and heads' outmax and outmin */
 	      for (k=0; k < bd->attrcount && fvalid; k++){
@@ -264,9 +272,9 @@ int CheckTogglesValid(MHproposal *MHp, DegreeBound *bd, Network *nwp) {
   free(headattr);
   
   /* Undo proposed toggles (of edges(tail, head)) */
-  for (i=0; i<MHp->ntoggles; i++) {
+  for (i=0; i<MHp->ntoggles; i++)
     ToggleEdge(MHp->toggletail[i], MHp->togglehead[i], nwp);
-  }
+
   return fvalid;
 }
 
@@ -278,10 +286,9 @@ int CheckConstrainedTogglesValid(MHproposal *MHp, DegreeBound *bd, Network *nwp)
   if(!bd) return 1;
 
   /* Make proposed toggles */
-  for (i=0; i<MHp->ntoggles; i++) {
+  for (i=0; i<MHp->ntoggles; i++)
     ToggleEdge(MHp->toggletail[i], MHp->togglehead[i], nwp);
-  }
-  
+
   /* if we're bounding degrees by attribute */
   if (bd->fBoundDegByAttr && fvalid)
   {

@@ -1,3 +1,12 @@
+#  File ergm/R/check.ErgmTerm.R
+#  Part of the statnet package, http://statnetproject.org
+#
+#  This software is distributed under the GPL-3 license.  It is free,
+#  open source, and has the attribution requirements (GPL Section 7) in
+#    http://statnetproject.org/attribution
+#
+#  Copyright 2011 the statnet development team
+######################################################################
 #====================================================================================
 # This file contains the following 6 files that help check the validity of ergm terms
 #       <check.ErgmTerm>               <get.InitErgm.fname>

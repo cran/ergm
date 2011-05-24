@@ -1,3 +1,12 @@
+#  File ergm/R/ergm.stocapprox.R
+#  Part of the statnet package, http://statnetproject.org
+#
+#  This software is distributed under the GPL-3 license.  It is free,
+#  open source, and has the attribution requirements (GPL Section 7) in
+#    http://statnetproject.org/attribution
+#
+#  Copyright 2011 the statnet development team
+######################################################################
 ############################################################################
 # The <ergm.stocapprox> function provides one of the styles of maximum
 # likelihood estimation that can be used. This one is based on Snijders
@@ -101,7 +110,6 @@ ergm.stocapprox <- function(theta0, nw, model, Clist,
 #cat(paste(" eta=",eta,")\n",sep=""))
 
   # Obtain MCMC sample
-  MCMCparams$nmatrixentries <- Clist$nstats * MCMCparams$samplesize #Unnecessary?
   z <- ergm.getMCMCsample(Clist, MHproposal, eta0, MCMCparams, verbose)
   
   # post-processing of sample statistics:  Shift each row,

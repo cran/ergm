@@ -1,3 +1,12 @@
+#  File ergm/R/simulate.ergm.R
+#  Part of the statnet package, http://statnetproject.org
+#
+#  This software is distributed under the GPL-3 license.  It is free,
+#  open source, and has the attribution requirements (GPL Section 7) in
+#    http://statnetproject.org/attribution
+#
+#  Copyright 2011 the statnet development team
+######################################################################
 #========================================================================
 # This file contains the following 2 functions for simulating ergms
 #           <simulate.ergm>
@@ -84,10 +93,9 @@ simulate.formula <- function(object, nsim=1, seed=NULL, theta0,
                              verbose=FALSE, ...) {
   if(!is.null(seed)) {set.seed(as.integer(seed))}
 
-  # If basis is not null, replace network in formula by basis.
-  # In either case, let nw be network object from formula.
-  if(is.null(nw <- basis)) {
-    nw <- ergm.getnetwork(object)
+  # define nw as either the basis argument or (if NULL) the LHS of the formula
+  if (is.null(nw <- basis)) {
+    nw <- ergm.getnetwork(object)    
   }
   
   # Do some error-checking on the nw object
@@ -99,13 +107,18 @@ simulate.formula <- function(object, nsim=1, seed=NULL, theta0,
     stop("A network object on the LHS of the formula or via",
          " the 'basis' argument must be given")
   }
+  if(is.null(basis)) {
+    basis <- nw
+  }
 
   # New formula (no longer use 'object'):
-  form <- ergm.update.formula(object, nw ~ .)
+  form <- ergm.update.formula(object, basis ~ .)
   
   # Prepare inputs to ergm.getMCMCsample
-  m <- ergm.getmodel(form, nw, drop=FALSE)
-  Clist <- ergm.Cprepare(nw, m)
+  m <- ergm.getmodel(form, basis, drop=FALSE)
+  if(!missing(theta0) && theta.length.model(m)!=length(theta0)) stop("theta0 has ", length(theta0), " elements, while the model requires ",theta.length.model(m)," parameters.")
+  
+  Clist <- ergm.Cprepare(basis, m)
   MHproposal <- MHproposal(constraints,arguments=control$prop.args,
                            nw=nw, model=m, weights=control$prop.weights, class="c")  
 
@@ -121,6 +134,9 @@ simulate.formula <- function(object, nsim=1, seed=NULL, theta0,
   if (any(is.nan(theta0) | is.na(theta0)))
     stop("Illegal value of theta0 passed to simulate.formula")
     
+  # Create eta0 from theta0
+  eta0 <- ergm.eta(theta0, m$etamap)
+
   # Create vector of current statistics
   curstats<-summary(form)
   names(curstats) <- m$coef.names
@@ -147,8 +163,7 @@ simulate.formula <- function(object, nsim=1, seed=NULL, theta0,
     # Call ergm.getMCMCsample only one time, using the C function to generate the whole
     # matrix of network statistics.
     MCMCparams$samplesize <- nsim
-    MCMCparams$nmatrixentries <- nsim * length(curstats)
-    z <- ergm.getMCMCsample(Clist, MHproposal, theta0, MCMCparams, verbose=verbose)
+    z <- ergm.getMCMCsample(Clist, MHproposal, eta0, MCMCparams, verbose=verbose)
     
     # Post-processing:  Add term names to columns and shift each row by
     # observed statistics.
@@ -169,7 +184,6 @@ simulate.formula <- function(object, nsim=1, seed=NULL, theta0,
   # more complicated situation:  Either we want a network for each
   # MCMC iteration (statsonly=FALSE) or we want to restart each chain
   # at the original network (sequential=FALSE).
-  MCMCparams$nmatrixentries <- length(curstats)
   for(i in 1:nsim){
     MCMCparams$burnin <- ifelse(i==1, burnin, interval)
     z <- ergm.getMCMCsample(Clist, MHproposal, theta0, MCMCparams, verbose)

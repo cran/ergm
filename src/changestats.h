@@ -1,3 +1,13 @@
+/*
+ *  File ergm/src/changestats.h
+ *  Part of the statnet package, http://statnetproject.org
+ *
+ *  This software is distributed under the GPL-3 license.  It is free,
+ *  open source, and has the attribution requirements (GPL Section 7) in
+ *    http://statnetproject.org/attribution
+ *
+ *  Copyright 2011 the statnet development team
+ */
 #ifndef CHANGESTATS_H
 #define CHANGESTATS_H
 
@@ -20,6 +30,8 @@ D_CHANGESTAT_FN(d_b1starmixhomophily);
 D_CHANGESTAT_FN(d_b1twostar);
 D_CHANGESTAT_FN(d_b2concurrent);
 D_CHANGESTAT_FN(d_b2concurrent_by_attr);
+D_CHANGESTAT_FN(d_b2degcor);
+D_CHANGESTAT_FN(d_b2degcrossprod);
 D_CHANGESTAT_FN(d_b2degree);
 D_CHANGESTAT_FN(d_b2degree_by_attr);
 D_CHANGESTAT_FN(d_b2factor);
@@ -104,6 +116,7 @@ D_CHANGESTAT_FN(d_m2star);
 D_CHANGESTAT_FN(d_meandeg);
 D_CHANGESTAT_FN(d_mix);
 D_CHANGESTAT_FN(d_mutual);
+D_CHANGESTAT_FN(d_mutual_by_attr);
 /********************  changestats:   N    ***********/                       
 D_CHANGESTAT_FN(d_nearsimmelian);
 D_CHANGESTAT_FN(d_nodecov);
@@ -120,6 +133,7 @@ D_CHANGESTAT_FN(d_odegree);
 D_CHANGESTAT_FN(d_odegree_by_attr);
 D_CHANGESTAT_FN(d_odegree_w_homophily);
 D_CHANGESTAT_FN(d_ostar);
+D_CHANGESTAT_FN(d_outdegreepopularity);
 /********************  changestats:   R    ***********/
 D_CHANGESTAT_FN(d_receiver);
 /********************  changestats:   S    ***********/
@@ -139,6 +153,9 @@ D_CHANGESTAT_FN(d_triadcensus);
 D_CHANGESTAT_FN(d_triangle);
 D_CHANGESTAT_FN(d_tripercent);
 D_CHANGESTAT_FN(d_ttriple);
+D_CHANGESTAT_FN(d_transitiveties);
+
+
 
               
 #endif

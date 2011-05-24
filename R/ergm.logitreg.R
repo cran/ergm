@@ -1,3 +1,12 @@
+#  File ergm/R/ergm.logitreg.R
+#  Part of the statnet package, http://statnetproject.org
+#
+#  This software is distributed under the GPL-3 license.  It is free,
+#  open source, and has the attribution requirements (GPL Section 7) in
+#    http://statnetproject.org/attribution
+#
+#  Copyright 2011 the statnet development team
+######################################################################
 #============================================================================
 # This file contains the following 2 functions for logistic regression
 #        <ergm.logitreg>
@@ -15,7 +24,8 @@
 # --PARAMETERS--
 #   x        : the design matrix
 #   y        : the binary outcomes, presumably the vector of edge values
-#   wt       : a vector of wieghts for each case; default=rep(1,length(y)) 
+#   wt       : a vector of wieghts for each case; default=rep(1,length(y));
+#              this and the two params above are returned by <ergm.pl>
 #   intercept: whether an intercept should be estimated (T or F);
 #              default=FALSE
 #   start    : initial values for the parameters to be optimized over
