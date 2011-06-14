@@ -60,7 +60,7 @@ ergm.MCMCse<-function(theta, theta0, statsmatrix, statsmatrix.miss,
 
   # Take any theta offsets (values fixed at theta0) into consideration
   theta.offset <- etamap$theta0
-  theta.offset[!offsettheta] <- theta
+  theta.offset[!offsettheta] <- theta[!offsettheta]
 
   #  Calculate the auto-covariance of the MCMC suff. stats.
   #  and hence the MCMC s.e.
@@ -116,10 +116,17 @@ ergm.MCMCse<-function(theta, theta0, statsmatrix, statsmatrix.miss,
     prob.miss <- prob.miss/sum(prob.miss)
     E.miss <- apply(sweep(xsim.miss, 1, prob.miss, "*"), 2, sum)
     htmp <- sweep(sweep(xsim.miss, 2, E.miss, "-"), 1, sqrt(prob.miss), "*")
+    #LINE ADDED BY CTB>
+    htmp.offset <- matrix(0, ncol = length(offsetmap), nrow = nrow(htmp))
+    #LINE ADDED BY CTB<
     htmp.offset[,!offsetmap] <- htmp
     htmp.offset <- t(ergm.etagradmult(theta.offset, t(htmp.offset), etamap))
     H.miss <- crossprod(htmp.offset, htmp.offset)
     cov.zbar.miss <- suppressWarnings(chol(cov.zbar.miss, pivot=TRUE))
+    #LINE ADDED BY CTB>
+  cov.zbar.offset <- matrix(0, ncol = length(offsetmap), 
+                            nrow = length(offsetmap))
+    #LINE ADDED BY CTB<
     cov.zbar.offset[!offsetmap,!offsetmap] <- cov.zbar.miss
     cov.zbar.offset <- t(ergm.etagradmult(theta.offset, t(cov.zbar.offset), etamap))
     cov.zbar.miss <- crossprod(cov.zbar.offset, cov.zbar.offset)
@@ -171,6 +178,32 @@ ergm.MCMCse<-function(theta, theta0, statsmatrix, statsmatrix.miss,
     }
   }
   names(mc.se) <- names(theta)
-#  return(list(mc.se=mc.se, mc.cov=NULL))
-  return(list(mc.se=mc.se))
+# return(list(mc.se=mc.se))
+
+  mc.cov <- matrix(NA,ncol=length(theta),nrow=length(theta))
+  mc.cov0 <- try(solve(H, cov.zbar), silent=TRUE)
+  if(!(inherits(mc.cov0,"try-error"))){
+    mc.cov0 <- try(solve(H, t(mc.cov0)), silent=TRUE)
+    if(!(inherits(mc.cov0,"try-error"))){
+      if(!is.null(statsmatrix.miss)){
+        mc.cov.miss0 <- try(solve(H.miss, cov.zbar.miss), silent=TRUE)
+        if(!(inherits(mc.cov.miss0,"try-error"))){
+          mc.cov.miss0 <- try(solve(H.miss, t(mc.cov.miss0)), silent=TRUE)
+          if(!inherits(mc.cov.miss0,"try-error")){
+            mc.cov[!novar,!novar] <- mc.cov0 + mc.cov.miss0
+          }else{
+            mc.cov[!novar,!novar] <- mc.cov0
+          }
+        }else{
+          mc.cov[!novar,!novar] <- mc.cov0
+        }
+      }else{
+        mc.cov[!novar,!novar] <- mc.cov0
+      }
+    }
+  }
+  colnames(mc.cov) <- names(theta)
+  rownames(mc.cov) <- names(theta)
+#
+  return(list(mc.se=mc.se, mc.cov=mc.cov))
 }
