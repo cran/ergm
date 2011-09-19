@@ -32,9 +32,9 @@
 #
 #        epsilon   : ??, this is passed to <ergm.estimate>, which ignores it;
 #   MHproposal     : an MHproposal object for 'nw', as returned by
-#                    <getMHproposal>
-#   MHproposal.miss: an MHproposal object for the missing network of'nw',
-#                    as returned by <getMHproposal>
+#                    <MHproposal>
+#   MHproposal.miss : an MHproposal object for the observed network of'nw',
+#                    as returned by <MHproposal>
 #   verbose        : whether the MCMC sampling should be verbose (T or F);
 #                    default=FALSE
 #   sequential     : whether to update the network returned in
@@ -52,7 +52,7 @@
 #      returned; if 'estimate'=FALSE, the MCMC and se variables will be
 #      NA or NULL
 #
-###########################################################################
+#############################################################################
 
 ergm.mainfitloop <- function(theta0, nw, model, Clist,
                              initialfit, 
@@ -90,6 +90,7 @@ ergm.mainfitloop <- function(theta0, nw, model, Clist,
   # mcmc.theta0 will change at each iteration.  It is the value that is used
   # to generate the MCMC samples.  theta0 will never change.
   mcmc.theta0 <- theta0
+  parametervalues <- theta0 # Keep track of all parameter values
   while(!finished){
 	  iteration <- iteration + 1
     if(verbose){
@@ -105,7 +106,11 @@ ergm.mainfitloop <- function(theta0, nw, model, Clist,
     z <- ergm.getMCMCsample(Clist, MHproposal, mcmc.eta0, MCMCparams, verbose)
     
     # post-processing of sample statistics:  Shift each row by the
-    # matrix Clist$obs - Clist$meanstats, store returned nw
+    # vector Clist$obs - Clist$meanstats, store returned nw
+    # The statistics in statsmatrix should all be relative to either the
+    # observed statistics or, if given, the alternative meanstats
+    # (i.e., the estimation goal is to use the statsmatrix to find 
+    # parameters that will give a mean vector of zero)
     statsmatrix <- sweep(z$statsmatrix, 2, statshift, "+")
     colnames(statsmatrix) <- model$coef.names
     nw.returned <- network.update(nw, z$newedgelist, "edgelist")
@@ -137,6 +142,7 @@ ergm.mainfitloop <- function(theta0, nw, model, Clist,
                 sample=statsmatrix, sample.miss=statsmatrix.miss,
                 iterations=1, MCMCtheta=mcmc.theta0,
                 loglikelihood=NA, #mcmcloglik=NULL, 
+                mle.lik=NULL,
                 gradient=rep(NA,length=length(mcmc.theta0)), #acf=NULL,
                 samplesize=MCMCparams$samplesize, failure=TRUE,
                 newnetwork = nw.returned)
@@ -179,13 +185,13 @@ ergm.mainfitloop <- function(theta0, nw, model, Clist,
       }
       if((MCMCparams$steplength==1) && (v$loglikelihood < MCMCparams$adaptive.epsilon) ){break}
     mcmc.theta0 <- v$coef
+    parametervalues <- rbind(parametervalues, mcmc.theta0)
   } # end of main loop
 
   # FIXME:  We should not be "tacking on" extra list items to the 
   # object returned by ergm.estimate.  Instead, it is more transparent
   # if we build the output object (v) from scratch, of course using 
   # some of the info returned from ergm.estimate.
-  #
   v$sample <- statsmatrix.0
   v$burnin <- MCMCparams$burnin
   v$samplesize <- MCMCparams$samplesize
@@ -196,6 +202,9 @@ ergm.mainfitloop <- function(theta0, nw, model, Clist,
   v$theta.original <- theta0
   v$mplefit <- initialfit
   v$parallel <- MCMCparams$parallel
+  # The following output is sometimes helpful.  It's the total history
+  # of all eta values, from the initial eta0 to the final estimate
+  # v$allparamvals <- parametervalues
 
   endrun <- MCMCparams$burnin+MCMCparams$interval*(MCMCparams$samplesize-1)
   attr(v$sample, "mcpar") <- c(MCMCparams$burnin+1, endrun, MCMCparams$interval)
