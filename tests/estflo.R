@@ -1,17 +1,16 @@
 #  File ergm/tests/estflo.R
-#  Part of the statnet package, http://statnetproject.org
+#  Part of the statnet package, http://statnet.org
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnetproject.org/attribution
+#    http://statnet.org/attribution
 #
-#  Copyright 2011 the statnet development team
+#  Copyright 2012 the statnet development team
 ######################################################################
 library(ergm)
 data(florentine)
 # a markov graph fit to the Florentine data
-gest <- ergm(flomarriage ~ edges + kstar(2), 
-	seed=16124)
+gest <- ergm(flomarriage ~ edges + kstar(2), control=control.ergm(seed=16124))
 gest
 summary(gest)
 #anova(gest)
@@ -26,7 +25,9 @@ summary(gest)
 #-1.622292   0.006467
 
 # While we are at it, test the constrainted version.
-gest <- ergm(flomarriage ~ edges + kstar(2), constraints=~edges, 
-	seed=16124)
+# (The edges term will be ignored because the constraint makes it irrelevant.)
+# XXX uncomment:
+#gest <- ergm(flomarriage ~ edges + kstar(2), constraints=~edges, control=control.ergm(seed=16124))
+gest <- ergm(flomarriage ~ kstar(2), constraints=~edges, control=control.ergm(seed=16124))
 gest
 summary(gest)

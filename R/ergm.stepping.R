@@ -1,56 +1,33 @@
 #  File ergm/R/ergm.stepping.R
-#  Part of the statnet package, http://statnetproject.org
+#  Part of the statnet package, http://statnet.org
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnetproject.org/attribution
+#    http://statnet.org/attribution
 #
-#  Copyright 2011 the statnet development team
+#  Copyright 2012 the statnet development team
 ######################################################################
 ############################################################################
 # The <ergm.stepping> function provides one of the styles of maximum
 # likelihood estimation that can be used. This one is attributed to ?? and
 # uses ?? approach. The other  MLE styles are found in functions <ergm.robmon>
 # <ergm.stocapprox> and <ergm.mainfitloop>
-#
-# --PARAMETERS--
-#   theta0         : the initial theta values
-#   nw             : the network
-#   model          : the model, as returned by <ergm.getmodel>
-#   Clist          : a list of several network and model parameters,
-#                    as returned by <ergm.Cprepare>
-#   initialfit     : an ergm object, as the initial fit
-#   MCMCparams     : a list of parameters for controlling the MCMC sampling
-#   MHproposal     : an MHproposal object for 'nw', as returned by
-#                    <MHproposal>
-#   MHproposal.miss: an MHproposal object for the observed network of'nw',
-#                    as returned by <MHproposal>
-#   verbose        : whether the MCMC sampling should be verbose AND
-#                    the diagnostic plots should be printed ; default=FALSE
-#   ...            : additional paramters that are passed onto
-#                    <ergm.estimate> and <simulate.formula>
-#
-# --RETURNED--
-#   v: an ergm object as a list containing several items; for details see
-#      the return list in the <ergm> function header (<ergm.stepping>=@)
-#
 ###########################################################################      
-
-ergm.stepping = function(theta0, nw, model, Clist, initialfit, 
-                         MCMCparams, MHproposal, MHproposal.miss, 
+ergm.stepping = function(init, nw, model, initialfit, constraints,
+                         control, MHproposal, MHproposal.obs, 
                          verbose=FALSE, ...){
 
   #   preliminary, to set up structure. 
   nw.orig <- nw
-  asyse=theta0-theta0
+  asyse=init-init
   mc.se=1+0.05*asyse
   mle.lik=initialfit$mle.lik
-  theta.original=theta0
+  theta.original=init
   
   ## Prepare the output structure:
   formula <- model$formula  # formula for this model
   obsstats <- summary(model$formula)  # Observed statistics
-  theta0 <- theta0  # beginning parameter value
+  init <- init  # beginning parameter value
   samples <- list()  # matrices of sampled network statistics
   sampmeans <- list() # vectors of column means of stats matrices
   xi <- list() # "new obsstats" values, somewhere between obsstats and sampmeans
@@ -58,19 +35,19 @@ ergm.stepping = function(theta0, nw, model, Clist, initialfit,
   gamma <- list() # factor controlling convex combo: # xi=gamma*obsstats + (1-gamma)*sampmeans	
 	
 	iter <- 0
-	eta[[1]] <- theta0
+	eta[[1]] <- init
 	finished <- FALSE
   countdown <- 2
 	while (!finished) { # Iterate until gamma==1
 		iter=iter+1
     ## Generate an mcmc sample from the probability distribution determined by orig.mle
-		samples[[iter]]=simulate.formula(formula, nsim=MCMCparams$stepMCMCsize,
-                                     theta0=eta[[iter]], burnin=MCMCparams$burnin, 
-                                     interval=MCMCparams$interval, statsonly=TRUE,
-                                     ...)
+		samples[[iter]]=simulate.formula(formula, nsim=control$Step.MCMC.samplesize,
+                                     coef=eta[[iter]], statsonly=TRUE,
+                                     constraints=constraints, 
+                                     control=control, ...)
 		sampmeans[[iter]]=colMeans(samples[[iter]])
 		
-		hi <- MCMCparams$gridsize  # Goal: Let gamma be largest possible multiple of .01
+		hi <- control$Step.gridsize  # Goal: Let gamma be largest possible multiple of .01
 		lo <- gamm <- 0
 		cat("Iteration #",iter, ". ")
     if (verbose) {
@@ -79,7 +56,7 @@ ergm.stepping = function(theta0, nw, model, Clist, initialfit,
     }
 		while (hi-lo>1 || hi > gamm) {
       gamm<-ceiling((hi+lo)/2)
-			gamma[[iter]] = gamm/MCMCparams$gridsize
+			gamma[[iter]] = gamm/control$Step.gridsize
 			xi[[iter]] = gamma[[iter]]*obsstats  + (1-gamma[[iter]])*sampmeans[[iter]]
 			inCH=is.inCH(1.05*gamma[[iter]]*obsstats  + 
                    (1 - 1.05*gamma[[iter]])*sampmeans[[iter]],
@@ -90,22 +67,22 @@ ergm.stepping = function(theta0, nw, model, Clist, initialfit,
       } else {
         hi <- gamm
         if (gamm==1) {
-          warning("gamma=", 1/MCMCparams$gridsize, " still not small enough to ",
+          warning("gamma=", 1/control$Step.gridsize, " still not small enough to ",
                   "stay in convex hull.  A larger gridsize than ",
-                  MCMCparams$gridsize, " might help.")
+                  control$Step.gridsize, " might help.")
         }
       }
 		}
 		if (!inCH && gamm>1) {# Last attempt was a fail, so decrease gamm by one
 			gamm <- gamm-1
-			gamma[[iter]] <- gamm/MCMCparams$gridsize
+			gamma[[iter]] <- gamm/control$Step.gridsize
 			xi[[iter]] <- gamma[[iter]]*obsstats  + (1-gamma[[iter]])*sampmeans[[iter]]
 		}
 	
     # Now we have found a gamm that moves xi inside the convex hull, 
     # a bit away from the boundary.  This is described 
     # in Hummel, Hunter, Handcock (2011, JCGS).
-    if (gamm == MCMCparams$gridsize) {
+    if (gamm == control$Step.gridsize) {
       if (verbose) 
         cat("Observed stats are well inside the convex hull.\n")
       countdown <- countdown - 1
@@ -114,7 +91,7 @@ ergm.stepping = function(theta0, nw, model, Clist, initialfit,
     }
     # We'd like to have gamma==1 for 2 consecutive iterations before
     # we declare that we're finished.
-    finished = (countdown==0)
+    finished = (countdown==0) || (iter >= control$Step.maxit)
     
     # When the stepped xi is in the convex hull (but not on the boundary), find the MLE for gyobs=xi
 		cat("  Trying gamma=", gamma[[iter]],"\n")  
@@ -137,44 +114,44 @@ ergm.stepping = function(theta0, nw, model, Clist, initialfit,
     # ergm.estimate requires that the simulated stats be "centered" in the sense that the
     # observed statistics would be exactly zero on the same scale.  In this case, the
     # "observed statistics" equal xi[[iter]].
-    v<-ergm.estimate(theta0=eta[[iter]], model=model, 
+    v<-ergm.estimate(init=eta[[iter]], model=model, 
                      statsmatrix=sweep(samples[[iter]], 2, xi[[iter]], '-'), 
-                     nr.maxit=MCMCparams$nr.maxit,
-                     metric=MCMCparams$metric,
+                     nr.maxit=control$MCMLE.NR.maxit,
+                     metric=control$MCMLE.metric,
                      verbose=verbose,
                      trace=0,  # suppress 'optim' output
                      estimateonly=TRUE, 
-                     #statsmatrix.miss=statsmatrix.miss, 
-                     #epsilon=MCMCparams$epsilon,
-                     # nr.reltol=MCMCparams$nr.reltol,
-                     #calc.mcmc.se=MCMCparams$calc.mcmc.se, hessianflag=MCMCparams$hessian,
-                     # trustregion=MCMCparams$trustregion, method=MCMCparams$method, 
-                     #compress=MCMCparams$compress, 
+                     #statsmatrix.obs=statsmatrix.obs, 
+                     #epsilon=control$epsilon,
+                     # nr.reltol=control$MCMLE.NR.reltol,
+                     #calc.mcmc.se=control$MCMC.addto.se, hessianflag=control$main.hessian,
+                     # trustregion=control$MCMLE.trustregion, method=control$MCMLE.method, 
+                     #compress=control$MCMC.compress, 
                      ...)
     eta[[iter+1]]<-v$coef
 	}
 	cat("Now ending with one large sample for MLE. \n")
 	flush.console()
 	iter <- iter+1
-  finalsample <- simulate.formula(formula, nsim=MCMCparams$samplesize,
-                                  theta0=eta[[iter]], burnin=MCMCparams$burnin, 
-                                  interval=MCMCparams$interval, statsonly=TRUE, 
-                                  ...)
+  finalsample <- simulate.formula(formula, nsim=control$MCMC.samplesize,
+                                  coef=eta[[iter]], statsonly=TRUE, 
+                                  constraints=constraints, 
+                                  control=control, ...)
   sampmeans[[iter]] <- colMeans(finalsample)
   xi[[iter]] <- obsstats
-	v<-ergm.estimate(theta0=eta[[iter]], model=model, 
+	v<-ergm.estimate(init=eta[[iter]], model=model, 
 									 statsmatrix=sweep(finalsample, 2, xi[[iter]], '-'), 
-									 nr.maxit=MCMCparams$nr.maxit,
-									 metric=MCMCparams$metric,
+									 nr.maxit=control$MCMLE.NR.maxit,
+									 metric=control$MCMLE.metric,
 									 verbose=verbose,
                    trace=0,  # suppress 'optim' output
 									 #estimateonly=TRUE,
-                   #statsmatrix.miss=statsmatrix.miss, 
-                   epsilon=MCMCparams$epsilon,
-                    nr.reltol=MCMCparams$nr.reltol,
-                   calc.mcmc.se=MCMCparams$calc.mcmc.se, hessianflag=MCMCparams$hessian,
-                    trustregion=MCMCparams$trustregion, method=MCMCparams$method, 
-                   compress=MCMCparams$compress, 
+                   #statsmatrix.obs=statsmatrix.obs, 
+                   epsilon=control$epsilon,
+                    nr.reltol=control$MCMLE.NR.reltol,
+                   calc.mcmc.se=control$MCMC.addto.se, hessianflag=control$main.hessian,
+                    trustregion=control$MCMLE.trustregion, method=control$MCMLE.method, 
+                   compress=control$MCMC.compress, 
 									 ...)
   eta[[iter+1]] <- v$coef
 	
@@ -191,20 +168,20 @@ ergm.stepping = function(theta0, nw, model, Clist, initialfit,
   #####	final.mle
 	mle.lik <- mle.lik + abs(v$loglikelihood)
 	v$newnetwork <- nw
-	v$burnin <- MCMCparams$burnin
-	v$samplesize <- MCMCparams$samplesize
-	v$interval <- MCMCparams$interval
+	v$burnin <- control$MCMC.burnin
+	v$samplesize <- control$MCMC.samplesize
+	v$interval <- control$MCMC.interval
 	v$network <- nw.orig
 	v$newnetwork <- nw
-	v$interval <- MCMCparams$interval
+	v$interval <- control$MCMC.interval
 	v$theta.original <- theta.original
 	v$mplefit <- initialfit
-	v$parallel <- MCMCparams$parallel
+	v$parallel <- control$parallel
   # The following output is sometimes helpful.  It's the 
   # total history of all eta values along with all of the corresponding
   # mean value parameter estimates:
-  # v$allmeanvals <- t(sapply(sampmeans, function(a)a))
-  # v$allparamvals <- t(sapply(eta, function(a)a))
+  v$allmeanvals <- t(sapply(sampmeans, function(a)a))
+  v$allparamvals <- t(sapply(eta, function(a)a))
 	
 	if(!v$failure & !any(is.na(v$coef))){
 		asyse <- mc.se
@@ -217,10 +194,8 @@ ergm.stepping = function(theta0, nw, model, Clist, initialfit,
 		options(warn=0)
 	}
 	
-	endrun <- MCMCparams$burnin+MCMCparams$interval*(MCMCparams$samplesize-1)
-	attr(v$sample, "mcpar") <- c(MCMCparams$burnin+1, endrun, MCMCparams$interval)
-	attr(v$sample, "class") <- "mcmc"
-	v$null.deviance <- 2*network.dyadcount(nw.orig)*log(2)
+  v$sample <- ergm.sample.tomcmc(v$sample, control)
+  v$null.deviance <- 2*network.dyadcount(nw.orig)*log(2)
 	v$mle.lik <- mle.lik
 	v$etamap <- model$etamap
   v$iterations <- iter

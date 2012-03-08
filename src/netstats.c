@@ -1,12 +1,12 @@
 /*
  *  File ergm/src/netstats.c
- *  Part of the statnet package, http://statnetproject.org
+ *  Part of the statnet package, http://statnet.org
  *
  *  This software is distributed under the GPL-3 license.  It is free,
  *  open source, and has the attribution requirements (GPL Section 7) in
- *    http://statnetproject.org/attribution
+ *    http://statnet.org/attribution
  *
- *  Copyright 2011 the statnet development team
+ *  Copyright 2012 the statnet development team
  */
 #include "netstats.h"
 /*****************
@@ -20,17 +20,16 @@
 
 /* *** don't forget tail-> head, so this fucntion now accepts tails before heads */
 
-void network_stats_wrapper(int *tails, int *heads, int *dnedges, 
+void network_stats_wrapper(int *tails, int *heads, int *time, int *lasttoggle, int *dnedges, 
 			   int *dn, int *dflag,  int *bipartite,
 			   int *nterms, char **funnames,
 			   char **sonames, double *inputs,  double *stats)
 {
-  int directed_flag, hammingterm;
+  int directed_flag;
   Vertex n_nodes;
-  Edge n_edges, nddyads;
+  Edge n_edges;
   Network nw[2];
   Model *m;
-  ModelTerm *thisterm;
   Vertex bip;
 
 /*	     Rprintf("prestart with setup\n"); */
@@ -39,28 +38,18 @@ void network_stats_wrapper(int *tails, int *heads, int *dnedges,
   directed_flag = *dflag;
   bip = (Vertex)*bipartite;
   
-  m=ModelInitialize(*funnames, *sonames, inputs, *nterms);
+  m=ModelInitialize(*funnames, *sonames, &inputs, *nterms);
   nw[0]=NetworkInitialize(NULL, NULL, 0,
-                          n_nodes, directed_flag, bip, 0);
+                          n_nodes, directed_flag, bip, time?1:0, time?*time:0, lasttoggle);
 
-  hammingterm=ModelTermHamming (*funnames, *nterms);
-/*	     Rprintf("start with setup\n"); */
-  if(hammingterm>0){
-    thisterm = m->termarray + hammingterm - 1;
-    nddyads = (Edge)(thisterm->inputparams[0]);
-    /* Initialize discordance network to the reference network. */
-    nw[1]=NetworkInitializeD(thisterm->inputparams+1, 
-			     thisterm->inputparams+1+nddyads, nddyads,
-			     n_nodes, directed_flag, bip, 0);
-  }
-
-  /* Compute the change statistics and copy them to stats for return to R. */
-  SummStats(n_edges, tails, heads, nw, m,stats);
+  /* Compute the change statistics and copy them to stats for return
+     to R.  Note that stats already has the statistics of an empty
+     network, so d_??? statistics will add on to them, while s_???
+     statistics will simply overwrite them. */
+  SummStats(n_edges, tails, heads, nw, m, stats);
   
   ModelDestroy(m);
   NetworkDestroy(nw);
-  if (hammingterm > 0)
-    NetworkDestroy(&nw[1]);
 }
 
 
@@ -106,7 +95,7 @@ Network *nwp, Model *m, double *stats){
     if(mtp->s_func){
       (*(mtp->s_func))(mtp, nwp);  /* Call s_??? function */
       for (unsigned int i=0; i < mtp->nstats; i++,statspos++)
-        *statspos += mtp->dstats[i];
+        *statspos = mtp->dstats[i];
     }else statspos += mtp->nstats;
   }
   

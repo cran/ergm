@@ -1,83 +1,15 @@
 #  File ergm/R/gof.ergm.R
-#  Part of the statnet package, http://statnetproject.org
+#  Part of the statnet package, http://statnet.org
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnetproject.org/attribution
+#    http://statnet.org/attribution
 #
-#  Copyright 2011 the statnet development team
+#  Copyright 2012 the statnet development team
 ######################################################################
-#=============================================================================
-# This file contains the following 8 functions for assessing goodness of fit
-#         <gof>              <summary.gofobject>
-#         <gof.default>      <plot.gofobject>
-#         <gof.ergm>         <ergm.get.terms.formula>
-#         <gof.formula>      <ergm.rhs.formula>
-#=============================================================================
-
-
-
 ###############################################################################
 # Each of the <gof.X> functions assesses the goodness of fit of X by comparison
-# with 'nsim' ergm simulations of X
-#
-# --PARAMETERS--
-#   object/formula: either an ergm object or a formula
-#   ...           : additional parameters passed from within the program;
-#                   these are ignored
-#   theta0        : the parameters from which the simulations will be drawn;
-#                   default=NULL;
-#   nsim          : the number of simulated ergms, with which to compare X;
-#                   default=100
-#   burnin        : the number of proposals to disregard before any MCMC
-#                   sampling is done; this is passed along to the simulation
-#                   routines; default=10000
-#   interval      : the number of proposals between sampled ergm statistics;
-#                   this is passed along to the simulation rountines;
-#                   default=1000
-#   GOF           : a one-sided formula specifying which summary statistics
-#                   should be used in the GOF comparison; choices include
-#                       distance      espartners    dspartners
-#                       odegree       idegree       degree
-#                       triadcensus   model
-#                   default=NULL; is internally mapped to 
-#                   ~degree+espartners+distance if nw is undirected, and
-#                   ~idegree+odegree+espartners+distance otherwise
-#   constraints   : a one-sided formula of the constraint terms; options are
-#                         bd        degrees        nodegrees
-#                         edges     degreedist     indegreedist
-#                         observed  outdegreedist
-#                   default="~ ."   
-#   control       : a list of parameters for controlling GOF evaluation, as
-#                   returned by <control.gof.X>; default=control.gof.X()
-#                   (note that <control.gof.X> has different defaults 
-#                    depending on the class of X)
-#   seed          : an integer value at which to set the random generator;
-#                   default=NULL
-#   verbose       : whether to print information on the progress of the
-#                   simulations; default=FALSE
-#
-# --RETURNED--
-#   returnlist: a list with the following components for each term
-#               G given in 'GOF'
-#      summary.G: a matrix of summary statistics for the observed and
-#                 simulated G's; if G takes on the values {G1, G2,...,Gq},
-#                 the entries of 'summary.G' are
-#         [i,1]-- the observed frequency of Gi
-#         [i,2]-- the minimum value of Gi from the simulations
-#         [i,3]-- the mean value of Gi from the simulations
-#         [i,4]-- the maximum value of Gi from the simulations
-#         [i,5]-- the p-value for the observed Gi estimated from the
-#                 distribution of simulations
-#      pobs.G   : a vector giving G's observed probability distribution
-#      psim.G   : a matrix of G's simulated probability distributions; each
-#                 row gives a distribution
-#      bds.G    : the estimatd confidence interval, as the .025 and .975
-#                 quantile values of the simulations
-#      obs.G    : the vector of summary statistics for the observed X
-#      sim.G    : the matrix of summary statistics for each simulated
-#                 version of X
-#
+# with 'control$nsim' ergm simulations of X
 ###############################################################################
 
 gof <- function(object, ...){
@@ -90,13 +22,11 @@ gof.default <- function(object,...) {
 }
 
 
-gof.ergm <- function (object, ..., nsim=100,
+gof.ergm <- function (object, ..., 
+                      coef=NULL,
                       GOF=NULL, 
-                      burnin=10000, interval=1000,
                       constraints=NULL,
                       control=control.gof.ergm(),
-                      seed=NULL,
-                      theta0=NULL,
                       verbose=FALSE) {
   
   nw <- as.network(object$network)
@@ -119,50 +49,51 @@ gof.ergm <- function (object, ..., nsim=100,
     stop("A network must be given as part of the network object.")
   }
 
-  if(missing(theta0)){theta0 <- object$coef}
+  if(missing(coef)){coef <- object$coef}
 
   ## If a different constraint was specified, use it; otherwise, copy
   ## from the ERGM.
+
+  control.transfer <- c("MCMC.burnin", "MCMC.interval", "MCMC.prop.weights", "MCMC.prop.args", "MCMC.packagenames", "MCMC.init.maxedges")
+  for(arg in control.transfer)
+    if(is.null(control[[arg]]))
+      control[arg] <- list(object$control[[arg]])
   
-  if(is.null(constraints)) constraints<-object$constraints
-  if(is.null(control$prop.args)) control$prop.args<-object$prop.args
-  if(is.null(control$prop.weights)) control$prop.weights<-object$prop.weights
+  if(is.null(constraints)) constraints <- object$constraints
   
-  gof.formula(formula=formula, theta0=theta0, nsim=nsim,
+  gof.formula(object=formula, coef=coef,
               GOF=GOF,
-              burnin=burnin, interval=interval,
               constraints=constraints,
               control=control,
-              seed=seed,
               verbose=verbose, ...)
 }
 
 
 
-gof.formula <- function(formula, ..., theta0=NULL, nsim=100,
-                        burnin=10000, interval=1000,
+gof.formula <- function(object, ..., 
+                        coef=NULL,
                         GOF=NULL,
                         constraints=~.,
                         control=control.gof.formula(),
-                        seed=NULL,
                         verbose=FALSE) {
+  if(!is.null(control$seed)) {set.seed(as.integer(control$seed))}
   if (verbose) 
     cat("Starting GOF for the given ERGM formula.\n")
   # Unused code
-  theta0missing <- NULL
+  coefmissing <- NULL
   unconditional <- TRUE
   # get network
-  trms <- ergm.getterms(formula)
+  trms <- ergm.getterms(object)
   if(length(trms)>2){
     nw <- eval(trms[[2]], sys.parent())
   }else{
     stop("A network object on the RHS of the formula argument must be given")
   }
   if(is.ergm(nw)){
-    all.gof.vars <- ergm.rhs.formula(formula)
-    formula <- nw$formula
-    if(missing(theta0)){theta0 <- nw$coef}
-    trms <- ergm.getterms(formula)
+    all.gof.vars <- ergm.rhs.formula(object)
+    object <- nw$formula
+    if(missing(coef)){coef <- nw$coef}
+    trms <- ergm.getterms(object)
     if(length(trms)>2){
       nw <- eval(trms[[2]], sys.parent())
     }else{
@@ -200,33 +131,32 @@ gof.formula <- function(formula, ..., theta0=NULL, nsim=100,
   }
 
 # if(is.bipartite(nw)){
-#   formula <- ergm.update.formula(formula, ~ . + bipartite)
-#   trms <- ergm.getterms(formula)
+#   object <- ergm.update.formula(object, ~ . + bipartite)
+#   trms <- ergm.getterms(object)
 #   termnames <- ergm.gettermnames(trms)
 # }
 
-  m <- ergm.getmodel(formula, nw, drop=control$drop)
+  m <- ergm.getmodel(object, nw)
   Clist <- ergm.Cprepare(nw, m)
 
-  if(is.null(theta0)){
-      theta0 <- rep(0,Clist$nstats)
+  if(is.null(coef)){
+      coef <- rep(0,Clist$nstats)
       warning("No parameter values given, using 0\n\t")
   }
 # if(is.bipartite(nw)){
-#     theta0 <- c(theta0,-1)
+#     coef <- c(coef,-1)
 # }
 
   # If missing simulate from the conditional model
   if(!is.null(nw$gal$design) & unconditional){
    if(verbose){cat("Conditional simulations for missing fit\n")}
-   if(is.null(theta0missing)){theta0missing <- theta0}
-   SimCond <- gof(formula=formula, theta0=theta0missing,
-                  GOF=GOF, nsim=nsim,
-                  burnin=burnin, interval=interval,
+   if(is.null(coefmissing)){coefmissing <- coef}
+   SimCond <- gof(object=object, coef=coefmissing,
+                  GOF=GOF, 
                   constraints=constraints,
                   control=control,
                   unconditional=FALSE,
-                  seed=seed, verbose=verbose)
+                  verbose=verbose)
   }
 
 # test to see which of these is/are necessary
@@ -251,12 +181,12 @@ gof.formula <- function(formula, ..., theta0=NULL, nsim=100,
   
   if ('model' %in% all.gof.vars) {
    if(is.null(nw$gal$design) | !unconditional){
-    obs.model <- summary(formula, drop=control$drop)
+    obs.model <- summary(object)
    }else{
     obs.model <- SimCond$obs.model
    }
-   sim.model <- array(0,dim=c(nsim,length(obs.model)))
-   dimnames(sim.model) <- list(paste(c(1:nsim)),names(obs.model))
+   sim.model <- array(0,dim=c(control$nsim,length(obs.model)))
+   dimnames(sim.model) <- list(paste(c(1:control$nsim)),names(obs.model))
   }
 
   if ('distance' %in% all.gof.vars) {
@@ -266,33 +196,33 @@ gof.formula <- function(formula, ..., theta0=NULL, nsim=100,
    }else{
     obs.dist <- SimCond$summary.dist[,"mean"]
    }
-   sim.dist <-array(0,dim=c(nsim,n))
-   dimnames(sim.dist)  <- list(paste(c(1:nsim)),paste(1:n))
+   sim.dist <-array(0,dim=c(control$nsim,n))
+   dimnames(sim.dist)  <- list(paste(c(1:control$nsim)),paste(1:n))
   }
 
   if ('odegree' %in% all.gof.vars) {
    if(is.null(nw$gal$design) | !unconditional){
     mesp <- paste("c(",paste(0:(n-1),collapse=","),")",sep="")
-    obs.odeg <- summary(as.formula(paste('nw ~ odegree(',mesp,')',sep="")),drop=FALSE)
+    obs.odeg <- summary(as.formula(paste('nw ~ odegree(',mesp,')',sep="")))
    }else{
     obs.odeg <- SimCond$summary.odeg[,"mean"]
    }
-   sim.odeg <- array(0,dim=c(nsim,n))
+   sim.odeg <- array(0,dim=c(control$nsim,n))
 #  obs.odeg <- c(obs.odeg,rep(0,n-length(obs.odeg)))
-   dimnames(sim.odeg)   <- list(paste(c(1:nsim)),paste(0:(n-1)))
+   dimnames(sim.odeg)   <- list(paste(c(1:control$nsim)),paste(0:(n-1)))
    names(obs.odeg) <- dimnames(sim.odeg)[[2]]
   }
 
   if ('idegree' %in% all.gof.vars) {
    if(is.null(nw$gal$design) | !unconditional){
     mesp <- paste("c(",paste(0:(n-1),collapse=","),")",sep="")
-    obs.ideg <- summary(as.formula(paste('nw ~ idegree(',mesp,')',sep="")),drop=FALSE)
+    obs.ideg <- summary(as.formula(paste('nw ~ idegree(',mesp,')',sep="")))
    }else{
     obs.ideg <- SimCond$summary.ideg[,"mean"]
    }
-   sim.ideg <- array(0,dim=c(nsim,n))
+   sim.ideg <- array(0,dim=c(control$nsim,n))
 #  obs.ideg <- c(obs.ideg,rep(0,n-length(obs.ideg)))
-   dimnames(sim.ideg)   <- list(paste(c(1:nsim)),paste(0:(n-1)))
+   dimnames(sim.ideg)   <- list(paste(c(1:control$nsim)),paste(0:(n-1)))
    names(obs.ideg) <- dimnames(sim.ideg)[[2]]
   }
 
@@ -303,13 +233,13 @@ gof.formula <- function(formula, ..., theta0=NULL, nsim=100,
      obs.deg <- c(obs.deg,rep(0,n-length(obs.deg)))
     }else{
      mesp <- paste("c(",paste(0:(n-1),collapse=","),")",sep="")
-     obs.deg <- summary(as.formula(paste('nw ~ degree(',mesp,')',sep="")),drop=FALSE)
+     obs.deg <- summary(as.formula(paste('nw ~ degree(',mesp,')',sep="")))
     }
    }else{
     obs.deg <- SimCond$summary.deg[,"mean"]
    }
-   sim.deg <- array(0,dim=c(nsim,n))
-   dimnames(sim.deg)   <- list(paste(c(1:nsim)),paste(0:(n-1)))
+   sim.deg <- array(0,dim=c(control$nsim,n))
+   dimnames(sim.deg)   <- list(paste(c(1:control$nsim)),paste(0:(n-1)))
    names(obs.deg) <- dimnames(sim.deg)[[2]]
   }
  
@@ -317,24 +247,24 @@ gof.formula <- function(formula, ..., theta0=NULL, nsim=100,
 #  obs.espart <- espartnerdist(nw, print=verbose)
    if(is.null(nw$gal$design) | !unconditional){
     mesp <- paste("c(",paste(0:(network.size(nw)-2),collapse=","),")",sep="")
-    obs.espart <- summary(as.formula(paste('nw ~ esp(',mesp,')',sep="")), drop=FALSE)
+    obs.espart <- summary(as.formula(paste('nw ~ esp(',mesp,')',sep="")))
    }else{
     obs.espart <- SimCond$summary.espart[,"mean"]
    }
-   sim.espart <- array(0,dim=c(nsim,n-1))
-   dimnames(sim.espart) <- list(paste(c(1:nsim)),paste(0:(n-2)))
+   sim.espart <- array(0,dim=c(control$nsim,n-1))
+   dimnames(sim.espart) <- list(paste(c(1:control$nsim)),paste(0:(n-2)))
   }
  
   if ('dspartners' %in% all.gof.vars) {
    if(is.null(nw$gal$design) | !unconditional){
 #   obs.dspart <- dspartnerdist(nw, print=verbose)
     mesp <- paste("c(",paste(0:(network.size(nw)-2),collapse=","),")",sep="")
-    obs.dspart <- summary(as.formula(paste('nw ~ dsp(',mesp,')',sep="")), drop=FALSE)
+    obs.dspart <- summary(as.formula(paste('nw ~ dsp(',mesp,')',sep="")))
    }else{
     obs.dspart <- SimCond$summary.dspart[,"mean"]
    }
-   sim.dspart <- array(0,dim=c(nsim,n-1))
-   dimnames(sim.dspart) <- list(paste(c(1:nsim)),paste(0:(n-2)))
+   sim.dspart <- array(0,dim=c(control$nsim,n-1))
+   dimnames(sim.dspart) <- list(paste(c(1:control$nsim)),paste(0:(n-2)))
   }
 
   if ('triadcensus' %in% all.gof.vars) {
@@ -350,54 +280,50 @@ gof.formula <- function(formula, ..., theta0=NULL, nsim=100,
     triadcensus.formula <- "~ triadcensus(0:3)"
    }
    if(is.null(nw$gal$design) | !unconditional){
-    obs.triadcensus <- summary(as.formula(paste('nw',triadcensus.formula,sep="")), drop=FALSE)
+    obs.triadcensus <- summary(as.formula(paste('nw',triadcensus.formula,sep="")))
    }else{
     obs.triadcensus <- SimCond$summary.triadcensus[,"mean"]
    }
-   sim.triadcensus <- array(0,dim=c(nsim,length(triadcensus)))
-   dimnames(sim.triadcensus) <- list(paste(c(1:nsim)), namestriadcensus)
+   sim.triadcensus <- array(0,dim=c(control$nsim,length(triadcensus)))
+   dimnames(sim.triadcensus) <- list(paste(c(1:control$nsim)), namestriadcensus)
    names(obs.triadcensus) <- namestriadcensus
   }
  
   # Simulate an exponential family random graph model
 
-#  SimNetworkSeriesObj <- simulate(formula, nsim=nsim, seed=seed,
-#                                  theta0=theta0,
+#  SimNetworkSeriesObj <- simulate(object, control$nsim=control$nsim, seed=seed,
+#                                  coef=coef,
 #                                  burnin=burnin, interval=interval,
 #                                  constraints=constraints,
 #                                  control=control.simulate.formula(
-#                                   prop.args=control$prop.args,
-#                                   prop.weights=control$prop.weights,
+#                                   prop.args=control$MCMC.prop.args,
+#                                   prop.weights=control$MCMC.prop.weights,
 #                                   summarizestats=control$summarizestats,
 #                                   drop=control$drop),
 #                                  verbose=verbose, basis=nw)
 # New approach below avoids having to store gigantic unnecessary
-# network.series object
+# network.list object
 
   if(verbose)
     cat("Starting simulations.\n")
 
   tempnet <- nw
-  for (i in 1:nsim) {
+  for (i in 1:control$nsim) {
     if(verbose){
-      cat("Sim",i,"of",nsim,": ")
+      cat("Sim",i,"of",control$nsim,": ")
     }
-    tempnet <- simulate(formula, nsim=1, seed=seed, theta0=theta0,
-                        burnin=burnin, constraints=constraints, 
-                        control=control.simulate.formula(
-                            prop.args=control$prop.args,
-                            prop.weights=control$prop.weights,
-                            summarizestats=control$summarizestats,
-                            drop=control$drop),
-                        verbose=verbose, basis=tempnet)
+    tempnet <- simulate(object, nsim=1, coef=coef,
+                        constraints=constraints, 
+                        control=control,
+                        basis=tempnet,
+                        verbose=verbose)
     seed <- NULL # Don't re-seed after first iteration   
-    burnin <- interval # starting with iteration 2
 #    if(verbose){
 #     cat(paste("...",i,sep=""))
-#     if ((i %% 10 == 0) || (i==nsim)) cat("\n")
+#     if ((i %% 10 == 0) || (i==control$nsim)) cat("\n")
 #    }
     if ('model' %in% all.gof.vars) {
-     sim.model[i,] <- summary(ergm.update.formula(formula,tempnet ~ .))
+     sim.model[i,] <- summary(ergm.update.formula(object,tempnet ~ .))
     }
     if ('distance' %in% all.gof.vars) {
      sim.dist[i,] <- ergm.geodistdist(tempnet)
@@ -405,14 +331,14 @@ gof.formula <- function(formula, ..., theta0=NULL, nsim=100,
     if ('idegree' %in% all.gof.vars) {
      mesp <- paste("c(",paste(0:(n-1),collapse=","),")",sep="")
      gi <- tempnet
-     sim.ideg[i,] <- summary(as.formula(paste('gi ~ idegree(',mesp,')',sep="")),drop=FALSE)
+     sim.ideg[i,] <- summary(as.formula(paste('gi ~ idegree(',mesp,')',sep="")))
 #    temp <- table(degreedist(tempnet, print=verbose)[1,])
 #    sim.ideg[i,] <- c(temp, rep(0, n-length(temp)))
     }
     if ('odegree' %in% all.gof.vars) {
      mesp <- paste("c(",paste(0:(n-1),collapse=","),")",sep="")
      gi <- tempnet
-     sim.odeg[i,] <- summary(as.formula(paste('gi ~ odegree(',mesp,')',sep="")),drop=FALSE)
+     sim.odeg[i,] <- summary(as.formula(paste('gi ~ odegree(',mesp,')',sep="")))
 #    temp <- table(degreedist(tempnet, print=verbose)[2,])
 #    sim.odeg[i,] <- c(temp, rep(0, n-length(temp)))
     }
@@ -423,7 +349,7 @@ gof.formula <- function(formula, ..., theta0=NULL, nsim=100,
       sim.deg[i,] <- c(temp,rep(0,n-length(temp)))
      }else{                                                
       mesp <- paste("c(",paste(0:(n-1),collapse=","),")",sep="")
-      sim.deg[i,] <- summary(as.formula(paste('gi ~ degree(',mesp,')',sep="")),drop=FALSE)
+      sim.deg[i,] <- summary(as.formula(paste('gi ~ degree(',mesp,')',sep="")))
      }
 #    temp <- table(degreedist(tempnet, print=verbose))
 #    sim.deg[i,] <- c(temp, rep(0, n-length(temp)))
@@ -433,18 +359,18 @@ gof.formula <- function(formula, ..., theta0=NULL, nsim=100,
 #                                   print=verbose)
      gi <- tempnet
      mesp <- paste("c(",paste(0:(network.size(gi)-2),collapse=","),")",sep="")
-     sim.espart[i,] <- summary(as.formula(paste('gi ~ esp(',mesp,')',sep="")), drop=FALSE)
+     sim.espart[i,] <- summary(as.formula(paste('gi ~ esp(',mesp,')',sep="")))
     }
     if ('dspartners' %in% all.gof.vars) {
 #    sim.espart[i,] <- dspartnerdist(tempnet,
 #                                   print=verbose)
      gi <- tempnet
      mesp <- paste("c(",paste(0:(network.size(gi)-2),collapse=","),")",sep="")
-     sim.dspart[i,] <- summary(as.formula(paste('gi ~ dsp(',mesp,')',sep="")), drop=FALSE)
+     sim.dspart[i,] <- summary(as.formula(paste('gi ~ dsp(',mesp,')',sep="")))
     }
     if ('triadcensus' %in% all.gof.vars) {
      gi <- tempnet
-     sim.triadcensus[i,] <- summary(as.formula(paste('gi',triadcensus.formula,sep="")), drop=FALSE)
+     sim.triadcensus[i,] <- summary(as.formula(paste('gi',triadcensus.formula,sep="")))
     }
   }
   if(verbose){
@@ -614,13 +540,6 @@ gof.formula <- function(formula, ..., theta0=NULL, nsim=100,
 ################################################################
 # The <print.gofobject> function prints the summary matrices
 # of each GOF term included in the build of the gofobject
-#
-# --PARAMETERS--
-#   x  : a gofobject, as returned by one of the <gof.X> functions
-#   ...: additional printing parameters; these are ignored
-#
-# --RETURNED--
-#   NULL
 #################################################################
 
 print.gofobject <- function(x, ...){
@@ -659,24 +578,6 @@ summary.gofobject <- function(object, ...) {
 ###################################################################
 # The <plot.gofobject> function plots the GOF diagnostics for each
 # term included in the build of the gofobject
-#
-# --PARAMETERS--
-#   x          : a gofobject, as returned by one of the <gof.X>
-#                functions
-#   ...        : additional par arguments to send to the native R
-#                plotting functions
-#   cex.axis   : the magnification of the text used in axis notation;
-#                default=0.7
-#   plotlogodds: whether the summary results should be presented
-#                as their logodds; default=FALSE
-#   main       : the main title; default="Goodness-of-fit diagnostics"
-#   verbose    : this parameter is ignored; default=FALSE
-#   normalize.reachibility: whether to normalize the distances in
-#                the 'distance' GOF summary; default=FALSE
-#
-# --RETURNED--
-#   NULL
-#
 ###################################################################
 
 plot.gofobject <- function(x, ..., 

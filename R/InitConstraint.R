@@ -1,38 +1,12 @@
 #  File ergm/R/InitConstraint.R
-#  Part of the statnet package, http://statnetproject.org
+#  Part of the statnet package, http://statnet.org
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnetproject.org/attribution
+#    http://statnet.org/attribution
 #
-#  Copyright 2011 the statnet development team
+#  Copyright 2012 the statnet development team
 ######################################################################
-#============================================================================
-# This file contains the following 12 functions for initializing empty
-# constraint lists (each prependend with "InitConstraint")
-#         <edges>                   <outdegreedist>
-#         <degrees>=<nodedegrees>   <bd>
-#         <degreesTetrad>           <indegrees>
-#         <degreesHexad>            <outdegrees>
-#         <degreedist>              <hamming>
-#         <indegreedist>            <observed>
-#============================================================================
-
-
-## List of which constraints make which constraints redundant.
-ConstraintImplications<-list(edges=character(0),
-                             degrees=c("edges","indegrees","outdegrees","degreedist","bd"),
-                             degreedist=c("edges","indegrees"),
-                             indegreedist=c("edges"),
-                             outdegreedist=c("edges"),
-                             bd=character(0),
-                             indegrees=c("edges"),
-                             outdegrees=c("edges"),
-                             hamming=character(0),
-                             observed=character(0))
-
-
-
 ##########################################################################################
 # Each of the <InitConstraint.X> functions accepts an existing constraint list, 'conlist',
 # and to this adds an empty constraint list for term X; if any arguments are passed besides
@@ -61,7 +35,12 @@ InitConstraint.degrees<-InitConstraint.nodedegrees<-function(conlist){
    conlist
 }
 
-
+InitConstraint.degreessimple<-function(conlist){
+   if (nargs()>1)
+     stop(paste("Vertex degrees constraint does not take arguments at this time."), call.=FALSE)
+   conlist$degreessimple<-list()
+   conlist
+}
 
 InitConstraint.degreesTetrad<-function(conlist){
    if (nargs()>1)
@@ -115,8 +94,6 @@ InitConstraint.bd<-function(conlist, attribs=0, maxout=0, maxin=0, minout=0, min
    conlist
 }
 
-
-
 #InitConstraint.indegrees<-function(conlist){
 #   if (nargs()>1)
 #     stop(paste("Vertex indegrees constraint does not take arguments at this time."), call.=FALSE)
@@ -148,5 +125,19 @@ InitConstraint.observed <- function(conlist){
   if(nargs()>1)
     stop(paste("Toggle non-observed constraint does not take arguments at this time."), call.=FALSE)
   conlist$observed<-list()
+  conlist
+}
+
+InitConstraint.atleast<-function(conlist,nw=NULL){
+  if(is.null(nw)) stop("Formation constraint ``atleast'' requires a baseline network.",call.=FALSE)
+  if(network.naedgecount(nw)) stop("Baseline network passed to formation constraint ``atleast'' may not have missing dyads.")
+  conlist$atleast<-list(nw=nw)
+  conlist
+}
+
+InitConstraint.atmost<-function(conlist,nw=NULL){
+  if(is.null(nw)) stop("Dissolution constraint ``atmost'' requires a baseline network.",call.=FALSE)
+  if(network.naedgecount(nw)) stop("Baseline network passed to dissolution constraint ``atleast'' may not have missing dyads.")
+  conlist$atmost<-list(nw=nw)
   conlist
 }

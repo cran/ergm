@@ -1,11 +1,11 @@
 #  File ergm/tests/testgmonkmiss.R
-#  Part of the statnet package, http://statnetproject.org
+#  Part of the statnet package, http://statnet.org
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnetproject.org/attribution
+#    http://statnet.org/attribution
 #
-#  Copyright 2011 the statnet development team
+#  Copyright 2012 the statnet development team
 ######################################################################
 library(ergm)
 data(sampson)
@@ -17,6 +17,7 @@ data(sampson)
 # samplike <- set.graph.attribute(samplike, "design", msamplike)
 # summary(samplike)
 
+set.seed(123)
 respondent <- rep(FALSE,network.size(samplike))
 respondent[sample(1:network.size(samplike), size=network.size(samplike)-2,replace=FALSE)] <- TRUE
 respondent
@@ -25,25 +26,31 @@ summary(samplike)
 
 degreedist(samplike)
 
-efit <- ergm(samplike~edges + triangle, MPLEonly=T)
+set.seed(234)
+efit <- ergm(samplike~edges + triangle, estimate="MPLE")
 summary(efit)
 
-efit <- ergm(samplike~edges + triangle, maxit=3,
- MCMCsamplesize=1000, interval=1000, burnin=1000)
+set.seed(345)
+efit <- ergm(samplike~edges + triangle, control=control.ergm(MCMLE.maxit=3,
+      MCMC.samplesize=1000, MCMC.interval=1000, MCMC.burnin=1000))
 summary(efit)
 
 ## Test bounded degrees.
-efit <- ergm(samplike~edges + triangle,constraints=~bd(maxout=9))
+set.seed(456)
+efit <- ergm(samplike~edges + triangle, constraints=~bd(maxout=9), 
+             control=control.ergm(MCMLE.maxit=3,
+             MCMC.samplesize=1000, MCMC.interval=1000, MCMC.burnin=1000))
 summary(efit)
 
 samplike <- set.vertex.attribute(samplike, "respondent", respondent)
 rm(respondent)
 summary(samplike)
 
-efit <- ergm(samplike~edges + triangle, MPLEonly=T)
+efit <- ergm(samplike~edges + triangle, estimate="MPLE")
 summary(efit)
 
-efit <- ergm(samplike~edges + triangle, maxit=3,
- MCMCsamplesize=1000, interval=1000, burnin=1000)
+set.seed(567)
+efit <- ergm(samplike~edges + triangle, control=control.ergm(MCMLE.maxit=3,
+    MCMC.samplesize=1000, MCMC.interval=1000, MCMC.burnin=1000))
 summary(efit)
 

@@ -1,40 +1,12 @@
 #  File ergm/R/ergm.utility.R
-#  Part of the statnet package, http://statnetproject.org
+#  Part of the statnet package, http://statnet.org
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnetproject.org/attribution
+#    http://statnet.org/attribution
 #
-#  Copyright 2011 the statnet development team
+#  Copyright 2012 the statnet development team
 ######################################################################
-#==============================================================
-# This file contains the following 21 utility functions:
-#      <ostar2deg>                  
-#      <is.invertible>          <summary.statsmatrix.ergm>
-#      <is.ergm>                <ergm.t.summary>
-#      <is.matrixnetwork>       <is.latent>
-#      <degreedist>             <is.latent.cluster>
-#      <degreedistfactor>       <newnw.extract>
-#      <espartnerdist>          <statnet.edit>
-#      <dspartnerdist>          <ergm.update.formula>
-#      <rspartnerdist>          <term.list.formula>
-#      <twopathdist>            <copy.named>
-#==============================================================      
-
-
-
-###############################################################################
-# The <ostar2deg> function ??
-#
-# --PARAMETERS--
-#   object  : an ergm object
-#   ninflast: whether ??
-#
-# --RETURNED--
-#   odeg: the vector of ??
-#
-###############################################################################
-
 ostar2deg <- function(object, ninflast=TRUE){
  nnodes <- network.size(object$newnetwork)
  nodeg <- paste("odeg",1:(nnodes-1),sep="")
@@ -63,7 +35,7 @@ ostar2deg <- function(object, ninflast=TRUE){
 
 is.invertible <- function(V, tol=1e-12)
 {
-    ev <- eigen(V, sym = TRUE, only.values = TRUE)$values
+    ev <- eigen(V, symmetric = TRUE, only.values = TRUE)$values
     all(ev/max(ev) > tol)
 }
 
@@ -73,28 +45,9 @@ is.ergm <- function(object)
     class(object)=="ergm"
 }
 
-
-is.matrixnetwork<-function(x){
- is.matrix(x)|is.network(x)
-}
-
-
 ###############################################################################
 # The <degreedist> function computes and returns the degree distribution for
 # a given network
-#
-# --PARAMETERS--
-#   g    : a network object
-#   print: whether to print the degree distribution; default=TRUE
-#
-# --RETURNED--
-#   degrees:
-#      if directed  -- a matrix of the distributions of in and out degrees;
-#                      this is row bound and only contains degrees for which
-#                      one of the in or out distributions has a positive count
-#      if bipartite -- a list containing the degree distributions of b1 and b2
-#      otherwise    -- a vector of the positive values in the degree
-#                      distribution
 ###############################################################################
 
 degreedist <- function(g, print=TRUE)
@@ -104,8 +57,8 @@ degreedist <- function(g, print=TRUE)
  }
  if(is.directed(g)){                                      
    mesp <- paste("c(",paste(0:(network.size(g)-1),collapse=","),")",sep="")
-   outdegrees <- summary(as.formula(paste('g ~ odegree(',mesp,')',sep="")),drop=FALSE)
-   indegrees <- summary(as.formula(paste('g ~ idegree(',mesp,')',sep="")),drop=FALSE)
+   outdegrees <- summary(as.formula(paste('g ~ odegree(',mesp,')',sep="")))
+   indegrees <- summary(as.formula(paste('g ~ idegree(',mesp,')',sep="")))
    temp <- outdegrees > 0 | indegrees > 0
    outdegrees <- outdegrees[temp]
    indegrees <- indegrees[temp]
@@ -117,9 +70,9 @@ degreedist <- function(g, print=TRUE)
    nb1 <- get.network.attribute(g,"bipartite")
    nb2 <- network.size(g) - nb1
    mesp <- paste("c(",paste(0:nb2,collapse=","),")",sep="")
-   b1degrees <- summary(as.formula(paste('g ~ b1degree(',mesp,')',sep="")),drop=FALSE)
+   b1degrees <- summary(as.formula(paste('g ~ b1degree(',mesp,')',sep="")))
    mesp <- paste("c(",paste(0:nb1,collapse=","),")",sep="")
-   b2degrees <- summary(as.formula(paste('g ~ b2degree(',mesp,')',sep="")),drop=FALSE)
+   b2degrees <- summary(as.formula(paste('g ~ b2degree(',mesp,')',sep="")))
    names(b2degrees) <- 0:nb1
    if(!is.null(b2degrees) & print){
     cat("Bipartite mode 2 degree distribution:\n")
@@ -133,7 +86,7 @@ degreedist <- function(g, print=TRUE)
    degrees <- list(b2=b2degrees, b1=b1degrees)
   }else{              
    mesp <- paste("c(",paste(0:(network.size(g)-1),collapse=","),")",sep="")
-   degrees <- summary(as.formula(paste('g ~ degree(',mesp,')',sep="")),drop=FALSE)
+   degrees <- summary(as.formula(paste('g ~ degree(',mesp,')',sep="")))
    degrees <- degrees[degrees > 0]
    if(!is.null(degrees) & print){print(degrees)}
   }
@@ -145,17 +98,6 @@ degreedist <- function(g, print=TRUE)
 ###############################################################################
 # The <degreedistfactor> function returns the cross table of the degree
 # distribution for a network and a given factor
-#
-# --PARAMETERS--
-#   g: a network
-#   x: a nodal attribute, as a character string
-#
-# --RETURNED--
-#   degrees:
-#      if directed  -- a list containing 2 cross tables, the in degree
-#                      distributions by 'x', and out degree dist by 'x'
-#      otherwise    -- a table of the degree distribution by 'x'
-#
 ###############################################################################
 
 degreedistfactor <- function(g,x)
@@ -164,7 +106,7 @@ degreedistfactor <- function(g,x)
   stop("degreedist() requires a network object")
  }
  x <- get.vertex.attribute(g,x)
- degrees <- as.matrix.network.edgelist(g)
+ degrees <- as.edgelist(g)
  if(length(degrees)>0){
   if(is.directed(g)){
    outdegrees <- table(degrees[,1],x[degrees[,2]])
@@ -220,7 +162,7 @@ espartnerdist <- function(g, print=TRUE)
   stop("espartnerdist() requires a network object")
  }
  mesp <- paste("c(",paste(0:(network.size(g)-2),collapse=","),")",sep="")
- degrees <- summary(as.formula(paste('g ~ esp(',mesp,')',sep="")),drop=FALSE)
+ degrees <- summary(as.formula(paste('g ~ esp(',mesp,')',sep="")))
 #names(degrees) <- paste(0:(network.size(g)-2))
  if(print){
   cat("ESP (edgewise shared partner) distribution:\n")
@@ -258,7 +200,7 @@ dspartnerdist <- function(g, print=TRUE)
   stop("dspartnerdist() requires a network object")
  }
  mesp <- paste("c(",paste(0:(network.size(g)-2),collapse=","),")",sep="")
- degrees <- summary(as.formula(paste('g ~ dsp(',mesp,')',sep="")),drop=FALSE)
+ degrees <- summary(as.formula(paste('g ~ dsp(',mesp,')',sep="")))
 #names(degrees) <- paste(0:(network.size(g)-2))
  if(print){
   cat("DSP (dyadwise shared partner) distribution:\n")
@@ -324,24 +266,6 @@ summary.statsmatrix.ergm <- function(object, ...){
 ###############################################################################
 # The <ergm.t.summary> function conducts a t test for comparing the mean of a
 # given vector and a hypothesized mean
-#
-# --PARAMETERS--
-#   x          : a numeric vector
-#   alternative: a string to indicate whether the test is two-sided or one-
-#                sided to the left or right, as either "two.sided", "less",
-#                or "greater"; default="two.sided"
-#   mu         : the hypothesized mean; default = 0
-#
-# --IGNORED PARAMETERS--
-#   var.equal : whether the variance of ?? is ??; default=FALSE
-#   conf.level: the confidence level; default=0.95
-#   ...       : ??
-#
-# --RETURNED--
-#   rval: a vetor of the standard error, the t statistic, the p value, and the
-#         standard deviation, consistent with 'alternative'; if the length of
-#         x is <2, this vector will be predominently NA's
-#
 ###############################################################################
 
 ergm.t.summary <-
@@ -386,7 +310,7 @@ function(x, alternative = c("two.sided", "less", "greater"),
 	pval <- pt(tstat, df)
     }
     else if (alternative == "greater") {
-	pval <- pt(tstat, df, lower = FALSE)
+	pval <- pt(tstat, df, lower.tail = FALSE)
     }
     else {
 	pval <- 2 * pt(-abs(tstat), df)
@@ -395,17 +319,31 @@ function(x, alternative = c("two.sided", "less", "greater"),
     return(rval)
 }
 
-
 newnw.extract<-function(oldnw,z,output="network"){
-  nedges<-z$newnwtails[1]
-  # *** don't forget - edgelists are cbind(tails, heads) now
-  newedgelist <-
-    if(nedges>0) cbind(z$newnwtails[2:(nedges+1)],z$newnwheads[2:(nedges+1)])
-    else matrix(0, ncol=2, nrow=0)
+  if("newedgelist" %in% names(z)){
+    newedgelist<-z$newedgelist[,1:2,drop=FALSE]
+  }else{
+    nedges<-z$newnwtails[1]
+    # *** don't forget - edgelists are cbind(tails, heads) now
+    newedgelist <-
+      if(nedges>0) cbind(z$newnwtails[2:(nedges+1)],z$newnwheads[2:(nedges+1)])
+      else matrix(0, ncol=2, nrow=0)
+  }
   
-  network.update(oldnw,newedgelist,"edgelist",output=output)
+  network.update(oldnw,newedgelist,matrix.type="edgelist",output=output)
 }
 
+nvattr.copy.network <- function(to, from, ignore=c("bipartite","directed","hyper","loops","mnext","multiple","n")){
+  for(a in list.vertex.attributes(from)){
+    if(! a%in%ignore)
+      to <- set.vertex.attribute(to, a, get.vertex.attribute(from, a, unlist=FALSE))
+  }
+  for(a in list.network.attributes(from)){
+    if(! a%in%ignore)
+      to <- set.network.attribute(to, a, get.network.attribute(from, a, unlist=FALSE))
+  }
+  to
+}
 
 
 statnet.edit <- function(name,package=c("statnet","ergm","network")){
@@ -428,5 +366,26 @@ statnet.edit <- function(name,package=c("statnet","ergm","network")){
   invisible(filepath)
 }
 
+## Compress a data frame by eliminating duplicate rows while keeping
+## track of their frequency.
+compress.data.frame<-function(x){
+  x<-sort(x)
+  firsts<-which(!duplicated(x))
+  freqs<-diff(c(firsts,nrow(x)+1))
+  x<-x[firsts,]
+  list(rows=x,frequencies=freqs)
+}
 
+## Sorts rows of a data frame in lexicographic order.
+sort.data.frame<-function(x, decreasing=FALSE, ...){
+  x[do.call(order,c(sapply(seq_along(x),function(i)x[[i]],simplify=FALSE), decreasing=decreasing)),]
+}
 
+## Concatenate a character list with commas and ands in the right places.
+paste.and <- function(x, oq='', cq=''){
+  x <- paste(oq, x, cq, sep='')
+  if(length(x)==0) return('')
+  if(length(x)==1) return(x)
+  if(length(x)==2) return(paste(x[1],'and',x[2]))
+  if(length(x)>=3) return(paste(paste(x[-length(x)], collapse=", "),', and ',x[length(x)],sep=''))
+}

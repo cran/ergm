@@ -1,26 +1,16 @@
 #  File ergm/R/ergm.getnetwork.R
-#  Part of the statnet package, http://statnetproject.org
+#  Part of the statnet package, http://statnet.org
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnetproject.org/attribution
+#    http://statnet.org/attribution
 #
-#  Copyright 2011 the statnet development team
+#  Copyright 2012 the statnet development team
 ######################################################################
 #################################################################################
 # The <ergm.getnetwork> function ensures that the network in a given formula
 # is valid; if so, the network is returned; if not, execution is halted with
 # warnings
-#
-# --PARAMETERS--
-#   formula     :  the formula as 'network ~ model.term(s)'
-#   loopswarning:  whether warnings about loops should be printed (T or F);
-#                  default=TRUE
-#
-# --RETURNED--
-#   nw: the network from the formula IF (i) the formula was correctly structured
-#       and (ii) the network is found within the formula's enviornment
-#
 ###################################################################################
 
 ergm.getnetwork <- function (form, loopswarning=TRUE) {
@@ -34,7 +24,7 @@ ergm.getnetwork <- function (form, loopswarning=TRUE) {
 
   nw.env<-environment(form)
   if(!exists(x=paste(trms[[2]]),envir=nw.env)){
-    stop(paste("The network in the formula '",capture.output(print(form)),"' can not be found.",sep=""))
+    stop(paste("The network in the formula '",capture.output(print(form)),"' cannot be found.",sep=""))
   }
   nw <- try(as.network(eval(trms[[2]],envir=nw.env), silent = TRUE))  
   if(inherits(nw,"try-error")){
@@ -42,7 +32,7 @@ ergm.getnetwork <- function (form, loopswarning=TRUE) {
   }
   # options(warn=current.warn)
   if (loopswarning) {
-    e <- as.matrix.network.edgelist(nw)
+    e <- as.edgelist(nw)
     if(any(e[,1]==e[,2])) {
       print("Warning:  This network contains loops")
     } else if (has.loops(nw)) {

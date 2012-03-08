@@ -1,12 +1,12 @@
 /*
  *  File ergm/src/MPLE.c
- *  Part of the statnet package, http://statnetproject.org
+ *  Part of the statnet package, http://statnet.org
  *
  *  This software is distributed under the GPL-3 license.  It is free,
  *  open source, and has the attribution requirements (GPL Section 7) in
- *    http://statnetproject.org/attribution
+ *    http://statnet.org/attribution
  *
- *  Copyright 2011 the statnet development team
+ *  Copyright 2012 the statnet development team
  */
 #include "MPLE.h"
 #include "changestat.h"
@@ -35,7 +35,6 @@
    tails before heads now */
 
 void MPLE_wrapper (int *tails, int *heads, int *dnedges,
-       int *maxpossibleedges,
 		   int *dn, int *dflag, int *bipartite, int *nterms, 
 		   char **funnames, char **sonames, double *inputs,  
 		   int *responsevec, double *covmat,
@@ -46,47 +45,15 @@ void MPLE_wrapper (int *tails, int *heads, int *dnedges,
   Vertex n_nodes = (Vertex) *dn; 
   Edge n_edges = (Edge) *dnedges;
   int directed_flag = *dflag;
-  int hammingterm;
   Vertex bip = (Vertex) *bipartite;
   Edge maxMPLE = (Edge) *maxMPLEsamplesize;
-  Vertex htail, hhead;
-  Edge  nddyads, kedge;
   Model *m;
-  ModelTerm *thisterm;
 
   GetRNGstate(); /* Necessary for R random number generator */
   nw[0]=NetworkInitialize(tails, heads, n_edges,
-                          n_nodes, directed_flag, bip, 0);
-  m=ModelInitialize(*funnames, *sonames, inputs, *nterms);
+                          n_nodes, directed_flag, bip, 0, 0, NULL);
+  m=ModelInitialize(*funnames, *sonames, &inputs, *nterms);
   
-  hammingterm=ModelTermHamming (*funnames, *nterms);
-  if(hammingterm>0){
-   Network nwhamming;
-   thisterm = m->termarray + hammingterm - 1;
-   nddyads = (Edge)(thisterm->inputparams[0]);
-   nwhamming=NetworkInitializeD(thisterm->inputparams+1, 
-				thisterm->inputparams+1+nddyads,
-			       	nddyads, n_nodes, directed_flag, bip,0);
-   nddyads=0;
-   nw[1]=NetworkInitializeD(thisterm->inputparams+1, 
-			   thisterm->inputparams+1+nddyads, nddyads,
-         n_nodes, directed_flag, bip,0);
-   for (kedge=1; kedge <= nwhamming.nedges; kedge++) {
-     FindithEdge(&htail, &hhead, kedge, &nwhamming);
-     if(EdgetreeSearch(htail, hhead, nw[0].outedges) == 0){
-       ToggleEdge(htail, hhead, &nw[1]);
-     }
-   }
-   for (kedge=1; kedge <= nw[0].nedges; kedge++) {
-     FindithEdge(&htail, &hhead, kedge, &nw[0]);
-     if(EdgetreeSearch(htail, hhead, nwhamming.outedges) == 0){
-       ToggleEdge(htail, hhead, &nw[1]);
-     }
-   }
-/*   Rprintf("Initial number of discordant %d Number of g0 ties %d Number of ties in g %d\n",nw[1].nedges, nwhamming.nedges,nw[0].nedges); */
-   NetworkDestroy(&nwhamming);
-  }
-
   if (*compressflag) 
     MpleInit_hash(responsevec, covmat, weightsvector, offset, 
 		  compressedOffset, *maxNumDyadTypes, maxMPLE, nw, m); 
@@ -134,6 +101,7 @@ numRows should, ideally, be a power of 2, but doesn't have to be.
   unsigned int hash_pos = hashCovMatRow(newRow, rowLength, numRows, response, offset), pos, round;
   
   for(/*unsigned int*/ pos=hash_pos, round=0; !round ; pos = (pos+1)%numRows, round+=(pos==hash_pos)?1:0){
+//    Rprintf("pos %d round %d hash_pos %d\n",pos,round,hash_pos);
     if(weights[pos]==0){ /* Space is unoccupied. */
       weights[pos]=1;
       compressedOffset[pos]=offset;
@@ -142,33 +110,6 @@ numRows should, ideally, be a power of 2, but doesn't have to be.
       return TRUE;
     }else {
       
-      if( compressedOffset[pos]==offset &&
-	      responsevec[pos]==response &&
-      memcmp(matrix+rowLength*pos,newRow,rowLength*sizeof(double))==0 ){ /* Rows are identical. */
-        weights[pos]++;
-        return TRUE;
-      }
-    }
-  }
-  return FALSE; /* Insertion unsuccessful: the table is full. */
-}
-
-/*R_INLINE*/ unsigned int addCovMatRow(double *newRow, double *matrix, unsigned int rowLength, unsigned int numRows,
-			  int response, int *responsevec,
-			  double offset, double *compressedOffset, int *weights ){
-  unsigned int hash_pos = hashCovMatRow(newRow, rowLength, numRows, response, offset), pos, round;
-  
-// Rprintf("start %d %d\n",hash_pos,numRows);
-  for(/*unsigned int*/ pos=hash_pos, round=0; !round ; pos = (pos+1)%numRows, round+=(pos==hash_pos)?1:0){
-// Rprintf("pos %d round %d hash_pos %d\n",pos,round,hash_pos);
-    if(weights[pos]==0){ /* Space is unoccupied. */
-      weights[pos]=1;
-      compressedOffset[pos]=offset;
-      responsevec[pos]=response;
-      memcpy(matrix+rowLength*pos,newRow,rowLength*sizeof(double));
-//    Rprintf("pos %d round %d hash_pos %d\n",pos,round,hash_pos);
-      return TRUE;
-    }else{
       if( compressedOffset[pos]==offset &&
 	      responsevec[pos]==response &&
       memcmp(matrix+rowLength*pos,newRow,rowLength*sizeof(double))==0 ){ /* Rows are identical. */
@@ -237,7 +178,7 @@ void MpleInit_no_compress(int *responsevec, double *covmat, int *weightsvector,
             /* Update mtp->dstats pointer to skip ahead by mtp->nstats */
             totalStats += mtp->nstats; 
           }
-          if(!addCovMatRow(newRow, covmat, m->n_stats,
+          if(!insCovMatRow(newRow, covmat, m->n_stats,
 			   maxNumDyadTypes, response, 
 			   responsevec, offset ? offset[dyadNum++]:0, 
 			   compressedOffset, weightsvector)) {

@@ -1,24 +1,16 @@
 #  File ergm/R/ergm.geodistn.R
-#  Part of the statnet package, http://statnetproject.org
+#  Part of the statnet package, http://statnet.org
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnetproject.org/attribution
+#    http://statnet.org/attribution
 #
-#  Copyright 2011 the statnet development team
+#  Copyright 2012 the statnet development team
 ######################################################################
-#======================================================================================
-# This file contains the following 6 functions for computing various geodesic measures
-#        <ergm.geodistdist>         <ergm.geodesicmatrix.edgelist>
-#        <ergm.geodistn>            <ergm.nodegeodesics>
-#        <ergm.geodesicmatrix>      <ergm.pairgeodesic>
-#======================================================================================
-
-
 
 ergm.geodistdist<-function(nw, directed=is.directed(nw)){
- ergm.geodistn(edgelist=as.matrix.network(nw,matrix.type="edgelist"),
-               n=nw$gal$n, directed=directed)/(2-is.directed(nw))
+ ergm.geodistn(edgelist=as.edgelist(nw),
+               n=network.size(nw), directed=directed)/(2-is.directed(nw))
 }
 
 
@@ -28,23 +20,9 @@ ergm.geodistdist<-function(nw, directed=is.directed(nw)){
 # Note:  This code does very little error-checking, so don't screw it up
 # with illegal vertex numbers (non-positive integers) or an illegal value
 # of n.
-#
-# --PARAMETERS--
-#   edgelist:  the edgelist an mx2 matrix
-#   n       :  the number of nodes in the network; default=max(edgelist)
-#   directed:  whether the edgelist represents a directed network (T or F);
-#              default=FALSE
-#
-#
-# --RETURNED--
-#   ans: an n-length vector where
-#      ans[i], i=1, ..., n-1 is the number of pairs of geodesic length i
-#      ans[n] is the number of pairs of geodesic length infinity.
-#
 ################################################################################
 
 ergm.geodistn <- function(edgelist, n=max(edgelist), directed=FALSE) {
-  
   if(!directed){
    ndyads <- n*(n-1)/2
   }else{
@@ -84,7 +62,7 @@ ergm.geodistn <- function(edgelist, n=max(edgelist), directed=FALSE) {
 
 
 ergm.geodesicmatrix <- function(nw, directed=is.directed(nw)){
- ergm.geodesicmatrix.edgelist(edgelist=as.matrix.network(nw,matrix.type="edgelist"),
+ ergm.geodesicmatrix.edgelist(edgelist=as.edgelist(nw),
                n=network.size(nw), directed=directed)
 }
 
@@ -94,17 +72,6 @@ ergm.geodesicmatrix <- function(nw, directed=is.directed(nw)){
 # The <ergm.geodesicmatrix.edgelist> function calculates and returns a matrix of
 # the shorted path lengths between all node for a given network, nw, via
 # <geodesic_matrix.C>
-#
-# --PARAMETERS--
-#   edgelist:  the edgelist of the network  
-#   n       :  the number of nodes in the network; default=max(edgelist) 
-#   directed:  whether the edgelist represents a directed network (T or F);
-#              default=FALSE
-#
-# --RETURNED--
-#   an n x n matrix, whose i,j entry is the shortest path length between nodes
-#   i and j
-#
 ###################################################################################
 
 ergm.geodesicmatrix.edgelist <- function(edgelist, n=max(edgelist), directed=FALSE) {
@@ -134,18 +101,6 @@ ergm.geodesicmatrix.edgelist <- function(edgelist, n=max(edgelist), directed=FAL
 # The <ergm.nodegeodesics> function calculates and returns a vector of the
 # shortest path lengths between a given node s and all others of a network via
 # <node_geodesics.C>
-#
-# --PARAMETERS--
-#   edgelist:  the edgelist of the network
-#   s       :  the node from which to calculate shortest paths; 1<s<n
-#   n       :  the number of nodes in the network; default=max(edgelist)
-#   directed:  whether the edgelist represents a directed network (T or F);
-#              default=FALSE
-#
-# --RETURNED--
-#   ans: a vector of length n whose ith entry is the length of shortest path from
-#        vertex s to vertex i
-#
 ###################################################################################
 
 ergm.nodegeodesics <- function(edgelist, s, n=max(edgelist), directed=FALSE) {
@@ -173,19 +128,6 @@ ergm.nodegeodesics <- function(edgelist, s, n=max(edgelist), directed=FALSE) {
 ##################################################################################
 # The <ergm.pairgeodesic> function calculates and returns the geodesic distance
 # between a pair of nodes, s and d, in a network, via <pair_geodesic.C>
-#
-# --PARAMETERS--
-#   edgelist:  the edgelist for the network
-#   s       :  the source node 
-#   d       :  the destination node
-#   n       :  the number of nodes in the network; default=max(edgelist)
-#   directed:  whether the edgelist represents a directed network (T or F);
-#              default=FALSE
-#
-# --RETURNED--
-#   ans: a vector of length n whose ith entry is the length of shortest path from
-#        vertex s to vertex i
-#
 ###################################################################################
 
 ergm.pairgeodesic <- function(edgelist, s, d, n=max(edgelist), directed=FALSE) {

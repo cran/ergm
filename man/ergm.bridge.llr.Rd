@@ -1,11 +1,11 @@
 %  File ergm/man/ergm.bridge.llr.Rd
-%  Part of the statnet package, http://statnetproject.org
+%  Part of the statnet package, http://statnet.org
 %
 %  This software is distributed under the GPL-3 license.  It is free,
 %  open source, and has the attribution requirements (GPL Section 7) in
-%    http://statnetproject.org/attribution
+%    http://statnet.org/attribution
 %
-%  Copyright 2011 the statnet development team
+%  Copyright 2012 the statnet development team
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{ergm.bridge.llr}
 \alias{ergm.bridge.llr}
@@ -14,48 +14,51 @@ A simple implementation of bridge sampling to evaluate
 log-likelihood-ratio between two ERGM configurations 
 }
 \description{
-This function uses bridge sampling with geometric spacing to estimate the difference between the log-likelihoods of
-two parameter configurations for an ERGM via repeated calls to
+This function uses bridge sampling with geometric spacing to 
+estimate the difference between the log-likelihoods of
+two parameter vectors for an ERGM via repeated calls to
 \code{\link{simulate.formula.ergm}}.
 }
 \usage{
-ergm.bridge.llr(object, from, to, nsteps = 20,
-sample.size = 10000, burnin = 10000, basis = NULL, verbose = FALSE, llronly = FALSE, ...)
+  ergm.bridge.llr(object, 
+                  constraints=~., 
+                  from, 
+                  to, 
+                  basis=NULL, 
+                  verbose=FALSE, 
+                  \dots, 
+                  llronly=FALSE, 
+                  control=control.ergm.bridge())
 }
 \arguments{
   \item{object}{
     A model formula. See \code{\link{ergm}} for details.
   }
-  \item{basis}{
-  See \code{\link{simulate.ergm}}.
-}
-\item{verbose}{
-  How much information to print about the progress.
-}
-
-  \item{from}{
-  The initial parameter configuration.
-}
-  \item{to}{
-  The final parameter configuration.
-}
-  \item{nsteps}{
-  Number of geometric bridges to use.
-}
-  \item{sample.size}{
-  Total number of MCMC draws to use (to be divided up among the bridges, so
-  each bridge gets \code{sample.size/nsteps} draws.
-}
-  \item{burnin}{
-  Total number of steps draws to discart for each bridge (to be divided up among the bridges, so
-  each bridge after the first gets \code{sample.size/sqrt(nsteps)}.
-}
-
-\item{llronly}{
-  Whether only the estiamted log-ratio should be returned. (Defaults to \code{FALSE}.)
-}
-\item{\dots}{
-  Further arguments to \code{\link{simulate.formula.ergm}}.
+  \item{constraints}{A one-sided formula specifying one or more constraints
+    on the support of the distribution of the networks being
+    simulated. See the documentation for a similar argument for
+    \code{\link{ergm}} for more information. For
+    \code{simulate.formula}, defaults to no constraints. For
+    \code{simulate.ergm}, defaults to using the same constraints as
+    those with which \code{object} was fitted.
+  }  
+  \item{from, to}{
+    The initial and final parameter vectors.
+  }
+  \item{basis}{An optional \code{\link[network]{network}} object to start
+    the Markov chain.  If omitted, the default is the left-hand-side of 
+    the \code{object}.
+  }
+  \item{verbose}{Logical:  If TRUE, print detailed information.
+  }
+  \item{\dots}{
+    Further arguments to \code{\link{simulate.formula.ergm}}.
+  }
+  \item{llronly}{Logical:  If TRUE, only the estiamted log-ratio will 
+    be returned.)
+  }
+  \item{control}{Control arguments.  See 
+    \code{\link{control.ergm.bridge}} for details.
   }
 }
 \value{

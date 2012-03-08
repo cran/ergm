@@ -1,12 +1,12 @@
 /*
  *  File ergm/src/MHproposals_bipartite.c
- *  Part of the statnet package, http://statnetproject.org
+ *  Part of the statnet package, http://statnet.org
  *
  *  This software is distributed under the GPL-3 license.  It is free,
  *  open source, and has the attribution requirements (GPL Section 7) in
- *    http://statnetproject.org/attribution
+ *    http://statnet.org/attribution
  *
- *  Copyright 2011 the statnet development team
+ *  Copyright 2012 the statnet development team
  */
 #include "MHproposals_bipartite.h" 
 
@@ -20,7 +20,7 @@
 
  Default MH algorithm for bipartite networks
 *********************/
-void MH_Bipartiterandomtoggle (MHproposal *MHp, DegreeBound *bd, Network *nwp)  {  
+void MH_Bipartiterandomtoggle (MHproposal *MHp, Network *nwp)  {  
   
   if(MHp->ntoggles == 0) { /* Initialize */
     MHp->ntoggles=1;
@@ -29,7 +29,6 @@ void MH_Bipartiterandomtoggle (MHproposal *MHp, DegreeBound *bd, Network *nwp)  
 
   /* *** don't forget, edges are (tail, head) now */
 
-  MHp->ratio = 1.0;
   Mtail[0] = 1 + unif_rand() * nwp->bipartite;
   Mhead[0] = 1 + nwp->bipartite + 
                        unif_rand() * (nwp->nnodes - nwp->bipartite);
@@ -39,7 +38,7 @@ void MH_Bipartiterandomtoggle (MHproposal *MHp, DegreeBound *bd, Network *nwp)  
    void MH_BipartiteConstantEdges
    Chooses a pair of toggles - one a tie and one not. 
 ***********************/
-void MH_BipartiteConstantEdges (MHproposal *MHp, DegreeBound *bd, Network *nwp)  {  
+void MH_BipartiteConstantEdges (MHproposal *MHp, Network *nwp)  {  
   Vertex tail, head;
   
   if(MHp->ntoggles == 0) { /* Initialize */
@@ -48,9 +47,8 @@ void MH_BipartiteConstantEdges (MHproposal *MHp, DegreeBound *bd, Network *nwp) 
   } /* Note:  This proposal cannot be used for full or empty observed graphs.
        If desired, we could check for this at initialization phase. 
        (For now, however, no way to easily return an error message and stop.)*/
-  MHp->ratio=1.0;   
   /* First, select edge at random */
-  FindithEdge(Mtail, Mhead, 1+(nwp->nedges)*unif_rand(), nwp);
+  GetRandEdge(Mtail, Mhead, nwp);
   /* Second, select dyad at random until it has no edge */
 
   do{
@@ -75,11 +73,11 @@ void MH_BipartiteConstantEdges (MHproposal *MHp, DegreeBound *bd, Network *nwp) 
    to simple random toggles that rarely do so in sparse 
    networks
 ***********************/
-void MH_BipartiteTNT (MHproposal *MHp, DegreeBound *bd, Network *nwp) 
+void MH_BipartiteTNT (MHproposal *MHp, Network *nwp) 
 {
   /* *** don't forget, edges are (tail, head) now */
   Vertex tail, head;
-  Edge rane, nedges=nwp->nedges;
+  Edge nedges=nwp->nedges;
   unsigned trytoggle;
   static double comp=0.5;
   static double odds;
@@ -98,29 +96,28 @@ void MH_BipartiteTNT (MHproposal *MHp, DegreeBound *bd, Network *nwp)
   
   for(trytoggle = 0; trytoggle < MAX_TRIES; trytoggle++){
     if (unif_rand() < comp && nedges > 0) { /* Select a tie at random */
-      rane = 1 + unif_rand() * nedges;
-      FindithEdge(Mtail, Mhead, rane, nwp);
+      GetRandEdge(Mtail, Mhead, nwp);
       /* Thanks to Robert Goudie for pointing out an error in the previous 
       version of this sampler when proposing to go from nedges==0 to nedges==1 
       or vice versa.  Note that this happens extremely rarely unless the 
       network is small or the parameter values lead to extremely sparse 
       networks.  */
-      MHp->ratio = (nedges==1 ? 1.0/(comp*ndyads + (1.0-comp)) :
-                                nedges / (odds*ndyads + nedges));
+      MHp->logratio += log(nedges==1 ? 1.0/(comp*ndyads + (1.0-comp)) :
+			 nedges / (odds*ndyads + nedges));
     }else{ /* Select a (tail, head) dyad at random */
       tail = 1 + unif_rand() * nb1;
       head = 1 + nb1 + unif_rand() * (nnodes - nb1);
       Mtail[0] = tail;
       Mhead[0] = head;
       if(EdgetreeSearch(Mtail[0],Mhead[0],nwp->outedges)!=0){
-        MHp->ratio = (nedges==1 ? 1.0/(comp*ndyads + (1.0-comp)) :
-                                  nedges / (odds*ndyads + nedges));
+        MHp->logratio += log(nedges==1 ? 1.0/(comp*ndyads + (1.0-comp)) :
+			  nedges / (odds*ndyads + nedges));
       }else{
-        MHp->ratio = (nedges==0 ? comp*ndyads + (1.0-comp) :
-                                  1.0 + (odds*ndyads)/(nedges + 1));
+        MHp->logratio += log(nedges==0 ? comp*ndyads + (1.0-comp) :
+			  1.0 + (odds*ndyads)/(nedges + 1));
       }
     }
-    if(CheckTogglesValid(MHp, bd, nwp)) break;
+    if(CheckTogglesValid(MHp, nwp)) break;
   }
   
   /* If tries ran out, return failure code. */
@@ -137,12 +134,12 @@ void MH_BipartiteTNT (MHproposal *MHp, DegreeBound *bd, Network *nwp)
    MSH: The name Hamming is a hack for the Hamming proposals
         It is no different the MH_BipartiteConstantEdges
 ***********************/
-void MH_BipartiteHammingConstantEdges (MHproposal *MHp, DegreeBound *bd, Network *nwp) 
+void MH_BipartiteHammingConstantEdges (MHproposal *MHp, Network *nwp) 
 {
   /* *** don't forget, edges are (tail, head) now */
 
   Vertex tail, head;
-  Edge rane, nedges=nwp[0].nedges, nddyads=nwp[1].nedges;
+  Edge nedges=nwp[0].nedges, nddyads=nwp[1].nedges;
   int nde, ndn, nce, ncn;
   static double comp=0.5;
   static double odds;
@@ -162,8 +159,7 @@ void MH_BipartiteHammingConstantEdges (MHproposal *MHp, DegreeBound *bd, Network
   if (unif_rand() < comp && nddyads > 0) { /* Select a discordant pair of tie/nontie at random */
     /* First, select discord edge at random */
     do{
-      rane = 1 + unif_rand() * nddyads;
-      FindithEdge(Mtail, Mhead, rane, &nwp[1]);
+      GetRandEdge(Mtail, Mhead, &nwp[1]);
     }while(EdgetreeSearch(Mtail[0], Mhead[0], nwp[0].outedges) == 0);
 
     tail=Mtail[0];
@@ -172,8 +168,7 @@ void MH_BipartiteHammingConstantEdges (MHproposal *MHp, DegreeBound *bd, Network
   /* *** don't forget, edges are (tail, head) now */
 
     do{
-      rane = 1 + unif_rand() * nddyads;
-      FindithEdge(Mtail, Mhead, rane, &nwp[1]);
+      GetRandEdge(Mtail, Mhead, &nwp[1]);
     }while(EdgetreeSearch(Mtail[0], Mhead[0], nwp[0].outedges) != 0);
 
     Mtail[1]=Mtail[0];
@@ -185,7 +180,7 @@ void MH_BipartiteHammingConstantEdges (MHproposal *MHp, DegreeBound *bd, Network
     nce = nedges-nde;
     ncn = ndyads-nedges-ndn;
 /*    MHp->ratio = (nddyads*nddyads) / (odds*(nnodes-nddyads-2)*(nnodes-nddyads-2)); */
-    MHp->ratio = (nde*ndn*1.0) / (odds*(nce+1)*(ncn+1));
+    MHp->logratio += log((nde*ndn*1.0) / (odds*(nce+1)*(ncn+1)));
 /*    MHp->ratio = (1.0*(nce-1)*(ncn-1)) / (nde*ndn*odds); */
 /*    MHp->ratio = 1.0; */
 /*   Rprintf("disconcord nde %d nce %d ndn %d ncn %d nddyads %d MHp->ratio %f\n", */
@@ -193,8 +188,7 @@ void MH_BipartiteHammingConstantEdges (MHproposal *MHp, DegreeBound *bd, Network
   }else{
     /* First, select concordant edge at random */
     do{
-      rane = 1 + unif_rand() * nedges;
-      FindithEdge(Mtail, Mhead, rane, &nwp[0]);
+      GetRandEdge(Mtail, Mhead, &nwp[0]);
     }while(EdgetreeSearch(Mtail[0], Mhead[0], nwp[1].outedges) == 0);
        
     /* Next, select concord non-edge at random */
@@ -212,15 +206,15 @@ void MH_BipartiteHammingConstantEdges (MHproposal *MHp, DegreeBound *bd, Network
     ncn = ndyads-nedges-ndn;
 /*    MHp->ratio = ((nnodes-nddyads)*(nnodes-nddyads)) / (odds*(nddyads+2)*(nddyads+2)); */
     if(nddyads > 4){
-      MHp->ratio = (odds*nce*ncn) / ((nde+1)*(ndn+1)*1.0);
+      MHp->logratio += log((odds*nce*ncn) / ((nde+1)*(ndn+1)*1.0));
 /*    MHp->ratio = ((nde+1)*(ndn+1)*odds) / (1.0*nce*ncn); */
     }else{
-      MHp->ratio = 100000000.0;
+      MHp->logratio += 100000000.0;
     }
 /*   Rprintf("concord nde %d nce %d ndn %d ncn %d nddyads %d MHp->ratio %f\n", */
 /*	    nde, nce, ndn,ncn,nddyads, MHp->ratio); */
   }
-/*   Rprintf("tail0 %d head0 %d tail1 %d head1 %d\n", Mtail[0],  Mhead[0],  */
+/*   Rprintf("h0 %d t0 %d h1 %d t1 %d\n", Mtail[0],  Mhead[0],  */
 /*                                        Mtail[1],  Mhead[1]);  */
 }
 
@@ -233,11 +227,11 @@ void MH_BipartiteHammingConstantEdges (MHproposal *MHp, DegreeBound *bd, Network
    MSH: The name Hamming is a hack for the Hamming proposals
         It is no different the MH_BipartiteTNT
 ***********************/
-void MH_BipartiteHammingTNT (MHproposal *MHp, DegreeBound *bd, Network *nwp) 
+void MH_BipartiteHammingTNT (MHproposal *MHp, Network *nwp) 
 {
   /* *** don't forget, edges are (tail, head) now */  
   Vertex tail, head;
-  Edge rane, nddyads=nwp[1].nedges;
+  Edge nddyads=nwp[1].nedges;
   int nd, nc;
   static double comp=0.5;
   static double odds;
@@ -255,13 +249,12 @@ void MH_BipartiteHammingTNT (MHproposal *MHp, DegreeBound *bd, Network *nwp)
   }
   
   if (unif_rand() < comp && nddyads > 0) { /* Select a discordant dyad at random */
-    rane = 1 + unif_rand() * nddyads;
-    FindithEdge(Mtail, Mhead, rane, &nwp[1]);
+    GetRandEdge(Mtail, Mhead, &nwp[1]);
     nd = nddyads;
     nc = ndyads-nd;
     /*  Fixme!  Not sure whether the ratio is calculated correctly here.
         Check out the similar ratio calculations for other TNT proposals. */
-    MHp->ratio = (nd*1.0) / (odds*(nc+1));
+    MHp->logratio += log((nd*1.0) / (odds*(nc+1)));
 /*    MHp->ratio = (1.0*(nce-1)*(ncn-1)) / (nde*ndn*odds); */
 /*    MHp->ratio = 1.0; */
 /*   Rprintf("disconcord nd %d nc %d nddyads %d MHp->ratio %f\n", */
@@ -279,11 +272,11 @@ void MH_BipartiteHammingTNT (MHproposal *MHp, DegreeBound *bd, Network *nwp)
     nc = ndyads-nd;
     /*  Fixme!  Not sure whether the ratio is calculated correctly here.
         Check out the similar ratio calculations for other TNT proposals. */
-    MHp->ratio = (odds*nc) / ((nd+1)*1.0);
+    MHp->logratio += log((odds*nc) / ((nd+1)*1.0));
 /*   Rprintf("concord nd %d nc %d nddyads %d MHp->ratio %f\n", */
 /*	    nd, nc, nddyads, MHp->ratio); */
   }
-/*   Rprintf("tail0 %d head0 %d tail1 %d head1 %d\n", Mtail[0],  Mhead[0],  */
+/*   Rprintf("h0 %d t0 %d h1 %d t1 %d\n", Mtail[0],  Mhead[0],  */
 /*                                        Mtail[1],  Mhead[1]);  */
 }
 
@@ -298,7 +291,7 @@ void MH_BipartiteHammingTNT (MHproposal *MHp, DegreeBound *bd, Network *nwp)
  deg(tail) stays the same while deg(head) and deg(A) swap
  with one another.
 *********************/
-void MH_BipartiteCondDegreeDist (MHproposal *MHp, DegreeBound *bd, Network *nwp) {  
+void MH_BipartiteCondDegreeDist (MHproposal *MHp, Network *nwp) {  
   int valid, count;
   Edge e;
   Vertex tail, head, A, tailin, tailout, headdeg, Adeg, minA, maxA, i, k;
@@ -313,7 +306,7 @@ void MH_BipartiteCondDegreeDist (MHproposal *MHp, DegreeBound *bd, Network *nwp)
     return;
   }
   
-  MHp->ratio = 1.0; /* By symmetry:  P(choosing tail,head,A) must equal  */
+  MHp->logratio += 0;  /* By symmetry:  P(choosing tail,head,A) must equal  */
   /*                   P(choosing tail,A,head after head and A swap roles), */
   /*                   which makes the ratio equal to 1.           */
   
@@ -408,21 +401,24 @@ void MH_BipartiteCondDegreeDist (MHproposal *MHp, DegreeBound *bd, Network *nwp)
 }
 
 
-void MH_BipartiterandomtoggleNonObserved (MHproposal *MHp, DegreeBound *bd, Network *nwp)  {  
-  Edge rane;
+void MH_BipartiterandomtoggleNonObserved (MHproposal *MHp, Network *nwp)  {  
+  Edge rane, nmissing = MHp->inputs[0];
 
   if(MHp->ntoggles == 0) { /* Initialize */
     MHp->ntoggles=1;
     return;
   }
-  MHp->ratio = 1.0;
-  rane = 1 + unif_rand() * nwp[1].nedges;
-  FindithEdge(Mtail, Mhead, rane, &nwp[1]);
-/* Rprintf("bip %d nedges %d tail %d head %d\n", nwp[1].bipartite, nwp[1].nedges, Mtail[0],  Mhead[0]); */
+
+  // Note that missing edgelist is indexed from 0 but the first
+  // element of MHp->inputs is the number of missing edges.
+  rane = 1 + unif_rand() * nmissing;
+  
+  Mtail[0]=MHp->inputs[rane];
+  Mhead[0]=MHp->inputs[nmissing+rane];
 }
 
 /* CondDegree */
-void MH_BipartiteCondDegTetradToggles (MHproposal *MHp, DegreeBound *bd, Network *nwp)  {  
+void MH_BipartiteCondDegTetradToggles (MHproposal *MHp, Network *nwp)  {  
   Vertex A, B, C, D=0;
   Vertex tmpA=0, tmpB, tmpC, tmpD=0;
   int valid, n_C_nbrs, i;
@@ -441,9 +437,8 @@ void MH_BipartiteCondDegTetradToggles (MHproposal *MHp, DegreeBound *bd, Network
   } /* Note:  This proposal does not make work (well) with 
   directed graphs; however, we haven't yet implemented a way
   to warn the user about this.  */
-  MHp->ratio=1.0;
   /* First, select edge at random */
-  FindithEdge(&A, &B, 1+nwp->nedges*unif_rand(), nwp);
+  GetRandEdge(&A, &B, nwp);
    Rprintf("nb1 %d nb2 %d A %d B %d\n",nb1,nb2,A,B);
   /* Second, select a non-neighbor C of B and a random neighbor
   D of C such that D is not a neighbor of A.  */
@@ -490,13 +485,12 @@ void MH_BipartiteCondDegTetradToggles (MHproposal *MHp, DegreeBound *bd, Network
    Rprintf("tail0 %d head1 %d\n",Mtail[3], Mhead[3]);
 }  
   
-void MH_BipartiteCondDegree (MHproposal *MHp, DegreeBound *bd, Network *nwp)  {  
-  MHp->ratio=1.0;
+void MH_BipartiteCondDegree (MHproposal *MHp, Network *nwp)  {  
   
   if(MHp->ntoggles == 0) { /* Initialize CondDeg by */
 	                   /* Choosing Hexad or Tetrad */
-    MH_BipartiteCondDegHexadToggles (MHp, bd, nwp);
-    MH_BipartiteCondDegTetradToggles (MHp, bd, nwp);
+    MH_BipartiteCondDegHexadToggles (MHp, nwp);
+    MH_BipartiteCondDegTetradToggles (MHp, nwp);
     MHp->ntoggles=4;
     return;
   }
@@ -508,12 +502,12 @@ void MH_BipartiteCondDegree (MHproposal *MHp, DegreeBound *bd, Network *nwp)  {
   }
 
   if(MHp->ntoggles == 6) { /* Call Hexad */
-    MH_BipartiteCondDegHexadToggles (MHp, bd, nwp);
+    MH_BipartiteCondDegHexadToggles (MHp, nwp);
   }else{ /* call Tetrad */
-    MH_BipartiteCondDegTetradToggles (MHp, bd, nwp);
+    MH_BipartiteCondDegTetradToggles (MHp, nwp);
   }
 }
-void MH_BipartiteCondDegHexadToggles (MHproposal *MHp, DegreeBound *bd, Network *nwp)  {  
+void MH_BipartiteCondDegHexadToggles (MHproposal *MHp, Network *nwp)  {  
   int x1, x2, x3, x4, x5, x6;
   int fvalid, trynode;
   Vertex tail1, tail2, tail3, head1, head2, head3;
@@ -527,7 +521,6 @@ void MH_BipartiteCondDegHexadToggles (MHproposal *MHp, DegreeBound *bd, Network 
     nb2 = nnodes-nb1;
     return;
   }
-  MHp->ratio=1.0;
   
   x1 = -1;
   x2 = -1;

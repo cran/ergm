@@ -1,17 +1,18 @@
 /*
  *  File ergm/src/changestat.h
- *  Part of the statnet package, http://statnetproject.org
+ *  Part of the statnet package, http://statnet.org
  *
  *  This software is distributed under the GPL-3 license.  It is free,
  *  open source, and has the attribution requirements (GPL Section 7) in
- *    http://statnetproject.org/attribution
+ *    http://statnet.org/attribution
  *
- *  Copyright 2011 the statnet development team
+ *  Copyright 2012 the statnet development team
  */
 #ifndef CHANGESTAT_H
 #define CHANGESTAT_H
 
 #include "edgetree.h"
+#include "edgelist.h"
 
 typedef struct ModelTermstruct {
 	void (*d_func)(Edge, Vertex*, Vertex*, struct ModelTermstruct*, Network*);
@@ -25,11 +26,17 @@ typedef struct ModelTermstruct {
 } ModelTerm;
 
 
-/* binomial coefficient macro: */
+/* binomial coefficient function and macro: */
+double my_choose(double n, int r);
 #define CHOOSE(n,r) ((n)<(r) ? (0) : (my_choose((double)(n),(int)(r)))) 
 
 /* Comparison macro for doubles: */
 #define EQUAL(a,b) (fabs((a)-(b))<0.0000001)
+
+/* Macros to test for logical inequality (XOR) and logical equality (XNOR). */
+#define XOR(a,b) (((a)==0) != ((b)==0))
+#define XNOR(a,b) (((a)==0) == ((b)==0))
+
 /****************************************************
  Macros to make life easier when writing C code for change statistics:  */
 
@@ -72,7 +79,7 @@ typedef struct ModelTermstruct {
 #define TOGGLE_DISCORD(a,b) (ToggleEdge((a),(b),nwp+1));
 
 #define N_NODES (nwp->nnodes) /* Total number of nodes in the network */
-#define N_DYADS (nwp->directed_flag?(nnodes*(nnodes-1)):nwp->bipartite?nwp->bipartite*(nnodes-nwp->bipartite):(nnodes*(nnodes-1)/2))
+#define N_DYADS (nwp->directed_flag?(nwp->nnodes*(nwp->nnodes-1)):nwp->bipartite?nwp->bipartite*(nwp->nnodes-nwp->bipartite):(nwp->nnodes*(nwp->nnodes-1)/2))
 #define OUT_DEG (nwp->outdegree) /* Vector of length N_NODES giving current outdegrees */
 #define IN_DEG (nwp->indegree) /* Vector of length N_NODES giving current indegrees */
 #define DIRECTED (nwp->directed_flag) /* 0 if network is undirected, 1 if directed */

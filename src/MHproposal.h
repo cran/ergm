@@ -1,12 +1,12 @@
 /*
  *  File ergm/src/MHproposal.h
- *  Part of the statnet package, http://statnetproject.org
+ *  Part of the statnet package, http://statnet.org
  *
  *  This software is distributed under the GPL-3 license.  It is free,
  *  open source, and has the attribution requirements (GPL Section 7) in
- *    http://statnetproject.org/attribution
+ *    http://statnet.org/attribution
  *
- *  Copyright 2011 the statnet development team
+ *  Copyright 2012 the statnet development team
  */
 #ifndef MHproposal_H
 #define MHproposal_H
@@ -40,12 +40,15 @@ void DegreeBoundDestroy(DegreeBound *bd);
 #define MAX_TRIES 5000
 
 /* MH_* proposal failed codes. */
-/* Heads: */
-#define MH_FAILED 0
 /* Tails: */
+#define MH_FAILED 0
+/* Heads: */
 #define MH_UNRECOVERABLE 0
 #define MH_IMPOSSIBLE 1
 #define MH_UNSUCCESSFUL 2
+
+/* "Quit" threshold for unsuccessful proposals as a fraction of steps. */
+#define MH_QUIT_UNSUCCESSFUL 0.05
 
 
 /* Macros to test for logical inequality (XOR) and logical equality (XNOR). */
@@ -68,27 +71,34 @@ void DegreeBoundDestroy(DegreeBound *bd);
 /* *** don't forget tail-> head */
 
 typedef struct MHproposalstruct {
-  void (*func)(struct MHproposalstruct*, DegreeBound*, Network*);
+  void (*func)(struct MHproposalstruct*, Network*);
   Edge ntoggles;
   Vertex *toggletail;
   Vertex *togglehead;
-  double ratio;
+  double logratio;
   int status;
+  DegreeBound *bd;
+  Network **discord;
   double *inputs; /* may be used if needed, ignored if not. */
   /* int multiplicity; Is this needed? I removed all references to
        'multiplicity' everywhere */
 } MHproposal;
 
 
-void MH_init(MHproposal *MH, 
+void MH_init(MHproposal *MHp, 
 	     char *MHproposaltype, char *MHproposalpackage, 
+	     double *inputs,
 	     int fVerbose,
-	     Network *nwp, DegreeBound *bd);
+	     Network *nwp, 
+	     int *attribs, int *maxout, int *maxin, 
+	     int *minout, int *minin, int condAllDegExact, 
+	     int attriblength);
 
-void MH_free(MHproposal *MH);
+void MH_free(MHproposal *MHp);
 
-int CheckTogglesValid(MHproposal *MHp, DegreeBound *bd, Network *nwp);
-int CheckConstrainedTogglesValid(MHproposal *MHp, DegreeBound *bd, Network *nwp);
+int CheckTogglesValid(MHproposal *MHp, Network *nwp);
+int CheckConstrainedTogglesValid(MHproposal *MHp, Network *nwp);
+unsigned int dEdgeListSearch(Vertex tail, Vertex head, double *el);
 #endif 
 
 

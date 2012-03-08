@@ -1,15 +1,13 @@
 #  File ergm/tests/ergm.mixed.R
-#  Part of the statnet package, http://statnetproject.org
+#  Part of the statnet package, http://statnet.org
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnetproject.org/attribution
+#    http://statnet.org/attribution
 #
-#  Copyright 2011 the statnet development team
+#  Copyright 2012 the statnet development team
 ######################################################################
 library(ergm)                                        #
-# Use 'data(package = "ergm")' to list the data sets in a
-data(package="ergm")
 
 # import synthetic network that looks like a molecule
 data(molecule)
@@ -23,11 +21,11 @@ plot(molecule, vertex.col=molecule %v% "atomic type",vertex.cex=3)
 # measure tendency to match within each atomic type
 gest <- ergm(molecule ~ edges + kstar(2) + triangle + nodematch("atomic type"),
 # mixed=TRUE,
-             MCMCsamplesize=10000)
+             control=control.ergm(MCMC.samplesize=10000))
 summary(gest)
 
 # compare it to differential homophily
 gest <- ergm(molecule ~ edges + kstar(2) + triangle + nodematch("atomic type",diff=TRUE),
 # mixed=TRUE,
-             MCMCsamplesize=10000)
+             control=control.ergm(MCMC.samplesize=10000))
 summary(gest)

@@ -1,12 +1,12 @@
 /*
  *  File ergm/src/allstatistics.c
- *  Part of the statnet package, http://statnetproject.org
+ *  Part of the statnet package, http://statnet.org
  *
  *  This software is distributed under the GPL-3 license.  It is free,
  *  open source, and has the attribution requirements (GPL Section 7) in
- *    http://statnetproject.org/attribution
+ *    http://statnet.org/attribution
  *
- *  Copyright 2011 the statnet development team
+ *  Copyright 2012 the statnet development team
  */
 #include "MPLE.h"
 #include "changestat.h"
@@ -59,9 +59,9 @@ void AllStatistics (
   /* Step 1:  Initialize empty network and initialize model */
   GetRNGstate(); /* Necessary for R random number generator */
   nw=NetworkInitialize(tails, heads, *dnedges,
-                          n_nodes, directed_flag, bip, 0);
+		       n_nodes, directed_flag, bip, 0, 0, NULL);
   nwp = &nw;
-  m=ModelInitialize(*funnames, *sonames, inputs, *nterms);
+  m=ModelInitialize(*funnames, *sonames, &inputs, *nterms);
   
   /* Step 2:  Build nodelist1 and nodelist2, which together give all of the
   dyads in the network. */

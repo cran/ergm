@@ -1,11 +1,11 @@
 #  File ergm/R/formula.utils.R
-#  Part of the statnet package, http://statnetproject.org
+#  Part of the statnet package, http://statnet.org
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnetproject.org/attribution
+#    http://statnet.org/attribution
 #
-#  Copyright 2011 the statnet development team
+#  Copyright 2012 the statnet development team
 ######################################################################
 ###################################################################
 ## This file has utilities whose primary purpose is examining or ##
@@ -32,7 +32,7 @@ is.dyad.independent.formula<-function(object,basis=NULL,constraints=~.,...){
     # New formula (no longer use 'object'):
     form <- ergm.update.formula(object, nw ~ .)
     
-    m<-ergm.getmodel(form, nw, drop=FALSE)
+    m<-ergm.getmodel(form, nw)
     if(any(sapply(m$terms, function(term) is.null(term$dependence) || term$dependence==TRUE))) FALSE
     else TRUE
   }
@@ -59,6 +59,8 @@ append.rhs.formula<-function(object,newterms){
 }
 
 
+# FIXME:  Must rewrite without using .Internal!  Current this breaks
+# a lot of code, so this will be a tricky job.
 ergm.update.formula<-function (object, new, ...){
   tmp <- as.formula(.Internal(update.formula(as.formula(object), as.formula(new))))
   # Ensure that the formula's environment gets set to the network's
@@ -68,19 +70,6 @@ ergm.update.formula<-function (object, new, ...){
   else
     environment(tmp)<-environment(new)
   return(tmp)
-}
-
-theta.sublength.model<-function(m){
-  sapply(m$terms, function(term){
-    ## curved term
-    if(!is.null(term$params)) length(term$params)
-    ## linear term
-    else length(term$coef.names)
-  })
-}
-
-theta.length.model<-function(m){
-  sum(theta.sublength.model(m))
 }
 
 term.list.formula<-function(rhs){
@@ -151,8 +140,8 @@ model.transform.formula <- function(object, theta, recipes, ...){
   ## a simple special case of toarg, if it were given a function that
   ## returned a constant value.
 
-  m <- ergm.getmodel(object, ergm.getnetwork(object), drop=FALSE)
-  theta.inds<-cumsum(c(1,theta.sublength.model(m)))
+  m <- ergm.getmodel(object, ergm.getnetwork(object))
+  theta.inds<-cumsum(c(1,coef.sublength.model(m)))
   terms<-term.list.formula(object[[3]])
   form<-object
   ## This deletes the formula's RHS, and LHS becomes RHS (for the moment).
@@ -262,3 +251,15 @@ enformulate.curved.formula <- function(object, theta, ...){
 
   model.transform.formula(object, theta, recipes, ...) 
 }
+
+set.offset.formula <- function(object, which){
+  nw <- ergm.getnetwork(object)
+  m<-ergm.getmodel(object, nw,role="target")
+  to_offset <-unique(rep(seq_along(m$terms),coef.sublength.model(m))[which]) # Figure out which terms correspond to the coefficients to be offset.
+  terms <- term.list.formula(object[[3]])
+  for(i in to_offset)
+    if(!inherits(terms[[i]],"call") || terms[[i]][[1]]!="offset") # Don't offset terms already offset.
+      terms[[i]]<-call("offset", terms[[i]]) # Enclose the term in an offset.
+  ergm.update.formula(object, append.rhs.formula(~.,terms)) # append.rhs.formula call returns a formula of the form .~terms[[1]] + terms[[2]], etc.
+}
+

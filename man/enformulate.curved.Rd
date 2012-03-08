@@ -1,11 +1,11 @@
 %  File ergm/man/enformulate.curved.Rd
-%  Part of the statnet package, http://statnetproject.org
+%  Part of the statnet package, http://statnet.org
 %
 %  This software is distributed under the GPL-3 license.  It is free,
 %  open source, and has the attribution requirements (GPL Section 7) in
-%    http://statnetproject.org/attribution
+%    http://statnet.org/attribution
 %
-%  Copyright 2011 the statnet development team
+%  Copyright 2012 the statnet development team
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{enformulate.curved}
 \alias{enformulate.curved.formula}
@@ -29,21 +29,20 @@ vector. This is the form required by \code{\link{ergm}} calls.
   \item{object}{
     An \code{\link{ergm}} object or an ERGM formula. The curved terms of
     the given formula (or the formula used in the fit) must have all of their arguments passed by name.
-}
+  }
   \item{theta}{
     Curved model parameter configuration.
-}
-
+  }
   \item{\dots}{
     Unused at this time.
-}
+  }
 }
 \details{
   Because of a current kludge in \code{\link{ergm}}, output from one
-  run cannot be directly passed as initial values (\code{theta0}) for
+  run cannot be directly passed as initial values (\code{control.ergm(init=)}) for
   the next run if any of the terms are curved. One workaround is to
   embed the curved parameters into the formula (while keeping
-  \code{fixed=FALSE}) and remove them from \code{theta0}.
+  \code{fixed=FALSE}) and remove them from \code{control.ergm(init=)}.
   
   This function automates this process for curved ERGM terms included
   with the \code{\link[=ergm-package]{ergm}} package. It does not work with curved terms not
@@ -60,15 +59,16 @@ vector. This is the form required by \code{\link{ergm}} calls.
 }
 \examples{
 data(sampson)
-gest<-ergm(samplike~edges+gwesp(alpha=.5,fixed=FALSE),maxit=1)
+gest<-ergm(samplike~edges+gwesp(alpha=.5, fixed=FALSE), 
+    control=control.ergm(MCMLE.maxit=1))
 # Error:
-gest2<-try(ergm(gest$formula,theta0=coef(gest),maxit=2))
+gest2<-try(ergm(gest$formula, control=control.ergm(init=coef(gest), MCMLE.maxit=2)))
 print(gest2)
 
 # Works:
 tmp<-enformulate.curved(gest)
 tmp
-gest2<-try(ergm(tmp$formula,theta0=tmp$theta,maxit=2))
+gest2<-try(ergm(tmp$formula, control=control.ergm(init=tmp$theta, MCMLE.maxit=2)))
 summary(gest2)
 }
 \keyword{ model }

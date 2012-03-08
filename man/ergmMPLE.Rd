@@ -1,11 +1,11 @@
 %  File ergm/man/ergmMPLE.Rd
-%  Part of the statnet package, http://statnetproject.org
+%  Part of the statnet package, http://statnet.org
 %
 %  This software is distributed under the GPL-3 license.  It is free,
 %  open source, and has the attribution requirements (GPL Section 7) in
-%    http://statnetproject.org/attribution
+%    http://statnet.org/attribution
 %
-%  Copyright 2011 the statnet development team
+%  Copyright 2012 the statnet development team
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{ergmMPLE}
 \title{ERGM Predictors and response for logistic regression calculation of MPLE}
@@ -22,7 +22,7 @@ ergmMPLE (formula, fitmodel=FALSE, control=control.ergm(),
   \item{formula}{An ergm formula.  See \code{\link{ergm}}.}
   \item{fitmodel}{Logical:  Should the MPLE be found?  
       If \code{fitmodel==TRUE}, then \code{ergmMPLE} simply calls the 
-      \code{\link{ergm}} function with the \code{MPLEonly=TRUE} option set.
+      \code{\link{ergm}} function with the \code{estimate="MPLE"} option set.
       If \code{fitmodel==FALSE} (the default), then only the response, predictor,
       and weights are returned; thus, the MPLE may be found by hand or the vector
       of change statistics may be used in some other way.}

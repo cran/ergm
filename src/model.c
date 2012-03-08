@@ -1,12 +1,12 @@
 /*
  *  File ergm/src/model.c
- *  Part of the statnet package, http://statnetproject.org
+ *  Part of the statnet package, http://statnet.org
  *
  *  This software is distributed under the GPL-3 license.  It is free,
  *  open source, and has the attribution requirements (GPL Section 7) in
- *    http://statnetproject.org/attribution
+ *    http://statnet.org/attribution
  *
- *  Copyright 2011 the statnet development team
+ *  Copyright 2012 the statnet development team
  */
 #include <string.h>
 #include "model.h"
@@ -18,8 +18,9 @@ void ModelDestroy(Model *m)
 {  
   int i;
 
-  for(i=0; i < m->n_terms; i++)
+  for(i=0; i < m->n_terms; i++){
     free(m->dstatarray[i]);
+  }
   free(m->dstatarray);
   free(m->termarray);
   free(m->workspace); 
@@ -32,12 +33,13 @@ void ModelDestroy(Model *m)
  Allocate and initialize the ModelTerm structures, each of which contains
  all necessary information about how to compute one term in the model.
 *****************/
-Model* ModelInitialize (char *fnames, char *sonames, double *inputs,
+Model* ModelInitialize (char *fnames, char *sonames, double **inputsp,
 			int n_terms) {
   int i, j, k, l, offset;
   ModelTerm *thisterm;
   char *fn,*sn;
   Model *m;
+  double *inputs=*inputsp;
   
   m = (Model *) malloc(sizeof(Model));
   m->n_terms = n_terms;
@@ -61,9 +63,8 @@ Model* ModelInitialize (char *fnames, char *sonames, double *inputs,
       sonames[j] = 0;
       /* Extract the required string information from the relevant sources */
       if((fn=(char *)malloc(sizeof(char)*(i+3)))==NULL){
-        Rprintf("Error in ModelInitialize: Can't allocate %d bytes for fn.\n",
+        error("Error in ModelInitialize: Can't allocate %d bytes for fn. Memory has not been deallocated, so restart R sometime soon.\n",
 		sizeof(char)*(i+3));
-	exit(0);
       }
       fn[0]='d';
       fn[1]='_';
@@ -73,9 +74,8 @@ Model* ModelInitialize (char *fnames, char *sonames, double *inputs,
       /* fn is now the string 'd_[name]', where [name] is fname */
 /*      Rprintf("fn: %s\n",fn); */
       if((sn=(char *)malloc(sizeof(char)*(j+1)))==NULL){
-        Rprintf("Error in ModelInitialize: Can't allocate %d bytes for sn.\n",
+        error("Error in ModelInitialize: Can't allocate %d bytes for sn. Memory has not been deallocated, so restart R sometime soon.\n",
 		sizeof(char)*(j+1));
-	exit(0);
       }
       sn=strncpy(sn,sonames,j);
       sn[j]='\0';
@@ -89,9 +89,8 @@ Model* ModelInitialize (char *fnames, char *sonames, double *inputs,
 	(void (*)(int, Vertex*, Vertex*, ModelTerm*, Network*))
 	R_FindSymbol(fn,sn,NULL);
       if(thisterm->d_func==NULL){
-        Rprintf("Error in ModelInitialize: could not find function %s in "
-                "namespace for package %s.\n",fn,sn);
-	exit(0);
+        error("Error in ModelInitialize: could not find function %s in "
+                "namespace for package %s. Memory has not been deallocated, so restart R sometime soon.\n",fn,sn);
       }      
 
       /* Optional function to compute the statistic of interest for
@@ -146,168 +145,16 @@ Model* ModelInitialize (char *fnames, char *sonames, double *inputs,
 
       fnames += i;
       sonames += j;
+
     }
   
   m->workspace = (double *) malloc(sizeof(double) * m->n_stats);
   for(i=0; i < m->n_stats; i++)
     m->workspace[i] = 0.0;
+
+  *inputsp = inputs;
   return m;
 }
-
-
-
-/*****************
- int ModelTermHamming
-*****************/
-int ModelTermHamming (char *fnames, int n_terms) {
-  int i, k, l;
-  char *fn;
-  
-  for (l=0; l < n_terms; l++) {
-      /* fnames points to a single character string, consisting of the names
-      of the selected options concatenated together and separated by spaces.
-      This is passed by the calling R function.  These names are matched with
-      their respective C functions that calculate the appropriate statistics. 
-      Similarly, sonames points to a character string containing the names
-      of the shared object files associated with the respective functions.*/
-      for (; *fnames == ' ' || *fnames == 0; fnames++);
-      for (i = 0; fnames[i] != ' ' && fnames[i] != 0; i++);
-      fnames[i] = 0;
-      /* Extract the required string information from the relevant sources */
-      if((fn=(char *)malloc(sizeof(char)*(i+1)))==NULL){
-        Rprintf("Error in ModelInitialize: Can't allocate %d bytes for fn.\n",
-		sizeof(char)*(i+3));
-	exit(0);
-      }
-      for(k=0;k<i;k++){
-        fn[k]=fnames[k];
-      }
-      fn[i]='\0';
-      /* fn is now the string '[name]', where [name] is fname */
-
-/*      Rprintf("l=%d ",l); */
-/*        Rprintf("%s",fn); */
-/*      for(k=0;k<=i;k++){ */
-/*        Rprintf("%s",fn[k]); */
-/*      } */
-/*      Rprintf("\n"); */
-
-      if(strncmp(fn,"hamming",7)==0){return(l+1);}
-      /*Clean up by freeing sn and fn*/
-      free((void *)fn);
-
-      /*  The lines above set thisterm->inputparams to point to needed input
-      parameters (or zero if none) and then increments the inputs pointer so
-      that it points to the inputs for the next model option for the next pass
-      through the loop. */
-
-      fnames += i;
-    }
-  
-  return(0);
-}
-
-/*****************
- int ModelTermFormation
-*****************/
-int ModelTermFormation (char *fnames, int n_terms) {
-  int i, k, l;
-  char *fn;
-  
-  for (l=0; l < n_terms; l++) {
-      /* fnames points to a single character string, consisting of the names
-      of the selected options concatenated together and separated by spaces.
-      This is passed by the calling R function.  These names are matched with
-      their respective C functions that calculate the appropriate statistics. 
-      Similarly, sonames points to a character string containing the names
-      of the shared object files associated with the respective functions.*/
-      for (; *fnames == ' ' || *fnames == 0; fnames++);
-      for (i = 0; fnames[i] != ' ' && fnames[i] != 0; i++);
-      fnames[i] = 0;
-      /* Extract the required string information from the relevant sources */
-      if((fn=(char *)malloc(sizeof(char)*(i+1)))==NULL){
-        Rprintf("Error in ModelInitialize: Can't allocate %d bytes for fn.\n",
-		sizeof(char)*(i+3));
-	exit(0);
-      }
-      for(k=0;k<i;k++){
-        fn[k]=fnames[k];
-      }
-      fn[i]='\0';
-      /* fn is now the string '[name]', where [name] is fname */
-
-/*      Rprintf("l=%d ",l); */
-/*        Rprintf("%s",fn); */
-/*      for(k=0;k<=i;k++){ */
-/*        Rprintf("%s",fn[k]); */
-/*      } */
-/*      Rprintf("\n"); */
-
-      if(strncmp(fn,"formation",9)==0){return(l+1);}
-      /*Clean up by freeing sn and fn*/
-      free((void *)fn);
-
-      /*  The lines above set thisterm->inputparams to point to needed input
-      parameters (or zero if none) and then increments the inputs pointer so
-      that it points to the inputs for the next model option for the next pass
-      through the loop. */
-
-      fnames += i;
-    }
-  
-  return(0);
-}
-/*****************
- int ModelTermDissolve
-*****************/
-int ModelTermDissolve (char *fnames, int n_terms) {
-  int i, k, l;
-  char *fn;
-  
-  for (l=0; l < n_terms; l++) {
-      /* fnames points to a single character string, consisting of the names
-      of the selected options concatenated together and separated by spaces.
-      This is passed by the calling R function.  These names are matched with
-      their respective C functions that calculate the appropriate statistics. 
-      Similarly, sonames points to a character string containing the names
-      of the shared object files associated with the respective functions.*/
-      for (; *fnames == ' ' || *fnames == 0; fnames++);
-      for (i = 0; fnames[i] != ' ' && fnames[i] != 0; i++);
-      fnames[i] = 0;
-      /* Extract the required string information from the relevant sources */
-      if((fn=(char *)malloc(sizeof(char)*(i+1)))==NULL){
-        Rprintf("Error in ModelInitialize: Can't allocate %d bytes for fn.\n",
-		sizeof(char)*(i+3));
-	exit(0);
-      }
-      for(k=0;k<i;k++){
-        fn[k]=fnames[k];
-      }
-      fn[i]='\0';
-      /* fn is now the string '[name]', where [name] is fname */
-
-/*      Rprintf("l=%d ",l); */
-/*        Rprintf("%s",fn); */
-/*      for(k=0;k<=i;k++){ */
-/*        Rprintf("%s",fn[k]); */
-/*      } */
-/*      Rprintf("\n"); */
-
-      if(strncmp(fn,"dissolve",9)==0){return(l+1);}
-      /*Clean up by freeing sn and fn*/
-      free((void *)fn);
-
-      /*  The lines above set thisterm->inputparams to point to needed input
-      parameters (or zero if none) and then increments the inputs pointer so
-      that it points to the inputs for the next model option for the next pass
-      through the loop. */
-
-      fnames += i;
-    }
-  
-  return(0);
-}
-
 
 /*
   MCMCChangeStats
@@ -324,6 +171,28 @@ void ChangeStats(unsigned int ntoggles, Vertex *toggletail, Vertex *togglehead,
     mtp->dstats = dstats; /* Stuck the change statistic here.*/
     (*(mtp->d_func))(ntoggles, toggletail, togglehead, 
 		   mtp, nwp);  /* Call d_??? function */
+    dstats += (mtp++)->nstats;
+  }
+}
+
+
+/*
+  MCMCChangeStatsT
+  A helper's helper function to compute change statistics associated with advancing the clock by 1 unit.
+  The vector of changes is written to m->workspace.
+*/
+void ChangeStatsT(Network *nwp, Model *m){
+  ModelTerm *mtp = m->termarray;
+  double *dstats = m->workspace;
+  
+  for (unsigned int i=0; i < m->n_terms; i++){
+    /* Calculate change statistics */
+    mtp->dstats = dstats; /* Stuck the change statistic here.*/
+    if(mtp->t_func){
+      (*(mtp->t_func))(mtp, nwp);  /* Call t_??? function */
+    }else{
+      memset(mtp->dstats, 0, mtp->nstats*sizeof(double)); /* If none exists, zero changes. */
+    }
     dstats += (mtp++)->nstats;
   }
 }

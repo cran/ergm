@@ -1,12 +1,12 @@
 /*
  *  File ergm/src/SAN.h
- *  Part of the statnet package, http://statnetproject.org
+ *  Part of the statnet package, http://statnet.org
  *
  *  This software is distributed under the GPL-3 license.  It is free,
  *  open source, and has the attribution requirements (GPL Section 7) in
- *    http://statnetproject.org/attribution
+ *    http://statnet.org/attribution
  *
- *  Copyright 2011 the statnet development team
+ *  Copyright 2012 the statnet development team
  */
 #ifndef SAN_H
 #define SAN_H
@@ -21,7 +21,6 @@
 
 void SAN_wrapper (int *dnumnets, int *nedges,
 		  int *tails, int *heads,
-		  int *maxpossibleedges,
 		  int *dn, int *dflag, int *bipartite, 
 		  int *nterms, char **funnames,
 		  char **sonames, 
@@ -36,14 +35,14 @@ void SAN_wrapper (int *dnumnets, int *nedges,
 		  int *minin, int *condAllDegExact, int *attriblength, 
 		  int *maxedges);
 
-void SANSample (char *MHproposaltype, char *MHproposalpackage,
+void SANSample (MHproposal *MHp,
 		double *theta, double *invcov, double *tau, double *networkstatistics, 
-		long int samplesize, long int burnin, 
-		long int interval, int hammingterm, int fVerbose,
-		Network *nwp, Model *m, DegreeBound *bd);
+		int samplesize, int burnin, 
+		int interval, int fVerbose,
+		Network *nwp, Model *m);
 void SANMetropolisHastings (MHproposal *MHp,
 			 double *theta, double *invcov, double *tau, double *statistics, 
-			 long int nsteps, long int *staken,
-			 int hammingterm, int fVerbose,
-			 Network *nwp, Model *m, DegreeBound *bd);
+			 int nsteps, int *staken,
+			 int fVerbose,
+			 Network *nwp, Model *m);
 #endif

@@ -1,77 +1,22 @@
 #  File ergm/R/ergm.pl.R
-#  Part of the statnet package, http://statnetproject.org
+#  Part of the statnet package, http://statnet.org
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnetproject.org/attribution
+#    http://statnet.org/attribution
 #
-#  Copyright 2011 the statnet development team
+#  Copyright 2012 the statnet development team
 ######################################################################
 ###############################################################################
 # The <ergm.pl> function prepares many of the components needed by <ergm.mple>
 # for the regression rountines that are used to find the MPLE estimated ergm;
 # this is largely done through <MPLE_wrapper.C> or <MPLEconddeg_wrapper>
-#
-# --PARAMETERS--
-#   Clist            : a list of parameters used for fitting and returned
-#                      by <ergm.Cprepare>
-#   Clist.miss       : the corresponding 'Clist' for the network of missing
-#                      edges returned by <ergm.design>
-#   m                : the model, as returned by <ergm.getmodel>
-#   theta.offset     : a logical vector specifying which of the model
-#                      coefficients are offset, i.e. fixed
-#   maxMPLEsamplesize: the sample size to use for endogenous sampling in the
-#                      pseudolikelihood computation; default=1e6
-#   maxNumDyadTypes  : the maximum number of unique pseudolikelihood
-#                      change statistics to be allowed if 'compressflag'=TRUE;
-#                      if this is less than the networks maximum count of
-#                      unique change stats, these will be sampled to attain
-#                      the correct size; default=1e6
-#   conddeg          : an indicator of whether the MPLE should be conditional
-#                      on degree; non-NULL values indicate yes, NULL no;
-#                      default=NULL 
-#   MCMCparams       : a list of MCMC related parameters; recognized variables
-#                      include:
-#         samplesize : the number of networks to sample, which will inform the size
-#                      of the returned 'xmat'
-#         Clist.miss : see 'Clist.miss' above; some of the code uses this Clist.miss,
-#                      some uses the one above, does this seem right?
-#   MHproposal       : an MHproposal object, as returned by <ergm.getMHproposal>
-#   verbose          : whether this and the C routines should be verbose (T or F);
-#                      default=FALSE
-#   compressflag     : whether to compress the design matrix of change stats by
-#                      tabulating the unique rows (T or F); default=TRUE
-#
-#
-# --RETURNED--
-#   a list containing
-#     xmat     : the possibly compressed and possibly sampled matrix of change
-#                statistics
-#     zy       : the corresponding vector of responses, i.e. tie values
-#     foffset  : ??
-#     wend     : the vector of weights for 'xmat' and 'zy'
-#     numobs   : the number of dyads 
-#     xmat.full: the 'xmat' before sampling; if no sampling is needed, this
-#                is NULL
-#     zy.full  : the 'zy' before  sampling; if no sampling is needed, this
-#                is NULL
-#     foffset.full     : ??
-#     theta.offset     : a numeric vector whose ith entry tells whether the
-#                        the ith curved coefficient?? was offset/fixed; -Inf
-#                        implies the coefficient was fixed, 0 otherwise; if
-#                        the model hasn't any curved terms, the first entry
-#                        of this vector is one of
-#                           log(Clist$nedges/(Clist$ndyads-Clist$nedges))
-#                           log(1/(Clist$ndyads-1))
-#                        depending on 'Clist$nedges'
-#     maxMPLEsamplesize: the 'maxMPLEsamplesize' inputted to <ergm.pl>
-#    
 ###############################################################################
 
 ergm.pl<-function(Clist, Clist.miss, m, theta.offset=NULL,
                     maxMPLEsamplesize=1e+6,
                     maxNumDyadTypes=1e+6,
-                    conddeg=NULL, MCMCparams, MHproposal,
+                    conddeg=NULL, control, MHproposal,
                     verbose=FALSE, compressflag=TRUE) {
   bip <- Clist$bipartite
   n <- Clist$n
@@ -115,7 +60,7 @@ ergm.pl<-function(Clist, Clist.miss, m, theta.offset=NULL,
   # *** don't forget, pass in tails first now, not heads
   z <- .C("MPLE_wrapper",
           as.integer(Clist$tails),    as.integer(Clist$heads),
-          as.integer(Clist$nedges),   as.integer(Clist$maxpossibleedges),
+          as.integer(Clist$nedges),   
           as.integer(n), 
           as.integer(Clist$dir),     as.integer(bip),
           as.integer(Clist$nterms), 
@@ -147,85 +92,108 @@ ergm.pl<-function(Clist, Clist.miss, m, theta.offset=NULL,
     # Conditional on degree version
     eta0 <- ergm.eta(rep(0,length(conddeg$m$coef.names)), conddeg$m$etamap)
     
-    stats <- matrix(0,ncol=conddeg$Clist$nstats,nrow=MCMCparams$samplesize+1)
-    MCMCparams$stats <- stats
     maxedges <- max(5000, conddeg$Clist$nedges)
+    nsim <- 1
+    if(control$MPLE.samplesize > 50000){
+     nsim <- ceiling(control$MPLE.samplesize / 50000)
+     control$MPLE.samplesize <- 50000
+
+     cl <- ergm.getCluster(control, verbose)
+    }
     flush.console()
-    # *** don't forget, pass in tails first now, not heads    
-    z <- .C("MPLEconddeg_wrapper",
-            as.integer(conddeg$Clist$tails), as.integer(conddeg$Clist$heads),
-            as.integer(conddeg$Clist$nedges), as.integer(conddeg$Clist$maxpossibleedges), 
-            as.integer(conddeg$Clist$n),
-            as.integer(conddeg$Clist$dir), as.integer(conddeg$Clist$bipartite),
-            as.integer(conddeg$Clist$nterms),
-            as.character(conddeg$Clist$fnamestring),
-            as.character(conddeg$Clist$snamestring),
-            as.character(MHproposal$name), as.character(MHproposal$package),
-            as.double(conddeg$Clist$inputs), as.double(eta0),
-            as.integer(MCMCparams$samplesize+1),
-            s = as.double(t(MCMCparams$stats)),
+#
+    control$stats <- matrix(0,ncol=conddeg$Clist$nstats,nrow=control$MPLE.samplesize+1)
+    data <- list(conddeg=conddeg,Clist=Clist, MHproposal=MHproposal, eta0=eta0,
+         control=control,maxedges=maxedges,verbose=verbose)
+    simfn <- function(i, data){
+     # *** don't forget, pass in tails first now, not heads    
+     z <- .C("MPLEconddeg_wrapper",
+            as.integer(data$conddeg$Clist$tails), as.integer(data$conddeg$Clist$heads),
+            as.integer(data$conddeg$Clist$nedges), as.integer(data$conddeg$Clist$maxpossibleedges), 
+            as.integer(data$conddeg$Clist$n),
+            as.integer(data$conddeg$Clist$dir), as.integer(data$conddeg$Clist$bipartite),
+            as.integer(data$conddeg$Clist$nterms),
+            as.character(data$conddeg$Clist$fnamestring),
+            as.character(data$conddeg$Clist$snamestring),
+            as.character(data$MHproposal$name), as.character(data$MHproposal$package),
+            as.double(data$conddeg$Clist$inputs), as.double(data$eta0),
+            as.integer(data$control$MPLE.samplesize+1),
+            s = as.double(t(data$control$stats)),
             as.integer(0), 
             as.integer(1),
-            newnwtails = integer(maxedges),
-            newnwheads = integer(maxedges),
-            as.integer(verbose), as.integer(MHproposal$bd$attribs),
-            as.integer(MHproposal$bd$maxout), as.integer(MHproposal$bd$maxin),
-            as.integer(MHproposal$bd$minout), as.integer(MHproposal$bd$minin),
-            as.integer(MHproposal$bd$condAllDegExact), as.integer(length(MHproposal$bd$attribs)),
-            as.integer(maxedges),
-            as.integer(MCMCparams$Clist.miss$tails), as.integer(MCMCparams$Clist.miss$heads),
-            as.integer(MCMCparams$Clist.miss$nedges),
+            newnwtails = integer(data$maxedges),
+            newnwheads = integer(data$maxedges),
+            as.integer(data$verbose), as.integer(data$MHproposal$arguments$constraints$bd$attribs),
+            as.integer(data$MHproposal$arguments$constraints$bd$maxout), as.integer(data$MHproposal$arguments$constraints$bd$maxin),
+            as.integer(data$MHproposal$arguments$constraints$bd$minout), as.integer(data$MHproposal$arguments$constraints$bd$minin),
+            as.integer(data$MHproposal$arguments$constraints$bd$condAllDegExact),
+as.integer(length(data$MHproposal$arguments$constraints$bd$attribs)),
+            as.integer(data$maxedges),
+            as.integer(data$control$Clist.miss$tails), as.integer(data$control$Clist.miss$heads),
+            as.integer(data$control$Clist.miss$nedges),
             PACKAGE="ergm")
     # save the results
     z <- list(s=z$s, newnwtails=z$newnwtails, newnwheads=z$newnwheads)
     
     nedges <- z$newnwtails[1]
-    statsmatrix <- matrix(z$s, nrow=MCMCparams$samplesize+1,
-                          ncol=conddeg$Clist$nstats,
+    statsmatrix <- matrix(z$s, nrow=data$control$MPLE.samplesize+1,
+                          ncol=data$conddeg$Clist$nstats,
                           byrow = TRUE)
-    colnames(statsmatrix) <- conddeg$m$coef.names
-    # xb <- apply(statsmatrix,2,diff)
-    xb <- statsmatrix[-1,]
+    colnames(statsmatrix) <- data$conddeg$m$coef.names
+    xb <- ergm.sufftoprob(statsmatrix[-1,],compress=TRUE)
+# if (verbose) {cat("Finished compression.\n")}
+    xmat <- xb[,-c(1,ncol(xb)),drop=FALSE]
+    wend <- xb[,ncol(xb)]
+#   xb <- statsmatrix[-1,]
     zy <- round(xb[,1]-1)
-    xmat <- xb[,-1,drop=FALSE]
     xmat[zy==1,] <- -xmat[zy==1,]
-    wend <- zy-zy+1
-    #
-    #foffset <- NULL
-    #foffset.full <- NULL
-    #xmat.full <- xmat
-    #zy.full <- zy
+#   wend <- zy-zy+1
+    return(list(zy=zy,xmat=xmat,wend=wend))
+    }
+#
+    if(nsim >1){
+      outlist <- clusterApplyLB(cl, as.list(1:nsim), simfn, data)
+#
+#     Process the results
+#
+      zy <- NULL
+      xmat <- NULL
+      wend <- NULL
+      for(i in (1:nsim)){
+       z <- outlist[[i]]
+       zy <- c(zy, z$zy)
+       xmat <- rbind(xmat, z$xmat)
+       wend <- c(wend, z$wend)
+      }
+      rm(outlist)
+      ergm.stopCluster(cl)
+     }else{
+      z <- simfn(1, data)
+      zy <- z$zy
+      xmat <- z$xmat
+      wend <- z$wend
+      rm(z)
+     }
   }
 
   #
   # Adjust for the offset
   #
   if(any(m$etamap$offsettheta)){
-    if(is.null(theta.offset)){
-      theta.offset <- rep(0, length=Clist$nstats)
-      names(theta.offset) <- m$coef.names
-      theta.offset[m$etamap$offsettheta] <- -Inf
-#     theta.offset[m$etamap$offsettheta] <- -10000
+    if(any(is.na(theta.offset[m$etamap$offsettheta]))){
+      stop("Offset terms without offset coefficients specified!")
     }
-    # Commenting out recent version of this section that does not work;
-    #foffset <- xmat[,m$etamap$offsettheta,drop=FALSE]%*%theta.offset[m$etamap$offsettheta]
-    #foffset[is.nan(foffset)] <- 0 # zero times +-Inf should be zero in this context
-    #foffset <- xmat[,m$etamap$offsettheta,drop=FALSE]%*%theta.offset[m$etamap$offsettheta]
-    #xmat <- xmat[,!m$etamap$offsettheta,drop=FALSE]
-    #colnames(xmat) <- m$coef.names[!m$etamap$offsettheta]
-    
-    # Returning to the version from CRAN ergm v. 2.1:
-    foffset <- xmat[,!m$etamap$offsettheta,drop=FALSE] %*%
-               theta.offset[!m$etamap$offsettheta]
-    shouldoffset <- apply(abs(xmat[,m$etamap$offsettheta,drop=FALSE])>1e-8,1,any)
-    xmat <- xmat[,!m$etamap$offsettheta,drop=FALSE]
+    foffset <- xmat[,m$etamap$offsettheta,drop=FALSE] %*% cbind(theta.offset[m$etamap$offsettheta]) # Compute the offset's effect.
+    foffset[is.nan(foffset)] <- 0 # 0*Inf==0 in this case.
+    # Remove offset covariate columns.
+    xmat <- xmat[,!m$etamap$offsettheta,drop=FALSE] 
     colnames(xmat) <- m$coef.names[!m$etamap$offsettheta]
-    xmat <- xmat[!shouldoffset,,drop=FALSE]
-    zy <- zy[!shouldoffset]
-    wend <- wend[!shouldoffset]
-    foffset <- foffset[!shouldoffset]
-    dmiss <- dmiss[!shouldoffset]
-#   theta.offset <- theta.offset[!m$etamap$offsettheta]
+    # Now, iff a row's offset effect is infinite, then it carries no
+    # further information whatsoever, so it should be dropped.
+    xmat <- xmat[is.finite(foffset),,drop=FALSE]
+    zy <- zy[is.finite(foffset)]
+    wend <- wend[is.finite(foffset)]
+    foffset <- foffset[is.finite(foffset)]
   }else{
     foffset <- rep(0, length=length(zy))
     theta.offset <- rep(0, length=Clist$nstats)

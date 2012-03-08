@@ -1,55 +1,18 @@
 #  File ergm/R/ergm.Cprepare.R
-#  Part of the statnet package, http://statnetproject.org
+#  Part of the statnet package, http://statnet.org
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnetproject.org/attribution
+#    http://statnet.org/attribution
 #
-#  Copyright 2011 the statnet development team
+#  Copyright 2012 the statnet development team
 ######################################################################
 ##########################################################################
 # The <ergm.Cprepare> function builds an object called Clist that contains
 # all the necessary ingredients to be passed to the C functions
-#
-# --PARAMETERS--
-#   nw:  a network object
-#   m :  a model object, as returned by <ergm.getmodel>
-#
-# --RETURNED--
-#   Clist:  a list of parameters used by several of the fitting routines
-#           containing
-#            n           :  the size of the network
-#            dir         :  whether the network is directed (T or F)
-#            bipartite   :  whether the network is bipartite (T or F)
-#            ndyads      :  the number of dyads in the network
-#            nedges      :  the number of edges in this network
-#            tails       :  the vector of tail nodes; tail nodes are
-#                               the 1st column of the implicit edgelist,
-#                               so either the lower-numbered nodes in an
-#                               undirected graph, or the out nodes of a
-#                               directed graph, or the b1 nodes of a bi-
-#                               partite graph
-#            heads           :  the vector of head nodes; head nodes are
-#                               the 2nd column of the implicit edgelist,
-#                               so either the higher-numbered nodes in an
-#                               undirected graph, or the in nodes of a
-#                               directed graph, or the b2 nodes of a bi-
-#                               partite graph
-#            nterms      :  the number of model terms
-#            nstats      :  the total number of change statistics
-#                           for all model terms
-#            inputs      :  the concatenated vector of 'input's from each
-#                           model term as returned by <InitErgmTerm.X> or
-#                           <InitErgm.X>
-#            fnamestring :  the concatenated string of model term names
-#            snamestring :  the concatenated string of package names that
-#                           contain the C function 'd_fname'; default="ergm"
-#                           for each fname in fnamestring
-#            maxpossibleedges :  the maximum number of edges to allocate
-#                                space for
 ##########################################################################
 
-ergm.Cprepare <- function(nw, m) 
+ergm.Cprepare <- function(nw, m)
 {
   n <- network.size(nw)
   dir <- is.directed(nw)
@@ -58,24 +21,22 @@ ergm.Cprepare <- function(nw, m)
   if (is.null(bip)) bip <- 0
   Clist$bipartite <- bip
   Clist$ndyads <- n * (n-1) / (2-dir)
-  e<-as.matrix.network(nw,matrix.type="edgelist")
-  Clist$maxpossibleedges <- min(max(1e+6, 2*nrow(e)), Clist$ndyads)
+  e<-as.edgelist(nw) # Ensures that for undirected networks, tail<head.
   if(length(e)==0){
     Clist$nedges<-0
     Clist$tails<-NULL
     Clist$heads<-NULL
   }else{
     if(!is.matrix(e)){e <- matrix(e, ncol=2)}
+    
     Clist$nedges<-dim(e)[1]
-    # *** Ensure that for undirected networks, tail<head.
-    if(dir){
-      Clist$tails<-e[,1]
-      Clist$heads<-e[,2]
-    }else{
-      Clist$tails<-pmin(e[,1],e[,2])
-      Clist$heads<-pmax(e[,1],e[,2])
-    }
+    Clist$tails<-e[,1]
+    Clist$heads<-e[,2]
   }
+
+  Clist$lasttoggle <- nw %n% "lasttoggle"
+  Clist$time <- nw %n% "time"
+  
   mo<-m$terms 
   
   Clist$nterms<-length(mo)
@@ -105,7 +66,40 @@ ergm.Cprepare <- function(nw, m)
   while (substring(Clist$snamestring, 1, 1)==" ")
     Clist$snamestring <- substring(Clist$snamestring, 2)
 
+  # We don't care about diagnostics for terms that are not being
+  # estimated.
+  Clist$diagnosable <- ! m$etamap$offsetmap
+  names(Clist$diagnosable) <- m$coef.names[!m$etamap$offsetmap]
+    
   Clist
 }
 
 
+## Construct and serialize a very simple static edgelist, with the
+## vertex having the lesser index the tail and sorted by tails, then
+## by heads.
+ergm.Cprepare.el<-function(x, attrname=NULL, directed=if(is.network(x)) is.directed(x) else stop("Directedness argument is mandatory for edgelist input.")){
+  xm <- if(is.network(x)) as.edgelist(x, attrname=attrname) else x
+  
+  if(nrow(xm)){
+    # Sort.
+    xm <- xm[order(xm[,1],xm[,2]),,drop=FALSE]
+  }
+
+  c(nrow(xm),c(xm))
+}
+
+# Note: this converter must be kept in sync with whatever edgetree.c does.
+ergm.el.lasttoggle <- function(nw){
+  n <- network.size(nw)
+  b <- if(is.bipartite(nw)) nw %n% "bipartite"
+  edge.to.pos <-
+    if(is.bipartite(nw))
+      function(e) (e[2]-b-1)*b + e[1]
+    else if(is.directed(nw))
+      function(e) (e[2]-1)*(n - 1) + e[1] - (e[1]>e[2])
+    else function(e) (e[2] - 1)*(e[2] - 2)/2 + e[1]
+
+  el <- as.edgelist(nw)
+  cbind(el,(nw %n% "lasttoggle")[apply(el,1,edge.to.pos)])
+}

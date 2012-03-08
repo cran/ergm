@@ -1,12 +1,12 @@
 /*
  *  File ergm/src/changestats.h
- *  Part of the statnet package, http://statnetproject.org
+ *  Part of the statnet package, http://statnet.org
  *
  *  This software is distributed under the GPL-3 license.  It is free,
  *  open source, and has the attribution requirements (GPL Section 7) in
- *    http://statnetproject.org/attribution
+ *    http://statnet.org/attribution
  *
- *  Copyright 2011 the statnet development team
+ *  Copyright 2012 the statnet development team
  */
 #ifndef CHANGESTATS_H
 #define CHANGESTATS_H
@@ -17,6 +17,7 @@
 /********************  changestats:  A    ***********/
 D_CHANGESTAT_FN(d_absdiff);
 D_CHANGESTAT_FN(d_absdiffcat);
+D_CHANGESTAT_FN(d_adegcor); S_CHANGESTAT_FN(s_adegcor);
 D_CHANGESTAT_FN(d_altkstar);
 D_CHANGESTAT_FN(d_asymmetric);
 /********************  changestats:  B    ***********/
@@ -30,8 +31,6 @@ D_CHANGESTAT_FN(d_b1starmixhomophily);
 D_CHANGESTAT_FN(d_b1twostar);
 D_CHANGESTAT_FN(d_b2concurrent);
 D_CHANGESTAT_FN(d_b2concurrent_by_attr);
-D_CHANGESTAT_FN(d_b2degcor);
-D_CHANGESTAT_FN(d_b2degcrossprod);
 D_CHANGESTAT_FN(d_b2degree);
 D_CHANGESTAT_FN(d_b2degree_by_attr);
 D_CHANGESTAT_FN(d_b2factor);
@@ -43,7 +42,6 @@ D_CHANGESTAT_FN(d_boundeddegree);
 D_CHANGESTAT_FN(d_boundedidegree);
 D_CHANGESTAT_FN(d_boundedodegree);
 D_CHANGESTAT_FN(d_boundedistar);
-  double my_choose(double n, int r);
 D_CHANGESTAT_FN(d_boundedkstar);
 D_CHANGESTAT_FN(d_boundedostar);
 D_CHANGESTAT_FN(d_boundedtriangle);
@@ -67,6 +65,8 @@ D_CHANGESTAT_FN(d_cycle);
   void edgewise_cycle_census(Network *g, Vertex tail, Vertex head, 
      double *countv, long int maxlen);
 /********************  changestats:  D    ***********/
+D_CHANGESTAT_FN(d_degcor); S_CHANGESTAT_FN(s_degcor);
+D_CHANGESTAT_FN(d_degcrossprod);
 D_CHANGESTAT_FN(d_degree);
 D_CHANGESTAT_FN(d_degree_by_attr);
 D_CHANGESTAT_FN(d_degree_w_homophily);
@@ -97,7 +97,6 @@ D_CHANGESTAT_FN(d_gwtesp);
 D_CHANGESTAT_FN(d_gwtnsp);
 /********************  changestats:   H    ***********/
 D_CHANGESTAT_FN(d_hamming);
-D_CHANGESTAT_FN(d_hamming_weighted);
 D_CHANGESTAT_FN(d_hammingmix_constant);
 D_CHANGESTAT_FN(d_hammingmix);
 /********************  changestats:   I    ***********/
@@ -106,6 +105,7 @@ D_CHANGESTAT_FN(d_idegree_by_attr);
 D_CHANGESTAT_FN(d_idegree_w_homophily);
 D_CHANGESTAT_FN(d_intransitive);
 D_CHANGESTAT_FN(d_isolates);
+S_CHANGESTAT_FN(s_isolates);
 D_CHANGESTAT_FN(d_istar);
 /********************  changestats:   K    ***********/
 D_CHANGESTAT_FN(d_kstar);
@@ -132,9 +132,13 @@ D_CHANGESTAT_FN(d_nsp);
 D_CHANGESTAT_FN(d_odegree);
 D_CHANGESTAT_FN(d_odegree_by_attr);
 D_CHANGESTAT_FN(d_odegree_w_homophily);
+D_CHANGESTAT_FN(d_opentriad);
 D_CHANGESTAT_FN(d_ostar);
 D_CHANGESTAT_FN(d_outdegreepopularity);
+/********************  changestats:   P    ***********/
+D_CHANGESTAT_FN(d_pdegcor); S_CHANGESTAT_FN(s_pdegcor);
 /********************  changestats:   R    ***********/
+D_CHANGESTAT_FN(d_rdegcor); S_CHANGESTAT_FN(s_rdegcor);
 D_CHANGESTAT_FN(d_receiver);
 /********************  changestats:   S    ***********/
 D_CHANGESTAT_FN(d_sender);

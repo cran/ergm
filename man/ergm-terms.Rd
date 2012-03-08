@@ -1,11 +1,11 @@
 %  File ergm/man/ergm-terms.Rd
-%  Part of the statnet package, http://statnetproject.org
+%  Part of the statnet package, http://statnet.org
 %
 %  This software is distributed under the GPL-3 license.  It is free,
 %  open source, and has the attribution requirements (GPL Section 7) in
-%    http://statnetproject.org/attribution
+%    http://statnet.org/attribution
 %
-%  Copyright 2011 the statnet development team
+%  Copyright 2012 the statnet development team
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{ergm-terms}
 \alias{ergm-terms}
@@ -30,6 +30,7 @@
 \alias{b2twostar}
 \alias{balance}
 \alias{concurrent}
+\alias{concurrentties}
 \alias{ctriple}
 \alias{cycle}
 \alias{degree}
@@ -71,6 +72,7 @@
 \alias{nodeofactor}
 \alias{nsp}
 \alias{odegree}
+\alias{opentriad}
 \alias{ostar}
 \alias{receiver}
 \alias{sender}
@@ -102,11 +104,6 @@
 
   This page describes the possible terms (and hence network statistics).
 }
-%\usage{
-%ergm-terms()
-%}
-%\arguments{
-%}
 \section{Specifying models}{
  Terms to \code{\link{ergm}} are specified by a formula to represent the network and
  network statistics. This is done via a \code{formula}, that is,
@@ -273,7 +270,7 @@ network
     created when \code{base=NULL}) are left out.}
 
     \item{\code{b1twostar(b1attrname, b2attrname, base=NULL)}}{\emph{ Two-star
-    census for central nodes ceneterd on the first mode of a bipartite network:}
+    census for central nodes centered on the first mode of a bipartite network:}
     This term takes two nodal attribute names, one for b1 nodes (actors in some
     contexts) and one for b2 nodes (events in some contexts). Only
     \code{b1attrname} is required; if \code{b2attrname} is not passed, it is
@@ -355,7 +352,7 @@ network
     b1 and b2 are reversed.}
     
     \item{\code{b2twostar(b1attrname, b2attrname, base=NULL)}}{\emph{ Two-star
-    census for central nodes ceneterd on the second mode of a bipartite
+    census for central nodes centered on the second mode of a bipartite
     network:} This term is exactly the same as \code{b1twostar} except that the
     roles of b1 and b2 are reversed.}    
 
@@ -368,6 +365,16 @@ network
     network, the balanced triads are those with an even number of ties (i.e., 0
     and 2).}
     
+    \item{\code{coincidence(d=NULL,active=0)}}{\emph{Coincident node count for the
+    second mode in a bipartite (aka two-mode) network:} By default this term adds one
+    network statistic to the model for each pair of nodes of mode two. It is
+equal to the number of (first mode) mutual partners of that pair.
+    The first mode of a bipartite
+    network object is sometimes known as the "actor" mode and the seconds as the "event" mode. So this is the number of actors going to both events in the pair. The optional argument
+    \code{d} is a two-column matrix of (row-wise) pairs indices where the first row is less than the second row. The second optional argument, \code{active}, selects pairs for which the observed count is at least \code{active}.
+    This term can only be
+    used with undirected bipartite networks. }
+    
     \item{\code{concurrent(by=NULL)}}{\emph{Concurrent node count:} 
     This term adds one network statistic to the model, equal to the number of
     nodes in the network with degree 2 or higher. The optional argument
@@ -376,6 +383,16 @@ network
     it functions just like the \code{by} argument of the \code{degree} term.
     This term can only be used with undirected
     networks. }
+
+    \item{\code{concurrentties(by=NULL)}}{\emph{Concurrent tie count:} 
+    This term adds one network statistic to the model, equal to the number of
+    ties incident on each actor beyond the first. The optional argument
+    \code{by} is a character string giving the name of an attribute in the
+    network's vertex attribute list;
+    it functions just like the \code{by} argument of the \code{degree} term.
+    This term can only be used with undirected
+    networks. }
+
     
     \item{\code{ctriple(attrname=NULL)}}{\emph{Cyclic triples:} This term adds one
     statistic to the model, equal to the number of cyclic triples in the
@@ -935,7 +952,12 @@ of the degrees of all pairs of nodes in the network which are tied.
     value of the attribute.
     This term can only be used with directed networks; for undirected networks
     see \code{degree}. }
-    
+
+    \item{\code{opentriad}}{\emph{``Open triads'':} This term adds one
+    statistic to the model equal to three times the number of triangles
+    in the network minus the number of 2-stars. It is currently only
+    implemented for undirected networks. }
+  
     \item{\code{ostar(k, attrname=NULL)}}{\emph{k-Outstars:} The \code{k} argument is
     a vector of distinct integers. This term adds one network statistic to the
     model for each element in \code{k}. The \eqn{i}th such statistic counts the

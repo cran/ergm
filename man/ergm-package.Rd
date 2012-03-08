@@ -1,11 +1,11 @@
 %  File ergm/man/ergm-package.Rd
-%  Part of the statnet package, http://statnetproject.org
+%  Part of the statnet package, http://statnet.org
 %
 %  This software is distributed under the GPL-3 license.  It is free,
 %  open source, and has the attribution requirements (GPL Section 7) in
-%    http://statnetproject.org/attribution
+%    http://statnet.org/attribution
 %
-%  Copyright 2011 the statnet development team
+%  Copyright 2012 the statnet development team
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{ergm-package}
 \alias{ergm-package}
@@ -14,7 +14,7 @@
 Fit, Simulate and Diagnose Exponential-Family Models for Networks
 }
 \description{
-\code{\link{ergm}} is a collection of functions to plot, fit, diagnose, and simulate from random 
+\code{\link[=ergm-package]{ergm}} is a collection of functions to plot, fit, diagnose, and simulate from random 
 graph models. For a list of functions type: \code{help(package='ergm')}
 
 For a complete list of the functions, use \code{library(help="ergm")} 
@@ -28,7 +28,7 @@ Mark S. Handcock, David R. Hunter, Carter T. Butts, Steven M. Goodreau,
 and Martina Morris. 2003 
 \emph{statnet: Software tools for the Statistical Modeling of Network Data}
 \cr
-\url{http://statnetproject.org}.
+\url{statnet.org}.
 
 All programs derived from this package must cite it.
 For complete citation information, use\cr
@@ -56,7 +56,7 @@ networks and assessing model goodness-of-fit.
 
 For detailed information on how to download and install the software,
 go to the \code{\link{ergm}} website:
-\url{http://statnetproject.org}.
+\url{statnet.org}.
 A tutorial, support newsgroup, references and links to further resources are provided there.
 }
 \author{
@@ -64,7 +64,7 @@ Mark S. Handcock \email{handcock@stat.ucla.edu},\cr
 David R. Hunter \email{dhunter@stat.psu.edu},\cr
 Carter T. Butts \email{buttsc@uci.edu},\cr
 Steven M. Goodreau \email{goodreau@u.washington.edu},\cr
-Pavel N. Krivitsky \email{pavel@stat.cmu.edu}, and\cr
+Pavel N. Krivitsky \email{krivitsky@stat.psu.edu}, and\cr
 Martina Morris \email{morrism@u.washington.edu}
 
 Maintainer: David R. Hunter \email{dhunter@stat.psu.edu}
@@ -74,7 +74,7 @@ Admiraal R, Handcock MS (2007).
  \pkg{networksis}: Simulate bipartite graphs with fixed
   marginals through sequential importance sampling.
  Statnet Project, Seattle, WA.
- Version 1, \url{http://statnetproject.org}.
+ Version 1, \url{statnet.org}.
 
 Bender-deMoll S, Morris M, Moody J (2008).
  Prototype Packages for Managing and Animating Longitudinal
@@ -132,19 +132,19 @@ Handcock MS (2003b).
  \pkg{degreenet}: Models for Skewed Count Distributions Relevant
   to Networks.
  Statnet Project, Seattle, WA.
- Version 1.0, \url{http://statnetproject.org}.
+ Version 1.0, \url{statnet.org}.
 
 Handcock MS, Hunter DR, Butts CT, Goodreau SM, Morris M (2003a).
  \pkg{ergm}: A Package to Fit, Simulate and Diagnose
   Exponential-Family Models for Networks.
  Statnet Project, Seattle, WA.
- Version 2, \url{http://statnetproject.org}.
+ Version 2, \url{statnet.org}.
 
 Handcock MS, Hunter DR, Butts CT, Goodreau SM, Morris M (2003b).
  \pkg{statnet}: Software Tools for the Statistical Modeling of
   Network Data.
  Statnet Project, Seattle, WA.
- Version 2, \url{http://statnetproject.org}.
+ Version 2, \url{statnet.org}.
 
 Hunter, D. R. and Handcock, M. S. (2006)
    Inference in curved exponential family models for networks,
@@ -162,7 +162,7 @@ Krivitsky PN, Handcock MS (2007).
  \pkg{latentnet}: Latent position and cluster models for
   statistical networks.
  Seattle, WA.
- Version 2, \url{http://statnetproject.org}.
+ Version 2, \url{http://statnet.org}.
 
 Morris M, Handcock MS, Hunter DR (2008).
  Specification of Exponential-Family Random Graph Models:

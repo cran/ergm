@@ -1,11 +1,11 @@
 %  File ergm/man/print.ergm.Rd
-%  Part of the statnet package, http://statnetproject.org
+%  Part of the statnet package, http://statnet.org
 %
 %  This software is distributed under the GPL-3 license.  It is free,
 %  open source, and has the attribution requirements (GPL Section 7) in
-%    http://statnetproject.org/attribution
+%    http://statnet.org/attribution
 %
-%  Copyright 2011 the statnet development team
+%  Copyright 2012 the statnet development team
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{print.ergm}
 \alias{print.ergm}
@@ -24,8 +24,8 @@
   in the future.}
 }
 \details{Automatically called when an object of class \code{\link{ergm}} is printed.
-  Currently, \code{\link{print.ergm}} summarizes the number of Newton-Raphson
-  iterations required, the size of the MCMC sample, the theta vector
+  Currently, \code{\link{print.ergm}} summarizes 
+  the size of the MCMC sample, the theta vector
   governing the selection of the sample, and the Monte Carlo MLE.
 }
 \value{The value returned is the \code{\link{ergm}} object itself.}

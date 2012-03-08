@@ -1,49 +1,12 @@
 #  File ergm/R/InitErgmTerm.R
-#  Part of the statnet package, http://statnetproject.org
+#  Part of the statnet package, http://statnet.org
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnetproject.org/attribution
+#    http://statnet.org/attribution
 #
-#  Copyright 2011 the statnet development team
+#  Copyright 2012 the statnet development team
 ######################################################################
-#===========================================================================
-# This file contains the following 74 new, easier-to-write ergm-term
-# initialization functions (each prepended with "InitErgmTerm"):
-#   A:   <absdiff>          <absdiffcat>      <altkstar>
-#        <asymmetric>       <adegcor>
-#   B:   <b1concurrent>     <b1degree>        <b1factor>
-#        <b1star>           <b1starmix>       <b1twostar>
-#        <b2concurrent>     <b2degree>        <b2factor>         
-#        <b2star>           <b2starmix>       <b2twostar>
-#        <balance>
-#   C:   <concurrent>       <cycle>           <ctriple>=<ctriad> 
-#   D:   <degree>           <density>         <dsp>
-#        <dyadcov>          <degcrossprod>    <degcor>
-#   E:   <edgecov>          <edges>           <esp>
-#   G:   <gwb1degree>       <gwb2degree>      <gwdegree>
-#        <gwdsp>            <gwesp>           <gwidegree>
-#        <gwnsp>            <gwodegree>
-#   H:   <hamming>          <hammingmix>
-#   I:   <idegree>          <intransitive>    <indegreepopularity> 
-#        <isolates>         <istar>
-#   K:   <kstar>
-#   L:   <localtraingle>
-#   M:   <m2star>           <meandeg>         <mutual>
-#   N:   <nearsimmelian>    <nodefactor>      <nodecov>=<nodemain> 
-#        <nodeicov>         <nodeifactor>     <nodematch>=<match>
-#        <nodemix>          <nodeocov>        <nodeofactor>       
-#        <nsp>
-#   O:   <odegree>          <ostar>           <outdegreepopularity>  
-#   P:   <pdegcor>
-#   R:   <receiver>         <rdegcor>
-#   S:   <sender>           <simmelian>       <simmelianties>
-#        <smalldiff>        <sociality>
-#   T:   <threepath>        <transitive>      <triangles>=<triangle>
-#        <triadcensus>      <tripercent>      <ttriple>=<ttriad>
-#        <transitiveties>   <twopath
-#==========================================================================
-
 ################################################################################
 # The <InitErgmTerm.X> functions initialize each ergm term, X, by
 #   1) checking the validity of X and its arguments via <check.ErgmTerm> and
@@ -58,8 +21,6 @@
 #               (T or F); if FALSE, the ergm belongs to the curved exponential
 #               family; if TRUE, the term X does not the ergm to be curved,
 #               though other terms may; default=FALSE
-#   drop      : whether coefficients with 0 values should be
-#               dropped; default=TRUE
 #
 # --IGNORED PARAMETERS--
 #   ... : ignored, but necessary to accomodate other arguments
@@ -180,24 +141,24 @@ InitErgmTerm.absdiffcat <- function(nw, arglist, ...) {
 }
 
 
-## adegcor is not yet documented and the C code is still not in public version
+
 ################################################################################
-#InitErgmTerm.adegcor<-function (nw, arglist, drop=TRUE, ...) {
-#  a <- check.ErgmTerm(nw, arglist, directed=FALSE) 
-#
-#  deg=summary(nw ~ sociality(base=0))
-#  el=as.matrix.network.edgelist(nw)
-#  deg1<-deg[el[,1]]
-#  deg2<-deg[el[,2]]
-#  alldeg<-c(deg1,deg2)
-#  sigma2<-(sum(alldeg*alldeg)-length(alldeg)*(mean(alldeg)^2))
-#  ### Construct the list to return
-#  list(name="adegcor",                            #name: required
-#       coef.names = "adegcor",                    #coef.names: required
-#       inputs=sigma2,
-#       dependence = TRUE # So we don't use MCMC if not necessary
-#       )
-#}
+InitErgmTerm.adegcor<-function (nw, arglist, ...) {
+  a <- check.ErgmTerm(nw, arglist, directed=FALSE) 
+
+  deg=summary(nw ~ sociality(base=0))
+  el=as.edgelist(nw)
+  deg1<-deg[el[,1]]
+  deg2<-deg[el[,2]]
+  alldeg<-c(deg1,deg2)
+  sigma2<-(sum(alldeg*alldeg)-length(alldeg)*(mean(alldeg)^2))
+  ### Construct the list to return
+  list(name="adegcor",                            #name: required
+       coef.names = "adegcor",                    #coef.names: required
+       inputs=sigma2,
+       dependence = TRUE # So we don't use MCMC if not necessary
+       )
+}
 
 
 ################################################################################
@@ -243,7 +204,7 @@ InitErgmTerm.altkstar <- function(nw, arglist, initialfit=FALSE, ...) {
 
 
 ################################################################################
-InitErgmTerm.asymmetric <- function(nw, arglist, drop=TRUE, ...) {
+InitErgmTerm.asymmetric <- function(nw, arglist, ...) {
   ### Check the network and arguments to make sure they are appropriate
   a <- check.ErgmTerm(nw, arglist, directed=TRUE, bipartite=NULL,
                       varnames = c("attrname", "diff", "keep"),
@@ -264,23 +225,11 @@ InitErgmTerm.asymmetric <- function(nw, arglist, drop=TRUE, ...) {
     nodecov[dontmatch] <- length(u) + (1:sum(dontmatch))
     ui <- seq(along=u)
   }
-  if(drop) { # Check for zero statistics, print -Inf messages if applicable
-    obsstats <- check.ErgmTerm.summarystats(nw, arglist, ...)
-    if (is.null(a$attrname)) {
-      n <- network.size(nw)
-      ndc <- n * (n-1) / 2 # temporary until network.dyadcount is fixed
-      if (extremewarnings(obsstats, maxval=ndc)) {
-        return(NULL) # In this case the obs nw has 0 or n(n-1)/2 asymmetric dyads
-      }
-    } else {
-      ew <- extremewarnings(obsstats)
-      u <- u[!ew]
-      ui <- ui[!ew]
-    }
-  }
   ### Construct the list to return
   out <- list(name="asymmetric",                      #name: required
-              coef.names = "asymmetric"               #coef.names: required
+              coef.names = "asymmetric",              #coef.names: required
+              minval = 0,
+              maxval = network.dyadcount(nw)/2
               ) 
   if (!is.null(a$attrname)) {
     if (a$diff) {
@@ -291,6 +240,7 @@ InitErgmTerm.asymmetric <- function(nw, arglist, drop=TRUE, ...) {
       out$inputs <- nodecov
     }
   }
+
   out
 }
 
@@ -299,7 +249,7 @@ InitErgmTerm.asymmetric <- function(nw, arglist, drop=TRUE, ...) {
 
 
 ################################################################################
-InitErgmTerm.b1concurrent<-function(nw, arglist, drop=TRUE, ...) {
+InitErgmTerm.b1concurrent<-function(nw, arglist, ...) {
   a <- check.ErgmTerm(nw, arglist, directed=FALSE, bipartite=TRUE,
                       varnames = c("byarg"),
                       vartypes = c("character"),
@@ -317,23 +267,6 @@ InitErgmTerm.b1concurrent<-function(nw, arglist, drop=TRUE, ...) {
     # Combine degree and u into 2xk matrix, where k=length(d)*length(u)
     lu <- length(u)
     ui <- seq(along=u)
-    if(drop){ #   Check for zero statistics
-      obsstats <- check.ErgmTerm.summarystats(nw, arglist, ...)
-      b1concurrentattr <- extremewarnings(obsstats)
-      if(any(b1concurrentattr)){
-        u <- u[-b1concurrentattr]
-        ui <- ui[-b1concurrentattr]
-      }
-    }
-  } else {
-    if(is.logical(byarg)){drop <- byarg}
-    if(drop){
-      obsstats <- check.ErgmTerm.summarystats(nw, arglist, ...)
-      mb1concurrent <- extremewarnings(obsstats)
-      if(any(mb1concurrent)){
-        return(NULL)
-      }
-    }
   }
   if(!is.null(byarg)) {
     if(length(u)==0) {return(NULL)}
@@ -346,13 +279,13 @@ InitErgmTerm.b1concurrent<-function(nw, arglist, drop=TRUE, ...) {
     coef.names<-paste("b1concurrent",sep="")
     inputs <- NULL
   }
-  list(name=name, coef.names=coef.names, inputs=inputs, dependence=TRUE)
+  list(name=name, coef.names=coef.names, inputs=inputs, dependence=TRUE, minval=0, maxval=nb1)
 }
 
 
 
 ################################################################################
-InitErgmTerm.b1degree <- function(nw, arglist, drop=TRUE, ...) {
+InitErgmTerm.b1degree <- function(nw, arglist, ...) {
   ### Check the network and arguments to make sure they are appropriate.
   a <- check.ErgmTerm (nw, arglist, directed=FALSE, bipartite=TRUE,
                        varnames = c("d", "byarg"),
@@ -361,11 +294,6 @@ InitErgmTerm.b1degree <- function(nw, arglist, drop=TRUE, ...) {
                        required = c(TRUE, FALSE))
   ### Process the arguments
   nb1 <- get.network.attribute(nw, "bipartite")
-  if(drop) { # Check for zero statistics, print -Inf messages if applicable
-    obsstats <- check.ErgmTerm.summarystats(nw, arglist, ...)
-    ew <- extremewarnings(obsstats)
-    # will process the ew variable later
-  } else {ew <- FALSE}
   if (!is.null(a$byarg)) {  # CASE 1:  a$byarg GIVEN
     nodecov <- get.node.attr(nw, a$byarg)
     u<-sort(unique(nodecov))
@@ -374,7 +302,6 @@ InitErgmTerm.b1degree <- function(nw, arglist, drop=TRUE, ...) {
     # Combine degree and u into 2xk matrix, where k=length(a$d)*length(u)
     lu <- length(u)
     du <- rbind(rep(a$d,lu), rep(1:lu, rep(length(a$d), lu)))
-    du <- matrix(du[,!ew], nrow=2) # Drop any zero-obs-value rows
     emptynwstats <- rep(0, ncol(du))
     if (any(du[1,]==0)) { # Alter emptynwstats
       tmp <- du[2,du[1,]==0]
@@ -386,7 +313,6 @@ InitErgmTerm.b1degree <- function(nw, arglist, drop=TRUE, ...) {
     coef.names <- paste("b1deg", du[1,], ".", a$byarg, u[du[2,]], sep="")
     inputs <- c(as.vector(du), nodecov)
   } else { # CASE 2:  a$byarg NOT GIVEN
-    a$d <- a$d[!ew] # Drop any zero-obs-value values
     name <- "b1degree"
     coef.names <- paste("b1deg", a$d, sep="")
     inputs <- a$d
@@ -396,12 +322,12 @@ InitErgmTerm.b1degree <- function(nw, arglist, drop=TRUE, ...) {
     }
   }
   list(name=name, coef.names=coef.names, #name and coef.names: required
-       inputs = inputs, emptynwstats=emptynwstats)
+       inputs = inputs, emptynwstats=emptynwstats, minval=0, maxval=nb1)
 }
 
 
 ################################################################################
-InitErgmTerm.b1factor<-function (nw, arglist, drop=TRUE, ...) {
+InitErgmTerm.b1factor<-function (nw, arglist, ...) {
   a <- check.ErgmTerm(nw, arglist, directed=FALSE, bipartite=TRUE,
                       varnames = c("attrname", "base"),
                       vartypes = c("character", "numeric"),
@@ -415,14 +341,6 @@ InitErgmTerm.b1factor<-function (nw, arglist, drop=TRUE, ...) {
   if(any(is.na(nodecov))){u<-c(u,NA)}
   nodecov <- match(nodecov,u,nomatch=length(u)+1)
   ui <- seq(along=u)
-  if(drop){
-    obsstats <- check.ErgmTerm.summarystats(nw, arglist, ...)
-    nfc <- extremewarnings(obsstats)
-    if(any(nfc)){
-      u<-u[!nfc]
-      ui<-ui[!nfc]
-    }
-  }
   lu <- length(ui)
   if (lu==1){
     stop ("Argument to b1factor() has only one value", call.=FALSE)
@@ -436,13 +354,13 @@ InitErgmTerm.b1factor<-function (nw, arglist, drop=TRUE, ...) {
     inputs <- c(ui[-base], nodecov)
     attr(inputs, "ParamsBeforeCov") <- lu-length(base)
   }
-  list(name="b1factor", coef.names=coef.names, inputs=inputs, dependence=FALSE)
+  list(name="b1factor", coef.names=coef.names, inputs=inputs, dependence=FALSE, minval=0)
 }
 
 
 
 ################################################################################
-InitErgmTerm.b1star <- function(nw, arglist, drop=TRUE, ...) {
+InitErgmTerm.b1star <- function(nw, arglist, ...) {
   ### Check the network and arguments to make sure they are appropriate.
   a <- check.ErgmTerm (nw, arglist, directed=FALSE, bipartite=TRUE,
                        varnames = c("k", "attrname"),
@@ -450,11 +368,6 @@ InitErgmTerm.b1star <- function(nw, arglist, drop=TRUE, ...) {
                        defaultvalues = list(NULL, NULL),
                        required = c(TRUE, FALSE))
   ### Process the arguments
-  if(drop) { # Check for zero statistics, print -Inf messages if applicable
-    obsstats <- check.ErgmTerm.summarystats(nw, arglist, ...)
-    ew <- extremewarnings(obsstats)
-    # will process the ew variable later
-  } else {ew <- FALSE}
   if (!is.null(a$attrname)) {
     nodecov <- get.node.attr(nw, a$attrname)
     u<-sort(unique(nodecov))
@@ -472,11 +385,11 @@ InitErgmTerm.b1star <- function(nw, arglist, drop=TRUE, ...) {
     inputs <- a$k
   }
   list(name = name, coef.names = coef.names, #name and coef.names: required
-       inputs = inputs)
+       inputs = inputs, minval = 0)
 }
 
 ################################################################################
-InitErgmTerm.b1starmix <- function(nw, arglist, drop=TRUE, ...) {
+InitErgmTerm.b1starmix <- function(nw, arglist, ...) {
   ### Check the network and arguments to make sure they are appropriate.
   a <- check.ErgmTerm (nw, arglist, directed=FALSE, bipartite=TRUE,
                        varnames = c("k", "attrname", "base", "diff"),
@@ -485,11 +398,6 @@ InitErgmTerm.b1starmix <- function(nw, arglist, drop=TRUE, ...) {
                        required = c(TRUE, TRUE, FALSE, FALSE))
   ### Process the arguments
   nb1 <- get.network.attribute(nw, "bipartite")
-  if(drop) { # Check for zero statistics, print -Inf messages if applicable
-    obsstats <- check.ErgmTerm.summarystats(nw, arglist, ...)
-    ew <- extremewarnings(obsstats)
-    # will process the ew variable later
-  } else {ew <- FALSE}
   nodecov <- get.node.attr(nw, a$attrname)
   u<-sort(unique(nodecov))
   if(any(is.na(nodecov))){u<-c(u,NA)}
@@ -508,7 +416,6 @@ InitErgmTerm.b1starmix <- function(nw, arglist, drop=TRUE, ...) {
   if (a$diff) {
     u <- cbind(rep(1:nr,nc), nr + rep(1:nc, each=nr))
     if (!is.null(a$base) && !identical(a$base,0)) { u <- u[-a$base,] }
-    u <- u[!ew,]
     name <- "b1starmix"
     coef.names <- paste("b1starmix", a$k, a$attrname,
                         apply(matrix(namescov[u],ncol=2), 1,paste,collapse="."), 
@@ -519,18 +426,17 @@ InitErgmTerm.b1starmix <- function(nw, arglist, drop=TRUE, ...) {
   else {
     u <- 1:nr
     if (!is.null(a$base) && !identical(a$base,0)) { u <- u[-a$base] }
-    u <- u[!ew]
     name <- "b1starmixhomophily"
     coef.names <- paste("b1starmix", a$k, a$attrname, namescov[u], sep=".")
     inputs <- c(a$k, nodecov, u)
     attr(inputs, "ParamsBeforeCov") <- length(a$k) # should be 1
   }
   list(name = name, coef.names = coef.names, #name and coef.names: required
-       inputs = inputs)
+       inputs = inputs, minval = 0)
 }
 
 ################################################################################
-InitErgmTerm.b1twostar <- function(nw, arglist, drop=TRUE, ...) {
+InitErgmTerm.b1twostar <- function(nw, arglist, ...) {
   ### Check the network and arguments to make sure they are appropriate.
   a <- check.ErgmTerm (nw, arglist, directed=FALSE, bipartite=TRUE,
                        varnames = c("b1attrname", "b2attrname", "base"),
@@ -540,11 +446,6 @@ InitErgmTerm.b1twostar <- function(nw, arglist, drop=TRUE, ...) {
   ### Process the arguments
   nb1 <- get.network.attribute(nw, "bipartite")
   n <- network.size(nw)
-  if(drop) { # Check for zero statistics, print -Inf messages if applicable
-    obsstats <- check.ErgmTerm.summarystats(nw, arglist, ...)
-    ew <- extremewarnings(obsstats)
-    # will process the ew variable later
-  } else {ew <- FALSE}
   b1nodecov <- get.node.attr(nw, a$b1attrname)[1:nb1]
   b1u<-sort(unique(b1nodecov))
   if(any(is.na(b1nodecov))){ b1u<-c(b1u,NA) }
@@ -560,16 +461,15 @@ InitErgmTerm.b1twostar <- function(nw, arglist, drop=TRUE, ...) {
   u <- cbind(rep(1:nr, nc*nc), rep(rep(1:nc, each=nr), nc), rep(1:nc, each=nc*nr))
   u <- u[u[,2] <= u[,3],]  
   if (!is.null(a$base) && !identical(a$base,0)) { u <- u[-a$base,] }
-  u <- u[!ew,]
   coef.names <- paste("b1twostar", a$b1attrname, b1u[u[,1]],  a$b2attrname,
                       apply(matrix(b2u[u[,2:3]],ncol=2), 1, paste, collapse="."),
                       sep=".")
   list(name = "b1twostar", coef.names = coef.names, #name and coef.names: required
-       inputs = c(b1nodecov, b2nodecov, u[,1], u[,2], u[,3]) )
+       inputs = c(b1nodecov, b2nodecov, u[,1], u[,2], u[,3]), minval = 0)
 }
 
 ################################################################################
-InitErgmTerm.b2concurrent<-function(nw, arglist, drop=TRUE, ...) {
+InitErgmTerm.b2concurrent<-function(nw, arglist, ...) {
   a <- check.ErgmTerm(nw, arglist, directed=FALSE, bipartite=TRUE,
                       varnames = c("byarg"),
                       vartypes = c("character"),
@@ -587,23 +487,6 @@ InitErgmTerm.b2concurrent<-function(nw, arglist, drop=TRUE, ...) {
     # Combine degree and u into 2xk matrix, where k=length(d)*length(u)
     lu <- length(u)
     ui <- seq(along=u)
-    if(drop){ #   Check for extreme statistics
-      obsstats <- check.ErgmTerm.summarystats(nw, arglist, ...)
-      b2concurrentattr <- extremewarnings(obsstats)
-      if(any(b2concurrentattr)){
-        u <- u[-b2concurrentattr]
-        ui <- ui[-b2concurrentattr]
-      }
-    }
-  } else {
-    if(is.logical(byarg)){drop <- byarg}
-    if(drop){
-      obsstats <- check.ErgmTerm.summarystats(nw, arglist, ...)
-      mb2concurrent <- extremewarnings(obsstats)
-      if(any(mb2concurrent)){
-        return(NULL)
-      }
-    }
   }
   if(!is.null(byarg)) {
     if(length(u)==0) {return(NULL)}
@@ -616,13 +499,13 @@ InitErgmTerm.b2concurrent<-function(nw, arglist, drop=TRUE, ...) {
     name <- "b2concurrent"
     inputs <- NULL
   }
-  list(name=name, coef.names=coef.names, inputs=inputs, dependence=TRUE)
+  list(name=name, coef.names=coef.names, inputs=inputs, dependence=TRUE, minval = 0, maxval=network.size(nw)-nb1)
 }
 
 
 
 ################################################################################
-InitErgmTerm.b2degree <- function(nw, arglist, drop=TRUE, ...) {
+InitErgmTerm.b2degree <- function(nw, arglist, ...) {
   ### Check the network and arguments to make sure they are appropriate.
   a <- check.ErgmTerm (nw, arglist, directed=FALSE, bipartite=TRUE,
                        varnames = c("d", "byarg"),
@@ -632,11 +515,6 @@ InitErgmTerm.b2degree <- function(nw, arglist, drop=TRUE, ...) {
   ### Process the arguments
   nb1 <- get.network.attribute(nw, "bipartite")
   n <- network.size(nw)
-  if(drop) { # Check for zero statistics, print -Inf messages if applicable
-    obsstats <- check.ErgmTerm.summarystats(nw, arglist, ...)
-    ew <- extremewarnings(obsstats)
-    # will process the ew variable later
-  } else {ew <- FALSE}
   if (!is.null(a$byarg)) {  # CASE 1:  a$byarg GIVEN
     nodecov <- get.node.attr(nw, a$byarg)
     u<-sort(unique(nodecov))
@@ -645,7 +523,6 @@ InitErgmTerm.b2degree <- function(nw, arglist, drop=TRUE, ...) {
     # Combine degree and u into 2xk matrix, where k=length(a$d)*length(u)
     lu <- length(u)
     du <- rbind(rep(a$d,lu), rep(1:lu, rep(length(a$d), lu)))
-    du <- matrix(du[,!ew], nrow=2) # Drop any zero-obs-value rows
     emptynwstats <- rep(0, ncol(du))
     if (any(du[1,]==0)) { # Alter emptynwstats
       tmp <- du[2,du[1,]==0]
@@ -657,7 +534,6 @@ InitErgmTerm.b2degree <- function(nw, arglist, drop=TRUE, ...) {
     coef.names <- paste("b2deg", du[1,], ".", a$byarg, u[du[2,]], sep="")
     inputs <- c(as.vector(du), nodecov)
   } else { # CASE 2:  a$byarg NOT GIVEN
-    a$d <- a$d[!ew] # Drop any zero-obs-value values
     name <- "b2degree"
     coef.names <- paste("b2deg", a$d, sep="")
     inputs <- a$d
@@ -667,11 +543,11 @@ InitErgmTerm.b2degree <- function(nw, arglist, drop=TRUE, ...) {
     }
   }
   list(name=name, coef.names=coef.names, #name and coef.names: required
-       inputs = inputs, emptynwstats=emptynwstats)
+       inputs = inputs, emptynwstats=emptynwstats, minval=0, maxval=network.size(nw)-nb1)
 }
 
 ################################################################################
-InitErgmTerm.b2factor<-function (nw, arglist, drop=TRUE, ...) {
+InitErgmTerm.b2factor<-function (nw, arglist, ...) {
   a <- check.ErgmTerm(nw, arglist, directed=FALSE, bipartite=TRUE,
                       varnames = c("attrname", "base"),
                       vartypes = c("character", "numeric"),
@@ -685,14 +561,6 @@ InitErgmTerm.b2factor<-function (nw, arglist, drop=TRUE, ...) {
   if(any(is.na(nodecov))){u<-c(u,NA)}
   nodecov <- match(nodecov,u,nomatch=length(u)+1)
   ui <- seq(along=u)
-  if(drop){
-    obsstats <- check.ErgmTerm.summarystats(nw, arglist, ...)
-    nfc <- extremewarnings(obsstats)
-    if(any(nfc)){
-      u<-u[!nfc]
-      ui<-ui[!nfc]
-    }
-  }
   lu <- length(ui)
   if (lu==1){
     stop ("Argument to b2factor() has only one value", call.=FALSE)
@@ -706,13 +574,13 @@ InitErgmTerm.b2factor<-function (nw, arglist, drop=TRUE, ...) {
     inputs <- c(ui[-base], nodecov)
     attr(inputs, "ParamsBeforeCov") <- lu-length(base)
   }
-  list(name="b2factor", coef.names=coef.names, inputs=inputs, dependence=FALSE)
+  list(name="b2factor", coef.names=coef.names, inputs=inputs, dependence=FALSE, minval=0)
 }
 
 
 
 ################################################################################
-InitErgmTerm.b2star <- function(nw, arglist, drop=TRUE, ...) {
+InitErgmTerm.b2star <- function(nw, arglist, ...) {
   ### Check the network and arguments to make sure they are appropriate.
   a <- check.ErgmTerm (nw, arglist, directed=FALSE, bipartite=TRUE,
                        varnames = c("k", "attrname"),
@@ -720,11 +588,6 @@ InitErgmTerm.b2star <- function(nw, arglist, drop=TRUE, ...) {
                        defaultvalues = list(NULL, NULL),
                        required = c(TRUE, FALSE))
   ### Process the arguments
-  if(drop) { # Check for zero statistics, print -Inf messages if applicable
-    obsstats <- check.ErgmTerm.summarystats(nw, arglist, ...)
-    ew <- extremewarnings(obsstats)
-    # will process the ew variable later
-  } else {ew <- FALSE}
   if (!is.null(a$attrname)) {
     nodecov <- get.node.attr(nw, a$attrname)
     u<-sort(unique(nodecov))
@@ -742,11 +605,11 @@ InitErgmTerm.b2star <- function(nw, arglist, drop=TRUE, ...) {
     inputs <- a$k
   }
   list(name = name, coef.names = coef.names, #name and coef.names: required
-       inputs = inputs)
+       inputs = inputs, minval=0)
 }
 
 ################################################################################
-InitErgmTerm.b2starmix <- function(nw, arglist, drop=TRUE, ...) {
+InitErgmTerm.b2starmix <- function(nw, arglist, ...) {
   ### Check the network and arguments to make sure they are appropriate.
   a <- check.ErgmTerm (nw, arglist, directed=FALSE, bipartite=TRUE,
                        varnames = c("k", "attrname", "base", "diff"),
@@ -755,11 +618,6 @@ InitErgmTerm.b2starmix <- function(nw, arglist, drop=TRUE, ...) {
                        required = c(TRUE, TRUE, FALSE, FALSE))
   ### Process the arguments
   nb1 <- get.network.attribute(nw, "bipartite")
-  if(drop) { # Check for zero statistics, print -Inf messages if applicable
-    obsstats <- check.ErgmTerm.summarystats(nw, arglist, ...)
-    ew <- extremewarnings(obsstats)
-    # will process the ew variable later
-  } else {ew <- FALSE}
   nodecov <- get.node.attr(nw, a$attrname)
   u<-sort(unique(nodecov))
   if(any(is.na(nodecov))){u<-c(u,NA)}
@@ -778,7 +636,6 @@ InitErgmTerm.b2starmix <- function(nw, arglist, drop=TRUE, ...) {
   if (a$diff) {
     u <- cbind(rep(1:nr,nc), nr + rep(1:nc, each=nr))
     if (!is.null(a$base) && !identical(a$base,0)) { u <- u[-a$base,] }
-    u <- u[!ew,]
     name <- "b2starmix"
     coef.names <- paste("b2starmix", a$k, a$attrname,
                         apply(matrix(namescov[u[,2:1]],ncol=2), 1,paste,collapse="."), 
@@ -789,18 +646,17 @@ InitErgmTerm.b2starmix <- function(nw, arglist, drop=TRUE, ...) {
   else {
     u <- nr+(1:nc)
     if (!is.null(a$base) && !identical(a$base,0)) { u <- u[-a$base] }
-    u <- u[!ew]
     name <- "b2starmixhomophily"
     coef.names <- paste("b2starmix", a$k, a$attrname, namescov[u], sep=".")
     inputs <- c(a$k, nodecov, u)
     attr(inputs, "ParamsBeforeCov") <- length(a$k) # should be 1
   }
   list(name = name, coef.names = coef.names, #name and coef.names: required
-       inputs = inputs)
+       inputs = inputs, minval=0)
 }
 
 ################################################################################
-InitErgmTerm.b2twostar <- function(nw, arglist, drop=TRUE, ...) {
+InitErgmTerm.b2twostar <- function(nw, arglist, ...) {
   ### Check the network and arguments to make sure they are appropriate.
   a <- check.ErgmTerm (nw, arglist, directed=FALSE, bipartite=TRUE,
                        varnames = c("b1attrname", "b2attrname", "base"),
@@ -810,11 +666,6 @@ InitErgmTerm.b2twostar <- function(nw, arglist, drop=TRUE, ...) {
   ### Process the arguments
   nb1 <- get.network.attribute(nw, "bipartite")
   n <- network.size(nw)
-  if(drop) { # Check for zero statistics, print -Inf messages if applicable
-    obsstats <- check.ErgmTerm.summarystats(nw, arglist, ...)
-    ew <- extremewarnings(obsstats)
-    # will process the ew variable later
-  } else {ew <- FALSE}
   b1nodecov <- get.node.attr(nw, a$b1attrname)[1:nb1]
   b1u<-sort(unique(b1nodecov))
   if(any(is.na(b1nodecov))){ b1u<-c(b1u,NA) }
@@ -830,16 +681,15 @@ InitErgmTerm.b2twostar <- function(nw, arglist, drop=TRUE, ...) {
   u <- cbind(rep(1:nc, nr*nr), rep(rep(1:nr, each=nc), nr), rep(1:nr, each=nc*nr))
   u <- u[u[,2] <= u[,3],]  
   if (!is.null(a$base) && !identical(a$base,0)) { u <- u[-a$base,] }
-  u <- u[!ew,]
   coef.names <- paste("b2twostar", a$b2attrname, b2u[u[,1]],  a$b1attrname,
                       apply(matrix(b1u[u[,2:3]],ncol=2), 1, paste, collapse="."),
                       sep=".")
   list(name = "b2twostar", coef.names = coef.names, #name and coef.names: required
-       inputs = c(b1nodecov, b2nodecov, u[,1], u[,2], u[,3]) )
+       inputs = c(b1nodecov, b2nodecov, u[,1], u[,2], u[,3]), minval=0)
 }
 
 ################################################################################
-InitErgmTerm.balance<-function (nw, arglist, drop=TRUE, ...) {
+InitErgmTerm.balance<-function (nw, arglist, ...) {
   a <- check.ErgmTerm(nw, arglist,
                       varnames = c("attrname", "diff"),
                       vartypes = c("character", "logical"),
@@ -859,23 +709,6 @@ InitErgmTerm.balance<-function (nw, arglist, drop=TRUE, ...) {
 
    if (length(u)==1)
          stop ("Attribute given to balance() has only one value", call.=FALSE)
-#
-#  Check for extreme statistics
-#
-   if(drop){
-     obsstats <- check.ErgmTerm.summarystats(nw, arglist, ...)
-     triattr <- extremewarnings(obsstats)
-     if(diff){
-       if(any(triattr)){
-         u <- u[!triattr] 
-         ui <- ui[!triattr] 
-       }
-     }else{
-       if(triattr){
-         return(NULL)
-       }
-     }
-   }
    if (!diff) {
      #     No parameters before covariates here, so no need for "ParamsBeforeCov"
      coef.names <- paste("balance",attrname,sep=".")
@@ -891,7 +724,7 @@ InitErgmTerm.balance<-function (nw, arglist, drop=TRUE, ...) {
     coef.names <- "balance"
     inputs <- NULL
   }
-  list(name="balance", coef.names=coef.names, inputs=inputs, dependence=TRUE)
+  list(name="balance", coef.names=coef.names, inputs=inputs, dependence=TRUE, minval=0)
 }
 
 
@@ -900,7 +733,7 @@ InitErgmTerm.balance<-function (nw, arglist, drop=TRUE, ...) {
 
 
 ################################################################################
-InitErgmTerm.concurrent<-function(nw, arglist, drop=TRUE, ...) {
+InitErgmTerm.concurrent<-function(nw, arglist, ...) {
   a <- check.ErgmTerm(nw, arglist, directed=FALSE,
                       varnames = c("byarg"),
                       vartypes = c("character"),
@@ -917,30 +750,7 @@ InitErgmTerm.concurrent<-function(nw, arglist, drop=TRUE, ...) {
     # Combine degree and u into 2xk matrix, where k=length(d)*length(u)
     lu <- length(u)
     ui <- seq(along=u)
-    if(drop){ #   Check for extreme statistics
-      concurrentattr <- summary(nw ~ concurrent(byarg), drop=FALSE) == 0
-      if(any(concurrentattr)){
-        dropterms <- paste("concurrent", ".", byarg,
-                           u[concurrentattr], sep="")
-      cat(" ")
-        cat("Warning: These concurrent terms have extreme counts and will be dropped:\n")
-        cat(dropterms, "", fill=TRUE)
-        cat("  The corresponding coefficients have been fixed at their MLE of negative infinity.\n")
-        u <- u[-concurrentattr]
-        ui <- ui[-concurrentattr]
-      }
-    }
-  } else {
-    if(is.logical(byarg)){drop <- byarg}
-    if(drop){
-      mconcurrent <- summary(nw ~ concurrent, drop=FALSE) == 0
-      if(any(mconcurrent)){
-      cat(" ")
-        cat(paste("Warning: There are no concurrent b1s;\n",
-                 " the corresponding coefficient has been fixed at its MLE of negative infinity.\n",sep=" "))
-        return(NULL)
-      }
-    }                                                         
+
   }
   if(!is.null(byarg)) {
     if(length(u)==0) {return(NULL)}
@@ -953,13 +763,13 @@ InitErgmTerm.concurrent<-function(nw, arglist, drop=TRUE, ...) {
     name <- "concurrent"
     inputs <- NULL
   }
-  list(name=name, coef.names=coef.names, inputs=inputs, dependence=TRUE)
+  list(name=name, coef.names=coef.names, inputs=inputs, dependence=TRUE, minval = 0, maxval=network.size(nw))
 }
 
 
 
 ################################################################################
-InitErgmTerm.ctriple<-InitErgmTerm.ctriad<-function (nw, arglist, drop=TRUE, ...) {
+InitErgmTerm.ctriple<-InitErgmTerm.ctriad<-function (nw, arglist, ...) {
   a <- check.ErgmTerm(nw, arglist, directed=TRUE,
                       varnames = c("attrname","diff"),
                       vartypes = c("character","logical"),
@@ -974,29 +784,6 @@ InitErgmTerm.ctriple<-InitErgmTerm.ctriad<-function (nw, arglist, drop=TRUE, ...
     ui <- seq(along=u)
     if (length(u)==1)
       stop ("Attribute given to ctriple() has only one value", call.=FALSE)
-    if(drop){
-      triattr <- summary(nw ~ ctriple(attrname,diff=diff), drop=FALSE) == 0
-      if(diff){
-        if(any(triattr)){
-          dropterms <- paste(paste("ctriple",attrname,sep="."),
-                             u[triattr],sep="")
-      cat(" ")
-          cat(paste("Warning: The count of",
-                paste(dropterms,collapse=" and, "),
-                    "is extreme;\n",
-                 " the corresponding coefficient has been fixed at its MLE of negative infinity.\n",sep=""))
-          u <- u[!triattr] 
-          ui <- ui[!triattr] 
-        }
-      }else{
-        if(triattr){
-          dropterms <- paste(paste("ctriple",attrname,sep="."),sep="")
-      cat(" ")
-          cat(paste("Warning: The count of", dropterms, "is extreme;\n",
-                 " the corresponding coefficient has been fixed at its MLE of negative infinity.\n",sep=" "))
-        }
-      }
-    }
     if (!diff) {
       coef.names <- paste("ctriple",attrname,sep=".")
       inputs <- c(nodecov)
@@ -1013,13 +800,13 @@ InitErgmTerm.ctriple<-InitErgmTerm.ctriad<-function (nw, arglist, drop=TRUE, ...
     coef.names <- "ctriple"
     inputs <- NULL
   }
-  list(name="ctriple", coef.names=coef.names, inputs=inputs)
+  list(name="ctriple", coef.names=coef.names, inputs=inputs, minval = 0)
 }
 
 
 
 ################################################################################
-InitErgmTerm.cycle <- function(nw, arglist, drop=TRUE, ...) {
+InitErgmTerm.cycle <- function(nw, arglist, ...) {
   ### Check the network and arguments to make sure they are appropriate.
   a <- check.ErgmTerm(nw, arglist,
                      varnames = c("k"),
@@ -1027,17 +814,12 @@ InitErgmTerm.cycle <- function(nw, arglist, drop=TRUE, ...) {
                      defaultvalues = list(NULL),
                      required = c(TRUE))
   ### Process the arguments
-  if(drop) { # Check for zero statistics, print -Inf messages if applicable
-    obsstats <- check.ErgmTerm.summarystats(nw, arglist, ...)
-    ew <- extremewarnings(obsstats)
-    a$k <- a$k[!ew]
-  }
   if (length(a$k)==0) return(NULL)
   ### Construct the list to return
   list(name="cycle",                            #name: required
        coef.names = paste("cycle", a$k, sep=""),  #coef.names: required
-       inputs = c(max(a$k), (2:max(a$k)) %in% a$k)
-       )
+       inputs = c(max(a$k), (2:max(a$k)) %in% a$k),
+       minval = 0)
 }
 
 
@@ -1046,11 +828,11 @@ InitErgmTerm.cycle <- function(nw, arglist, drop=TRUE, ...) {
 
 
 ################################################################################
-InitErgmTerm.degcor<-function (nw, arglist, drop=TRUE, ...) {
+InitErgmTerm.degcor<-function (nw, arglist, ...) {
   a <- check.ErgmTerm(nw, arglist, directed=FALSE) 
 
   deg=summary(nw ~ sociality(base=0))
-  el=as.matrix.network.edgelist(nw)
+  el=as.edgelist(nw)
   deg1<-deg[el[,1]]
   deg2<-deg[el[,2]]
   alldeg<-c(deg1,deg2)
@@ -1064,7 +846,7 @@ InitErgmTerm.degcor<-function (nw, arglist, drop=TRUE, ...) {
 }
 
 ################################################################################
-InitErgmTerm.degcrossprod<-function (nw, arglist, drop=TRUE, ...) {
+InitErgmTerm.degcrossprod<-function (nw, arglist, ...) {
   a <- check.ErgmTerm(nw, arglist, directed=FALSE) 
   ### Construct the list to return
   list(name="degcrossprod",                            #name: required
@@ -1075,7 +857,7 @@ InitErgmTerm.degcrossprod<-function (nw, arglist, drop=TRUE, ...) {
 }
 
 ################################################################################
-InitErgmTerm.degree<-function(nw, arglist, drop=TRUE, ...) {
+InitErgmTerm.degree<-function(nw, arglist, ...) {
   a <- check.ErgmTerm(nw, arglist, directed=FALSE,
                       varnames = c("d", "byarg", "homophily"),
                       vartypes = c("numeric", "character", "logical"),
@@ -1095,18 +877,6 @@ InitErgmTerm.degree<-function(nw, arglist, drop=TRUE, ...) {
     # Combine degree and u into 2xk matrix, where k=length(d)*length(u)
     lu <- length(u)
     du <- rbind(rep(d,lu), rep(1:lu, rep(length(d), lu)))
-    if(drop){ #   Check for extreme statistics
-      degreeattr <- summary(nw ~ degree(d,byarg), drop=FALSE) == 0
-      if(any(degreeattr)){
-        dropterms <- paste("deg", du[1,degreeattr], ".", byarg,
-                           u[du[2,degreeattr]], sep="")
-        cat(" ")
-        cat("Warning: These degree terms have extreme counts and will be dropped:\n")
-        cat(dropterms, "", fill=TRUE)
-        cat("  The corresponding coefficients have been fixed at their MLE of negative infinity.\n")
-        du <- matrix(du[,!degreeattr], nrow=2)
-      }
-    }
     if (any(du[1,]==0)) {
       emptynwstats <- rep(0, ncol(du))
       tmp <- du[2,du[1,]==0]
@@ -1114,20 +884,6 @@ InitErgmTerm.degree<-function(nw, arglist, drop=TRUE, ...) {
         emptynwstats[du[1,]==0] <- tmp
     }
   } else {
-    if(drop){
-      if(!homophily) {
-        mdegree <- summary(nw ~ degree(d), drop=FALSE) == 0
-      } else {
-        mdegree <- summary(nw ~ degree(d,byarg, TRUE),  drop=FALSE) == 0
-      }
-      if(any(mdegree)){
-      cat(" ")
-        cat("Warning: These degree terms have extreme counts and will be dropped:\n")
-        cat(d[mdegree], "\n", fill=TRUE)
-        cat("  The corresponding coefficients have been fixed at their MLE of negative infinity.\n")
-        d <- d[!mdegree] 
-      }
-    }
     if (any(d==0)) {
       emptynwstats <- rep(0, length(d))
       emptynwstats[d==0] <- network.size(nw)
@@ -1154,9 +910,9 @@ InitErgmTerm.degree<-function(nw, arglist, drop=TRUE, ...) {
   }
   if (!is.null(emptynwstats)){
     list(name=name,coef.names=coef.names, inputs=inputs,
-         emptynwstats=emptynwstats, dependence=TRUE)
+         emptynwstats=emptynwstats, dependence=TRUE, minval = 0)
   }else{
-    list(name=name,coef.names=coef.names, inputs=inputs, dependence=TRUE)
+    list(name=name,coef.names=coef.names, inputs=inputs, dependence=TRUE, minval = 0, maxval=network.size(nw), conflicts.constraints="degreedist")
   }
 }
 
@@ -1168,13 +924,13 @@ InitErgmTerm.density<-function(nw, arglist, ...) {
                       vartypes = NULL,
                       defaultvalues = list(),
                       required = NULL)
-  list(name="density", coef.names="density", dependence=FALSE)
+  list(name="density", coef.names="density", dependence=FALSE, minval = 0, maxval = 1, conflicts.constraints="edges")
 }
 
 
 
 ################################################################################
-InitErgmTerm.dsp<-function(nw, arglist, drop=TRUE, ...) {
+InitErgmTerm.dsp<-function(nw, arglist, ...) {
 # the following line was commented out in <InitErgm.dsp>:  
 #   ergm.checkdirected("dsp", is.directed(nw), requirement=FALSE)
 # so, I've not passed 'directed=FALSE' to <check.ErgmTerm>  
@@ -1184,16 +940,6 @@ InitErgmTerm.dsp<-function(nw, arglist, drop=TRUE, ...) {
                       defaultvalues = list(NULL),
                       required = c(TRUE))
   d <- a$d
-  if(drop){
-    mdsp <- summary(nw ~ dsp(d), drop=FALSE)
-    if(any(mdsp==0)){
-      cat(" ")
-      cat(paste("Warning: There are no dsp", d[mdsp==0],"dyads;\n",
-                 " the corresponding coefficient has been fixed at its MLE of negative infinity.\n",sep=" "))
-      dropterms <- paste("dsp", d[mdsp==0],sep="")
-      d <- d[mdsp!=0] 
-    }
-  }
   if (any(d==0)) {
     emptynwstats <- rep(0, length(d))
     if(is.bipartite(nw)){
@@ -1211,9 +957,9 @@ InitErgmTerm.dsp<-function(nw, arglist, drop=TRUE, ...) {
   if(is.directed(nw)){dname <- "tdsp"}else{dname <- "dsp"}
   if (!is.null(emptynwstats)){
     list(name=dname, coef.names=paste("dsp",d,sep=""),
-         inputs=c(d), emptynwstats=emptynwstats)
+         inputs=c(d), emptynwstats=emptynwstats, minval = 0)
   }else{
-    list(name=dname, coef.names=paste("dsp",d,sep=""),inputs=c(d))
+    list(name=dname, coef.names=paste("dsp",d,sep=""),inputs=c(d), minval = 0)
   }
 }
 
@@ -1222,7 +968,7 @@ InitErgmTerm.dsp<-function(nw, arglist, drop=TRUE, ...) {
 InitErgmTerm.dyadcov<-function (nw, arglist, ...) {
   a <- check.ErgmTerm(nw, arglist,
                       varnames = c("x","attrname"),
-                      vartypes = c("matrixnetwork","character"),
+                      vartypes = c("matrix,network","character"),
                       defaultvalues = list(NULL,NULL),
                       required = c(TRUE,FALSE))
   x<-a$x;attrname<-a$attrname
@@ -1277,7 +1023,7 @@ InitErgmTerm.edgecov <- function(nw, arglist, ...) {
   ### Check the network and arguments to make sure they are appropriate.
   a <- check.ErgmTerm(nw, arglist, 
                       varnames = c("x", "attrname"),
-                      vartypes = c("matrixnetwork", "character"),
+                      vartypes = c("matrix,network", "character"),
                       defaultvalues = list(NULL, NULL),
                       required = c(TRUE, FALSE))
   ### Process the arguments
@@ -1287,19 +1033,22 @@ InitErgmTerm.edgecov <- function(nw, arglist, ...) {
     xm<-get.network.attribute(nw,a$x)
   else
     xm<-as.matrix(a$x)
+  
   ### Construct the list to return
   if(!is.null(a$attrname)) {
     # Note: the sys.call business grabs the name of the x object from the 
     # user's call.  Not elegant, but it works as long as the user doesn't
     # pass anything complicated.
-    cn<-paste("edgecov", as.character(sys.call(0)[[3]][2]), 
-              as.character(a$attrname), sep = ".")
+    cn<-paste("edgecov", as.character(a$attrname), sep = ".")
   } else {
     cn<-paste("edgecov", as.character(sys.call(0)[[3]][2]), sep = ".")
   }
   inputs <- c(NCOL(xm), as.double(xm))
   attr(inputs, "ParamsBeforeCov") <- 1
-  list(name="edgecov", coef.names = cn, inputs = inputs, dependence=FALSE)
+  list(name="edgecov", coef.names = cn, inputs = inputs, dependence=FALSE,
+       minval = sum(c(xm)[c(xm)<0]),
+       maxval = sum(c(xm)[c(xm)>0])
+       )
 }
 
 ################################################################################
@@ -1309,13 +1058,15 @@ InitErgmTerm.edges<-function(nw, arglist, ...) {
                       vartypes = NULL,
                       defaultvalues = list(),
                       required = NULL)
-  list(name="edges", coef.names="edges", dependence=FALSE)
+  
+  list(name="edges", coef.names="edges", dependence=FALSE,
+       minval = 0, maxval = network.dyadcount(nw), conflicts.constraints="edges")
 }
 
 
 
 ################################################################################
-InitErgmTerm.esp<-function(nw, arglist, drop=TRUE, ...) {
+InitErgmTerm.esp<-function(nw, arglist, ...) {
 # the following line was commented out in <InitErgm.esp>:  
 #    ergm.checkdirected("esp", is.directed(nw), requirement=FALSE)
 # so, I've not passed 'directed=FALSE' to <check.ErgmTerm>  
@@ -1325,21 +1076,11 @@ InitErgmTerm.esp<-function(nw, arglist, drop=TRUE, ...) {
                       defaultvalues = list(NULL),
                       required = c(TRUE))
   d<-a$d
-  if(drop){
-    mesp <- summary(nw ~ esp(d), drop=FALSE)
-    if(any(mesp==0)){
-      cat(" ")
-      cat(paste("Warning: There are no dyads with esp", d[mesp==0],";\n",
-                 " the corresponding coefficient has been fixed at its MLE of negative infinity.\n",sep=" "))
-      dropterms <- paste("esp", d[mesp==0],sep="")
-      d <- d[mesp!=0] 
-    }
-  }
   ld<-length(d)
   if(ld==0){return(NULL)}
   if(is.directed(nw)){dname <- "tesp"}else{dname <- "esp"}
 
-  list(name=dname, coef.names=paste("esp",d,sep=""), inputs=c(d))
+  list(name=dname, coef.names=paste("esp",d,sep=""), inputs=c(d), minval=0)
 }
 
 
@@ -1505,7 +1246,7 @@ InitErgmTerm.gwdegree<-function(nw, arglist, initialfit=FALSE, ...) {
     }
     list(name="degree", coef.names=paste("gwdegree#",d,sep=""), 
          inputs=c(d), params=list(gwdegree=NULL,gwdegree.decay=decay),
-         map=map, gradient=gradient)
+         map=map, gradient=gradient, conflicts.constraints="degreedist")
   } else {
     if(!is.null(attrname)) {
       nodecov <- get.node.attr(nw, attrname, "gwdegree")
@@ -1527,7 +1268,7 @@ InitErgmTerm.gwdegree<-function(nw, arglist, initialfit=FALSE, ...) {
       name <- "gwdegree"
       coef.names <- "gwdegree"
       inputs <- c(decay)
-      list(name=name, coef.names=coef.names, inputs=inputs)
+      list(name=name, coef.names=coef.names, inputs=inputs, conflicts.constraints="degreedist")
     }
   }
 }
@@ -1653,7 +1394,7 @@ InitErgmTerm.gwidegree<-function(nw, arglist, initialfit=FALSE, ...) {
     }
     list(name="idegree", coef.names=paste("gwidegree#",d,sep=""), 
          inputs=c(d), params=list(gwidegree=NULL,gwidegree.decay=decay),
-         map=map, gradient=gradient)
+         map=map, gradient=gradient, conflicts.constraints="indegreedist")
   } else { 
     if(!is.null(attrname)) {
       nodecov <- get.node.attr(nw, attrname, "gwidegree")
@@ -1675,7 +1416,7 @@ InitErgmTerm.gwidegree<-function(nw, arglist, initialfit=FALSE, ...) {
       name <- "gwidegree"
       coef.names <- "gwidegree"
       inputs <- c(decay)
-      list(name=name, coef.names=coef.names, inputs=inputs)
+      list(name=name, coef.names=coef.names, inputs=inputs, conflicts.constraints="indegreedist")
     }
   }
 }
@@ -1756,7 +1497,7 @@ InitErgmTerm.gwodegree<-function(nw, arglist, initialfit=FALSE, ...) {
     }
     list(name="odegree", coef.names=paste("gwodegree#",d,sep=""),
          inputs=c(d), params=list(gwodegree=NULL,gwodegree.decay=decay),
-         map=map, gradient=gradient)
+         map=map, gradient=gradient, conflicts.constraints="outdegreedist")
   } else {
     if(!is.null(attrname)) {
       nodecov <- get.node.attr(nw, attrname, "gwodegree")
@@ -1778,7 +1519,7 @@ InitErgmTerm.gwodegree<-function(nw, arglist, initialfit=FALSE, ...) {
       name <- "gwodegree"
       coef.names <- "gwodegree"
       inputs <- c(decay)
-      list(name=name, coef.names=coef.names, inputs=inputs)
+      list(name=name, coef.names=coef.names, inputs=inputs, conflicts.constraints="outdegreedist")
     }
   }
 }
@@ -1789,21 +1530,23 @@ InitErgmTerm.gwodegree<-function(nw, arglist, initialfit=FALSE, ...) {
 
 
 ################################################################################
-InitErgmTerm.hamming<-function (nw, arglist, drop=TRUE, ...) {
+InitErgmTerm.hamming<-function (nw, arglist, ...) {
   a <- check.ErgmTerm (nw, arglist,
 	    varnames = c("x","cov","attrname","defaultweight"),
-	    vartypes = c("matrixnetwork","matrixnetwork","character","numeric"),
+	    vartypes = c("matrix,network","matrix,network","character","numeric"),
 	    defaultvalues = list(nw, NULL, NULL, NULL),
 	    required = c(FALSE, FALSE, FALSE, FALSE))
 
   ## Process hamming network ##
   if(is.network(a$x)){													# Arg to hamming is a network
-    xm<-as.matrix.network(a$x,matrix.type="edgelist",a$attrname)
+    xm<-as.edgelist(a$x,a$attrname)
   }else if(is.character(a$x)){												# Arg to hamming is the name of an attribute in nw
     xm<-get.network.attribute(nw,a$x)
-    xm<-as.matrix.network(xm,matrix.type="edgelist")
+    xm<-as.edgelist(xm)
   }else if(is.null(a$x)){
-    xm<-as.matrix.network(nw,matrix.type="edgelist")								# Arg to hamming does not exist; uses nw
+    xm<-as.edgelist(nw)								# Arg to hamming does not exist; uses nw
+  }else if(is.matrix(a$x) && ncol(a$x)!=2){
+    xm<-as.edgelist(network.update(network.copy(nw),a$x,matrix.type="adjacency"))
   }else{
     xm<-as.matrix(a$x)													# Arg to hamming is anything else; attempts to coerce
   }
@@ -1813,12 +1556,8 @@ InitErgmTerm.hamming<-function (nw, arglist, drop=TRUE, ...) {
   sc03 <- sys.call(0)[[3]]
   coef.names <- "hamming"  # This might be modified later
   if (is.null(a$cov)) {
-    if(drop){ #   Check for zero statistics (Should this happen when !is.null(a$cov)?)
-      obsstats <- check.ErgmTerm.summarystats(nw, arglist, ...)
-      if (extremewarnings(obsstats))
-        return(NULL) # In this case the observed Hamming distance is zero.
-    }
-#    name <- "hamhamming_weighted"
+    minval <- 0
+    maxval <- network.dyadcount(nw)
     if (length(sc03)>1) 
       coef.names <- paste("hamming", as.character(sc03[[2]]), sep=".")
     covm <- NULL
@@ -1830,21 +1569,20 @@ InitErgmTerm.hamming<-function (nw, arglist, drop=TRUE, ...) {
   } else {
     # Extract dyadic covariate
     if(is.network(a$cov)){
-      covm<-as.matrix.network(a$cov,matrix.type="edgelist",a$attrname)
+      covm<-as.edgelist(a$cov,a$attrname)
       if(length(covm)==2){covm <- matrix(covm,ncol=2)}
       if(length(covm)==3){covm <- matrix(covm,ncol=3)}
       if (NCOL(covm)==2)
         covm <- cbind(covm,1)
     }else if(is.character(a$cov)){
       covm<-get.network.attribute(nw,a$cov)
-      covm<-as.matrix.network(covm,matrix.type="edgelist") # DH:  Not really sure what should happen here
+      covm<-as.edgelist(covm) # DH:  Not really sure what should happen here
     }else{
       covm<-as.matrix(a$cov)
     }
     if (is.null(covm) || !is.matrix(covm) || NCOL(covm)!=3){
       stop("Improper dyadic covariate passed to hamming()", call.=FALSE)
     }
-    #    name = "hamhamming_weighted"
     emptynwstats <- sum(apply(xm, 1, function(a,b) sum(b[(a[1]==b[,1] & a[2]==b[,2]),3]), covm))
     if (is.null(a$defaultweight))
       a$defaultweight <- 0
@@ -1855,26 +1593,20 @@ InitErgmTerm.hamming<-function (nw, arglist, drop=TRUE, ...) {
       coef.names<-paste("hamming", as.character(sc03[2]), "wt",
                 as.character(sys.call(0)[[3]][3]), sep = ".")
     }
+    minval <- sum(c(covm)[c(covm)<0])
+    maxval <- sum(c(covm)[c(covm)<0])
   }
   ## Return ##
   if (!is.null(xm)) {
-    if (!is.directed(nw)) {
-      tmp <- apply(xm, 1, function(a) a[1]>a[2])
-      xm[tmp,] <- xm[tmp,2:1]
-    }
-    xm <- xm[order(xm[,1], xm[,2]), , drop=FALSE]
+    xm <- ergm.Cprepare.el(xm, directed=is.directed(nw))
   }
   if (!is.null(covm)) {
-    if (!is.directed(nw)) {
-      tmp <- apply(covm, 1, function(a) a[1]>a[2])
-      covm[tmp,] <- covm[tmp,c(2,1,3)]
-    }
-   covm <- covm[order(covm[,1], covm[,2]), , drop=FALSE]
-  }
-  inputs <- c(NROW(xm), as.vector(xm), a$defaultweight, NROW(covm), as.vector(covm))
- # is the name really "hamhamming", and not "hamming"?
-  list(name="hamhamming", coef.names=coef.names, #name and coef.names: required 
-       inputs = inputs, emptynwstats = emptynwstats, dependence = FALSE)
+    covm <- ergm.Cprepare.el(covm, directed=is.directed(nw))
+  }else covm <- 0
+  inputs <- c(xm, a$defaultweight, covm)
+  list(name="hamming", coef.names=coef.names, #name and coef.names: required 
+       inputs = inputs, emptynwstats = emptynwstats, dependence = FALSE,
+       minval = minval, maxval = maxval)
 }
 
 ################################################################################
@@ -1883,23 +1615,21 @@ InitErgmTerm.hammingmix<-function (nw, arglist, ...) {
   # the undirected version does not seem to work properly, so:
   a <- check.ErgmTerm(nw, arglist, directed=TRUE,
                       varnames = c("attrname","x","base","contrast"),
-                      vartypes = c("character","matrixnetwork","numeric","logical"),
+                      vartypes = c("character","matrix,network","numeric","logical"),
                       defaultvalues = list(NULL,nw,0,FALSE),
                       required = c(TRUE,FALSE,FALSE,FALSE))
   attrname<-a$attrname
   x<-a$x
   base<-a$base
-  drop<-a$drop
-  drop<-TRUE
   if (a$contrast) {
     stop("The 'contrast' argument of the hammingmix term is deprecated.  Use 'base' instead")
   }
   if(is.network(x)){
-    xm<-as.matrix.network(x,matrix.type="edgelist",attrname)
+    xm<-as.edgelist(x,attrname)
     x<-paste(quote(x))
   }else if(is.character(x)){
     xm<-get.network.attribute(nw,x)
-    xm<-as.matrix.network(xm, matrix.type="edgelist")
+    xm<-as.edgelist(xm)
   }else{
     xm<-as.matrix(x)
     x<-paste(quote(x))
@@ -1922,21 +1652,7 @@ InitErgmTerm.hammingmix<-function (nw, arglist, ...) {
     nodecov <- match(nodecov,namescov)
     if (length(nodecov)==1)
         stop ("Argument to hammingmix() has only one value", call.=FALSE)
-##
-##   Check for extreme statistics
-##
-#    if(drop){
-#     ematch <- mixmat[u]
-#     mu <- ematch==0
-#     mu[is.na(mu)] <- FALSE
-#     if(any(mu)){
-#      dropterms <- paste(paste("hammingmix",attrname,sep="."),
-#        apply(u,1,paste,collapse="")[mu],sep="")
-#      cat(paste("Warning: The count of", dropterms, "is extreme.\n"))
-#      cat(paste("The terms",dropterms,"have been dropped.\n"))
-#      u <- u[!mu,]
-#     }
-#    }
+
   if (!is.null(base) && !identical(base,0)) {
     u <- u[-base,]
   }
@@ -1945,7 +1661,7 @@ InitErgmTerm.hammingmix<-function (nw, arglist, ...) {
                       sep=".")
   #  Number of input parameters before covariates equals twice the number
   #  of used matrix cells, namely 2*length(uui),
-  inputs=c(nrow(xm),as.integer(xm), u[,1], u[,2],nodecov)
+  inputs=c(ergm.Cprepare.el(xm,directed=is.directed(nw)), u[,1], u[,2],nodecov)
   attr(inputs, "ParamsBeforeCov") <- nrow(u)
   # The emptynwstats code below does not work right for
   # undirected networks, mostly since hammingmix doesn't work 
@@ -1963,7 +1679,7 @@ InitErgmTerm.hammingmix<-function (nw, arglist, ...) {
 
 
 ################################################################################
-InitErgmTerm.idegree<-function(nw, arglist, drop=TRUE, ...) {
+InitErgmTerm.idegree<-function(nw, arglist, ...) {
   a <- check.ErgmTerm(nw, arglist, directed=TRUE,
                       varnames = c("d", "byarg", "homophily"),
                       vartypes = c("numeric", "character", "logical"),
@@ -1983,18 +1699,6 @@ InitErgmTerm.idegree<-function(nw, arglist, drop=TRUE, ...) {
     # Combine degree and u into 2xk matrix, where k=length(d)*length(u)
     lu <- length(u)
     du <- rbind(rep(d,lu), rep(1:lu, rep(length(d), lu)))
-    if(drop){ #   Check for extreme statistics
-      idegreeattr <- summary(nw ~ idegree(d,byarg), drop=FALSE) == 0
-      if(any(idegreeattr)){
-        dropterms <- paste("ideg", du[1,idegreeattr], ".", byarg,
-                           u[du[2,idegreeattr]], sep="")
-      cat(" ")
-        cat("Warning: These idegree terms have extreme counts and will be dropped:\n")
-        cat(dropterms, "", fill=TRUE)
-        cat("  The corresponding coefficients have been fixed at their MLE of negative infinity.\n")
-        du <- matrix(du[,!idegreeattr], nrow=2)
-      }
-    }
     if (any(du[1,]==0)) {
       emptynwstats <- rep(0, ncol(du))
       tmp <- du[2,du[1,]==0]
@@ -2002,20 +1706,6 @@ InitErgmTerm.idegree<-function(nw, arglist, drop=TRUE, ...) {
         emptynwstats[du[1,]==0] <- tmp
     }
   } else {
-    if(drop){
-      if(!homophily) {
-        midegree <- summary(nw ~ idegree(d), drop=FALSE) == 0
-      } else {
-        midegree <- summary(nw ~ idegree(d,byarg,TRUE), drop=FALSE) == 0
-      }
-      if(any(midegree)){
-      cat(" ")
-        cat("Warning: These idegree terms have extreme counts and will be dropped:\n")
-        cat(d[midegree], "\n", fill=TRUE)
-        cat("  The corresponding coefficients have been fixed at their MLE of negative infinity.\n")
-        d <- d[!midegree] 
-      }
-    }
     if (any(d==0)) {
       emptynwstats <- rep(0, length(d))
       emptynwstats[d==0] <- network.size(nw)
@@ -2043,84 +1733,57 @@ InitErgmTerm.idegree<-function(nw, arglist, drop=TRUE, ...) {
     list(name=name, coef.names=coef.names, inputs=inputs,
          emptynwstats=emptynwstats, dependence=TRUE)
   }else{
-    list(name=name, coef.names=coef.names, inputs=inputs, dependence=TRUE)
+    list(name=name, coef.names=coef.names, inputs=inputs, dependence=TRUE, minval = 0, maxval=network.size(nw), conflicts.constraints="indegreedist")
   }
 }
 
 
 ################################################################################
-InitErgmTerm.indegreepopularity<-function (nw, arglist, drop=TRUE, ...) {
+InitErgmTerm.indegreepopularity<-function (nw, arglist, ...) {
   a <- check.ErgmTerm(nw, arglist, directed=TRUE,
                       varnames = NULL,
                       vartypes = NULL,
                       defaultvalues = list(),
                       required = NULL)
-  if(drop){
-    nindegreepopularity <- summary(nw ~ indegreepopularity, drop=FALSE)
-    if(nindegreepopularity==0){
-      cat(" ")
-      cat(paste("Warning: There is no indegree popularity;\n",
-                 " the corresponding coefficient has been fixed at its MLE of negative infinity.\n",sep=" "))
-      return(NULL)
-    }
-    if(network.dyadcount(nw)==network.edgecount(nw)){
-      cat(" ")
-      cat(paste("Warning: The indegree popularity is maximized!\n",
-                 " The corresponding coefficient has been fixed at its MLE of infinity.\n",sep=" "))
-      return(NULL)
-    }
-  }
-  list(name="indegreepopularity", coef.names="indegreepopularity")
+  list(name="indegreepopularity", coef.names="indegreepopularity",
+       minval=0, maxval=network.dyadcount(nw)*sqrt(network.size(nw)-1), conflicts.constraints="indegreedist")
 }
 
 
 
 ################################################################################
-InitErgmTerm.intransitive<-function (nw, arglist, drop=TRUE, ...) {
+InitErgmTerm.intransitive<-function (nw, arglist, ...) {
   a <- check.ErgmTerm(nw, arglist, directed=TRUE,
                       varnames = NULL,
                       vartypes = NULL,
                       defaultvalues = list(),
                       required = NULL)
-  if(drop){
-    nintransitive <- summary(nw ~ intransitive, drop=FALSE)
-    if(nintransitive==0){
-      cat(" ")
-      cat(paste("Warning: There are no intransitive triads;\n",
-                 " the corresponding coefficient has been fixed at its MLE of negative infinity.\n",sep=" "))
-      return(NULL)
-    }
-  }
-  list(name="intransitive", coef.names="intransitive")
+  list(name="intransitive", coef.names="intransitive", minval = 0)
 }
 
 
 
 
 ################################################################################
-InitErgmTerm.isolates <- function(nw, arglist, drop=TRUE, ...) {
+InitErgmTerm.isolates <- function(nw, arglist, ...) {
   ### Check the network and arguments to make sure they are appropriate.
   a <- check.ErgmTerm(nw, arglist, directed=NULL, bipartite=NULL,
                      varnames = NULL,
                      vartypes = NULL,
                      defaultvalues = list(),
                      required = NULL)
-  ### Process the arguments
-  if(drop) { # Check for zero statistics, print -Inf messages if applicable
-    obsstats <- check.ErgmTerm.summarystats(nw, arglist, ...)
-    if (extremewarnings(obsstats, maxval=network.size(nw))) {
-      return (NULL)  # Do not add this term at all if isolates==0 or n
-    }
-  }
   ### Construct the list to return
   list(name="isolates",                               #name: required
        coef.names = "isolates",                       #coef.names: required
-       emptynwstats = network.size(nw) # When nw is empty, isolates=n, not 0
+       emptynwstats = network.size(nw), # When nw is empty, isolates=n, not 0,
+       minval = 0,
+       maxval = network.size(nw),
+       conflicts.constraints="degreedist"
        )                                                               
 }
 
 ################################################################################
-InitErgmTerm.istar<-function(nw, arglist, drop=TRUE, ...) {
+InitErgmTerm.istar<-function(nw, arglist, ...) {
   a <- check.ErgmTerm(nw, arglist, directed=TRUE,
                       varnames = c("k", "attrname"),
                       vartypes = c("numeric", "character"),
@@ -2136,27 +1799,7 @@ InitErgmTerm.istar<-function(nw, arglist, drop=TRUE, ...) {
     nodecov <- match(nodecov,u,nomatch=length(u)+1)
     if (length(u)==1)
       stop ("Attribute given to istar() has only one value", call.=FALSE)
-    if(drop){
-      istarattr <- summary(nw ~ istar(k,attrname), drop=FALSE) == 0
-      if(any(istarattr)){
-        dropterms <- paste(paste("istar",attrname,sep="."),k[istarattr],sep="")
-      cat(" ")
-        cat(paste("Warning: The count of", dropterms, "is extreme;\n",
-                 " the corresponding coefficient has been fixed at its MLE of negative infinity.\n",sep=" "))
-        k <- k[!istarattr] 
-      }
-    }
   }else{
-    if(drop){
-      mistar <- summary(nw ~ istar(k), drop=FALSE) == 0
-      if(any(mistar)){
-      cat(" ")
-        cat(paste("Warning: There are no order", k[mistar],"stars;\n",
-                 " the corresponding coefficient has been fixed at its MLE of negative infinity.\n",sep=" "))
-        dropterms <- paste("istar", k[mistar],sep="")
-        k <- k[!mistar] 
-      }
-    }
   }
   lk<-length(k)
   if(lk==0){return(NULL)}
@@ -2168,7 +1811,7 @@ InitErgmTerm.istar<-function(nw, arglist, drop=TRUE, ...) {
     coef.names <- paste("istar",k,sep="")
     inputs <- c(k)
   }
-  list(name="istar", coef.names=coef.names, inputs=inputs)
+  list(name="istar", coef.names=coef.names, inputs=inputs, minval = 0, conflicts.constraints="indegreedist")
 }
 
 
@@ -2176,7 +1819,7 @@ InitErgmTerm.istar<-function(nw, arglist, drop=TRUE, ...) {
 #=======================InitErgmTerm functions:  K============================#
 
 ################################################################################
-InitErgmTerm.kstar<-function(nw, arglist, drop=TRUE, ...) {
+InitErgmTerm.kstar<-function(nw, arglist, ...) {
   a <- check.ErgmTerm(nw, arglist, directed=FALSE,
                       varnames = c("k", "attrname"),
                       vartypes = c("numeric", "character"),
@@ -2191,27 +1834,6 @@ InitErgmTerm.kstar<-function(nw, arglist, drop=TRUE, ...) {
     nodecov <- match(nodecov,u,nomatch=length(u)+1)
     if (length(u)==1)
       stop ("Attribute given to kstar() has only one value", call.=FALSE)
-    if(drop){
-      kstarattr <- summary(nw ~ kstar(k,attrname), drop=FALSE) == 0
-      if(any(kstarattr)){
-        dropterms <- paste(paste("kstar",attrname,sep="."),k[kstarattr],sep="")
-      cat(" ")
-        cat(paste("Warning: The count of", dropterms, "is extreme;\n",
-                 " the corresponding coefficient has been fixed at its MLE of negative infinity.\n",sep=" "))
-        k <- k[!kstarattr] 
-      }
-    }
-  }else{
-    if(drop){
-      mkstar <- summary(nw ~ kstar(k), drop=FALSE) == 0
-      if(any(mkstar)){
-      cat(" ")
-        cat(paste("Warning: There are no order", k[mkstar],"stars;\n",
-                 " the corresponding coefficient has been fixed at its MLE of negative infinity.\n",sep=" "))
-        dropterms <- paste("kstar", k[mkstar],sep="")
-        k <- k[!mkstar] 
-      }
-    }
   }
   lk<-length(k)
   if(lk==0){return(NULL)}
@@ -2223,7 +1845,7 @@ InitErgmTerm.kstar<-function(nw, arglist, drop=TRUE, ...) {
     coef.names <- paste("kstar",k,sep="")
     inputs <- c(k)
   }
-  list(name="kstar", coef.names=coef.names, inputs=inputs)
+  list(name="kstar", coef.names=coef.names, inputs=inputs, minval = 0, conflicts.constraints="degreedist")
 }
 
 
@@ -2234,19 +1856,18 @@ InitErgmTerm.kstar<-function(nw, arglist, drop=TRUE, ...) {
 InitErgmTerm.localtriangle<-function (nw, arglist, ...) {
   a <- check.ErgmTerm(nw, arglist,
                       varnames = c("x", "attrname"),
-                      vartypes = c("matrixnetwork", "character"),
+                      vartypes = c("matrix,network", "character"),
                       defaultvalues = list(NULL, NULL),
                       required = c(TRUE, FALSE))
   x<-a$x;attrname<-a$attrname
   if(is.network(x))
-    xm<-as.matrix.network(x, matrix.type="adjacency", attrname)
+    xm<-as.matrix(x, matrix.type="adjacency", attrname)
   else if(is.character(x))
-    xm<-as.matrix.network(nw, matrix.type="adjacency", x)
+    xm<-as.matrix(nw, matrix.type="adjacency", x)
   else
     xm<-as.matrix(x)
   if(!is.null(attrname))
-    coef.names <- paste("localtriangle", as.character(sys.call(0)[[3]][2]), 
-                        as.character(sys.call(0)[[4]]), sep = ".")
+    coef.names <- paste("localtriangle", attrname, sep = ".")
   else
     coef.names <- paste("localtriangle", as.character(sys.call(0)[[3]][2]),
                         sep = ".")
@@ -2260,22 +1881,13 @@ InitErgmTerm.localtriangle<-function (nw, arglist, ...) {
 #=======================InitErgmTerm functions:  M============================#
 
 ################################################################################
-InitErgmTerm.m2star<-function(nw, arglist, drop=TRUE, ...) {
+InitErgmTerm.m2star<-function(nw, arglist, ...) {
   a <- check.ErgmTerm(nw, arglist, directed=TRUE, 
                       varnames = NULL,
                       vartypes = NULL,
                       defaultvalues = list(),
                       required = NULL)
-  if(drop){
-   degrees <- as.matrix.network.edgelist(nw)
-   if(all(is.na(match(degrees[,1],degrees[,2])))){
-      cat(" ")
-    cat(paste("Warning: The are no mixed 2-stars;\n",
-                 " the corresponding coefficient has been fixed at its MLE of negative infinity.\n",sep=" "))
-    return(NULL)
-   }
-  }
-  list(name="m2star", coef.names="m2star",dependence=TRUE) 
+  list(name="m2star", coef.names="m2star",dependence=TRUE, minval = 0) 
 }
 
 
@@ -2286,13 +1898,13 @@ InitErgmTerm.meandeg<-function(nw, arglist, ...) {
                       vartypes = NULL,
                       defaultvalues = list(),
                       required = NULL)
-  list(name="meandeg", coef.names="meandeg", dependence=FALSE)
+  list(name="meandeg", coef.names="meandeg", dependence=FALSE, minval=0, maxval=if(!is.bipartite(nw)) network.size(nw)-1, conflicts.constraints="edges")
 }
 
 
 
 ################################################################################
-InitErgmTerm.mutual<-function (nw, arglist, drop=TRUE, ...) {
+InitErgmTerm.mutual<-function (nw, arglist, ...) {
   ### Check the network and arguments to make sure they are appropriate.
   a <- check.ErgmTerm(nw, arglist, directed=TRUE, bipartite=NULL,
                       varnames = c("same", "by", "diff", "keep"),
@@ -2320,20 +1932,7 @@ InitErgmTerm.mutual<-function (nw, arglist, drop=TRUE, ...) {
     nodecov[dontmatch] <- length(u) + (1:sum(dontmatch))
     ui <- seq(along=u)
   }
-  if(drop) { # Check for zero statistics, print -Inf messages if applicable
-    obsstats <- check.ErgmTerm.summarystats(nw, arglist, ...)
-    if (is.null(a$same) && is.null(a$by)) {
-      n <- network.size(nw)
-      ndc <- n * (n-1) / 2 # temporary until network.dyadcount is fixed
-      if (extremewarnings(obsstats, maxval=ndc)) {
-        return(NULL) # In this case the obs nw has 0 or n(n-1)/2 asymmetric dyads
-      }
-    } else {
-      ew <- extremewarnings(obsstats)
-      u <- u[!ew]
-      ui <- ui[!ew]
-    }
-  }
+
   ### Construct the list to return
   if (!is.null(a$same) || !is.null(a$by)) {
     if (is.null(a$same)) {
@@ -2360,35 +1959,22 @@ InitErgmTerm.mutual<-function (nw, arglist, drop=TRUE, ...) {
   }
   list(name=name,                      #name: required
        coef.names = coef.names,        #coef.names: required
-       inputs=inputs) 
+       inputs=inputs,
+       minval = 0,
+       maxval = network.dyadcount(nw)/2) 
 }
 
 #=======================InitErgmTerm functions:  N============================#
 
 
 ################################################################################
-InitErgmTerm.nearsimmelian<-function (nw, arglist, drop=TRUE, ...) {
+InitErgmTerm.nearsimmelian<-function (nw, arglist, ...) {
   a <- check.ErgmTerm(nw, arglist, directed=TRUE,
                       varnames = NULL,
                       vartypes = NULL,
                       defaultvalues = list(),
                       required = NULL)
-  if(drop){
-    nsimmelian <- summary(nw ~ nearsimmelian, drop=FALSE)
-    if(nsimmelian==0){
-      cat(" ")
-      cat(paste("Warning: There are no nearsimmelian triads;\n",
-                 " the corresponding coefficient has been fixed at its MLE of negative infinity.\n",sep=" "))
-      return(NULL)
-    }
-    if(nsimmelian==network.dyadcount(nw)*network.size(nw)*0.5){
-      cat(" ")
-      cat(paste("Warning: All dyads have nearsimmelian triads!\n",
-                 " the corresponding coefficient has been fixed at its MLE of infinity.\n",sep=" "))
-      return(NULL)
-    }
-  }
-  list(name="nearsimmelian", coef.names="nearsimmelian")
+  list(name="nearsimmelian", coef.names="nearsimmelian", minval=0, maxval=network.dyadcount(nw)*network.size(nw)*0.5)
 }
 
 
@@ -2410,7 +1996,7 @@ InitErgmTerm.nodecov<-InitErgmTerm.nodemain<-function (nw, arglist, ...) {
 
 
 ################################################################################
-InitErgmTerm.nodefactor<-function (nw, arglist, drop=TRUE, ...) {
+InitErgmTerm.nodefactor<-function (nw, arglist, ...) {
   ### Check the network and arguments to make sure they are appropriate.
   a <- check.ErgmTerm(nw, arglist, 
                       varnames = c("attrname", "base"),
@@ -2437,19 +2023,14 @@ InitErgmTerm.nodefactor<-function (nw, arglist, drop=TRUE, ...) {
   #   Recode to numeric
   nodecov <- match(nodecov,u,nomatch=length(u)+1)
   ui <- seq(along=u)
-  if(drop) { # Check for zero statistics, print -Inf messages if applicable
-    obsstats <- check.ErgmTerm.summarystats(nw, arglist, ...)
-    ew <- extremewarnings(obsstats)
-    u <- u[!ew]
-    ui <- ui[!ew]
-  }
   ### Construct the list to return
   inputs <- c(ui, nodecov)
   attr(inputs, "ParamsBeforeCov") <- length(ui) # See comment at top of file
   list(name="nodefactor",                                        #required
        coef.names = paste("nodefactor", paste(a$attrname,collapse="."), u, sep="."), #required
        inputs = inputs,
-       dependence = FALSE # So we don't use MCMC if not necessary
+       dependence = FALSE, # So we don't use MCMC if not necessary
+       minval = 0
        )
 }  
 
@@ -2471,7 +2052,7 @@ InitErgmTerm.nodeicov<-function (nw, arglist, ...) {
 
 
 ################################################################################
-InitErgmTerm.nodeifactor<-function (nw, arglist, drop=TRUE, ...) {
+InitErgmTerm.nodeifactor<-function (nw, arglist, ...) {
   ### Check the network and arguments to make sure they are appropriate.
   a <- check.ErgmTerm(nw, arglist, directed=TRUE, 
                       varnames = c("attrname", "base"),          
@@ -2498,24 +2079,19 @@ InitErgmTerm.nodeifactor<-function (nw, arglist, drop=TRUE, ...) {
   #   Recode to numeric
   nodecov <- match(nodecov,u,nomatch=length(u)+1)
   ui <- seq(along=u)
-  if(drop) { # Check for zero statistics, print -Inf messages if applicable
-    obsstats <- check.ErgmTerm.summarystats(nw, arglist, ...)
-    ew <- extremewarnings(obsstats)
-    u <- u[!ew]
-    ui <- ui[!ew]
-  }
   ### Construct the list to return
   inputs <- c(ui, nodecov)
   attr(inputs, "ParamsBeforeCov") <- length(ui) # See comment at top of file
   list(name="nodeifactor",                                        #required
        coef.names = paste("nodeifactor", paste(a$attrname,collapse="."), u, sep="."), #required
        inputs = inputs,
-       dependence = FALSE # So we don't use MCMC if not necessary
+       dependence = FALSE, # So we don't use MCMC if not necessary
+       minval = 0
        )
 }
 
 ################################################################################
-InitErgmTerm.nodematch<-InitErgmTerm.match<-function (nw, arglist, drop=TRUE, ...) {
+InitErgmTerm.nodematch<-InitErgmTerm.match<-function (nw, arglist, ...) {
   ### Check the network and arguments to make sure they are appropriate.
   a <- check.ErgmTerm(nw, arglist, 
                       varnames = c("attrname", "diff", "keep"),
@@ -2539,12 +2115,6 @@ InitErgmTerm.nodematch<-InitErgmTerm.match<-function (nw, arglist, drop=TRUE, ..
   dontmatch <- nodecov==(length(u)+1)
   nodecov[dontmatch] <- length(u) + (1:sum(dontmatch))
   ui <- seq(along=u)
-  if(drop) { # Check for zero statistics, print -Inf messages if applicable
-    obsstats <- check.ErgmTerm.summarystats(nw, arglist, ...)
-    ew <- extremewarnings(obsstats)
-    u <- u[!ew]
-    ui <- ui[!ew]
-  }
   ### Construct the list to return
   if (a$diff) {
     coef.names <- paste("nodematch", paste(a$attrname,collapse="."), u, sep=".")
@@ -2556,12 +2126,13 @@ InitErgmTerm.nodematch<-InitErgmTerm.match<-function (nw, arglist, drop=TRUE, ..
   list(name="nodematch",                                 #name: required
        coef.names = coef.names,                          #coef.names: required
        inputs =  inputs,
-       dependence = FALSE # So we don't use MCMC if not necessary
+       dependence = FALSE, # So we don't use MCMC if not necessary
+       minval = 0
        )
 }
 
 ################################################################################
-InitErgmTerm.nodemix<-function (nw, arglist, drop=TRUE, ...) {
+InitErgmTerm.nodemix<-function (nw, arglist, ...) {
   ### Check the network and arguments to make sure they are appropriate.
   a <- check.ErgmTerm(nw, arglist,
                       varnames = c("attrname", "base"),
@@ -2579,11 +2150,6 @@ InitErgmTerm.nodemix<-function (nw, arglist, drop=TRUE, ...) {
       do.call(paste,c(sapply(a$attrname,function(oneattr) get.node.attr(nw,oneattr),simplify=FALSE),sep="."))
     }
     
-  if(drop) { # Check for zero statistics, print -Inf messages if applicable
-    obsstats <- check.ErgmTerm.summarystats(nw, arglist, ...)
-    ew <- extremewarnings(obsstats)
-    # deal with ew variable later
-  } else { ew <- FALSE }
   if (is.bipartite(nw)) {
     #  So undirected network storage but directed mixing
     nb1 <- get.network.attribute(nw, "bipartite")       
@@ -2601,7 +2167,6 @@ InitErgmTerm.nodemix<-function (nw, arglist, drop=TRUE, ...) {
     if (!is.null(a$base) && !identical(a$base,0)) {
       u <- u[-a$base,]
     }
-    u <- u[!ew,]
     name <- "mix"
     cn <- paste("mix", paste(a$attrname,collapse="."), apply(matrix(namescov[u],ncol=2),
                                        1,paste,collapse="."), sep=".")
@@ -2629,9 +2194,6 @@ InitErgmTerm.nodemix<-function (nw, arglist, drop=TRUE, ...) {
       ucm <- as.vector(ucm)[-a$base]
       uun <- as.vector(uun)[-a$base]
     }
-    urm <- urm[!ew]
-    ucm <- ucm[!ew]
-    uun <- uun[!ew]
     name <- "nodemix"
     cn <- paste("mix", paste(a$attrname,collapse="."), uun, sep=".")
     inputs <- c(urm, ucm, nodecov)
@@ -2641,7 +2203,8 @@ InitErgmTerm.nodemix<-function (nw, arglist, drop=TRUE, ...) {
   ### Construct the list to return
   list(name = name, coef.names = cn, # required
        inputs = inputs, 
-       dependence = FALSE # So we don't use MCMC if not necessary
+       dependence = FALSE, # So we don't use MCMC if not necessary
+       minval = 0
        )
 }
 
@@ -2663,7 +2226,7 @@ InitErgmTerm.nodeocov<-function (nw, arglist, ...) {
 
 
 ################################################################################
-InitErgmTerm.nodeofactor<-function (nw, arglist, drop=TRUE, ...) {
+InitErgmTerm.nodeofactor<-function (nw, arglist, ...) {
   ### Check the network and arguments to make sure they are appropriate.
   a <- check.ErgmTerm(nw, arglist, directed=TRUE, 
                       varnames = c("attrname", "base"),
@@ -2689,24 +2252,20 @@ InitErgmTerm.nodeofactor<-function (nw, arglist, drop=TRUE, ...) {
   #   Recode to numeric
   nodecov <- match(nodecov,u,nomatch=length(u)+1)
   ui <- seq(along=u)
-  if(drop) { # Check for zero statistics, print -Inf messages if applicable
-    obsstats <- check.ErgmTerm.summarystats(nw, arglist, ...)
-    ew <- extremewarnings(obsstats)
-    u <- u[!ew]
-    ui <- ui[!ew]
-  }
+
   ### Construct the list to return
   inputs <- c(ui, nodecov)
   attr(inputs, "ParamsBeforeCov") <- length(ui) # See comment at top of file
   list(name="nodeofactor",                                        #required
        coef.names = paste("nodeofactor", paste(a$attrname,collapse="."), u, sep="."), #required
        inputs = inputs,
-       dependence = FALSE # So we don't use MCMC if not necessary
+       dependence = FALSE, # So we don't use MCMC if not necessary
+       minval = 0
        )
 }  
 
 ################################################################################
-InitErgmTerm.nsp<-function(nw, arglist, drop=TRUE, ...) {
+InitErgmTerm.nsp<-function(nw, arglist, ...) {
 # The following line was commented out in <InitErgm.nsp>
 #   ergm.checkdirected("nsp", is.directed(nw), requirement=FALSE)
 # so I have not included 'directed=TRUE' in the call to <check.ErgmTerm>
@@ -2716,16 +2275,6 @@ InitErgmTerm.nsp<-function(nw, arglist, drop=TRUE, ...) {
                       defaultvalues = list(NULL),
                       required = c(TRUE))
   d<-a$d
-  if(drop){
-    mnsp <- summary(nw ~ nsp(d), drop=FALSE)
-    if(any(mnsp==0)){
-      cat(" ")
-      cat(paste("Warning: There are no dyads with nsp", d[mnsp==0],";\n",
-                 " the corresponding coefficient has been fixed at its MLE of negative infinity.\n",sep=" "))
-      dropterms <- paste("nsp", d[mnsp==0],sep="")
-      d <- d[mnsp!=0] 
-    }
-  }
   if (any(d==0)) {
     emptynwstats <- rep(0, length(d))
     if(is.bipartite(nw)){
@@ -2745,9 +2294,9 @@ InitErgmTerm.nsp<-function(nw, arglist, drop=TRUE, ...) {
 
   if (!is.null(emptynwstats)) {
     list(name=dname, coef.names=coef.names, inputs=c(d),
-         emptynwstats=emptynwstats)
+         emptynwstats=emptynwstats, minval=0)
   } else {
-    list(name=dname, coef.names=coef.names, inputs=c(d))
+    list(name=dname, coef.names=coef.names, inputs=c(d), minval=0)
   }
 }
 
@@ -2756,7 +2305,7 @@ InitErgmTerm.nsp<-function(nw, arglist, drop=TRUE, ...) {
 #=======================InitErgmTerm functions:  O============================#
 
 ################################################################################
-InitErgmTerm.odegree<-function(nw, arglist, drop=TRUE, ...) {
+InitErgmTerm.odegree<-function(nw, arglist, ...) {
   a <- check.ErgmTerm(nw, arglist, directed=TRUE,
                       varnames = c("d", "byarg", "homophily"),
                       vartypes = c("numeric", "character", "logical"),
@@ -2776,18 +2325,6 @@ InitErgmTerm.odegree<-function(nw, arglist, drop=TRUE, ...) {
     # Combine degree and u into 2xk matrix, where k=length(d)*length(u)
     lu <- length(u)
     du <- rbind(rep(d,lu), rep(1:lu, rep(length(d), lu)))
-    if(drop){ #   Check for extreme statistics
-      odegreeattr <- summary(nw ~ odegree(d,byarg), drop=FALSE) == 0
-      if(any(odegreeattr)){
-        dropterms <- paste("odeg", du[1,odegreeattr], ".", byarg,
-                           u[du[2,odegreeattr]], sep="")
-      cat(" ")
-        cat("Warning: These odegree terms have extreme counts and will be dropped:\n")
-        cat(dropterms, "", fill=TRUE)
-        cat("  The corresponding coefficients have been fixed at their MLE of negative infinity.\n")
-        du <- matrix(du[,!odegreeattr], nrow=2)
-      }      
-    }
     if (any(du[1,]==0)) {
       emptynwstats <- rep(0, ncol(du))
       tmp <- du[2,du[1,]==0]
@@ -2795,20 +2332,6 @@ InitErgmTerm.odegree<-function(nw, arglist, drop=TRUE, ...) {
         emptynwstats[du[1,]==0] <- tmp
     }
   } else {
-    if(drop){
-      if(!homophily) {
-        modegree <- summary(nw ~ odegree(d), drop=FALSE) == 0
-      } else {
-        modegree <- summary(nw ~ odegree(d,byarg, TRUE), drop=FALSE) == 0
-      }
-      if(any(modegree)){
-      cat(" ")
-        cat("Warning: These odegree terms have extreme counts and will be dropped:\n")
-        cat(d[modegree], "\n", fill=TRUE)
-        cat("  The corresponding coefficients have been fixed at their MLE of negative infinity.\n")
-        d <- d[!modegree] 
-      }
-    }
     if (any(d==0)) {
       emptynwstats <- rep(0, length(d))
       emptynwstats[d==0] <- network.size(nw)
@@ -2835,41 +2358,38 @@ InitErgmTerm.odegree<-function(nw, arglist, drop=TRUE, ...) {
   }
   if (!is.null(emptynwstats)){
     list(name=name, coef.names=coef.names, inputs=inputs,
-         emptynwstats=emptynwstats, dependence=TRUE)
+         emptynwstats=emptynwstats, dependence=TRUE, minval=0)
   }else{
-    list(name=name, coef.names=coef.names, inputs=inputs, dependence=TRUE)
+    list(name=name, coef.names=coef.names, inputs=inputs, dependence=TRUE, minval=0, maxval=network.size(nw), conflicts.constraints="outdegreedist")
   }
 }
 
 
 ################################################################################
-InitErgmTerm.outdegreepopularity<-function (nw, arglist, drop=TRUE, ...) {
+InitErgmTerm.outdegreepopularity<-function (nw, arglist, ...) {
   a <- check.ErgmTerm(nw, arglist, directed=TRUE,
                       varnames = NULL,
                       vartypes = NULL,
                       defaultvalues = list(),
                       required = NULL)
-  if(drop){
-    noutdegreepopularity <- summary(nw ~ outdegreepopularity, drop=FALSE)
-    if(noutdegreepopularity==0){
-      cat(" ")
-      cat(paste("Warning: There is no outdegree popularity;\n",
-                 " the corresponding coefficient has been fixed at its MLE of negative infinity.\n",sep=" "))
-      return(NULL)
-    }
-    if(network.dyadcount(nw)==network.edgecount(nw)){
-      cat(" ")
-      cat(paste("Warning: The outdegree popularity is maximized!\n",
-                 " The corresponding coefficient has been fixed at its MLE of infinity.\n",sep=" "))
-      return(NULL)
-    }
-  }
-  list(name="outdegreepopularity", coef.names="outdegreepopularity")
+  list(name="outdegreepopularity", coef.names="outdegreepopularity",
+       minval=0, maxval=network.dyadcount(nw)*sqrt(network.size(nw)-1), conflicts.constraints="outdegreedist")
 }
 
 
 ################################################################################
-InitErgmTerm.ostar<-function(nw, arglist, drop=TRUE, ...) {
+InitErgmTerm.opentriad<-function (nw, arglist, ...) {
+  a <- check.ErgmTerm(nw, arglist, directed=FALSE,
+                      varnames = c(),
+                      vartypes = c(),
+                      defaultvalues = list(),
+                      required = c())
+  list(name="opentriad", coef.names="opentriad", inputs=NULL)
+}
+
+
+################################################################################
+InitErgmTerm.ostar<-function(nw, arglist, ...) {
   a <- check.ErgmTerm(nw, arglist, directed=TRUE,
                       varnames = c("k", "attrname"),
                       vartypes = c("numeric", "character"),
@@ -2885,27 +2405,6 @@ InitErgmTerm.ostar<-function(nw, arglist, drop=TRUE, ...) {
     nodecov <- match(nodecov,u,nomatch=length(u)+1)
     if (length(u)==1)
       stop ("Attribute given to ostar() has only one value", call.=FALSE)
-    if(drop){
-      ostarattr <- summary(nw ~ ostar(k,attrname), drop=FALSE) == 0
-      if(any(ostarattr)){
-        dropterms <- paste(paste("ostar",attrname,sep="."),k[ostarattr],sep="")
-        cat(" ")
-        cat(paste("Warning: The count of", dropterms, "is extreme;\n",
-                 " the corresponding coefficient has been fixed at its MLE of negative infinity.\n",sep=" "))
-        k <- k[!ostarattr]
-      }
-    }
-  }else{
-    if(drop){
-      mostar <- summary(nw ~ ostar(k), drop=FALSE) == 0
-      if(any(mostar)){
-      cat(" ")
-        cat(paste("Warning: There are no order", k[mostar],"stars;\n",
-                 " the corresponding coefficient has been fixed at its MLE of negative infinity.\n",sep=" "))
-        dropterms <- paste("ostar", k[mostar],sep="")
-        k <- k[!mostar] 
-      }
-    }
   }
   lk<-length(k)
   if(lk==0){return(NULL)}
@@ -2918,59 +2417,57 @@ InitErgmTerm.ostar<-function(nw, arglist, drop=TRUE, ...) {
     coef.names <- paste("ostar",k,sep="")
     inputs <- c(k)
   }
-  list(name="ostar", coef.names=coef.names, inputs=inputs)  
+  list(name="ostar", coef.names=coef.names, inputs=inputs, minval=0, conflicts.constraints="outdegreedist")  
 }
 
 
 #=======================InitErgmTerm functions:  P============================#
 
-# pdegcor is not yet documented and the C code is still not in public version
-#################################################################################
-#InitErgmTerm.pdegcor<-function (nw, arglist, drop=TRUE, ...) {
-#  a <- check.ErgmTerm(nw, arglist, directed=TRUE) 
-#
-#  el=as.matrix.network.edgelist(nw)
-#  deg1<-summary(nw ~ sender(base=0))[el[,1]]
-#  deg2<-summary(nw ~ receiver(base=0))[el[,2]]
-#  deg12na<-is.na(deg1)|is.na(deg2)
-#  deg1<-deg1[!deg12na]
-#  deg2<-deg2[!deg12na]
-#  sigma1<-(sum(deg1*deg1)-length(deg1)*(mean(deg1)^2))
-#  sigma2<-(sum(deg2*deg2)-length(deg2)*(mean(deg2)^2))
-#  sigma1 <- 0
-#  sigma2 <- 0
-#  ### Construct the list to return
-#  list(name="pdegcor",                            #name: required
-#       coef.names = "pdegcor",                    #coef.names: required
-#       inputs=sigma2,
-#       dependence = TRUE # So we don't use MCMC if not necessary
-#       )
-#}
-#
+################################################################################
+InitErgmTerm.pdegcor<-function (nw, arglist, ...) {
+  a <- check.ErgmTerm(nw, arglist, directed=TRUE) 
+
+  el=as.edgelist(nw)
+  deg1<-summary(nw ~ sender(base=0))[el[,1]]
+  deg2<-summary(nw ~ receiver(base=0))[el[,2]]
+  deg12na<-is.na(deg1)|is.na(deg2)
+  deg1<-deg1[!deg12na]
+  deg2<-deg2[!deg12na]
+  sigma1<-(sum(deg1*deg1)-length(deg1)*(mean(deg1)^2))
+  sigma2<-(sum(deg2*deg2)-length(deg2)*(mean(deg2)^2))
+  sigma1 <- 0
+  sigma2 <- 0
+  ### Construct the list to return
+  list(name="pdegcor",                            #name: required
+       coef.names = "pdegcor",                    #coef.names: required
+       inputs=sigma2,
+       dependence = TRUE # So we don't use MCMC if not necessary
+       )
+}
+
 
 #=======================InitErgmTerm functions:  R============================#
 
-# rdegcor is not yet documented and the C code is still not in public version
-#################################################################################
-#InitErgmTerm.rdegcor<-function (nw, arglist, drop=TRUE, ...) {
-#  a <- check.ErgmTerm(nw, arglist, directed=FALSE) 
-#
-#  deg=summary(nw ~ sociality(base=0))
-#  el=as.matrix.network.edgelist(nw)
-#  deg1<-deg[el[,1]]
-#  deg2<-deg[el[,2]]
-#  alldeg<-c(deg1,deg2)
-#  sigma2<-(sum(alldeg*alldeg)-length(alldeg)*(mean(alldeg)^2))
-#  ### Construct the list to return
-#  list(name="rdegcor",                            #name: required
-#       coef.names = "rdegcor",                    #coef.names: required
-#       inputs=sigma2,
-#       dependence = TRUE # So we don't use MCMC if not necessary
-#       )
-#}
+################################################################################
+InitErgmTerm.rdegcor<-function (nw, arglist, ...) {
+  a <- check.ErgmTerm(nw, arglist, directed=FALSE) 
+
+  deg=summary(nw ~ sociality(base=0))
+  el=as.edgelist(nw)
+  deg1<-deg[el[,1]]
+  deg2<-deg[el[,2]]
+  alldeg<-c(deg1,deg2)
+  sigma2<-(sum(alldeg*alldeg)-length(alldeg)*(mean(alldeg)^2))
+  ### Construct the list to return
+  list(name="rdegcor",                            #name: required
+       coef.names = "rdegcor",                    #coef.names: required
+       inputs=sigma2,
+       dependence = TRUE # So we don't use MCMC if not necessary
+       )
+}
 
 ################################################################################
-InitErgmTerm.receiver<-function(nw, arglist, drop=FALSE, ...) {
+InitErgmTerm.receiver<-function(nw, arglist, ...) {
   a <- check.ErgmTerm(nw, arglist, directed=TRUE,
                       varnames = c("base"),
                       vartypes = c("numeric"),
@@ -2980,29 +2477,17 @@ InitErgmTerm.receiver<-function(nw, arglist, drop=FALSE, ...) {
   if (!identical(a$base,0)) {
     d <- d[-a$base]
   }
-  if(drop){
-    degrees <- as.numeric(names(table(as.matrix.network.edgelist(nw)[,2])))
-    mdegrees <- match(d, degrees)  
-    if(any(is.na(mdegrees))){
-      cat(" ")
-      cat(paste("Warning: There are no in ties for the vertex", 
-                d[is.na(mdegrees)],";\n",
-                 " the corresponding coefficient has been fixed at its MLE of negative infinity.\n",sep=" "))
-      dropterms <- paste("receiver", d[is.na(mdegrees)],sep="")
-      d <- degrees[mdegrees[!is.na(mdegrees)]] 
-    }
-  }
   ld<-length(d)
   if(ld==0){return(NULL)}
   list(name="receiver", coef.names=paste("receiver",d,sep=""),
-       inputs=c(d), emptynwstats=rep(0,length(d)), dependence=FALSE)
+       inputs=c(d), emptynwstats=rep(0,length(d)), dependence=FALSE, minval=0, maxval=network.size(nw)-1, conflicts.constraints="indegrees")
 }
 
 
 #=======================InitErgmTerm functions:  S============================#
 
 ################################################################################
-InitErgmTerm.sender<-function(nw, arglist, drop=FALSE, ...) {
+InitErgmTerm.sender<-function(nw, arglist, ...) {
   a <- check.ErgmTerm(nw, arglist, directed=TRUE,
                       varnames = c("base"),
                       vartypes = c("numeric"),
@@ -3012,74 +2497,32 @@ InitErgmTerm.sender<-function(nw, arglist, drop=FALSE, ...) {
   if (!identical(a$base,0)) {
     d <- d[-a$base]
   }
-  if(drop){
-    degrees <- as.numeric(names(table(as.matrix.network.edgelist(nw)[,1])))
-    mdegrees <- match(d, degrees)  
-    if(any(is.na(mdegrees))){
-      cat(" ")
-      cat(paste("Warning: There are no out ties for the vertex", 
-                d[is.na(mdegrees)],";\n",
-                 " the corresponding coefficient has been fixed at its MLE of negative infinity.\n",sep=" "))
-      dropterms <- paste("sender", d[is.na(mdegrees)],sep="")
-      d <- degrees[mdegrees[!is.na(mdegrees)]] 
-    }
-  }
   ld<-length(d)
   if(ld==0){return(NULL)}
   list(name="sender", coef.names=paste("sender",d,sep=""),
-       inputs=c(d), emptynwstats=rep(0,length(d)), dependence=FALSE)
+       inputs=c(d), emptynwstats=rep(0,length(d)), dependence=FALSE, minval=0, maxval=network.size(nw)-1, conflicts.constraints="outdegrees")
 }
 
 
 ################################################################################
-InitErgmTerm.simmelian<-function (nw, arglist, drop=TRUE, ...) {
+InitErgmTerm.simmelian<-function (nw, arglist, ...) {
   a <- check.ErgmTerm(nw, arglist, directed=TRUE,
                       varnames = NULL,
                       vartypes = NULL,
                       defaultvalues = list(),
                       required = NULL)
-  if(drop){
-    nsimmelian <- summary(nw ~ simmelian, drop=FALSE)
-    if(nsimmelian==0){
-      cat(" ")
-      cat(paste("Warning: There are no simmelian triads;\n",
-                 " the corresponding coefficient has been fixed at its MLE of negative infinity.\n",sep=" "))
-      return(NULL)
-    }
-    if(nsimmelian==network.edgecount(nw)*network.size(nw)*0.5){
-      cat(" ")
-      cat(paste("Warning: All triads are simmelian!\n",
-                 " The corresponding coefficient has been fixed at its MLE of infinity.\n",sep=" "))
-      return(NULL)
-    }
-  }
-  list(name="simmelian", coef.names="simmelian")
+  list(name="simmelian", coef.names="simmelian", minval=0, maxval=network.edgecount(nw)*network.size(nw)*0.5)
 }
 
 
 ################################################################################
-InitErgmTerm.simmelianties<-function (nw, arglist, drop=TRUE, ...) {
+InitErgmTerm.simmelianties<-function (nw, arglist, ...) {
   a <- check.ErgmTerm(nw, arglist, directed=TRUE,
                       varnames = NULL,
                       vartypes = NULL,
                       defaultvalues = list(),
                       required = NULL)
-  if(drop){
-    nsimmelianties <- summary(nw ~ simmelianties, drop=FALSE)
-    if(nsimmelianties==0){
-      cat(" ")
-      cat(paste("Warning: There are no simmelianties ties;\n",
-                 " the corresponding coefficient has been fixed at its MLE of negative infinity.\n",sep=" "))
-      return(NULL)
-    }
-    if(nsimmelianties==network.edgecount(nw)){
-      cat(" ")
-      cat(paste("Warning: All ties have simmelianties ties!\n",
-                 " the corresponding coefficient has been fixed at its MLE of infinity.\n",sep=" "))
-      return(NULL)
-    }
-  }
-  list(name="simmelianties", coef.names="simmelianties")
+  list(name="simmelianties", coef.names="simmelianties", minval=0, maxval=network.edgecount(nw)) # TODO: Is this correct?
 }
 
 
@@ -3106,7 +2549,7 @@ InitErgmTerm.smalldiff<-function (nw, arglist, ...) {
   
 
 ################################################################################
-InitErgmTerm.sociality<-function(nw, arglist, drop=FALSE, ...) {
+InitErgmTerm.sociality<-function(nw, arglist, ...) {
   a <- check.ErgmTerm(nw, arglist, directed=FALSE,
                       varnames = c("attrname", "base"),
                       vartypes = c("character", "numeric"),
@@ -3126,26 +2569,6 @@ InitErgmTerm.sociality<-function(nw, arglist, drop=FALSE, ...) {
     if (length(u)==1)
       stop ("Attribute given to sociality() has only one value", call.=FALSE)
   }
-  if(drop){
-    obsstats <- check.ErgmTerm.summarystats(nw, arglist, ...)
-    centattr <- obsstats == 0
-# Old code, fixed by using check.ErgmTerm.summarystats function:
-#    if(is.null(attrname)){
-#      centattr <- summary(nw ~ sociality, drop=FALSE) == 0
-#    }else{
-#      centattr <- summary(nw ~ sociality(','"',attrname,
-#                                           '")',sep="")),
-#                          drop=FALSE) == 0
-#    }
-    if(any(centattr)){
-      cat(paste(" Warning: There are no ", attrname," ties for the vertex ", 
-                d[centattr],";\n",
-                 " the corresponding coefficient has been fixed at ",
-                 "its MLE of negative infinity.\n", sep=""))
-      dropterms <- paste("sociality", d[centattr],sep="")
-      d <- d[!centattr] 
-    }
-  }
   ld<-length(d)
   if(ld==0){return(NULL)}
   if(!is.null(attrname)){
@@ -3155,7 +2578,7 @@ InitErgmTerm.sociality<-function(nw, arglist, drop=FALSE, ...) {
     coef.names <- paste("sociality",d,sep="")
     inputs <- c(d)
   }
-  list(name="sociality", coef.names=coef.names, inputs=inputs)
+  list(name="sociality", coef.names=coef.names, inputs=inputs, minval=0, maxval=network.size(nw)-1, conflicts.constraints="degrees")
 }
 
 
@@ -3165,108 +2588,36 @@ InitErgmTerm.sociality<-function(nw, arglist, drop=FALSE, ...) {
 
 
 ################################################################################
-InitErgmTerm.threepath <- function(nw, arglist, drop=TRUE, ...) {
+InitErgmTerm.threepath <- function(nw, arglist, ...) {
   ### Check the network and arguments to make sure they are appropriate.
   a <- check.ErgmTerm (nw, arglist, 
                        varnames = c("keep"),
                        vartypes = c("numeric"),
                        defaultvalues = list(1:4),
                        required = c(FALSE))
-  if(drop) { # Check for zero statistics, print -Inf messages if applicable
-    obsstats <- check.ErgmTerm.summarystats(nw, arglist, ...)
-    ew <- extremewarnings(obsstats)
-    # will process the ew variable later
-  } 
-  else 
-    ew <- FALSE
   types <- c("RRR","RRL","LRR","LRL")[a$keep]
-  types <- types[!ew]  
   if (is.directed(nw)) {
     return(list(name = "threepath", 
                 coef.names = paste("threepath", types, sep="."),
-                inputs=a$keep[!ew]))
+                inputs=a$keep, minval = 0))
   }
   else {
-    return(list(name = "threepath", coef.names = "threepath"))
+    return(list(name = "threepath", coef.names = "threepath", minval = 0))
   }
 }
 
 ################################################################################
-InitErgmTerm.transitive<-function (nw, arglist, drop=TRUE, ...) {
+InitErgmTerm.transitive<-function (nw, arglist, ...) {
   a <- check.ErgmTerm(nw, arglist, directed=TRUE,
                       varnames = NULL,
                       vartypes = NULL,
                       defaultvalues = list(),
                       required = NULL)
-  if(drop){
-    ntransitive <- summary(nw ~ transitive, drop=FALSE)
-    if(ntransitive==0){
-      cat(" ")
-      cat(paste("Warning: There are no transitive triads;\n",
-                 " the corresponding coefficient has been fixed at its MLE of negative infinity.\n",sep=" "))
-      return(NULL)
-    }
-  }
-  list(name="transitive", coef.names="transitive")
+  list(name="transitive", coef.names="transitive", minval = 0)
 }
 
-
 ################################################################################
-InitErgmTerm.transitiveties<-function (nw, arglist, drop=TRUE, ...) {
-  a <- check.ErgmTerm(nw, arglist, directed=TRUE,
-                      varnames = c("attrname"),#, "diff"),
-                      vartypes = c("character"),#, "logical"),
-                      defaultvalues = list(NULL),#, FALSE),
-                      required = c(FALSE))#, FALSE))
-  attrname <- a$attrname
-#  diff <- a$diff
-  if(!is.null(attrname)) {
-    nodecov <- get.node.attr(nw, attrname, "transitiveties")
-    u<-sort(unique(nodecov))
-    if(any(is.na(nodecov))){u<-c(u,NA)}
-    nodecov <- match(nodecov,u,nomatch=length(u)+1)
-    ui <- seq(along=u)
-    if (length(u)==1)
-      stop ("Attribute given to transitiveties() has only one value", call.=FALSE)
-    if(drop){
-      triattr <- summary(nw ~ transitiveties(attrname,diff=diff), drop=FALSE) == 0
-#      if(diff){
-#        if(any(triattr)){
-#          dropterms <- paste(paste("transitiveties",attrname,sep="."),
-#                             u[triattr],sep="")
-#      cat(" ")
-#          cat(paste("Warning: The count of", dropterms, "is extreme;\n",
-#                 " the corresponding coefficient has been fixed at its MLE of negative infinity.\n",sep=" "))
-#          u <- u[!triattr] 
-#          ui <- ui[!triattr] 
-#        }
-#      }else{
-        if(triattr){
-          dropterms <- paste(paste("transitiveties",attrname,sep="."),sep="")
-      cat(" ")
-          cat(paste("Warning: The count of", dropterms, "is extreme;\n",
-                 " the corresponding coefficient has been fixed at its MLE of negative infinity.\n",sep=" "))
-        }
-#      }
-    }
-#    if (!diff) {
-      coef.names <- paste("transitiveties",attrname,sep=".")
-      inputs <- c(nodecov)
-#     } else { 
-#       coef.names <- paste("transitiveties",attrname, u, sep=".")
-#       inputs <- c(ui, nodecov)
-#       attr(inputs, "ParamsBeforeCov") <- length(ui)
-#     }
-  }else{
-    coef.names <- "transitiveties"
-    inputs <- NULL
-  }
-  list(name="transitiveties", coef.names=coef.names, inputs=inputs)
-}
-
-
-################################################################################
-InitErgmTerm.triadcensus<-function (nw, arglist, drop=FALSE, ...) {
+InitErgmTerm.triadcensus<-function (nw, arglist, ...) {
   a <- check.ErgmTerm(nw, arglist,
                       varnames = c("d"),
                       vartypes = c("numeric"),
@@ -3286,16 +2637,6 @@ InitErgmTerm.triadcensus<-function (nw, arglist, drop=FALSE, ...) {
    if(is.null(d)){d <- 1:3}
    if(is.character(d)){d <- match(d, tcn)-1}
   }
-  if(drop){
-    mdegree <- summary(nw ~ triadcensus(d), drop=FALSE) == 0
-    if(any(mdegree)){
-     dropterms <- tcn[d[mdegree]]
-     cat(" ")
-     cat(paste("Warning: There are no triads of type", tcn[d[mdegree]],".\n"))
-     cat("  The corresponding coefficients have been fixed at their MLE of negative infinity.\n")
-     d <- d[!mdegree]
-    }
-  }
   if (any(d==0)) {
     emptynwstats <- rep(0,length(d))
     nwsize <- network.size(nw)
@@ -3313,14 +2654,14 @@ InitErgmTerm.triadcensus<-function (nw, arglist, drop=FALSE, ...) {
          emptynwstats=emptynwstats, dependence=TRUE)
   }else{
     list(name="triadcensus", coef.names=coef.names, inputs=c(d),
-         dependence=TRUE)
+         dependence=TRUE, minval = 0)
   }
 }
 
 
 
 ################################################################################
-InitErgmTerm.triangle<-InitErgmTerm.triangles<-function (nw, arglist, drop=TRUE, ...) {
+InitErgmTerm.triangle<-InitErgmTerm.triangles<-function (nw, arglist, ...) {
   a <- check.ErgmTerm(nw, arglist,
                       varnames = c("attrname", "diff"),
                       vartypes = c("character", "logical"),
@@ -3336,27 +2677,6 @@ InitErgmTerm.triangle<-InitErgmTerm.triangles<-function (nw, arglist, drop=TRUE,
     ui <- seq(along=u)
     if (length(u)==1)
       stop ("Attribute given to triangle() has only one value", call.=FALSE)
-    if(drop){
-      triattr <- summary(nw ~ triangle(attrname,diff=diff), drop=FALSE) == 0
-      if(diff){
-        if(any(triattr)){
-          dropterms <- paste(paste("triangle",attrname,sep="."),
-                             u[triattr],sep="")
-      cat(" ")
-          cat(paste("Warning: The count of", dropterms, "is extreme;\n",
-                 " the corresponding coefficient has been fixed at its MLE of negative infinity.\n",sep=" "))
-          u <- u[!triattr] 
-          ui <- ui[!triattr] 
-        }
-      }else{
-        if(triattr){
-          dropterms <- paste(paste("triangle",attrname,sep="."),sep="")
-      cat(" ")
-          cat(paste("Warning: The count of", dropterms, "is extreme;\n",
-                 " the corresponding coefficient has been fixed at its MLE of negative infinity.\n",sep=" "))
-        }
-      }
-    }
     if (!diff) {
       coef.names <- paste("triangle",attrname,sep=".")
       inputs <- c(nodecov)
@@ -3369,13 +2689,13 @@ InitErgmTerm.triangle<-InitErgmTerm.triangles<-function (nw, arglist, drop=TRUE,
     coef.names <- "triangle"
     inputs <- NULL
   }
-  list(name="triangle", coef.names=coef.names, inputs=inputs)
+  list(name="triangle", coef.names=coef.names, inputs=inputs, minval=0)
 }
 
 
 
 ################################################################################
-InitErgmTerm.tripercent<-function (nw, arglist, drop=TRUE, ...) {
+InitErgmTerm.tripercent<-function (nw, arglist, ...) {
   a <- check.ErgmTerm(nw, arglist, directed=FALSE,
                       varnames = c("attrname", "diff"),
                       vartypes = c("character", "logical"),
@@ -3391,25 +2711,6 @@ InitErgmTerm.tripercent<-function (nw, arglist, drop=TRUE, ...) {
     ui <- seq(along=u)
     if (length(u)==1)
       stop ("Attribute given to tripercent() has only one value", call.=FALSE)
-    if(drop){
-      triattr <- summary(nw ~ tripercent(attrname,diff=diff), drop=FALSE) == 0
-      if(any(triattr)){
-        if(diff){
-          dropterms <- paste(paste("tripercent",attrname,sep="."),
-                             u[triattr],sep="")
-      cat(" ")
-          cat(paste("Warning: The count of", dropterms, "is extreme;\n",
-                 " the corresponding coefficient has been fixed at its MLE of negative infinity.\n",sep=" "))
-          u <- u[!triattr] 
-          ui <- ui[!triattr] 
-        }else{
-          dropterms <- paste(paste("tripercent",attrname,sep="."),sep="")
-      cat(" ")
-          cat(paste("Warning: The count of", dropterms, "is extreme;\n",
-                 " the corresponding coefficient has been fixed at its MLE of negative infinity.\n",sep=" "))
-        }
-      }
-    }
     if (!diff) {
       coef.names <- paste("tripercent",attrname,sep=".")
       inputs <- c(1, nodecov)
@@ -3423,12 +2724,12 @@ InitErgmTerm.tripercent<-function (nw, arglist, drop=TRUE, ...) {
     coef.names <- "tripercent"
     inputs <- NULL
   }
-  list(name="tripercent", coef.names=coef.names, inputs=inputs)
+  list(name="tripercent", coef.names=coef.names, inputs=inputs, minval = 0)
 }
 
 
 ################################################################################
-InitErgmTerm.ttriple<-InitErgmTerm.ttriad<-function (nw, arglist, drop=TRUE, ...) {
+InitErgmTerm.ttriple<-InitErgmTerm.ttriad<-function (nw, arglist, ...) {
   a <- check.ErgmTerm(nw, arglist, directed=TRUE,
                       varnames = c("attrname", "diff"),
                       vartypes = c("character", "logical"),
@@ -3444,27 +2745,6 @@ InitErgmTerm.ttriple<-InitErgmTerm.ttriad<-function (nw, arglist, drop=TRUE, ...
     ui <- seq(along=u)
     if (length(u)==1)
       stop ("Attribute given to ttriple() has only one value", call.=FALSE)
-    if(drop){
-      triattr <- summary(nw ~ ttriple(attrname,diff=diff), drop=FALSE) == 0
-      if(diff){
-        if(any(triattr)){
-          dropterms <- paste(paste("ttriple",attrname,sep="."),
-                             u[triattr],sep="")
-      cat(" ")
-          cat(paste("Warning: The count of", dropterms, "is extreme;\n",
-                 " the corresponding coefficient has been fixed at its MLE of negative infinity.\n",sep=" "))
-          u <- u[!triattr] 
-          ui <- ui[!triattr] 
-        }
-      }else{
-        if(triattr){
-          dropterms <- paste(paste("ttriple",attrname,sep="."),sep="")
-      cat(" ")
-          cat(paste("Warning: The count of", dropterms, "is extreme;\n",
-                 " the corresponding coefficient has been fixed at its MLE of negative infinity.\n",sep=" "))
-        }
-      }
-    }
     if (!diff) {
       coef.names <- paste("ttriple",attrname,sep=".")
       inputs <- c(nodecov)
@@ -3477,42 +2757,24 @@ InitErgmTerm.ttriple<-InitErgmTerm.ttriad<-function (nw, arglist, drop=TRUE, ...
     coef.names <- "ttriple"
     inputs <- NULL
   }
-  list(name="ttriple", coef.names=coef.names, inputs=inputs)
+  list(name="ttriple", coef.names=coef.names, inputs=inputs, minval = 0)
 }
 
 
 ################################################################################
-InitErgmTerm.twopath<-function(nw, arglist, drop=TRUE, ...) {
+InitErgmTerm.twopath<-function(nw, arglist, ...) {
   a <- check.ErgmTerm(nw, arglist,
                       varnames = NULL,
                       vartypes = NULL,
                       defaultvalues = list(),
                       required = NULL)
   if(is.directed(nw)){
-   if(drop){
-    degrees <- as.matrix.network.edgelist(nw)
-    if(all(is.na(match(degrees[,1],degrees[,2])))){
-      cat(" ")
-     cat(paste("Warning: The are no two-paths;\n",
-                 " the corresponding coefficient has been fixed at its MLE of negative infinity.\n",sep=" "))
-     return(NULL)
-    }
-   }
-   list(name="m2star", coef.names="twopath", dependence=TRUE)
+   list(name="m2star", coef.names="twopath", dependence=TRUE, minval=0)
   }else{
    k<-2
-   if(drop){
-    mkstar <- summary(nw ~ kstar(k), drop=FALSE) == 0
-    if(any(mkstar)){
-      cat(" ")
-      cat(paste("Warning: There are no two paths;\n",
-                 " the corresponding coefficient has been fixed at its MLE of negative infinity.\n",sep=" "))
-      return(NULL)
-    }
-   }
    lk<-length(k)
    if(lk==0){return(NULL)}
-   list(name="kstar", coef.names="twopath", inputs=c(k))
+   list(name="kstar", coef.names="twopath", inputs=c(k), minval=0)
   }
 }
 

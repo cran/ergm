@@ -1,12 +1,12 @@
 /*
  *  File ergm/src/edgetree.h
- *  Part of the statnet package, http://statnetproject.org
+ *  Part of the statnet package, http://statnet.org
  *
  *  This software is distributed under the GPL-3 license.  It is free,
  *  open source, and has the attribution requirements (GPL Section 7) in
- *    http://statnetproject.org/attribution
+ *    http://statnet.org/attribution
  *
- *  Copyright 2011 the statnet development team
+ *  Copyright 2012 the statnet development team
  */
 #ifndef EDGETREE_H
 #define EDGETREE_H
@@ -48,7 +48,6 @@ edges in a network structure.
 typedef struct Dur_Infstruct {
   int MCMCtimer;
   int *lasttoggle;
-/*  double mean_edge_duration; This is probably not a good idea */
 } Dur_Inf;
 
 
@@ -93,18 +92,20 @@ typedef struct Networkstruct {
 /* Initialization and destruction. */
 Network NetworkInitialize(Vertex *tails, Vertex *heads, Edge nedges,
 			  Vertex nnodes, int directed_flag, Vertex bipartite,
-			  int lasttoggle_flag);
+			  int lasttoggle_flag, int time, int *lasttoggle);
 void NetworkDestroy(Network *nwp);
 Network NetworkInitializeD(double *tails, double *heads, Edge nedges,
 			   Vertex nnodes, int directed_flag, Vertex bipartite,
-			   int lasttoggle_flag);
+			   int lasttoggle_flag, int time, int *lasttoggle);
 
 Network *NetworkCopy(Network *dest, Network *src);
 
 /* Accessors. */
 Edge EdgetreeSearch (Vertex a, Vertex b, TreeNode *edges);
 Edge EdgetreeSuccessor (TreeNode *edges, Edge x);
+Edge EdgetreePredecessor (TreeNode *edges, Edge x);
 Edge EdgetreeMinimum (TreeNode *edges, Edge x);
+Edge EdgetreeMaximum (TreeNode *edges, Edge x);
 
 /* Modifiers. */
 
@@ -126,6 +127,7 @@ void TouchEdge(Vertex tail, Vertex head, Network *nwp);
 
 /* Utility functions. */
 int FindithEdge (Vertex *tail, Vertex *head, Edge i, Network *nwp);
+int GetRandEdge(Vertex *tail, Vertex *head, Network *nwp);
 void printedge(Edge e, TreeNode *edges);
 void InOrderTreeWalk(TreeNode *edges, Edge x);
 void NetworkEdgeList(Network *nwp);

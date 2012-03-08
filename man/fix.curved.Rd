@@ -1,11 +1,11 @@
 %  File ergm/man/fix.curved.Rd
-%  Part of the statnet package, http://statnetproject.org
+%  Part of the statnet package, http://statnet.org
 %
 %  This software is distributed under the GPL-3 license.  It is free,
 %  open source, and has the attribution requirements (GPL Section 7) in
-%    http://statnetproject.org/attribution
+%    http://statnet.org/attribution
 %
-%  Copyright 2011 the statnet development team
+%  Copyright 2012 the statnet development team
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{fix.curved}
 \alias{fix.curved.formula}
@@ -63,7 +63,8 @@ parameters are fixed. Note that each term has to be treated as a special case.
 }
 \examples{
 data(sampson)
-gest<-ergm(samplike~edges+gwesp(alpha=.5,fixed=FALSE))
+gest<-ergm(samplike~edges+gwesp(alpha=.5,fixed=FALSE),
+           control=control.ergm(MCMLE.maxit=3))
 summary(gest)
 # A statistic for esp(1),...,esp(16)
 simulate(gest,statsonly=TRUE)
@@ -71,6 +72,6 @@ simulate(gest,statsonly=TRUE)
 tmp<-fix.curved(gest)
 tmp
 # A gwesp() statistic only
-simulate(tmp$formula,theta0=tmp$theta,statsonly=TRUE) 
+simulate(tmp$formula, coef=tmp$theta, statsonly=TRUE) 
 }
 \keyword{ model }

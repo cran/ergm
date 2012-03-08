@@ -1,70 +1,22 @@
 #  File ergm/R/ergm.llik.R
-#  Part of the statnet package, http://statnetproject.org
+#  Part of the statnet package, http://statnet.org
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnetproject.org/attribution
+#    http://statnet.org/attribution
 #
-#  Copyright 2011 the statnet development team
+#  Copyright 2012 the statnet development team
 ######################################################################
-#=================================================================================
-# This file contains the following 14 functions for computing log likelihoods,
-# gradients, hessians, and such:
-#      <llik.fun>            <llik.fun.EF>     <llik.grad3>
-#      <llik.grad>           <llik.fun2>       <llik.info3>
-#      <llik.hessian>        <llik.grad2>      <llik.mcmcvar3>
-#      <llik.hessian.naive>  <llik.hessian2>   <llik.fun.median>
-#      <llik.exp>            <llik.fun3>
-#=================================================================================
-
-
-
-
 ###################################################################################
 # Each of the <llik.X> functions computes either a likelihood function, a gradient
 # function, or a Hessian matrix;  Each takes the same set of input parameters and
 # these are described below; the return values differ however and so these are
 # described above each function.
-#
-# --PARAMETERS--
-#   theta      : the vector of theta parameters; this is only used to solidify
-#                offset coefficients; the not-offset terms are given by 'theta0'
-#                of the 'etamap'
-#   xobs       : the vector of observed statistics 
-#   xsim       : the matrix of simulated statistics 
-#   probs      : the probability weight for each row of the stats matrix
-#   varweight  : the weight by which the variance of the base predictions will be 
-#                scaled; the name of this param was changed from 'penalty' to better 
-#                reflect what this parameter actually is; default=0.5, which is the 
-#                "true"  weight, in the sense that the lognormal approximation is
-#                given by
-#                           sum(xobs * etaparam) - mb - 0.5*vb 
-#   trustregion: the maximum value of the log-likelihood ratio that is trusted;
-#                default=20
-#   eta0       : the initial eta vector
-#   etamap     : the theta -> eta mapping, as returned by <ergm.etamap>
-#
-#
-# --IGNORED PARAMETERS--
-#   xsim.miss  : the 'xsim' counterpart for missing observations; default=NULL
-#   probs.miss : the 'probs' counterpart for missing observations; default=NULL
-#
 ####################################################################################
 
-
-
-
-
-#####################################################################################
-# --RETURNED--
-#   llr: the log-likelihood ratio of l(eta) - l(eta0) using a lognormal
-#        approximation; i.e., assuming that the network statistics are approximately
-#        normally  distributed so that exp(eta * stats) is lognormal
-#####################################################################################
-
-llik.fun <- function(theta, xobs, xsim, probs, xsim.miss=NULL, probs.miss=NULL,
+llik.fun <- function(theta, xobs, xsim, probs, xsim.obs=NULL, probs.obs=NULL,
                      varweight=0.5, trustregion=20, eta0, etamap){
-  theta.offset <- etamap$theta0
+  theta.offset <- etamap$init
   theta.offset[!etamap$offsettheta] <- theta
   # Convert theta to eta
   eta <- ergm.eta(theta.offset, etamap)
@@ -96,9 +48,9 @@ llik.fun <- function(theta, xobs, xsim, probs, xsim.miss=NULL, probs.miss=NULL,
 
 
 
-#llik.grad <- function(theta, xobs, xsim, probs,  xsim.miss=NULL, probs.miss=NULL,
+#llik.grad <- function(theta, xobs, xsim, probs,  xsim.obs=NULL, probs.obs=NULL,
 #                      varweight=0.5, trustregion=20, eta0, etamap){
-#  theta.offset <- etamap$theta0
+#  theta.offset <- etamap$init
 #  theta.offset[!etamap$offsettheta] <- theta
 #  eta <- ergm.eta(theta.offset, etamap)
 #  etaparam <- eta-eta0
@@ -127,14 +79,9 @@ llik.fun <- function(theta, xobs, xsim, probs, xsim.miss=NULL, probs.miss=NULL,
 
 
 
-#####################################################################################
-# --RETURNED--
-#   llg: the gradient of the not-offset eta parameters with ??
-#####################################################################################
-
-llik.grad <- function(theta, xobs, xsim, probs,  xsim.miss=NULL, probs.miss=NULL,
+llik.grad <- function(theta, xobs, xsim, probs,  xsim.obs=NULL, probs.obs=NULL,
                       varweight=0.5, trustregion=20, eta0, etamap){
-  theta.offset <- etamap$theta0
+  theta.offset <- etamap$init
   theta.offset[!etamap$offsettheta] <- theta
   eta <- ergm.eta(theta.offset, etamap)
 # etagrad <- ergm.etagrad(theta.offset, etamap)
@@ -176,16 +123,10 @@ llik.grad <- function(theta, xobs, xsim, probs,  xsim.miss=NULL, probs.miss=NULL
 
 
 
-#####################################################################################
-# --RETURNED--
-#   He: the ?? Hessian matrix
-#####################################################################################
-
-llik.hessian <- function(theta, xobs, xsim, probs, xsim.miss=NULL, probs.miss=NULL,
+llik.hessian <- function(theta, xobs, xsim, probs, xsim.obs=NULL, probs.obs=NULL,
                          varweight=0.5, trustregion=20, eta0, etamap){
-  theta.offset <- etamap$theta0
+  theta.offset <- etamap$init
   theta.offset[!etamap$offsettheta] <- theta
-  namestheta <- names(theta)
 # xsim[,etamap$offsettheta] <- 0
 #
 #    eta transformation
@@ -214,6 +155,7 @@ llik.hessian <- function(theta, xobs, xsim, probs, xsim.miss=NULL, probs.miss=NU
 # H <- - htmp %*% t(htmp)
 # htmp <- tcrossprod(etagrad, htmp)
   htmp.offset <- matrix(0, ncol = length(etamap$offsetmap), nrow = nrow(htmp))
+# htmp.offset[,!etamap$offsetmap] <- htmp
   htmp.offset[,!etamap$offsetmap] <- htmp
   htmp.offset <- t(ergm.etagradmult(theta.offset, t(htmp.offset), etamap))
 # Notice the negative sign!
@@ -226,8 +168,8 @@ llik.hessian <- function(theta, xobs, xsim, probs, xsim.miss=NULL, probs.miss=NU
 # He <- matrix(NA, ncol = length(etamap$offsettheta), 
 #                  nrow = length(etamap$offsettheta))
 # He[!etamap$offsettheta, !etamap$offsettheta] <- H
-  He <- H[!etamap$offsettheta, !etamap$offsettheta]
-  dimnames(He) <- list(names(namestheta), names(namestheta))
+  He <- H[!etamap$offsettheta, !etamap$offsettheta, drop=FALSE]
+  dimnames(He) <- list(names(theta), names(theta))
 # H
   He
 }
@@ -236,20 +178,12 @@ llik.hessian <- function(theta, xobs, xsim, probs, xsim.miss=NULL, probs.miss=NU
 
 
 
-#####################################################################################
-# --RETURNED--
-#   He: the naive approximation to the Hessian matrix - namely,
-#          (sum_i w_i g_i)(sum_i w_i g_i)^t - sum_i(w_i g_i g_i^t),  where
-#              g_i = the ith vector of statistics and
-#              w_i = normalized version of exp((eta-eta0)^t g_i) so that sum_i w_i=1
-#       this is equation (3.5) of Hunter & Handcock (2006)
-#####################################################################################
-
-llik.hessian.naive <- function(theta, xobs, xsim, probs, xsim.miss=NULL, probs.miss=NULL,
+llik.hessian.naive <- function(theta, xobs, xsim, probs, xsim.obs=NULL, probs.obs=NULL,
                                varweight=0.5, eta0, etamap){
-  namestheta <- names(theta)
   xsim <- xsim[,!etamap$offsettheta, drop=FALSE]
-  eta <- ergm.eta(theta, etamap)
+  theta.offset <- etamap$init
+  theta.offset[!etamap$offsettheta] <- theta
+  eta <- ergm.eta(theta.offset, etamap)
   etagrad <- ergm.etagrad(theta, etamap)
 
   # It does not matter if we subtract a constant from the (eta-eta0)^t g vector
@@ -269,7 +203,7 @@ llik.hessian.naive <- function(theta, xobs, xsim, probs, xsim.miss=NULL, probs.m
   H <- - crossprod(etagrad, crossprod(H, etagrad))
   He <- matrix(NA, ncol = length(theta), nrow = length(theta))
   He[!etamap$offsettheta, !etamap$offsettheta] <- H
-  dimnames(He) <- list(names(namestheta), names(namestheta))
+  dimnames(He) <- list(names(theta), names(theta))
   He
 }
 
@@ -279,7 +213,7 @@ llik.hessian.naive <- function(theta, xobs, xsim, probs, xsim.miss=NULL, probs.m
 # MSH: Yep, just another idea based on exp. family theory
 # llik.exp <- function(theta, xobs, xsim, probs, 
 #                      varweight=0.5, eta0, etamap){
-#   eta <- ergm.eta(theta, etamap)
+#   eta <- ergm.eta(theta.offset, etamap)
 #   etaparam <- eta-eta0
 #   vb <- var(xsim)
 #   llr <- -sum(xobs * etaparam) + varweight*(t(etaparam) %*% vb %*% etaparam)
@@ -289,14 +223,9 @@ llik.hessian.naive <- function(theta, xobs, xsim, probs, xsim.miss=NULL, probs.m
 
 
 
-#####################################################################################
-# --RETURNED--
-#   llr: the log-likelihood ratio of l(eta) - l(eta0) using ?? (what sort of approach)
-#####################################################################################
-
-llik.fun.EF <- function(theta, xobs, xsim, probs, xsim.miss=NULL, probs.miss=NULL,
+llik.fun.EF <- function(theta, xobs, xsim, probs, xsim.obs=NULL, probs.obs=NULL,
                      varweight=0.5, trustregion=20, eta0, etamap){
-  theta.offset <- etamap$theta0
+  theta.offset <- etamap$init
   theta.offset[!etamap$offsettheta] <- theta
   eta <- ergm.eta(theta.offset, etamap)
   etaparam <- eta-eta0
@@ -323,15 +252,11 @@ llik.fun.EF <- function(theta, xobs, xsim, probs, xsim.miss=NULL, probs.miss=NUL
 
 
 
-#####################################################################################
-# --RETURNED--
-#   llr: the log-likelihood ratio of l(eta) - l(eta0) using ?? (what sort of approach)
-#            "Simple convergence"
-#####################################################################################
-
-llik.fun2 <- function(theta, xobs, xsim, probs, xsim.miss=NULL, probs.miss=NULL, 
+llik.fun2 <- function(theta, xobs, xsim, probs, xsim.obs=NULL, probs.obs=NULL, 
                       varweight=0.5, trustregion=20, eta0, etamap){
-  eta <- ergm.eta(theta, etamap)
+  theta.offset <- etamap$init
+  theta.offset[!etamap$offsettheta] <- theta
+  eta <- ergm.eta(theta.offset, etamap)
   etaparam <- eta-eta0
   basepred <- xsim %*% etaparam
   maxbase <- max(basepred)
@@ -342,14 +267,12 @@ llik.fun2 <- function(theta, xobs, xsim, probs, xsim.miss=NULL, probs.miss=NULL,
 
 
 
-#####################################################################################
-# --RETURNED--
-#   the gradient of eta with ??
-#####################################################################################
 
-llik.grad2 <- function(theta, xobs, xsim, probs, xsim.miss=NULL, probs.miss=NULL,
+llik.grad2 <- function(theta, xobs, xsim, probs, xsim.obs=NULL, probs.obs=NULL,
                        varweight=0.5, trustregion=20, eta0, etamap){
-  eta <- ergm.eta(theta, etamap)
+  theta.offset <- etamap$init
+  theta.offset[!etamap$offsettheta] <- theta
+  eta <- ergm.eta(theta.offset, etamap)
   etaparam <- eta-eta0
   basepred <- xsim %*% etaparam
   prob <- max(basepred)
@@ -362,7 +285,7 @@ llik.grad2 <- function(theta, xobs, xsim, probs, xsim.miss=NULL, probs.miss=NULL
 #    vtmp <- (xsim-E)*sqrt(prob)
 #    V <- vtmp * vtmp
 #    list(gradient=xobs-E,hessian=V)
-  ergm.etagradmult(theta, xobs-E, etamap)
+  ergm.etagradmult(theta.offset, xobs-E, etamap)
 }
 
 llik.hessian2 <- llik.hessian
@@ -377,9 +300,11 @@ llik.hessian2 <- llik.hessian
 #        equation (5) of Hunter & Handcock (2010)
 #####################################################################################
 
-llik.fun3 <- function(theta, xobs, xsim, probs, xsim.miss=NULL, probs.miss=NULL, 
-                      varweight=0.5, trustregion=20, eta0, etamap){ # eqn (5) 
-  eta <- ergm.eta(theta, etamap)
+llik.fun3 <- function(theta, xobs, xsim, probs, xsim.obs=NULL, probs.obs=NULL, 
+                      varweight=0.5, trustregion=20, eta0, etamap){ # eqn (5)
+  theta.offset <- etamap$init
+  theta.offset[!etamap$offsettheta] <- theta
+  eta <- ergm.eta(theta.offset, etamap)
   deta <- matrix(eta-eta0,ncol=1) #px1
   basepred <- as.vector(xsim %*% deta) #nx1
   maxbase <- max(basepred)
@@ -393,9 +318,11 @@ llik.fun3 <- function(theta, xobs, xsim, probs, xsim.miss=NULL, probs.miss=NULL,
 #   the gradient of eta with ??  
 #####################################################################################
 
-llik.grad3 <- function(theta, xobs, xsim, probs,  xsim.miss=NULL, probs.miss=NULL,
+llik.grad3 <- function(theta, xobs, xsim, probs,  xsim.obs=NULL, probs.obs=NULL,
                        varweight=0.5, trustregion=20, eta0, etamap){ #eqn (11)
-  eta <- ergm.eta(theta, etamap)
+  theta.offset <- etamap$init
+  theta.offset[!etamap$offsettheta] <- theta
+  eta <- ergm.eta(theta.offset, etamap)
   deta <- matrix(eta-eta0,ncol=1)
   basepred <- as.vector(xsim %*% deta)
   maxbase <- max(basepred)
@@ -411,7 +338,7 @@ llik.grad3 <- function(theta, xobs, xsim, probs,  xsim.miss=NULL, probs.miss=NUL
 #   He: the ?? Hessian matrix
 #####################################################################################
 
-llik.info3 <- function(theta, xobs, xsim, probs,  xsim.miss=NULL, probs.miss=NULL,
+llik.info3 <- function(theta, xobs, xsim, probs,  xsim.obs=NULL, probs.obs=NULL,
                        varweight=0.5, eta0, etamap){ #eqn (12)
   eta <- ergm.eta(theta, etamap)
   etagrad <- ergm.etagrad(theta,etamap)
@@ -429,7 +356,7 @@ llik.info3 <- function(theta, xobs, xsim, probs,  xsim.miss=NULL, probs.miss=NUL
 #   "sort of"
 #####################################################################################
 
-llik.mcmcvar3 <- function(theta, xobs, xsim, probs,  xsim.miss=NULL, probs.miss=NULL,
+llik.mcmcvar3 <- function(theta, xobs, xsim, probs,  xsim.obs=NULL, probs.obs=NULL,
                           varweight=0.5, eta0, etamap){ #eqn (13) sort of
   eta <- ergm.eta(theta, etamap)
   deta <- matrix(eta-eta0,ncol=1)
@@ -449,9 +376,9 @@ llik.mcmcvar3 <- function(theta, xobs, xsim, probs,  xsim.miss=NULL, probs.miss=
 #   llr: the log-likelihood ratio of l(eta) - l(eta0) using ?? (what sort of approach)
 #####################################################################################
 
-llik.fun.median <- function(theta, xobs, xsim, probs, xsim.miss=NULL, probs.miss=NULL,
+llik.fun.median <- function(theta, xobs, xsim, probs, xsim.obs=NULL, probs.obs=NULL,
                      varweight=0.5, trustregion=20, eta0, etamap){
-  theta.offset <- etamap$theta0
+  theta.offset <- etamap$init
   theta.offset[!etamap$offsettheta] <- theta
   # Convert theta to eta
   eta <- ergm.eta(theta.offset, etamap)

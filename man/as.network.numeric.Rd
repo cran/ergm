@@ -1,11 +1,11 @@
 %  File ergm/man/as.network.numeric.Rd
-%  Part of the statnet package, http://statnetproject.org
+%  Part of the statnet package, http://statnet.org
 %
 %  This software is distributed under the GPL-3 license.  It is free,
 %  open source, and has the attribution requirements (GPL Section 7) in
-%    http://statnetproject.org/attribution
+%    http://statnet.org/attribution
 %
-%  Copyright 2011 the statnet development team
+%  Copyright 2012 the statnet development team
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{as.network.numeric}
 \alias{as.network.numeric}
@@ -19,7 +19,7 @@
     hyper = FALSE, loops = FALSE, multiple = FALSE, bipartite = FALSE,
     ignore.eval = TRUE, names.eval = NULL,
     edge.check = FALSE,
-    density=NULL, theta0=NULL, numedges=NULL, ...)
+    density=NULL, init=NULL, numedges=NULL, ...)
 }
 
 \arguments{
@@ -32,9 +32,10 @@
   \item{ignore.eval}{ logical; ignore edge values? Currently ignored. }
   \item{names.eval}{ optionally, the name of the attribute in which edge values should be stored. Currently ignored. }
   \item{edge.check}{ logical; perform consistency checks on new edges? }
-  \item{density}{numeric; the probability of a tie for Bernoulli networks. If neither density nor theta0 are given, it defaults to the number of nodes
+  \item{density}{numeric; the probability of a tie for Bernoulli networks. If neither density nor 
+     \code{init} is given, it defaults to the number of nodes
 divided by the number of dyads (so the expected number of ties is the same as the number of nodes.)}
-  \item{theta0}{numeric; the log-odds of a tie for Bernoulli networks. 
+  \item{init}{numeric; the log-odds of a tie for Bernoulli networks. 
     It is only used if density is not specified.}
   \item{numedges}{count; if present, sample the Bernoulli network conditional on this number of edges (rather than independently with the specified probability).}
   \item{...}{additional arguments}

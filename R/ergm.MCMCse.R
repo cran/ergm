@@ -1,65 +1,47 @@
 #  File ergm/R/ergm.MCMCse.R
-#  Part of the statnet package, http://statnetproject.org
+#  Part of the statnet package, http://statnet.org
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnetproject.org/attribution
+#    http://statnet.org/attribution
 #
-#  Copyright 2011 the statnet development team
+#  Copyright 2012 the statnet development team
 ######################################################################
 #############################################################################
-# The <ergm.MCMCse> function computes and returns the MCMC standard errors 
-#
-# --PARAMETERS--
-#   theta           :  the vector of theta coefficients
-#   theta0          :  the vector of initial theta coefficients
-#   statsmatrix     :  the matrix of network statistics
-#   statsmatrix.miss:  the matrix of network statistics on the network of
-#                      missing edges
-#   model           :  the model, as returned by <ergm.getmodel>
-#   lag.max         :  the maximum lag at which to calculate the acf for the
-#                      the network corresponding to 'statsmatrix'; default=10
-#   lag.max.miss    :  the maximum lag at which to calculate the acf for the
-#                      the network corresponding to 'statsmatrix.miss';
-#                      default=lag.max
-#
-# --RETURNED--
-#   list with one item:
-#   mc.se: the vector of MCMC standard error estimates for each theta parameter
-#
+# The <ergm.MCMCse> function computes and returns the MCMC standard errors
 ################################################################################
 
-ergm.MCMCse<-function(theta, theta0, statsmatrix, statsmatrix.miss,
+ergm.MCMCse<-function(theta, init, statsmatrix, statsmatrix.obs,
                       model, 
-                      lag.max=10, lag.max.miss=lag.max) {
+                      lag.max=10, lag.max.obs=lag.max) {
   # Not sure why this is necessary, but:
-  names(theta) <- names(theta0)
+  names(theta) <- names(init)
 
   # Transform theta to eta
   etamap <- model$etamap
-  eta0 <- ergm.eta(theta0, etamap)
+  eta0 <- ergm.eta(init, etamap)
   eta <-  ergm.eta(theta, etamap)
   offsettheta <- model$etamap$offsettheta
   offsetmap <- model$etamap$offsetmap
   etaparam <- (eta-eta0)[!offsetmap]
 
-  # Center statmatrix (and statsmatrix.miss, if applicable)
+  # Center statmatrix (and statsmatrix.obs, if applicable)
   av <- apply(statsmatrix, 2, mean)
 # av <- apply(statsmatrix,2,median)
   xsim <- sweep(statsmatrix, 2, av, "-")
   xobs <- -av
-  if(!is.null(statsmatrix.miss)){
-   av.miss <- apply(statsmatrix.miss, 2, mean)
-#  av.miss <- apply(statsmatrix.miss, 2, median)
-   xsim.miss <- sweep(statsmatrix.miss, 2, av.miss,"-")
-   xsim.miss <- xsim.miss[,!offsetmap, drop=FALSE]
-   xobs <- av.miss-av
+  if(!is.null(statsmatrix.obs)){
+   av.obs <- apply(statsmatrix.obs, 2, mean)
+#  av.obs <- apply(statsmatrix.obs, 2, median)
+   xsim.obs <- sweep(statsmatrix.obs, 2, av.obs,"-")
+   xsim.obs <- xsim.obs[,!offsetmap, drop=FALSE]
+   xobs <- av.obs-av
   }
   xobs <- xobs[!offsetmap]
   xsim <- xsim[,!offsetmap, drop=FALSE]
 
-  # Take any theta offsets (values fixed at theta0) into consideration
-  theta.offset <- etamap$theta0
+  # Take any theta offsets (values fixed at theta-1) into consideration
+  theta.offset <- etamap$init
   theta.offset[!offsettheta] <- theta[!offsettheta]
 
   #  Calculate the auto-covariance of the MCMC suff. stats.
@@ -100,41 +82,37 @@ ergm.MCMCse<-function(theta, theta0, statsmatrix, statsmatrix.miss,
 
   #  Calculate the auto-covariance of the Conditional MCMC suff. stats.
   #  and hence the Conditional MCMC s.e.
-  E.miss <- 0
-  lag.max.miss <- lag.max
-  if(!is.null(statsmatrix.miss)){
-    z <- xsim.miss
-    R <- acf(z, lag.max = lag.max.miss, type = "covariance", plot = FALSE)$acf
+  E.obs <- 0
+  lag.max.obs <- lag.max
+  if(!is.null(statsmatrix.obs)){
+    z <- xsim.obs
+    R <- acf(z, lag.max = lag.max.obs, type = "covariance", plot = FALSE)$acf
     if(dim(R)[2] > 1){
       part <- apply(R[-1,  ,  ,drop=FALSE], c(2, 3), sum)
     }else{
       part <- matrix(sum(R[-1,  ,  , drop=FALSE]))
     }
-    cov.zbar.miss <- (R[1,  ,  ] + part + t(part))/nrow(xsim.miss)
-    misspred <- xsim.miss %*% etaparam
-    prob.miss <- exp(misspred - max(misspred))
-    prob.miss <- prob.miss/sum(prob.miss)
-    E.miss <- apply(sweep(xsim.miss, 1, prob.miss, "*"), 2, sum)
-    htmp <- sweep(sweep(xsim.miss, 2, E.miss, "-"), 1, sqrt(prob.miss), "*")
-    #LINE ADDED BY CTB>
-    htmp.offset <- matrix(0, ncol = length(offsetmap), nrow = nrow(htmp))
-    #LINE ADDED BY CTB<
-    htmp.offset[,!offsetmap] <- htmp
-    htmp.offset <- t(ergm.etagradmult(theta.offset, t(htmp.offset), etamap))
-    H.miss <- crossprod(htmp.offset, htmp.offset)
-    cov.zbar.miss <- suppressWarnings(chol(cov.zbar.miss, pivot=TRUE))
-    #LINE ADDED BY CTB>
-  cov.zbar.offset <- matrix(0, ncol = length(offsetmap), 
-                            nrow = length(offsetmap))
-    #LINE ADDED BY CTB<
-    cov.zbar.offset[!offsetmap,!offsetmap] <- cov.zbar.miss
-    cov.zbar.offset <- t(ergm.etagradmult(theta.offset, t(cov.zbar.offset), etamap))
-    cov.zbar.miss <- crossprod(cov.zbar.offset, cov.zbar.offset)
-    novar <- novar | (diag(H.miss)==0)
-    H.miss <- H.miss[!novar,,drop=FALSE] 
-    H.miss <- H.miss[,!novar,drop=FALSE] 
-    cov.zbar.miss <- cov.zbar.miss[!novar,,drop=FALSE] 
-    cov.zbar.miss <- cov.zbar.miss[,!novar,drop=FALSE] 
+    cov.zbar.obs <- (R[1,  ,  ] + part + t(part))/nrow(xsim.obs)
+    obspred <- xsim.obs %*% etaparam
+    prob.obs <- exp(obspred - max(obspred))
+    prob.obs <- prob.obs/sum(prob.obs)
+    E.obs <- apply(sweep(xsim.obs, 1, prob.obs, "*"), 2, sum)
+    htmp.obs <- sweep(sweep(xsim.obs, 2, E.obs, "-"), 1, sqrt(prob.obs), "*")
+    htmp.obs.offset <- matrix(0, ncol = length(offsetmap), nrow = nrow(htmp.obs))
+    htmp.obs.offset[,!offsetmap] <- htmp.obs
+    htmp.obs.offset <- t(ergm.etagradmult(theta.offset, t(htmp.obs.offset), etamap))
+    H.obs <- crossprod(htmp.obs.offset, htmp.obs.offset)
+    cov.zbar.obs.offset <- matrix(0, ncol = length(offsetmap), 
+                                  nrow = length(offsetmap))
+    cov.zbar.obs <- suppressWarnings(chol(cov.zbar.obs, pivot=TRUE))
+    cov.zbar.obs.offset[!offsetmap,!offsetmap] <- cov.zbar.obs
+    cov.zbar.obs.offset <- t(ergm.etagradmult(theta.offset, t(cov.zbar.obs.offset), etamap))
+    cov.zbar.obs <- crossprod(cov.zbar.obs.offset, cov.zbar.obs.offset)
+    novar <- novar | (diag(H.obs)==0)
+    H.obs <- H.obs[!novar,,drop=FALSE] 
+    H.obs <- H.obs[,!novar,drop=FALSE] 
+    cov.zbar.obs <- cov.zbar.obs[!novar,,drop=FALSE] 
+    cov.zbar.obs <- cov.zbar.obs[,!novar,drop=FALSE] 
   }
   if(nrow(H)==1){
     H <- as.matrix(H[!novar,]) 
@@ -146,26 +124,26 @@ ergm.MCMCse<-function(theta, theta0, statsmatrix, statsmatrix.miss,
   if(all(dim(H)==c(0,0))){
     hessian <- matrix(NA, ncol=length(theta), nrow=length(theta))
     mc.se <- rep(NA,length=length(theta))
-    return(list(mc.se=mc.se))
+    return(mc.se)
   }
   cov.zbar <- cov.zbar[!novar,,drop=FALSE] 
   cov.zbar <- cov.zbar[,!novar,drop=FALSE] 
-  mc.se <- rep(NA,length=length(theta))
-  mc.se0 <- try(solve(H, cov.zbar), silent=TRUE)
   if(length(novar)==length(offsettheta)){
    novar <- novar | offsettheta
   }else{
    novar <- novar[!offsettheta]
   }
+  mc.se <- rep(NA,length=length(theta))
+  mc.se0 <- try(solve(H, cov.zbar), silent=TRUE)
   if(!(inherits(mc.se0,"try-error"))){
     mc.se0 <- try(diag(solve(H, t(mc.se0))), silent=TRUE)
     if(!(inherits(mc.se0,"try-error"))){
-      if(!is.null(statsmatrix.miss)){
-        mc.se.miss0 <- try(solve(H.miss, cov.zbar.miss), silent=TRUE)
-        if(!(inherits(mc.se.miss0,"try-error"))){
-          mc.se.miss0 <- try(diag(solve(H.miss, t(mc.se.miss0))), silent=TRUE)
-          if(!inherits(mc.se.miss0,"try-error")){
-            mc.se[!novar] <- sqrt(mc.se0 + mc.se.miss0)
+      if(!is.null(statsmatrix.obs)){
+        mc.se.obs0 <- try(solve(H.obs, cov.zbar.obs), silent=TRUE)
+        if(!(inherits(mc.se.obs0,"try-error"))){
+          mc.se.obs0 <- try(diag(solve(H.obs, t(mc.se.obs0))), silent=TRUE)
+          if(!inherits(mc.se.obs0,"try-error")){
+            mc.se[!novar] <- sqrt(mc.se0 + mc.se.obs0)
           }else{
             mc.se[!novar] <- sqrt(mc.se0)
           }
@@ -178,19 +156,17 @@ ergm.MCMCse<-function(theta, theta0, statsmatrix, statsmatrix.miss,
     }
   }
   names(mc.se) <- names(theta)
-# return(list(mc.se=mc.se))
-
   mc.cov <- matrix(NA,ncol=length(theta),nrow=length(theta))
   mc.cov0 <- try(solve(H, cov.zbar), silent=TRUE)
   if(!(inherits(mc.cov0,"try-error"))){
     mc.cov0 <- try(solve(H, t(mc.cov0)), silent=TRUE)
     if(!(inherits(mc.cov0,"try-error"))){
-      if(!is.null(statsmatrix.miss)){
-        mc.cov.miss0 <- try(solve(H.miss, cov.zbar.miss), silent=TRUE)
-        if(!(inherits(mc.cov.miss0,"try-error"))){
-          mc.cov.miss0 <- try(solve(H.miss, t(mc.cov.miss0)), silent=TRUE)
-          if(!inherits(mc.cov.miss0,"try-error")){
-            mc.cov[!novar,!novar] <- mc.cov0 + mc.cov.miss0
+      if(!is.null(statsmatrix.obs)){
+        mc.cov.obs0 <- try(solve(H.obs, cov.zbar.obs), silent=TRUE)
+        if(!(inherits(mc.cov.obs0,"try-error"))){
+          mc.cov.obs0 <- try(solve(H.obs, t(mc.cov.obs0)), silent=TRUE)
+          if(!inherits(mc.cov.obs0,"try-error")){
+            mc.cov[!novar,!novar] <- mc.cov0 + mc.cov.obs0
           }else{
             mc.cov[!novar,!novar] <- mc.cov0
           }

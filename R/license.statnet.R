@@ -1,22 +1,15 @@
 #  File ergm/R/license.statnet.R
-#  Part of the statnet package, http://statnetproject.org
+#  Part of the statnet package, http://statnet.org
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnetproject.org/attribution
+#    http://statnet.org/attribution
 #
-#  Copyright 2011 the statnet development team
+#  Copyright 2012 the statnet development team
 ######################################################################
 ###############################################################################
 # The <license.statnet> function prints the licensing information for any of
 # the statnet packages
-#
-# --PARAMETERS--
-#   package: the name of one of the statnet packages; default="statnet"
-#
-# --RETURNED--
-#   NULL
-#
 ###############################################################################
 
 license.statnet <- function (package="statnet") {
@@ -58,13 +51,13 @@ cat(
 "\n",
 paste("(a) you agree to retain in '",package,"' and any modifications to\n",sep=""),
 paste("    '",package,"' the copyright, author attribution and URL\n",sep=""),
-"    information as provided at http://statnetproject.org/attribution\n",
+"    information as provided at statnet.org/attribution\n",
 paste("(b) you agree that '",package,"' and any modifications to '",package,"' will,\n",sep=""),
 "    when used, display the attribution:\n",
 "\n",
-"      Based on 'statnet' project software (http://statnetproject.org).\n",
+"      Based on 'statnet' project software (statnet.org).\n",
 "      For license and citation information see\n",
-"      http://statnetproject.org/attribution\n\n",
+"      statnet.org/attribution\n\n",
 "--------------------------------------------------\n",
 "\n",
 "What does this mean?\n",

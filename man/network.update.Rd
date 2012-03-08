@@ -1,11 +1,11 @@
 %  File ergm/man/network.update.Rd
-%  Part of the statnet package, http://statnetproject.org
+%  Part of the statnet package, http://statnet.org
 %
 %  This software is distributed under the GPL-3 license.  It is free,
 %  open source, and has the attribution requirements (GPL Section 7) in
-%    http://statnetproject.org/attribution
+%    http://statnet.org/attribution
 %
-%  Copyright 2011 the statnet development team
+%  Copyright 2012 the statnet development team
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{network.update}
 \alias{network.update}
@@ -45,9 +45,9 @@ rand.net <- network(network.size(flomarriage))
 # store the sociomatrix 
 rand.mat <- rand.net[,]
 # Update the network
-network.update(flomarriage, rand.mat)
+network.update(flomarriage, rand.mat, matrix.type="adjacency")
 # Try this with an edgelist
 rand.mat <- as.matrix.network.edgelist(flomarriage)[1:5,]
-network.update(flomarriage, rand.mat)
+network.update(flomarriage, rand.mat, matrix.type="edgelist")
 }
 \keyword{models}

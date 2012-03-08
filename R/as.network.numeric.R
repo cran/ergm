@@ -1,62 +1,22 @@
 #  File ergm/R/as.network.numeric.R
-#  Part of the statnet package, http://statnetproject.org
+#  Part of the statnet package, http://statnet.org
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnetproject.org/attribution
+#    http://statnet.org/attribution
 #
-#  Copyright 2011 the statnet development team
+#  Copyright 2012 the statnet development team
 ######################################################################
 ###########################################################################
 # The <as.network.numeric> function creates and returns a bernouli
 # network.
-#
-# --PARAMETERS--
-#   x        : for a non-bipartite network, the number of nodes;
-#              for a bipartite network, the number of events.
-#               (the number of actors is specied via the bipartite param)
-#   directed : whether the network is to be directed; default=TRUE
-#   bipartite: the count of actors if the network should be bipartite; 0
-#              if 'x' is not bipartite; default=FALSE
-#   density  : the probability of a tie; default=the number of nodes divided
-#              by the number of possible dyad IF theta0 isn't provided, NULL
-#              otherwise
-#   theta0   : the log-odds of a tie, this parameter is ignored if density
-#              is given; default=the number of nodes divided by the number of
-#              possible dyad IF density isn't provided, NULL otherwise
-#   numedges : the number of edges that the returned network must have;
-#              default=NULL, in which case numedges will result from
-#              the random process
-#
-#
-# --IGNORED PARAMETERS--
-#   hyper       : whether the network should allow hyper edges; default=FALSE
-#   loops       : whether the network should allow loops; default=FALSE
-#   multiple    : whether the network should allow multiplex edges;
-#                 default=FALSE
-#   ignore.eval : whether edge values should be ignored; default=FALSE
-#                 default=FALSE
-#   names.eval  : the attribute in which edge values are to be stored;
-#                 default=NULL
-#   edge.check  : whether a consistency check should be performed;
-#                 default=FALSE
-#   ...         : additional parameters
-#
-#
-# --RETURNED--
-#   a random bernoulli network with the specified size and desired
-#   probabilistic qualities
-#
-# author: MSH
-#
 ##########################################################################
-
 as.network.numeric<-function(x,
     directed = TRUE,
     hyper = FALSE, loops = FALSE, multiple = FALSE, bipartite = FALSE,
     ignore.eval = TRUE, names.eval = NULL,
     edge.check = FALSE,
-    density=NULL, theta0=NULL, numedges=NULL, ...){
+    density=NULL, init=NULL, numedges=NULL, ...){
   #returns a bernouli network.
   if(bipartite){
    nb2 <- x
@@ -74,12 +34,12 @@ as.network.numeric<-function(x,
     ndyads <- nb1*(nb1-1)/2
   
   if(missing(density)){
-    if(missing(theta0)){
+    if(missing(init)){
       #     So the expected number of ties is the same as
       #     the number of nodes
       density <- nb1/ndyads
     }else{
-      density <- exp(theta0)/(1+exp(theta0))
+      density <- exp(init)/(1+exp(init))
     }
   }
   nw.mat <- matrix(0,nrow=nb1,ncol=nb2)

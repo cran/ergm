@@ -1,37 +1,15 @@
 #  File ergm/R/InitErgm.R
-#  Part of the statnet package, http://statnetproject.org
+#  Part of the statnet package, http://statnet.org
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnetproject.org/attribution
+#    http://statnet.org/attribution
 #
-#  Copyright 2011 the statnet development team
+#  Copyright 2012 the statnet development team
 ######################################################################
 #==========================================================================
-# This file contains the following 55 old, harder-to-write ergm-term
+# This file contains the old, harder-to-write ergm-term
 # initialization functions (each prepended with "InitErgm"):
-#      <b1concurrent>       <gwesp>               <odegree>
-#      <b1factor>           <gwidegree>           <outdegreepopularity>
-#      <b2concurrent>       <gwnsp>               <ostar>
-#      <b2factor>           <gwodegree>           <receiver> 
-#      <balance>            <hammingmix>          <sender>
-#      <concurrent>         <idegree>             <simmelian>
-#      <ctriple>=<ctriad>   <indegreepopularity>  <simmelianties>
-#      <degree>             <intransitive>        <smalldiff>
-#      <density>            <istar>               <sociality>
-#      <dsp>                <kstar>               <transitive>
-#      <dyadcov>            <localtriangle>       <triadcensus>
-#      <edgecov>            <m2star>              <triangle>=<triangles>
-#      <edges>              <meandeg>             <tripercent>
-#      <esp>                <nearsimmelian>       <ttriple>=<ttriad>
-#      <gwb1degree>         <nodemean>            <transitiveties>
-#      <gwb2degree>         <nodeicov>            <twopath>
-#      <gwdegree>           <nodeocov>
-#      <gwdsp>              <nsp>
-#==========================================================================
-
-  
-
 ##############################################################################
 # The <InitErgm.X> functions initialize each ergm term, X, of a model m, by
 #   1) checking the validity of X and its arguments via <checkargs>,
@@ -1361,7 +1339,7 @@
 #InitErgm.dyadcov<-function (nw, m, arglist, ...) {
 #  a <- ergm.checkargs("dyadcov", arglist,
 #    varnames = c("x","attrname"),
-#    vartypes = c("matrixnetwork","character"),
+#    vartypes = c("matrix,network","character"),
 #    defaultvalues = list(NULL,NULL),
 #    required = c(TRUE,FALSE))
 #  x<-a$x;attrname<-a$attrname
@@ -1428,7 +1406,7 @@
 #InitErgm.edgecov<-function (nw, m, arglist, ...) {
 #  a <- ergm.checkargs("edgecov", arglist,
 #    varnames = c("x", "attrname"),
-#    vartypes = c("matrixnetwork", "character"),
+#    vartypes = c("matrix,network", "character"),
 #    defaultvalues = list(NULL, NULL),
 #    required = c(TRUE, FALSE))
 #  x<-a$x;attrname<-a$attrname
@@ -1990,7 +1968,7 @@
 #InitErgm.hamming<-function (nw, m, arglist, drop=TRUE, ...) {
 #  a <- ergm.checkargs("hamming", arglist=arglist,
 #    varnames = c("x","cov","attrname"),
-#    vartypes = c("matrixnetwork","matrixnetwork","character"),
+#    vartypes = c("matrix,network","matrix,network","character"),
 #    defaultvalues = list(nw,NULL,NULL),
 #    required = c(FALSE,FALSE,FALSE))
 #  attrname<-a$attrname
@@ -2094,7 +2072,7 @@
 #  ergm.checkdirected("hammingmix", is.directed(nw), requirement=TRUE)
 #  a <- ergm.checkargs("hammingmix", arglist=arglist,
 #    varnames = c("attrname","x","base","contrast"),
-#    vartypes = c("character","matrixnetwork","numeric","logical"),
+#    vartypes = c("character","matrix,network","numeric","logical"),
 #    defaultvalues = list(NULL,nw,0,FALSE),
 #    required = c(TRUE,FALSE,FALSE,FALSE))
 #  attrname<-a$attrname
@@ -2515,7 +2493,7 @@
 #InitErgm.localtriangle<-function (nw, m, arglist, ...) {
 #  a <- ergm.checkargs("localtriangle", arglist,
 #    varnames = c("x", "attrname"),
-#    vartypes = c("matrixnetwork", "character"),
+#    vartypes = c("matrix,network", "character"),
 #    defaultvalues = list(NULL, NULL),
 #    required = c(TRUE, FALSE))
 #  x<-a$x;attrname<-a$attrname
