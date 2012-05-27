@@ -38,7 +38,7 @@ ergm.getMCMCsample <- function(nw, model, MHproposal, eta0, control,
     statsmatrix <- matrix(z$s, nrow=control$MCMC.samplesize,
                           ncol=Clist$nstats,
                           byrow = TRUE)
-    newnetwork <- newnw.extract(nw,z)
+    newnetwork <- newnw.extract(nw,z,output=control$network.output)
     newnetworks <- list(newnetwork)
   }else{
     control.parallel <- control
@@ -46,7 +46,7 @@ ergm.getMCMCsample <- function(nw, model, MHproposal, eta0, control,
     
     cl <- ergm.getCluster(control, verbose)
     #
-    #   Run the jobs with rpvm or Rmpi
+    #   Run the jobs on a cluster
     #
     flush.console()
     outlist <- clusterCall(cl,ergm.mcmcslave,
@@ -73,7 +73,7 @@ ergm.getMCMCsample <- function(nw, model, MHproposal, eta0, control,
                                   byrow = TRUE))
     }
 
-    newnetworks[[i]]<-newnetwork<-newnw.extract(nw,z)
+    newnetworks[[i]]<-newnetwork<-newnw.extract(nw,z,output=control$network.output)
     if(verbose){cat("parallel samplesize=",nrow(statsmatrix),"by",
                     control.parallel$samplesize,"\n")}
     
