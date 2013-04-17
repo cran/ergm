@@ -1,12 +1,12 @@
-%  File ergm/man/control.ergm.Rd
-%  Part of the statnet package, http://statnet.org
+%  File man/control.ergm.Rd in package ergm, part of the Statnet suite
+%  of packages for network analysis, http://statnet.org .
 %
 %  This software is distributed under the GPL-3 license.  It is free,
-%  open source, and has the attribution requirements (GPL Section 7) in
-%    http://statnet.org/attribution
+%  open source, and has the attribution requirements (GPL Section 7) at
+%  http://statnet.org/attribution
 %
-%  Copyright 2012 the statnet development team
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  Copyright 2003-2013 Statnet Commons
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{control.ergm}
 \alias{control.ergm}
 \title{ Auxiliary for Controlling ERGM Fitting }
@@ -25,7 +25,6 @@ control.ergm(drop=TRUE,
              main.hessian=TRUE,
 
              MPLE.max.dyad.types=1e+6, 
-             MPLE.max.samplesize=100000,
              MPLE.samplesize=50000,                       
              MPLE.type=c("glm", "penalized"),
                       
@@ -40,9 +39,10 @@ control.ergm(drop=TRUE,
              MCMC.burnin.check.alpha=0.01,
              MCMC.runtime.traceplot=FALSE,
              MCMC.init.maxedges=20000,
+             MCMC.max.maxedges=Inf,
              MCMC.addto.se=TRUE,
              MCMC.compress=FALSE,
-             MCMC.packagenames="ergm",
+             MCMC.packagenames=c(),
 
              SAN.maxit=10,
              SAN.control=control.san(
@@ -61,19 +61,25 @@ control.ergm(drop=TRUE,
              MCMLE.conv.min.pval=0.5,
              MCMLE.NR.maxit=100,
              MCMLE.NR.reltol=sqrt(.Machine$double.eps),
-             MCMLE.obs.MCMC.samplesize=MCMC.samplesize,
-             MCMLE.obs.MCMC.interval=MCMC.interval,
-             MCMLE.obs.MCMC.burnin=MCMC.burnin,
+             obs.MCMC.samplesize=MCMC.samplesize,
+             obs.MCMC.interval=MCMC.interval,
+             obs.MCMC.burnin=MCMC.burnin,
              MCMLE.check.degeneracy=FALSE,
              MCMLE.MCMC.precision=0.05,
              MCMLE.metric=c("lognormal", "Median.Likelihood",
                "EF.Likelihood", "naive"),
              MCMLE.method=c("BFGS","Nelder-Mead"),
              MCMLE.trustregion=20,
+             MCMLE.dampening=FALSE,
+             MCMLE.dampening.min.ess=20,
+             MCMLE.dampening.level=0.1,
              MCMLE.steplength=0.5,
              MCMLE.adaptive.trustregion=3,
              MCMLE.adaptive.epsilon=0.01,
              MCMLE.sequential=TRUE,
+             MCMLE.density.guard.min=10000,
+             MCMLE.density.guard=exp(3),
+
 
              SA.phase1_n=NULL, 
              SA.initial_gain=NULL, 
@@ -92,13 +98,7 @@ control.ergm(drop=TRUE,
              Step.maxit=50,
              Step.gridsize=100,
 
-             loglik.control=control.ergm.bridge(MCMC.burnin=MCMC.burnin,
-                         MCMC.interval=MCMC.interval,
-                         MCMC.samplesize=MCMC.samplesize,
-                         MCMC.prop.weights=MCMC.prop.weights,
-                         MCMC.prop.args=MCMC.prop.args,
-                         MCMC.init.maxedges=MCMC.init.maxedges,
-                         MCMC.packagenames=MCMC.packagenames),
+             loglik.control=control.logLik.ergm(),
 
              seed=NULL,
              parallel=0,
@@ -180,10 +180,6 @@ control.ergm(drop=TRUE,
     a compression algorithm that allocates space based on 
     \code{MPLE.max.dyad.types}.
   }
-  \item{MPLE.max.samplesize}{Not currently used.
-    Was the sample size to use for endogenous
-    sampling in the pseudolikelihood computation.
-  }
   \item{MPLE.samplesize}{Not currently documented; used in 
     conditional-on-degree version of MPLE.
   }
@@ -240,7 +236,11 @@ control.ergm(drop=TRUE,
   \item{MCMC.runtime.traceplot}{Logical:  If TRUE, plot traceplots of 
     the MCMC sample after every MCMC MLE iteration.
   }
-  \item{MCMC.init.maxedges}{Maximum number of edges expected in network.
+  \item{MCMC.init.maxedges, MCMC.max.maxedges}{Maximum number of edges
+    expected in network. Starting at \code{MCMC.init.maxedges}, it will
+    be incremented by a factor of 10 if exceeded during fitting, up to
+    \code{MCMC.max.maxedges}, at which point the process will stop with
+    an error.
   }
   \item{MCMC.addto.se}{Not yet documented.
   }
@@ -248,8 +248,9 @@ control.ergm(drop=TRUE,
     returned is compressed to the set of unique statistics with a 
     column of frequencies post-pended.
   }
-  \item{MCMC.packagenames}{Names of packages in which change statistic
-    functions are found.
+  \item{MCMC.packagenames}{Names of packages in which to look for change statistic
+    functions in addition to those autodetected. This argument should not be
+    needed outside of very strange setups.
   }
 
   \item{SAN.maxit}{When \code{target.stats} argument is passed to
@@ -280,7 +281,7 @@ control.ergm(drop=TRUE,
   }
   \item{MCMLE.NR.reltol}{Not yet documented.
   }
-  \item{MCMLE.obs.MCMC.samplesize,MCMLE.obs.MCMC.burnin,MCMLE.obs.MCMC.interval}{
+  \item{obs.MCMC.samplesize,obs.MCMC.burnin,obs.MCMC.interval}{
     Sample size, burnin, and interval parameters for the MCMC sampling used
     when unobserved data are present in the estimation routine.    
   }
@@ -306,6 +307,9 @@ control.ergm(drop=TRUE,
     allow for the approximated likelihood at a given iteration.
     See Snijders (2002) for details.
   }
+  \item{MCMLE.dampening}{(logical) Should likelihood dampening be used?}
+  \item{MCMLE.dampening.min.ess}{The effective sample size below which dampening is used.}
+  \item{MCMLE.dampening.level}{The proportional distance from boundary of the convex hull move.}
   \item{MCMLE.steplength}{Multiplier for step length, which may 
     (for values less than one) 
     make fitting more stable at the cost of efficiency.
@@ -332,6 +336,15 @@ control.ergm(drop=TRUE,
     TRUE option may help if the \code{target.stats} 
     in the \code{\link{ergm}} function are far from the
     initial network.
+  }
+  \item{MCMLE.density.guard.min, MCMLE.density.guard}{
+    A simple heuristic to stop optimization if it finds itself in an
+    overly dense region, which usually indicates ERGM degeneracy: if the
+    sampler encounters a network configuration that has more than
+    \code{MCMLE.density.guard.min} edges and whose number of edges is
+    exceeds the observed network by more than
+    \code{MCMLE.density.guard}, the optimization process will be stopped
+    with an error.
   }
   \item{SA.phase1_n}{Number of MCMC samples to draw
     in Phase 1 of the stochastic approximation algorithm.

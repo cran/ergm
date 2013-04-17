@@ -1,189 +1,27 @@
-%  File ergm/man/ergm-internal.Rd
-%  Part of the statnet package, http://statnet.org
+%  File man/ergm-internal.Rd in package ergm, part of the Statnet suite
+%  of packages for network analysis, http://statnet.org .
 %
 %  This software is distributed under the GPL-3 license.  It is free,
-%  open source, and has the attribution requirements (GPL Section 7) in
-%    http://statnet.org/attribution
+%  open source, and has the attribution requirements (GPL Section 7) at
+%  http://statnet.org/attribution
 %
-%  Copyright 2012 the statnet development team
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  Copyright 2003-2013 Statnet Commons
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{ergm-internal}
 \title{Internal ergm Objects}
 
-\alias{ConstraintImplications}
 
-\alias{InitConstraint.atleast}
-\alias{InitConstraint.atmost}
-\alias{InitConstraint.bd}
-\alias{InitConstraint.degreedist}
-\alias{InitConstraint.degrees}
-\alias{InitConstraint.degreesHexad}
-\alias{InitConstraint.degreesTetrad}
-\alias{InitConstraint.degreessimple}
-\alias{InitConstraint.edges}
-\alias{InitConstraint.hamming}
-\alias{InitConstraint.indegreedist}
-\alias{InitConstraint.nodedegrees}
-\alias{InitConstraint.observed}
-\alias{InitConstraint.outdegreedist}
-\alias{InitConstraint.ranks}
-
-\alias{InitErgm.D.dyad}
-\alias{InitErgm.D.edge}
-\alias{InitErgm.D.off}
-\alias{InitErgm.altistar}
-\alias{InitErgm.altostar}
-\alias{InitErgm.b1kappa}
-\alias{InitErgm.b1share}
-\alias{InitErgm.b2kappa}
-\alias{InitErgm.b2share}
-\alias{InitErgm.bichange}
-\alias{InitErgm.biduration}
-\alias{InitErgm.biendure}
-\alias{InitErgm.bounded.degree}
-\alias{InitErgm.bounded.idegree}
-\alias{InitErgm.bounded.istar}
-\alias{InitErgm.bounded.kstar}
-\alias{InitErgm.bounded.odegree}
-\alias{InitErgm.bounded.ostar}
-\alias{InitErgm.bounded.triangle}
-\alias{InitErgm.degreep}
-\alias{InitErgm.dissolve}
-\alias{InitErgm.duration}
-\alias{InitErgm.factor}
-\alias{InitErgm.formation}
-\alias{InitErgm.geodegree}
-\alias{InitErgm.gwb1706}
-\alias{InitErgm.gwb1share}
-\alias{InitErgm.gwb2706}
-\alias{InitErgm.gwb2share}
-\alias{InitErgm.gwdegree706}
-\alias{InitErgm.gwdegreealpha}
-\alias{InitErgm.gwdegreelambda}
-\alias{InitErgm.hamming.weighted}
-\alias{InitErgm.hammingmix.constant}
-\alias{InitErgm.heideriandynamic}
-\alias{InitErgm.hiertriad}
-\alias{InitErgm.hiertriaddegree}
-\alias{InitErgm.icvar}
-\alias{InitErgm.idc}
-\alias{InitErgm.intransitivedynamic}
-\alias{InitErgm.intransitivity}
-\alias{InitErgm.kappa}
-\alias{InitErgm.monopolymixmat}
-\alias{InitErgm.simmeliandynamic}
-\alias{InitErgm.spatial}
-\alias{InitErgm.transitivedynamic}
-\alias{InitErgm.transitivity}
-
-\alias{InitErgmTerm.absdiff}
-\alias{InitErgmTerm.absdiffcat}
-\alias{InitErgmTerm.adegcor}
-\alias{InitErgmTerm.altkstar}
-\alias{InitErgmTerm.asymmetric}
-\alias{InitErgmTerm.b1concurrent}
-\alias{InitErgmTerm.b1degree}
-\alias{InitErgmTerm.b1degree.edgecov}
-\alias{InitErgmTerm.b1factor}
-\alias{InitErgmTerm.b1mindegree}
-\alias{InitErgmTerm.b1mindegree.edgecov}
-\alias{InitErgmTerm.b1star}
-\alias{InitErgmTerm.b1starmix}
-\alias{InitErgmTerm.b1twostar}
-\alias{InitErgmTerm.b2concurrent}
-\alias{InitErgmTerm.b2degree}
-\alias{InitErgmTerm.b2degree.edgecov}
-\alias{InitErgmTerm.b2factor}
-\alias{InitErgmTerm.b2mindegree}
-\alias{InitErgmTerm.b2mindegree.edgecov}
-\alias{InitErgmTerm.b2star}
-\alias{InitErgmTerm.b2starmix}
-\alias{InitErgmTerm.b2twostar}
-\alias{InitErgmTerm.balance}
-\alias{InitErgmTerm.coincidence}
-\alias{InitErgmTerm.concurrent}
-\alias{InitErgmTerm.concurrentties}
-\alias{InitErgmTerm.concurrentties2}
 \alias{InitErgmTerm.conddegmple}
-\alias{InitErgmTerm.ctriad}
-\alias{InitErgmTerm.ctriple}
-\alias{InitErgmTerm.cycle}
-\alias{InitErgmTerm.cyclicalties}
-\alias{InitErgmTerm.cyclicalties2}
-\alias{InitErgmTerm.degcor}
-\alias{InitErgmTerm.degcrossprod}
-\alias{InitErgmTerm.degree}
-\alias{InitErgmTerm.density}
-\alias{InitErgmTerm.dsp}
-\alias{InitErgmTerm.dyadcov}
-\alias{InitErgmTerm.edge.ages}
-\alias{InitErgmTerm.edgecov}
-\alias{InitErgmTerm.edgecov.ages}
-\alias{InitErgmTerm.edges}
-\alias{InitErgmTerm.edges.ageinterval}
-\alias{InitErgmTerm.esp}
-\alias{InitErgmTerm.gwb1degree}
-\alias{InitErgmTerm.gwb2degree}
-\alias{InitErgmTerm.gwdegree}
-\alias{InitErgmTerm.gwdsp}
-\alias{InitErgmTerm.gwesp}
-\alias{InitErgmTerm.gwidegree}
-\alias{InitErgmTerm.gwnsp}
-\alias{InitErgmTerm.gwodegree}
-\alias{InitErgmTerm.hamming}
-\alias{InitErgmTerm.hammingmix}
-\alias{InitErgmTerm.homoproportion}
-\alias{InitErgmTerm.idegree}
-\alias{InitErgmTerm.indegreepopularity}
-\alias{InitErgmTerm.intransitive}
-\alias{InitErgmTerm.isolates}
-\alias{InitErgmTerm.istar}
-\alias{InitErgmTerm.kstar}
-\alias{InitErgmTerm.localtriangle}
-\alias{InitErgmTerm.m2star}
-\alias{InitErgmTerm.match}
-\alias{InitErgmTerm.meandeg}
-\alias{InitErgmTerm.mutual}
-\alias{InitErgmTerm.nearsimmelian}
-\alias{InitErgmTerm.nodecov}
-\alias{InitErgmTerm.nodefactor}
-\alias{InitErgmTerm.nodeicov}
-\alias{InitErgmTerm.nodeifactor}
-\alias{InitErgmTerm.nodemain}
-\alias{InitErgmTerm.nodematch}
-\alias{InitErgmTerm.nodemix}
-\alias{InitErgmTerm.nodeocov}
-\alias{InitErgmTerm.nodeofactor}
-\alias{InitErgmTerm.nsp}
-\alias{InitErgmTerm.odegree}
-\alias{InitErgmTerm.opentriad}
-\alias{InitErgmTerm.ostar}
-\alias{InitErgmTerm.outdegreepopularity}
-\alias{InitErgmTerm.pdegcor}
-\alias{InitErgmTerm.rdegcor}
-\alias{InitErgmTerm.receiver}
-\alias{InitErgmTerm.sender}
-\alias{InitErgmTerm.simmelian}
-\alias{InitErgmTerm.simmelianties}
-\alias{InitErgmTerm.smalldiff}
-\alias{InitErgmTerm.sociality}
-\alias{InitErgmTerm.threepath}
-\alias{InitErgmTerm.transitive}
-\alias{InitErgmTerm.transitiveties}
-\alias{InitErgmTerm.transitiveties2}
-\alias{InitErgmTerm.triadcensus}
-\alias{InitErgmTerm.triangle}
-\alias{InitErgmTerm.triangles}
-\alias{InitErgmTerm.tripercent}
-\alias{InitErgmTerm.ttriad}
-\alias{InitErgmTerm.ttriple}
-\alias{InitErgmTerm.twopath}
+\alias{as.edgelist.network}
+\alias{ergm.ConstraintImplications}
+\alias{ergm.MCMC.packagenames}
+\alias{ergm.MHP.table}
+\alias{ergm.init.methods}
+\alias{which.package.InitFunction}
+% MH proposals ought to get a documentation entry eventually.
 
 \alias{InitMHP.CondDegree}
 \alias{InitMHP.CondDegreeDist}
-\alias{InitMHP.CondDegreeHexad}
-\alias{InitMHP.CondDegreeSimple}
-\alias{InitMHP.CondDegreeTetrad}
 \alias{InitMHP.CondInDegreeDist}
 \alias{InitMHP.CondOutDegreeDist}
 \alias{InitMHP.ConstantEdges}
@@ -191,17 +29,20 @@
 \alias{InitMHP.HammingTNT}
 \alias{InitMHP.TNT}
 \alias{InitMHP.TNT10}
-\alias{InitMHP.dissolution}
-\alias{InitMHP.dissolutionMLE}
-\alias{InitMHP.dissolutionNonObservedMLE}
-\alias{InitMHP.formation}
-\alias{InitMHP.formationMLE}
-\alias{InitMHP.formationMLETNT}
-\alias{InitMHP.formationNonObservedMLE}
-\alias{InitMHP.formationTNT}
 \alias{InitMHP.nobetweengroupties}
 \alias{InitMHP.randomtoggle}
 \alias{InitMHP.randomtoggleNonObserved}
+\alias{InitMHP.CondB1Degree}
+\alias{InitMHP.CondB2Degree}
+\alias{InitMHP.CondInDegree}
+\alias{InitMHP.CondOutDegree}
+\alias{InitMHP.blockdiag}
+\alias{InitMHP.blockdiagNonObserved}
+\alias{InitMHP.blockdiagTNT}
+\alias{InitWtMHP.DescRank}
+\alias{InitWtMHP.DescRankEquivalent}
+\alias{InitWtMHP.StdNormal}
+\alias{InitWtMHP.StdNormalRank}
 
 \alias{MHproposal}
 \alias{MHproposal.MHproposal}
@@ -209,14 +50,14 @@
 \alias{MHproposal.character}
 \alias{MHproposal.ergm}
 \alias{MHproposal.formula}
-\alias{MHproposals}
 
 \alias{approx.hotelling.diff.test}
 \alias{append.rhs.formula}
 \alias{as.edgelist}
 \alias{as.edgelist.compressed}
 \alias{as.network.uncompressed}
-\alias{assignvariables}
+\alias{autoboot.ergm}
+\alias{autoboot.se.ergm}
 \alias{central.network}
 \alias{check.ErgmTerm}
 \alias{coef.length.model}
@@ -224,8 +65,6 @@
 \alias{colMeans.mcmc.list}
 \alias{compress.data.frame}
 \alias{control.ergm.toplevel}
-\alias{control.godfather}
-\alias{control.logLik.stergm}
 \alias{control.simulate.ergm.toplevel}
 \alias{copy.named}
 \alias{degreedist}
@@ -257,7 +96,6 @@
 \alias{ergm.curved.statsmatrix}
 \alias{ergm.degeneracy}
 \alias{ergm.design}
-\alias{ergm.el.lasttoggle}
 \alias{ergm.estimate}
 \alias{ergm.eta}
 \alias{ergm.etagrad}
@@ -273,7 +111,6 @@
 \alias{ergm.getmodel}
 \alias{ergm.getnetwork}
 \alias{ergm.getterms}
-\alias{ergm.godfather}
 \alias{ergm.independencemodel}
 \alias{ergm.initialfit}
 \alias{ergm.logisticdeviance}
@@ -309,7 +146,6 @@
 \alias{is.ergm}
 \alias{is.invertible}
 \alias{largest.components}
-\alias{license.statnet}
 \alias{llik.fun}
 \alias{llik.fun.EF}
 \alias{llik.fun.median}
@@ -327,8 +163,8 @@
 \alias{llik.hessian2}
 \alias{llik.info3}
 \alias{llik.mcmcvar3}
-\alias{logLik.stergm.CMLE}
 \alias{logistftest}
+\alias{logp.rank.ergm}
 \alias{mcmc.diagnostics.default}
 \alias{midarrow}
 \alias{model.matrix.pen.glm}
@@ -337,6 +173,7 @@
 \alias{mvmodel.default}
 \alias{mvmodel.ergm}
 \alias{mvmodel.formula}
+\alias{mk.conlist}
 \alias{myLibLoc}
 \alias{newnw.extract}
 \alias{nologLik.message}
@@ -352,16 +189,6 @@
 \alias{sociality.formula}
 \alias{sociality.network}
 \alias{sort.data.frame}
-\alias{statnet.edit}
-\alias{statnetShowDoc}
-\alias{statnetbrowseURL}
-\alias{stergm.CMLE}
-\alias{stergm.EGMME}
-\alias{stergm.EGMME.SA}
-\alias{stergm.EGMME.SA.Phase2.C}
-\alias{stergm.EGMME.initialfit}
-\alias{stergm.RM}
-\alias{stergm.getMCMCsample}
 \alias{summary.statsmatrix.ergm}
 \alias{sweep.mcmc.list}
 \alias{term.list.formula}
@@ -370,12 +197,37 @@
 \alias{vector.namesmatch}
 \alias{xyplot.mcmc.list.ergm}
 
+\alias{print.control.list}
+\alias{set.control.class}
+\alias{check.control.class}
+
+\alias{prune.conlist}
+\alias{standardize.network}
+\alias{unset.offset.formula}
+
+\alias{is.dyad.independent.NULL}
+\alias{is.dyad.independent.conlist}
+\alias{is.dyad.independent.ergm.model}
+
+
+\alias{get.free.dyads}
+\alias{get.miss.dyads}
+\alias{geweke.diag.ar}
+\alias{invert.network}
+
+\alias{mk.edge.to.pos.lasttoggle.f}
+\alias{as.edgelist.matrix}
+
+\alias{offset.info.formula}
+\alias{remove.offset.formula}
+
+
 \description{
-Internal ergm functions.}
+Internal \code{\link[=ergm-package]{ergm}} functions.}
 
 \details{
 Most of these are not to be called by the user (or in some cases are just
 waiting for proper documentation to be written :).}
 
-\seealso{ergm, statnet-package}
+\seealso{ergm-package}
 \keyword{internal}

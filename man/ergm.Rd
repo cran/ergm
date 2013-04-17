@@ -1,28 +1,34 @@
-%  File ergm/man/ergm.Rd
-%  Part of the statnet package, http://statnet.org
+%  File man/ergm.Rd in package ergm, part of the Statnet suite
+%  of packages for network analysis, http://statnet.org .
 %
 %  This software is distributed under the GPL-3 license.  It is free,
-%  open source, and has the attribution requirements (GPL Section 7) in
-%    http://statnet.org/attribution
+%  open source, and has the attribution requirements (GPL Section 7) at
+%  http://statnet.org/attribution
 %
-%  Copyright 2012 the statnet development team
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  Copyright 2003-2013 Statnet Commons
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{ergm}
 \alias{ergm}
 \alias{ergm.object}
 \title{Exponential Family Random Graph Models}
 \description{
-  \code{\link{ergm}} is used to fit linear exponential random network models, in which
+  \code{\link{ergm}} is used to fit linear exponential random graph
+  models (ERGMs), in which
   the probability of a given network, \eqn{y}, on a set of nodes is 
-  \eqn{\exp(\theta{\cdot}g(y))/c(\theta)}, where 
-  \eqn{g(y)} is a vector of network statistics,
-  \eqn{\theta} is a parameter vector of the same length and \eqn{c(\theta)} is the
+  \eqn{h(y) \exp\{\eta(\theta) \cdot
+    g(y)\}/c(\theta)}, where
+  \eqn{h(y)} is the reference measure (usually \eqn{h(y)=1}),
+  \eqn{g(y)} is a vector of network statistics for \eqn{y},
+  \eqn{\eta(\theta)} is a natural parameter vector of the same 
+  length (with \eqn{\eta(\theta)=\theta} for most terms), and \eqn{c(\theta)} is the
   normalizing constant for the distribution.
   \code{\link{ergm}} can return either a maximum pseudo-likelihood
   estimate or an approximate maximum likelihood estimator based on a Monte Carlo scheme.
 }
 \usage{
 ergm (formula,
+      response=NULL,
+      reference=~Bernoulli,
       constraints=~.,
       offset.coef=NULL,
       target.stats=NULL,
@@ -38,17 +44,29 @@ ergm (formula,
     where \code{y} is a \code{\link[network]{network}} object or a matrix that can be
     coerced to a \code{\link[network]{network}}  object.  For the details on the possible
     \code{<model terms>}, see \code{\link{ergm-terms}} and Morris, Handcock and
-    Hunter (2008).  To create a
+    Hunter (2008) for binary ERGM terms and
+    Krivitsky (2012) for valued ERGM
+    terms (terms for weighted edges).  To create a
     \code{\link[network]{network}} object in \R, use the \code{network()} function,
     then add nodal attributes to it using the \code{\%v\%}
     operator if necessary. Enclosing a model term in \code{offset()}
     fixes its value to one specified in \code{offset.coef}.
   }
+  \item{response}{\emph{EXPERIMENTAL.} Name of the edge attribute whose value is to be
+    modeled. Defaults to \code{NULL} for simple presence or
+    absence, modeled via binary ERGM terms. Passing
+    anything but \code{NULL} uses valued ERGM terms.} 
+  
+  \item{reference}{\emph{EXPERIMENTAL.} A one-sided formula specifying
+    the reference measure (\eqn{h(y)}) to be used. (Defaults to \code{~Bernoulli}.)
+    See help for \link[=ergm-references]{ERGM reference measures} implemented in the
+    \code{\link[=ergm-package]{ergm}} package.}
+  
   \item{constraints}{A one-sided formula specifying one or more constraints
     on the support of the distribution of the networks being modeled,
     using syntax similar to the \code{formula} argument. Multiple constraints
     may be given, separated by \dQuote{+} operators.
-    Together with the model terms in the formula, the constraints
+    Together with the model terms in the formula and the reference measure, the constraints
     define the distribution of networks being modeled.
 
     It is also possible to specify a proposal function directly
@@ -58,45 +76,14 @@ ergm (formula,
 
     The default is \code{~.}, for an unconstrained model.
 
-    The constraint terms currently implemented are 
-    \describe{
-      \item{\code{.} or \code{NULL}}{
-        A placeholder for no constraints: all networks of a
-        particular size and type have non-zero probability.
-        Cannot be combined with other constraints.
-      }
-      \item{\code{bd(attribs,maxout,maxin,minout,minin)}}{
-        Constrain maximum and minimum vertex degree. See
-        \dQuote{Placing Bounds
-        on Degrees} section for more information.
-      }
-      \item{\code{degrees} and \code{nodedegrees}}{
-        Preserve the degree of each vertex of the given network: only networks
-        whose vertex degrees are the same as those in the network passed
-        in the model formula have non-zero probability.
-      }
-      \item{\code{degreedist}}{
-        Preserve the degree distribution of the given network: only networks
-        whose degree distributions are the same as those in the network passed
-        in the model formula have non-zero probability.
-      }
-      \item{\code{indegreedist} and \code{outdegreedist}}{
-        Preserve the (respectively) indegree or outdegree distribution of 
-        the given network.
-      }
-      \item{\code{edges}}{
-        Preserve the edge count of the given network: only networks
-        having the same number of edges as the network passed
-        in the model formula have non-zero probability.
-      }
-      \item{\code{observed}}{
-        Preserve the observed dyads of the given network.
-      }
-    }
-    Not all combinations of the above are supported.
+    See the \link[=ergm-constraints]{ERGM constraints} documentation for
+    the constraints implemented in the \code{\link[=ergm-package]{ergm}}
+    package. Other packages may add their own constraints.
+    
+    Note that not all possible combinations of constraints and reference
+    measures are supported.
   }
-  \item{offset.coef}{Not yet documented.
-  }
+  \item{offset.coef}{A vector of coefficients for the offset terms.}
   \item{target.stats}{vector of "observed network statistics,"
     if these statistics are for some reason different than the 
     actual statistics of the network on the left-hand side of
@@ -131,17 +118,6 @@ ergm (formula,
   \item{\dots}{Additional
     arguments, to be passed to lower-level functions.
   }
-}
-
-\section{Model Terms}{
-  The \code{\link{ergm}} function allows the user to explore a large number
-  of potential models for their network data.  The
-  terms currently supported by the program,
-  and a brief description of each is given in the documentation
-  \code{\link{ergm-terms}}. 
-  In the \code{\link{formula}} for the model, the model terms are various function-like
-  calls, some of which require arguments, separated by \code{+} signs.
-  For a more detailed understanding of the model terms, see and Morris, Handcock and Hunter (2008).
 }
 
 \value{\code{\link{ergm}} returns an object of class \code{\link{ergm}} that is a list
@@ -225,6 +201,11 @@ Although each of the statistics in a given model is a summary
 statistic for the entire network, it is rarely necessary to
 calculate statistics for an entire network
 in a proposed Metropolis-Hastings step.
+%  The reason for this is that we may assume that each statistic equals
+% zero for the observed network (translating each statistic by
+% a constant does not change the probability model), and then
+% it is only necessary to calculate the changes in the various
+%statistics for a proposed Metropolis-Hastings step.  
 Thus, for example, if the triangle term is included in the model,
 a census of all triangles in the observed network is never
 taken; instead, only the change in the number of triangles
@@ -238,6 +219,9 @@ simple Newton-Raphson algorithm to approximate the MLE.
 An alternative style of maximum likelihood estimation is to use a stochastic
 approximation algorithm. This can be chosen with the 
 \code{control.ergm(style="Robbins-Monro")} option.
+%There seems little reason to implement the Newton-Raphson
+%algorithm in C since it moves very quickly in \R and
+%it is easier to alter the code if it is written in \R.
 
 The mechanism for proposing new networks for the MCMC sampling
 scheme, which is a Metropolis-Hastings algorithm, depends on 
@@ -252,133 +236,16 @@ be controlled using the \code{prop.weights} argument to the
 The package is designed so that the user could conceivably add additional 
 proposal types. 
 }
-  
-\section{Placing Bounds on Degrees:}{
-There are many times when one may wish to condition on the
-number of inedges or outedges possessed by a node, either as a
-consequence of some intrinsic property of that node (e.g., to control for 
-activity or popularity processes), to account
-for known outliers of some kind, and thus we wish to limit its indegree, an
-intrinsic property of the sampling scheme whence came our data (e.g.,
-the survey asked everyone to name only three friends total) or as a
-function of the attributes of the nodes to which a node has edges
-(e.g., we specify that nodes designated \dQuote{male} have a maximum number
-of outdegrees to nodes designated \dQuote{female}).  To accomplish this we
-use the \code{constraints} term  \code{bd}.
-
-Let's consider the simple cases first. 
-Suppose you want to condition on the total number of degrees
-regardless of attributes.  That is, if you had a survey that asked
-respondents to name three alters and no more, then you might want to
-limit your maximal outdegree to three without regard to any of the
-alters' attributes. The argument is then:  
-
-   \code{constraints=~bd(maxout=3)}
-
-Similar calls are used to restrict the number of indegrees
-(\code{maxin}), the minimum number of outdegrees
-(\code{minout}), and the minimum number of indegrees
-(\code{minin}).
-
-You can also set ego specific limits. For example:
-
-   \code{constraints=bd(maxout=rep(c(3,4),c(36,35)))}
-
-limits the first 36 to 3 and the other 35 to 4 outdegrees.
-
-Multiple restrictions can be combined. \code{bd} is very flexible.
-In general, the \code{bd} term can contain up to five arguments:
-
-  \preformatted{
-    bd(attribs=attribs,
-       maxout=maxout,
-       maxin=maxin,
-       minout=minout,
-       minin=minin)
-  }
-
-Omitted arguments are unrestricted, and arguments of length 1
-are replicated out to all nodes (as above). If an individual
-entry in \code{maxout},..., \code{minin} is \code{NA} then
-no restriction of that kind is applied to that actor.
-
-In general, \code{attribs} is a matrix of the attributes on
-which we are conditioning.  The dimensions of \code{attribs}
-are \code{n_nodes} rows by \code{attrcount} columns, where
-\code{attrcount} is the number of distinct attribute values
-on which we want to condition (i.e., a separate column is
-required for \dQuote{male} and \dQuote{female} if we want to condition on
-the number of ties to both \dQuote{male} and \dQuote{female} partners).
-The value of \code{attribs[n, i]}, therefore, is \code{TRUE}
-if node \code{n} has attribute value i, and \code{FALSE} otherwise.
-(Note that, since each column represents only a single value
-of a single attribute, the values of this matrix are all
-Boolean (\code{TRUE} or \code{FALSE}).)  It is important to
-note that \code{attribs} is a matrix of nodal attributes,
-not alter attributes.
-
-So, for instance, if we wanted to construct an \code{attribs} matrix
-with two columns, one each for male and female attribute
-values (we are conditioning on these values of the attribute
-\dQuote{sex}), and the attribute sex is represented in ads.sex as
-an \code{n_node}-long vector of 0s and 1s (men and women),
-then our code would look as follows:
-
-\preformatted{
- # male column: bit vector, TRUE for males
- attrsex1 <- (ads.sex == 0) 
- # female column: bit vector, TRUE for females
- attrsex2 <- (ads.sex == 1)
- # now create attribs matrix
- attribs <- matrix(ncol=2,nrow=71, data=c(attrsex1,attrsex2))
-}
-
-\code{maxout} is a matrix of alter attributes, with the same
-dimensions as the \code{attribs} matrix.  \code{maxout} is \code{n_nodes}
-rows by \code{attrcount} columns.  The value of \code{maxout[n,i]},
-therefore, is the maximum number of outdegrees permitted
-from node \code{n} to nodes with the attribute \code{i} (where a \code{NA}
-means there is no maximum).
-
-For example:  if we wanted to create a \code{maxout} matrix to work
-with our \code{attribs} matrix above, with a maximum from every
-node of five outedges to males and five outedges to females,
-our code would look like this:
-
-\preformatted{
-      # every node has maximum of 5 outdegrees to male alters
-      maxoutsex1 <- c(rep(5,71))
-      # every node has maximum of 5 outdegrees to female alters
-      maxoutsex2 <- c(rep(5,71))
-      # now create maxout matrix
-      maxout <- cbind(maxoutsex1,maxoutsex2)
-}
-
-The \code{maxin}, \code{minout}, and \code{minin} matrices
-are constructed exactly like the \code{maxout} matrix,
-except for the maximum allowed indegree, the minimum allowed
-outdegree, and the minimum allowed indegree, respectively.
-Note that in an undirected network, we only look at the outdegree
-matrices; \code{maxin} and \code{minin} will both be ignored
-in this case.
-
-
-
-
-
-
-
-
-
-
-  
-
-
-}
- 
 
 \references{
+%Handcock, M.S. (2000) \emph{Progress in Statistical Modeling of Drug User and 
+%  Sexual Networks}, Center for Statistics and the Social Sciences,
+%     University of Washington.
 
+%Handcock, M. S. (2002)
+%    \emph{Degeneracy and inference for social network models}
+%    Paper presented at the Sunbelt XXII International Social
+%Network Conference in New Orleans, LA.
 
 Admiraal R, Handcock MS (2007).
  \pkg{networksis}: Simulate bipartite graphs with fixed
@@ -454,12 +321,10 @@ Hunter DR, Handcock MS, Butts CT, Goodreau SM, Morris M (2008b).
  \emph{Journal of Statistical Software}, 24(3).
  \url{http://www.jstatsoft.org/v24/i03/}.
 
-Krivitsky PN, Handcock MS (2007).
- \pkg{latentnet}: Latent position and cluster models for
-  statistical networks.
- Seattle, WA.
- Version 2, \url{statnet.org}.
-
+Krivitsky PN (2012). Exponential-Family Random Graph Models for Valued
+Networks. \emph{Electronic Journal of Statistics}, 2012, 6,
+1100-1128. \href{http://dx.doi.org/10.1214/12-EJS696}{\code{doi:10.1214/12-EJS696}}
+ 
 Morris M, Handcock MS, Hunter DR (2008).
  Specification of Exponential-Family Random Graph Models:
   Terms and Computational Aspects.
@@ -475,8 +340,9 @@ Available from
 }
 
 \seealso{network, \%v\%, \%n\%, \code{\link{ergm-terms}}, \code{\link{ergmMPLE}},
-         \code{\link{summary.ergm}}, \code{\link{print.ergm}}}
+  \code{\link{summary.ergm}}, \code{\link{print.ergm}}}
 \examples{
+\donttest{
 #
 # load the Florentine marriage data matrix
 #
@@ -527,7 +393,6 @@ summary(gest)
 # add terms for the propensity to form 2-stars and triangles
 # of families 
 #
-\donttest{
 gest <- ergm(flomarriage ~ kstar(1:2) + absdiff("wealth") + triangle)
 summary(gest)
 

@@ -1,17 +1,16 @@
-%  File ergm/man/mcmc.diagnostics.ergm.Rd
-%  Part of the statnet package, http://statnet.org
+%  File man/mcmc.diagnostics.ergm.Rd in package ergm, part of the Statnet suite
+%  of packages for network analysis, http://statnet.org .
 %
 %  This software is distributed under the GPL-3 license.  It is free,
-%  open source, and has the attribution requirements (GPL Section 7) in
-%    http://statnet.org/attribution
+%  open source, and has the attribution requirements (GPL Section 7) at
+%  http://statnet.org/attribution
 %
-%  Copyright 2012 the statnet development team
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  Copyright 2003-2013 Statnet Commons
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{mcmc.diagnostics}
 \alias{mcmc.diagnostics.ergm}
-\alias{mcmc.diagnostics.stergm}
 \alias{mcmc.diagnostics}
-\title{Conduct MCMC diagnostics on an ergm or stergm fit}
+\title{Conduct MCMC diagnostics on an ergm fit}
 \description{
   This function prints diagnistic information and creates simple diagnostic plots for the MCMC sampled
   statistics produced from a fit.
@@ -22,15 +21,10 @@
                                   curved=TRUE,
                                   vars.per.page=3,
                                   \dots) 
-\method{mcmc.diagnostics}{stergm} (object,  
-                                  center=TRUE,
-                                  curved=TRUE,
-                                  vars.per.page=3,
-                                  \dots) 
 }
 \arguments{
-  \item{object}{An ergm or stergm object.  See documentation for
-    \code{\link{ergm}} or \code{\link{stergm}}, respectively.
+  \item{object}{An ergm object.  See documentation for
+    \code{\link{ergm}}.
   }
   \item{center}{Logical:  If TRUE, ; center the samples
     on the observed statistics.
@@ -60,10 +54,14 @@
   \url{http://www.mrc-bsu.cam.ac.uk/bugs/classic/coda04/readme.shtml}.
 
   More information can be found by looking at the documentation of
-  \code{\link{ergm}} and \code{\link{stergm}}.
+  \code{\link{ergm}}.
   
 }
 \references{
+%  Warnes, G.W. (2000).  Multi-Chain and Parallel Algorithms for Markov
+%  Chain Monte Carlo. Dissertation, Department of Biostatistics,
+%  University of Washington,
+%
   Raftery, A.E. and Lewis, S.M. (1992).  One long run with diagnostics:
   Implementation strategies for Markov chain Monte Carlo. Statistical
   Science, 7, 493-497.
@@ -85,7 +83,7 @@
   object.  The function is mainly used for its side effect, which is
   to produce plots and summary output based on those plots.
 }
-\seealso{\code{\link{ergm}}, \code{\link{stergm}},\code{network} package,
+\seealso{\code{\link{ergm}}, \code{network} package,
          \code{coda} package, 
          \code{\link{summary.ergm}}
         }

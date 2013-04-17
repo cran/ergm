@@ -1,12 +1,12 @@
-%  File ergm/man/control.san.Rd
-%  Part of the statnet package, http://statnet.org
+%  File man/control.san.Rd in package ergm, part of the Statnet suite
+%  of packages for network analysis, http://statnet.org .
 %
 %  This software is distributed under the GPL-3 license.  It is free,
-%  open source, and has the attribution requirements (GPL Section 7) in
-%    http://statnet.org/attribution
+%  open source, and has the attribution requirements (GPL Section 7) at
+%  http://statnet.org/attribution
 %
-%  Copyright 2012 the statnet development team
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  Copyright 2003-2013 Statnet Commons
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{control.san}
 \alias{control.san}
 \title{ Auxiliary for Controlling SAN }
@@ -25,8 +25,8 @@ control.san(coef=NULL,
                       
             SAN.prop.weights="default",
             SAN.prop.args=list(),
-            SAN.packagenames="ergm",
-
+            SAN.packagenames=c(),
+            MPLE.samplesize = 50000,
             network.output="network",
 
             seed=NULL,
@@ -71,9 +71,12 @@ control.san(coef=NULL,
   \item{SAN.prop.args}{An alternative, direct way of specifying additional 
     arguments to proposal.
   }
-  \item{SAN.packagenames}{Names of packages in which 
-    changestatistics are found. 
-    Currently unused as \code{ergm} is presumed.
+  \item{SAN.packagenames}{Names of packages in which to look for change statistic
+    functions in addition to those autodetected. This argument should not be
+    needed outside of very strange setups.
+  }
+  \item{MPLE.samplesize}{Not currently documented; used in 
+    conditional-on-degree version of MPLE.
   }
   \item{network.output}{R class with which to output 
     networks. The options are "network" (default) and "edgelist.compressed" 
@@ -102,4 +105,5 @@ control.san(coef=NULL,
 }
 \seealso{ \code{\link{san}}
 }
+%\keyword{simulation}
 \keyword{models}

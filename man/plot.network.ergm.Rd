@@ -1,12 +1,12 @@
-%  File ergm/man/plot.network.ergm.Rd
-%  Part of the statnet package, http://statnet.org
+%  File man/plot.network.ergm.Rd in package ergm, part of the Statnet suite
+%  of packages for network analysis, http://statnet.org .
 %
 %  This software is distributed under the GPL-3 license.  It is free,
-%  open source, and has the attribution requirements (GPL Section 7) in
-%    http://statnet.org/attribution
+%  open source, and has the attribution requirements (GPL Section 7) at
+%  http://statnet.org/attribution
 %
-%  Copyright 2012 the statnet development team
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  Copyright 2003-2013 Statnet Commons
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{plot.network.ergm}
 \alias{plot.network.ergm}
 \title{Two-Dimensional Visualization of Networks }
@@ -17,6 +17,7 @@
   The function is based on the 
   plotting capabilities of the \code{\link[network]{network}} package with additional
   pre-processing of arguments.
+  Some of the capabilites require the \code{\link[latentnet]{latentnet}} package.
   See \code{\link[network]{plot.network}} in the \code{\link[network]{network}} package for details.
 }
 \usage{
@@ -70,10 +71,17 @@
     cex.main=par("cex.main"), 
     cex.sub=par("cex.sub"),
     seed=NULL,
+    latent.control=list(maxit=500,
+                        trace=0,
+                        dyadsample=10000,
+                        penalty.sigma=c(5,0.5), 
+                        nsubsample=200),
     colornames="rainbow",
     verbose=FALSE, 
+    latent=FALSE, 
     \dots)
 }
+%- maybe also `usage' for other objects documented here.
 \arguments{
   \item{x}{ an object of class \code{\link[network]{network}}. }
   \item{attrname}{ an optional edge attribute, to be used to set edge values. }
@@ -84,6 +92,8 @@
   \item{usearrows}{ boolean; should arrows (rather than line segments) be used to indicate edges? }
   \item{mode}{ the vertex placement algorithm; this must correspond to a \code{network.layout} function.
     These include 
+    \code{"latent"}, \code{"latentPrior"},
+     and
     \code{"fruchtermanreingold"}. }
   \item{displayisolates}{ boolean; should isolates be displayed? }
   \item{interactive}{ boolean; should interactive adjustment of vertex placement be attempted? }
@@ -127,9 +137,11 @@
   \item{cex.main}{ Character expansion for the plot title.}
   \item{cex.sub}{ Character expansion for the plot sub-title.}
   \item{seed}{ Integer for seeding random number generator.  See \code{\link[base]{set.seed}}.}
+  \item{latent.control}{A list of parameters to control the \code{latent} and \code{latentPrior} models, \code{dyadsample} determines the size above which to sample the latent dyads; see \code{\link{ergm}} and \code{\link[stats]{optim}} for details.}
   \item{colornames}{A vector of color names that can be selected by index for
 the plot. By default it is \code{colors()}.}
   \item{verbose}{logical; if this is \code{TRUE}, we will print out more information as we run the function.}
+  \item{latent}{logical; use a two-dimensional latent space model based on the MLE fit.  See documentation for \code{ergmm()} in \code{\link[latentnet]{latentnet}}.}
   \item{\dots}{ additional arguments to \code{\link{plot}}. }
 }
 \details{
@@ -140,6 +152,10 @@ can be obtained.  Network layout -- if not specified directly
 using \code{coord} -- is determined via one of the various
 available algorithms.  These are (briefly) as follows:
 \enumerate{
+
+\item \code{latentPrior}: Use a two-dimensional latent space model based on a
+Bayesian minimum Kullback-Leibler fit. 
+See documentation for \code{latent()} in \code{\link{ergm}}.
 
 \item \code{random}: Vertices are placed (uniformly) randomly within a square region about the origin.
 
@@ -188,7 +204,9 @@ None.
 }
 \references{ Wasserman, S., and Faust, K.  (1994).  ``Social Network Analysis: Methods and Applications.''  Cambridge: Cambridge University Press. }
 \author{Carter T. Butts \email{buttsc@uci.edu} }
+%\note{  }
 
+ %~Make other sections like WARNING with \section{WARNING }{....} ~
 \section{Requires}{\code{mva}}
 
 \seealso{\code{\link{plot}} }
@@ -199,5 +217,5 @@ plot(flomarriage)  #Plot the Florentine Marriage data
 plot(network(10))  #Plot a random network
 \dontrun{plot(flomarriage,interactive="points")}
 }
-\keyword{ hplot }
-\keyword{ graphs }
+\keyword{ hplot }% at least one, from doc/KEYWORDS
+\keyword{ graphs }% __ONLY ONE__ keyword per line

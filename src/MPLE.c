@@ -1,12 +1,11 @@
-/*
- *  File ergm/src/MPLE.c
- *  Part of the statnet package, http://statnet.org
+/*  File src/MPLE.c in package ergm, part of the Statnet suite
+ *  of packages for network analysis, http://statnet.org .
  *
  *  This software is distributed under the GPL-3 license.  It is free,
- *  open source, and has the attribution requirements (GPL Section 7) in
- *    http://statnet.org/attribution
+ *  open source, and has the attribution requirements (GPL Section 7) at
+ *  http://statnet.org/attribution
  *
- *  Copyright 2012 the statnet development team
+ *  Copyright 2003-2013 Statnet Commons
  */
 #include "MPLE.h"
 #include "changestat.h"
@@ -34,19 +33,18 @@
 /* *** don't forget tail -> head, and so this function accepts
    tails before heads now */
 
-void MPLE_wrapper (int *tails, int *heads, int *dnedges,
-		   int *dn, int *dflag, int *bipartite, int *nterms, 
-		   char **funnames, char **sonames, double *inputs,  
-		   int *responsevec, double *covmat,
-		   int *weightsvector,
-		   double * offset, double * compressedOffset,
-		   int *maxNumDyadTypes, int *maxMPLEsamplesize, int *compressflag) {
+void MPLE_wrapper(int *tails, int *heads, int *dnedges,
+		  int *wl, int *ltails, int *lheads, int *dlnedges,
+		  int *dn, int *dflag, int *bipartite, int *nterms, 
+		  char **funnames, char **sonames, double *inputs,  
+		  int *responsevec, double *covmat,
+		  int *weightsvector,
+		  int *maxNumDyadTypes){
   Network nw[2];
   Vertex n_nodes = (Vertex) *dn; 
   Edge n_edges = (Edge) *dnedges;
   int directed_flag = *dflag;
   Vertex bip = (Vertex) *bipartite;
-  Edge maxMPLE = (Edge) *maxMPLEsamplesize;
   Model *m;
 
   GetRNGstate(); /* Necessary for R random number generator */
@@ -54,12 +52,9 @@ void MPLE_wrapper (int *tails, int *heads, int *dnedges,
                           n_nodes, directed_flag, bip, 0, 0, NULL);
   m=ModelInitialize(*funnames, *sonames, &inputs, *nterms);
   
-  if (*compressflag) 
-    MpleInit_hash(responsevec, covmat, weightsvector, offset, 
-		  compressedOffset, *maxNumDyadTypes, maxMPLE, nw, m); 
-  else
-    MpleInit_no_compress(responsevec, covmat, weightsvector, offset, 
-		  compressedOffset, *maxNumDyadTypes, maxMPLE, nw, m); 
+  if(*wl) MpleInit_hash_wl(responsevec, covmat, weightsvector, ltails, lheads, *dlnedges, *maxNumDyadTypes, nw, m); 
+  else MpleInit_hash_bl(responsevec, covmat, weightsvector, ltails, lheads, *dlnedges, *maxNumDyadTypes, nw, m); 
+
   ModelDestroy(m);
   NetworkDestroy(nw);
   PutRNGstate(); /* Must be called after GetRNGstate before returning to R */
@@ -72,12 +67,11 @@ Uses Jenkins One-at-a-Time hash.
 numRows should, ideally, be a power of 2, but doesn't have to be.
 **************/
 /*R_INLINE*/ unsigned int hashCovMatRow(double *newRow, unsigned int rowLength, unsigned int numRows,
-				    int response, double offset){
+				    int response){
   /* Cast all pointers to unsigned char pointers, since data need to 
      be fed to the hash function one byte at a time. */
   unsigned char *cnewRow = (unsigned char *) newRow,
-    *cresponse = (unsigned char *) &response,
-    *coffset = (unsigned char *) &offset;
+    *cresponse = (unsigned char *) &response;
   unsigned int crowLength = rowLength * sizeof(double);
   
   unsigned int hash=0;
@@ -85,7 +79,6 @@ numRows should, ideally, be a power of 2, but doesn't have to be.
 #define HASH_LOOP(hash, keybyte){ hash+=keybyte; hash+=(hash<<10); hash^= (hash>>6); }
   for(unsigned int i=0; i<crowLength; i++) HASH_LOOP(hash, cnewRow[i]);
   for(unsigned int i=0; i<sizeof(int); i++) HASH_LOOP(hash, cresponse[i]);
-  for(unsigned int i=0; i<sizeof(double); i++) HASH_LOOP(hash, coffset[i]);
 #undef HASH_LOOP
 
   hash += (hash<<3);
@@ -97,21 +90,19 @@ numRows should, ideally, be a power of 2, but doesn't have to be.
 
 /*R_INLINE*/ unsigned int insCovMatRow(double *newRow, double *matrix, unsigned int rowLength, unsigned int numRows,
 			  int response, int *responsevec,
-			  double offset, double *compressedOffset, int *weights ){
-  unsigned int hash_pos = hashCovMatRow(newRow, rowLength, numRows, response, offset), pos, round;
+			  int *weights ){
+  unsigned int hash_pos = hashCovMatRow(newRow, rowLength, numRows, response), pos, round;
   
   for(/*unsigned int*/ pos=hash_pos, round=0; !round ; pos = (pos+1)%numRows, round+=(pos==hash_pos)?1:0){
 //    Rprintf("pos %d round %d hash_pos %d\n",pos,round,hash_pos);
     if(weights[pos]==0){ /* Space is unoccupied. */
       weights[pos]=1;
-      compressedOffset[pos]=offset;
       responsevec[pos]=response;
       memcpy(matrix+rowLength*pos,newRow,rowLength*sizeof(double));
       return TRUE;
     }else {
       
-      if( compressedOffset[pos]==offset &&
-	      responsevec[pos]==response &&
+      if(responsevec[pos]==response &&
       memcmp(matrix+rowLength*pos,newRow,rowLength*sizeof(double))==0 ){ /* Rows are identical. */
         weights[pos]++;
         return TRUE;
@@ -122,7 +113,7 @@ numRows should, ideally, be a power of 2, but doesn't have to be.
 }
 
 /*****************
- void MpleInit_*
+ void MpleInit_hash
 
  For finding the MPLE, an extra bit of initialization is required:  
  we must build the matrix of covariates to be used in the logistic 
@@ -136,108 +127,96 @@ numRows should, ideally, be a power of 2, but doesn't have to be.
  for the logistic regression is simply the vector of indicators 
  giving the states of the edges in the observed network.
 
- The *_hash version also "compresses" the output by tabulating
- duplicate rows.
+ It comes in two versions: one that iterates through all valid dyads,
+ skipping those on the additional list, which is treated as a
+ blacklist; and another that iterates only through dyads on the
+ additional ist, which is treated as a whitelist.
+
 *****************/
 
-void MpleInit_no_compress(int *responsevec, double *covmat, int *weightsvector,
-		   double *offset, double *compressedOffset,
-		   int maxNumDyadTypes, Edge maxMPLE, Network *nwp, Model *m) {
-  int outflag = 0, inflag = 0;
-  Edge dyadNum=0;
-  Vertex rowmax;
-  ModelTerm *mtp;
+
+void MpleInit_hash_bl(int *responsevec, double *covmat, int *weightsvector,
+		   int *bltails, int *blheads, Edge blnedges, 
+		   Edge maxNumDyadTypes, Network *nwp, Model *m){
   double *newRow = (double *) R_alloc(m->n_stats,sizeof(double));
-  /* Note:  This function uses macros found in changestats.h */
+  /* Note:  This function uses macros found in changestat.h */
   
-  if(BIPARTITE > 0) rowmax = BIPARTITE + 1;
-  else              rowmax = N_NODES;
-  for(Vertex i=1; i < rowmax; i++){
-    for(Vertex j = MAX(i,BIPARTITE)+1; j <= N_NODES; j++){
-      for(unsigned int d=0; d <= DIRECTED; d++){ /*trivial loop if undirected*/
-        int response;
-        if (d==1) response = inflag = IS_INEDGE(i,j);
-        else      response = outflag = IS_OUTEDGE(i,j);
-        unsigned int totalStats = 0;
-        if(response || i <= maxMPLE){   
-          /* Let mtp loop through each model term */
-          for (mtp=m->termarray; mtp < m->termarray + m->n_terms; mtp++){
-            mtp->dstats = newRow + totalStats;
-            /* Now call d_xxx function, which updates mtp->dstats to reflect
-            changing the current dyad.  */
-            if(d==0) (*(mtp->d_func))(1, &i, &j, mtp, nwp);
-            else(*(mtp->d_func))(1, &j, &i, mtp, nwp);
-            /* dstats values reflect changes in current dyad; for MPLE, 
-            values must reflect going from 0 to 1.  Thus, we have to reverse 
-            the sign of dstats whenever the current edge exists. */
-            if((d==0 && outflag) || (d==1 && inflag)){
-              for(unsigned int l=0; l<mtp->nstats; l++){
-                mtp->dstats[l] = -mtp->dstats[l];
-              }
-            }
-            /* Update mtp->dstats pointer to skip ahead by mtp->nstats */
-            totalStats += mtp->nstats; 
-          }
-          if(!insCovMatRow(newRow, covmat, m->n_stats,
-			   maxNumDyadTypes, response, 
-			   responsevec, offset ? offset[dyadNum++]:0, 
-			   compressedOffset, weightsvector)) {
-            error("Too many unique dyads!");
-          }
-        }
+
+  Edge blpos = 0;
+  for(Vertex t = 1; t <= (BIPARTITE ? BIPARTITE : N_NODES); t++){
+    for(Vertex h = MAX(DIRECTED ? 0 : t, BIPARTITE)+1; h <= N_NODES; h++){
+      if(h==t) continue;
+
+      while(blpos < blnedges && 
+	    (t > bltails[blpos] || (t == bltails[blpos] && h > blheads[blpos]))) blpos++;
+      if(blpos < blnedges && t == bltails[blpos] && h == blheads[blpos]) continue;
+
+      int response = IS_OUTEDGE(t,h);
+      unsigned int totalStats = 0;
+      /* Let mtp loop through each model term */
+      for (ModelTerm *mtp=m->termarray; mtp < m->termarray + m->n_terms; mtp++){
+	mtp->dstats = newRow + totalStats;
+	/* Now call d_xxx function, which updates mtp->dstats to reflect
+	   changing the current dyad.  */
+	(*(mtp->d_func))(1, &t, &h, mtp, nwp);
+	/* dstats values reflect changes in current dyad; for MPLE, 
+	   values must reflect going from 0 to 1.  Thus, we have to reverse 
+	   the sign of dstats whenever the current edge exists. */
+	if(response){
+	  for(unsigned int l=0; l<mtp->nstats; l++){
+	    mtp->dstats[l] = -mtp->dstats[l];
+	  }
+	}
+	  /* Update mtp->dstats pointer to skip ahead by mtp->nstats */
+	  totalStats += mtp->nstats; 
+      }
+      /* In next command, if there is an offset vector then its total
+	 number of entries should match the number of times through the 
+	 inner loop (i.e., the number of dyads in the network) */          
+      if(!insCovMatRow(newRow, covmat, m->n_stats,
+		       maxNumDyadTypes, response, 
+		       responsevec, weightsvector)) {
+	error("Too many unique dyads!");
       }
     }
   }
 }
-void MpleInit_hash(int *responsevec, double *covmat, int *weightsvector,
-		   double *offset, double *compressedOffset,
-		   int maxNumDyadTypes, Edge maxMPLE, Network *nwp, Model *m) {
-  int outflag = 0, inflag = 0;
-  Edge dyadNum=0;
-  Vertex rowmax;
-  ModelTerm *mtp;
+
+void MpleInit_hash_wl(int *responsevec, double *covmat, int *weightsvector,
+		   int *wltails, int *wlheads, Edge wlnedges, 
+		   Edge maxNumDyadTypes, Network *nwp, Model *m){
   double *newRow = (double *) R_alloc(m->n_stats,sizeof(double));
-  /* Note:  This function uses macros found in changestats.h */
+  /* Note:  This function uses macros found in changestat.h */
   
-  if(BIPARTITE > 0) rowmax = BIPARTITE + 1;
-  else              rowmax = N_NODES;
-  for(Vertex i=1; i < rowmax; i++){
-    for(Vertex j = MAX(i,BIPARTITE)+1; j <= N_NODES; j++){
-      for(unsigned int d=0; d <= DIRECTED; d++){ /*trivial loop if undirected*/
-        int response;
-        if (d==1) response = inflag = IS_INEDGE(i,j);
-        else      response = outflag = IS_OUTEDGE(i,j);
-        unsigned int totalStats = 0;
-        if(response || i <= maxMPLE){   
-          /* Let mtp loop through each model term */
-          for (mtp=m->termarray; mtp < m->termarray + m->n_terms; mtp++){
-            mtp->dstats = newRow + totalStats;
-            /* Now call d_xxx function, which updates mtp->dstats to reflect
-            changing the current dyad.  */
-            if(d==0) (*(mtp->d_func))(1, &i, &j, mtp, nwp);
-            else(*(mtp->d_func))(1, &j, &i, mtp, nwp);
-            /* dstats values reflect changes in current dyad; for MPLE, 
-            values must reflect going from 0 to 1.  Thus, we have to reverse 
-            the sign of dstats whenever the current edge exists. */
-            if((d==0 && outflag) || (d==1 && inflag)){
-              for(unsigned int l=0; l<mtp->nstats; l++){
-                mtp->dstats[l] = -mtp->dstats[l];
-              }
-            }
-            /* Update mtp->dstats pointer to skip ahead by mtp->nstats */
-            totalStats += mtp->nstats; 
-          }
-          /* In next command, if there is an offset vector then its total
-             number of entries should match the number of times through the 
-             inner loop (i.e., the number of dyads in the network) */          
-          if(!insCovMatRow(newRow, covmat, m->n_stats,
-            maxNumDyadTypes, response, 
-            responsevec, offset ? offset[dyadNum++]:0, 
-            compressedOffset, weightsvector)) {
-            error("Too many unique dyads!");
-          }
-        }
+  for(Edge wlpos = 0; wlpos < wlnedges; wlpos++){
+    Vertex t=wltails[wlpos], h=wlheads[wlpos];
+    
+    int response = IS_OUTEDGE(t,h);
+    unsigned int totalStats = 0;
+    /* Let mtp loop through each model term */
+    for (ModelTerm *mtp=m->termarray; mtp < m->termarray + m->n_terms; mtp++){
+      mtp->dstats = newRow + totalStats;
+      /* Now call d_xxx function, which updates mtp->dstats to reflect
+	 changing the current dyad.  */
+      (*(mtp->d_func))(1, &t, &h, mtp, nwp);
+      /* dstats values reflect changes in current dyad; for MPLE, 
+	 values must reflect going from 0 to 1.  Thus, we have to reverse 
+	 the sign of dstats whenever the current edge exists. */
+      if(response){
+	for(unsigned int l=0; l<mtp->nstats; l++){
+	  mtp->dstats[l] = -mtp->dstats[l];
+	}
       }
+      /* Update mtp->dstats pointer to skip ahead by mtp->nstats */
+      totalStats += mtp->nstats; 
+    }
+    /* In next command, if there is an offset vector then its total
+       number of entries should match the number of times through the 
+       inner loop (i.e., the number of dyads in the network) */          
+    if(!insCovMatRow(newRow, covmat, m->n_stats,
+		     maxNumDyadTypes, response, 
+		     responsevec, weightsvector)) {
+      error("Too many unique dyads!");
     }
   }
 }

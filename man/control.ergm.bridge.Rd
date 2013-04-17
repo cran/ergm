@@ -1,12 +1,12 @@
-%  File ergm/man/control.ergm.bridge.Rd
-%  Part of the statnet package, http://statnet.org
+%  File man/control.ergm.bridge.Rd in package ergm, part of the Statnet suite
+%  of packages for network analysis, http://statnet.org .
 %
 %  This software is distributed under the GPL-3 license.  It is free,
-%  open source, and has the attribution requirements (GPL Section 7) in
-%    http://statnet.org/attribution
+%  open source, and has the attribution requirements (GPL Section 7) at
+%  http://statnet.org/attribution
 %
-%  Copyright 2012 the statnet development team
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  Copyright 2003-2013 Statnet Commons
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{control.ergm.bridge}
 \alias{control.ergm.bridge}
 \title{ Auxiliary for Controlling ergm.bridge}
@@ -28,7 +28,7 @@ control.ergm.bridge(nsteps=20,
                     MCMC.prop.args=list(),
 
                     MCMC.init.maxedges=20000,
-                    MCMC.packagenames="ergm",
+                    MCMC.packagenames=c(),
 
                     seed=NULL)
 }
@@ -70,8 +70,9 @@ control.ergm.bridge(nsteps=20,
   }
   \item{MCMC.init.maxedges}{Maximum number of edges expected in network.
   }
-  \item{MCMC.packagenames}{Names of packages in which change statistic
-    functions are found.
+  \item{MCMC.packagenames}{Names of packages in which to look for change statistic
+    functions in addition to those autodetected. This argument should not be
+    needed outside of very strange setups.
   }
   \item{seed}{Seed value (integer) for the random number generator.  
     See \code{\link[base]{set.seed}}
@@ -83,4 +84,5 @@ control.ergm.bridge(nsteps=20,
 \seealso{ 
   \code{\link{ergm.bridge.llr}}, \code{\link{ergm.bridge.dindstart.llk}}
 }
+%\keyword{simulation}
 \keyword{models}

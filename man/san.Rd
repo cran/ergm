@@ -1,12 +1,12 @@
-%  File ergm/man/san.Rd
-%  Part of the statnet package, http://statnet.org
+%  File man/san.Rd in package ergm, part of the Statnet suite
+%  of packages for network analysis, http://statnet.org .
 %
 %  This software is distributed under the GPL-3 license.  It is free,
-%  open source, and has the attribution requirements (GPL Section 7) in
-%    http://statnet.org/attribution
+%  open source, and has the attribution requirements (GPL Section 7) at
+%  http://statnet.org/attribution
 %
-%  Copyright 2012 the statnet development team
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  Copyright 2003-2013 Statnet Commons
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{san}
 \alias{san.ergm}
 \alias{san.formula}
@@ -16,6 +16,8 @@
 of mean statistics}
 \usage{
 \method{san}{formula}(object, 
+                      response=NULL, 
+                      reference=~Bernoulli, 
                       constraints=~., 
                       target.stats=NULL,
                       nsim=1, 
@@ -31,7 +33,7 @@ of mean statistics}
                    nsim=1, 
                    basis=NULL,
                    sequential=TRUE, 
-                   control=object$SAN.control,
+                   control=object$control$SAN.control,
                    verbose=FALSE, 
                    \dots)
 }
@@ -53,6 +55,13 @@ of mean statistics}
     then add nodal attributes to it using the \code{\%v\%}
     operator if necessary.
   }
+  \item{response}{\emph{EXPERIMENTAL.} Name of the edge attribute whose value is to be
+    modeled. Defaults to \code{NULL} for simple presence or absence. }
+
+  \item{reference}{\emph{EXPERIMENTAL.} One-sided formula whose RHS
+    gives the reference measure to
+    be used. (Defaults to \code{~Bernoulli}.)}
+
   \item{formula}{(By default, the \code{formula}
     is taken from the \code{ergm} object.
     If a different \code{formula} object is wanted, specify it here.
@@ -60,7 +69,8 @@ of mean statistics}
   \item{constraints}{A one-sided formula specifying one or more constraints
     on the support of the distribution of the networks being
     simulated. See the documentation for a similar argument for
-    \code{\link{ergm}} for more information. For
+    \code{\link{ergm}}  and see \link[=ergm-constraints]{list of
+    implemented constraints} for more information. For
     \code{simulate.formula}, defaults to no constraints. For
     \code{simulate.ergm}, defaults to using the same constraints as
     those with which \code{object} was fitted.
@@ -90,9 +100,12 @@ of mean statistics}
   }
 }
 
+%\details{}
 
 \value{
   A network or list of networks that hopefully have network statistics close
   to the \code{target.stats} vector.
 }
+%\seealso{}
+%\examples{}
 \keyword{models}

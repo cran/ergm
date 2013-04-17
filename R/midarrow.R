@@ -1,15 +1,38 @@
-#  File ergm/R/midarrow.R
-#  Part of the statnet package, http://statnet.org
+#  File R/midarrow.R in package ergm, part of the Statnet suite
+#  of packages for network analysis, http://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnet.org/attribution
+#  open source, and has the attribution requirements (GPL Section 7) at
+#  http://statnet.org/attribution
 #
-#  Copyright 2012 the statnet development team
-######################################################################
+#  Copyright 2003-2013 Statnet Commons
+#######################################################################
+#=====================================================================
+# This file contains the following 3 plotting functions:
+#           <midarrow>
+#           <drawcircle>
+#           <drawpie>
+#=====================================================================
+
+
+
+
 ##############################################################################
 # The <midarrow> function adds a line, with an arrow placed in the middle of
 # the line to an active plot
+#
+# --PARAMTERS--
+#   x0,y0 : the starting x and y coordinates of the line
+#   x1,y1 : the ending x and y coordinates of the line
+#   length: the length of the edges of the arrow head, in inches; default=.25
+#   angle : the angle from the shaft of the arrow to the edge of the arrow head;
+#           default=30
+#   code  : a code to indicate which way the arrow should point:
+#      1 -- towards the x0,y0 point
+#      2 -- towards the x1,y1 point
+#      3 -- towards both points
+#   col, lty, lwd, xpd have their typical par interpretations
+#
 ##############################################################################
 
 midarrow <- function(x0, y0, x1, y1, length = 0.25, angle = 30, code = 2, 

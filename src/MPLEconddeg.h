@@ -1,12 +1,11 @@
-/*
- *  File ergm/src/MPLEconddeg.h
- *  Part of the statnet package, http://statnet.org
+/*  File src/MPLEconddeg.h in package ergm, part of the Statnet suite
+ *  of packages for network analysis, http://statnet.org .
  *
  *  This software is distributed under the GPL-3 license.  It is free,
- *  open source, and has the attribution requirements (GPL Section 7) in
- *    http://statnet.org/attribution
+ *  open source, and has the attribution requirements (GPL Section 7) at
+ *  http://statnet.org/attribution
  *
- *  Copyright 2012 the statnet development team
+ *  Copyright 2003-2013 Statnet Commons
  */
 #ifndef MPLEconddeg_H
 #define MPLEconddeg_H
@@ -16,7 +15,15 @@
 #include "MHproposal.h"
 #include "model.h"
 
-void MPLEconddeg_wrapper (int *tails, int *heads, int *dnedges,
+// TODO: This might be worth moving into a common "constants.h".
+typedef enum MCMCStatus_enum {
+  MCMC_OK = 0,
+  MCMC_TOO_MANY_EDGES = 1,
+  MCMC_MH_FAILED = 2
+} MCMCStatus;
+
+void MPLEconddeg_wrapper (int *dnumnets, int *dnedges,
+		          int *tails, int *heads,
                    int *dn, int *dflag, int *bipartite, 
                    int *nterms, char **funnames,
                    char **sonames, 
@@ -29,15 +36,10 @@ void MPLEconddeg_wrapper (int *tails, int *heads, int *dnedges,
                    int *attribs, int *maxout, int *maxin, int *minout,
                    int *minin, int *condAllDegExact, int *attriblength, 
                    int *maxedges,
-                   int *mtails, int *mheads, int *mdnedges);
-void CondDegSampler (MHproposal *MHp,
+		   int *status);
+MCMCStatus CondDegSampler (MHproposal *MHp,
 		 double *theta, double *networkstatistics, 
 		 int samplesize, int burnin, 
-		 int interval, int fVerbose,
+		 int interval, int fVerbose, int nmax,
 	       	 Network *nwp, Model *m);
-void CondDegSample (MHproposal *MHp,
-			 double *theta, double *statistics, 
-			 int nsteps, int *staken,
-			 int fVerbose,
-			 Network *nwp, Model *m);
 #endif

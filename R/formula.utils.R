@@ -1,46 +1,16 @@
-#  File ergm/R/formula.utils.R
-#  Part of the statnet package, http://statnet.org
+#  File R/formula.utils.R in package ergm, part of the Statnet suite
+#  of packages for network analysis, http://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnet.org/attribution
+#  open source, and has the attribution requirements (GPL Section 7) at
+#  http://statnet.org/attribution
 #
-#  Copyright 2012 the statnet development team
-######################################################################
+#  Copyright 2003-2013 Statnet Commons
+#######################################################################
 ###################################################################
 ## This file has utilities whose primary purpose is examining or ##
 ## manipulating ERGM formulas.                                   ##
 ###################################################################
-
-is.dyad.independent<-function(object,...) UseMethod("is.dyad.independent")
-
-is.dyad.independent.formula<-function(object,basis=NULL,constraints=~.,...){
-  if(constraints!=~.) FALSE
-  else{    
-    # If basis is not null, replace network in formula by basis.
-    # In either case, let nw be network object from formula.
-    if(is.null(nw <- basis)) {
-      nw <- ergm.getnetwork(object)
-    }
-    
-    nw <- as.network(nw)
-    if(!is.network(nw)){
-      stop("A network object on the LHS of the formula or via",
-           " the 'basis' argument must be given")
-    }
-    
-    # New formula (no longer use 'object'):
-    form <- ergm.update.formula(object, nw ~ .)
-    
-    m<-ergm.getmodel(form, nw)
-    if(any(sapply(m$terms, function(term) is.null(term$dependence) || term$dependence==TRUE))) FALSE
-    else TRUE
-  }
-}
-
-is.dyad.independent.ergm<-function(object,...){
-  with(object,is.dyad.independent(formula,network,constraints))
-}
 
 ## This function appends a list of terms to the RHS of a
 ## formula. If the formula is one-sided, the RHS becomes the LHS.
@@ -58,8 +28,12 @@ append.rhs.formula<-function(object,newterms){
   object
 }
 
-# A reimplementation of update.formula() that does not simplify.
-ergm.update.formula<-function (object, new, ...){
+# A reimplementation of update.formula() that does not simplify.  Note
+# that the resulting formula's environment is set as follows. If
+# from.new==FALSE, it is set to that of object. Otherwise, a new
+# sub-environment of object, containing, in addition, variables in new
+# listed in from.new (if a character vector) or all of new (if TRUE).
+ergm.update.formula<-function (object, new, ..., from.new=FALSE){
   old.lhs <- if(length(object)==2) NULL else object[[2]]
   old.rhs <- if(length(object)==2) object[[2]] else object[[3]]
   
@@ -86,10 +60,24 @@ ergm.update.formula<-function (object, new, ...){
     }else return(c)
   }
   
-  # Construct the formula and ensure that the formula's environment
-  # gets set to the network's environment.
   out <- if(length(new)==2) call("~", deparen(sub.dot(new.rhs, old.rhs))) else call("~", deparen(sub.dot(new.lhs, old.lhs)), deparen(sub.dot(new.rhs, old.rhs)))
-  as.formula(out, env =  if(new[[2]]==".") environment(object) else environment(new))
+
+  #  a new sub-environment for the formula, containing both
+  # the variables from the old formula and the new.
+  
+  if(identical(from.new,FALSE)){ # The new formula will use the environment of the original formula (the default).
+    e <- environment(object)
+  }else{
+    # Create a sub-environment also containing variables from environment of new.
+    e <- new.env(parent=environment(object))
+    
+    if(identical(from.new,TRUE)) from.new <- ls(pos=environment(new)) # If TRUE, copy all of them (dangerous!).
+    
+    for(name in from.new)
+      assign(name, get(name, pos=environment(new)), pos=e)
+  }
+
+  as.formula(out, env = e)
 }
 
 term.list.formula<-function(rhs){
@@ -107,7 +95,7 @@ copy.named<-function(x){
 }
 
 
-model.transform.formula <- function(object, theta, recipes, ...){
+model.transform.formula <- function(object, theta, response=NULL, recipes, ...){
   ## Recipe syntax:
   ##
   ## Recipes are a named list with the names representing a map from
@@ -160,7 +148,7 @@ model.transform.formula <- function(object, theta, recipes, ...){
   ## a simple special case of toarg, if it were given a function that
   ## returned a constant value.
 
-  m <- ergm.getmodel(object, ergm.getnetwork(object))
+  m <- ergm.getmodel(object, ergm.getnetwork(object), response=response)
   theta.inds<-cumsum(c(1,coef.sublength.model(m)))
   terms<-term.list.formula(object[[3]])
   form<-object
@@ -232,10 +220,10 @@ model.transform.formula <- function(object, theta, recipes, ...){
 fix.curved <- function(object, ...) UseMethod("fix.curved")
 
 fix.curved.ergm <- function(object,...){
-  fix.curved.formula(object$formula, coef(object), ...)
+  fix.curved.formula(object$formula, coef(object), response=object$response, ...)
 }
 
-fix.curved.formula <- function(object, theta, ...){
+fix.curved.formula <- function(object, theta, response=NULL, ...){
   recipes<-list()
   is.fixed.1<-function(a) is.null(a$fixed) || a$fixed==FALSE
   recipes$gwdsp<-recipes$gwesp<-recipes$gwnsp<-
@@ -245,7 +233,7 @@ fix.curved.formula <- function(object, theta, ...){
   recipes$gwb1degree<-recipes$gwb2degree<-recipes$gwdegree<-recipes$gwidegree<-recipes$gwodegree<-
     list(filter=is.fixed.1, tocoef=1, toarg=list(decay=2), constant=list(fixed=TRUE))
 
-  model.transform.formula(object, theta, recipes, ...)
+  model.transform.formula(object, theta, response=response, recipes, ...)
 }
 
 
@@ -256,10 +244,10 @@ fix.curved.formula <- function(object, theta, ...){
 enformulate.curved <- function(object, ...) UseMethod("enformulate.curved")
 
 enformulate.curved.ergm <- function(object,...){
-  fix.curved.formula(object$formula, coef(object), ...)
+  fix.curved.formula(object$formula, coef(object), response=object$response, ...)
 }
 
-enformulate.curved.formula <- function(object, theta, ...){
+enformulate.curved.formula <- function(object, theta, response=NULL, ...){
   recipes<-list()
   is.fixed.1<-function(a) is.null(a$fixed) || a$fixed==FALSE
   recipes$gwdsp<-recipes$gwesp<-recipes$gwnsp<-
@@ -269,12 +257,12 @@ enformulate.curved.formula <- function(object, theta, ...){
   recipes$gwb1degree<-recipes$gwb2degree<-recipes$gwdegree<-recipes$gwidegree<-recipes$gwodegree<-
     list(filter=is.fixed.1, tocoef=1, toarg=list(decay=2))
 
-  model.transform.formula(object, theta, recipes, ...) 
+  model.transform.formula(object, theta, response=response, recipes, ...) 
 }
 
-set.offset.formula <- function(object, which){
+set.offset.formula <- function(object, which, response=NULL){
   nw <- ergm.getnetwork(object)
-  m<-ergm.getmodel(object, nw,role="target")
+  m<-ergm.getmodel(object, nw, response=response,role="target")
   to_offset <-unique(rep(seq_along(m$terms),coef.sublength.model(m))[which]) # Figure out which terms correspond to the coefficients to be offset.
   terms <- term.list.formula(object[[3]])
   for(i in to_offset)
@@ -283,3 +271,30 @@ set.offset.formula <- function(object, which){
   ergm.update.formula(object, append.rhs.formula(~.,terms)) # append.rhs.formula call returns a formula of the form .~terms[[1]] + terms[[2]], etc.
 }
 
+unset.offset.formula <- function(object, which=TRUE, response=NULL){
+  nw <- ergm.getnetwork(object)
+  m<-ergm.getmodel(object, nw, response=response,role="target")
+  to_unoffset <-unique(rep(seq_along(m$terms),coef.sublength.model(m))[which]) # Figure out which terms correspond to the coefficients to be un offset.
+  terms <- term.list.formula(object[[3]])
+  for(i in to_unoffset)
+    if(inherits(terms[[i]],"call") && terms[[i]][[1]]=="offset") # Is the term an offset?
+      terms[[i]]<-terms[[i]][[2]] # Grab the term inside the offset.
+  ergm.update.formula(object, append.rhs.formula(~.,terms)) # append.rhs.formula call returns a formula of the form .~terms[[1]] + terms[[2]], etc.
+}
+
+# Delete all offset() terms in an ERGM formula.
+remove.offset.formula <- function(object, response=NULL){
+  terms <- term.list.formula(object[[3]])
+  for(i in rev(seq_along(terms)))
+    if(inherits(terms[[i]],"call") && terms[[i]][[1]]=="offset") # Is the term an offset?
+      terms[[i]]<-NULL # Delete the offset term.
+  ergm.update.formula(object, append.rhs.formula(~.,terms)) # append.rhs.formula call returns a formula of the form .~terms[[1]] + terms[[2]], etc.
+}
+
+# A lightweight function that simply returns the offset vectors
+# associated with a formula.
+offset.info.formula <- function(object, response=NULL){
+  nw <- ergm.getnetwork(object)
+  m<-ergm.getmodel(object, nw, response=response,role="target")
+  with(m$etamap, list(term=offset, theta=offsettheta,eta=offsetmap))
+}

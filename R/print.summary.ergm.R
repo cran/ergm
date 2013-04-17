@@ -1,15 +1,33 @@
-#  File ergm/R/print.summary.ergm.R
-#  Part of the statnet package, http://statnet.org
+#  File R/print.summary.ergm.R in package ergm, part of the Statnet suite
+#  of packages for network analysis, http://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnet.org/attribution
+#  open source, and has the attribution requirements (GPL Section 7) at
+#  http://statnet.org/attribution
 #
-#  Copyright 2012 the statnet development team
-######################################################################
+#  Copyright 2003-2013 Statnet Commons
+#######################################################################
 ###############################################################################
 # The <print.summary.ergm> function prints a subset of the information given
 # by <summary.ergm>
+#
+# --PARAMETERS--
+#   x           : a "summary.ergm" object, as returned by <summary.ergm>
+#   digits      : the number of significant digits for the coefficients;
+#                 default=max(3, getOption("digits")-3)
+#   correlation : whether the correlation matrix of the estimated parameters
+#                 should be printed (T or F); default=FALSE
+#   covariance  : whether the covariance matrix of the estimated parameters
+#                 should be printed (T or F); default=FALSE
+#   signif.stars: whether stars are to be printed on summary tables of
+#                 coefficients (T or F); default=getOption("show.signif.stars")
+#   eps.Pvalue  : the tolerance to be passed to the R <printCoefmat> function;
+#                 default=.0001
+#   ...         : additional parameters to be passed to <printCoefmat> 
+#
+# --RETURNED--
+#   x
+#
 ###############################################################################
 
 print.summary.ergm <- function (x, 
@@ -17,6 +35,8 @@ print.summary.ergm <- function (x,
               correlation=FALSE, covariance=FALSE,
               signif.stars= getOption("show.signif.stars"),
               eps.Pvalue=0.0001, print.header=TRUE, print.formula=TRUE, print.fitinfo=TRUE, print.coefmat=TRUE, print.message=TRUE, print.deviances=TRUE, print.drop=TRUE, print.offset=TRUE, print.degeneracy=TRUE,...){
+  if(missing(digits)) digits <- x$digits
+  
   control <- x$control
   if(print.header){
     cat("\n==========================\n")
@@ -48,7 +68,7 @@ print.summary.ergm <- function (x,
              `Stepping`=cat("\n Stepping MLE Results:\n"),
              stop("Unknown estimation method. This is a bug.")),
            EGMME = if(!is.null(control$EGMME.main.method))  switch(control$EGMME.main.method,
-             `Stochastic-Approximation`=cat("\nEquilibrium Generalized Method of Moments Results:\n"),
+             `Gradient-Descent`=cat("\nEquilibrium Generalized Method of Moments Results:\n"),
              stop("Unknown estimation method. This is a bug.")),
            stop("Unknown estimate type. This is a bug.")
            )
@@ -70,9 +90,12 @@ print.summary.ergm <- function (x,
   if(print.deviances){
     if(!is.null(x$devtable)){
       cat(x$devtable)
+
+      if(x$null.lik.0) cat("Note that the null model likelihood and deviance are defined to be 0.\n\n")
       
-      cat(paste("AIC:", format(x$aic, digits = 5), "  ", 
-                "BIC:", format(x$bic, digits = 5), "\n", sep=" "))
+      cat(paste("AIC:", format(x$aic, digits = digits), "  ", 
+                "BIC:", format(x$bic, digits = digits), "  ",
+                "(Smaller is better.)", "\n", sep=" "))
     } else cat(nologLik.message(x$objname))
   }
 

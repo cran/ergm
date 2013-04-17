@@ -1,12 +1,12 @@
-%  File ergm/man/anova.ergm.Rd
-%  Part of the statnet package, http://statnet.org
+%  File man/anova.ergm.Rd in package ergm, part of the Statnet suite
+%  of packages for network analysis, http://statnet.org .
 %
 %  This software is distributed under the GPL-3 license.  It is free,
-%  open source, and has the attribution requirements (GPL Section 7) in
-%    http://statnet.org/attribution
+%  open source, and has the attribution requirements (GPL Section 7) at
+%  http://statnet.org/attribution
 %
-%  Copyright 2012 the statnet development team
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  Copyright 2003-2013 Statnet Commons
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{anova.ergm}
 \title{ANOVA for Linear Model Fits}
 \usage{
@@ -14,6 +14,7 @@
 \method{anova}{ergmlist}(object, \dots, eval.loglik = FALSE, scale = 0, test = "F")
 }
 \alias{anova.ergm}
+%\alias{anova.ergm.null}
 \alias{anova.ergmlist}
 \description{
   Compute an analysis of variance table for one or more linear model fits.
@@ -61,25 +62,37 @@
 \value{
   An object of class \code{"anova"} inheriting from class \code{"data.frame"}.
 }
+%\note{
+%  Versions of \R prior to 1.2.0 based F tests on pairwise comparisons,
+%  and this behaviour can still be obtained by a direct call to
+%  \code{\link{anovalist.ergm}}.
+%}
 \section{Warning}{
   The comparison between two or more models will only be valid if they
   are fitted to the same dataset. This may be a problem if there are
   missing values and \R's default of \code{na.action = na.omit} is used,
   and \code{\link{anova.ergmlist}} will detect this with an error.
 }
+%\references{
+%  Chambers, J. M. (1992)
+%  \emph{Linear models.}
+%  Chapter 4 of \emph{Statistical Models in S}
+%  eds J. M. Chambers and T. J. Hastie, Wadsworth \& Brooks/Cole.
+%}
 \seealso{
   The model fitting function \code{\link{ergm}}, \code{\link{anova}},
   \code{\link{logLik.ergm}} for adding the log-likelihood to an existing
   \code{\link[=ergm.object]{ergm}} object.
 }
 \examples{
+\donttest{
 data(molecule)
 molecule \%v\% "atomic type" <- c(1,1,1,1,1,1,2,2,2,2,2,2,2,3,3,3,3,3,3,3)
 fit0 <- ergm(molecule ~ edges)
 anova(fit0)
 fit1 <- ergm(molecule ~ edges + nodefactor("atomic type"))
 anova(fit1)
-\donttest{
+
 fit2 <- ergm(molecule ~ edges + nodefactor("atomic type") +  gwesp(0.5,
   fixed=TRUE), eval.loglik=TRUE) # Note the eval.loglik argument.
 anova(fit0, fit1)

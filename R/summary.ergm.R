@@ -1,15 +1,58 @@
-#  File ergm/R/summary.ergm.R
-#  Part of the statnet package, http://statnet.org
+#  File R/summary.ergm.R in package ergm, part of the Statnet suite
+#  of packages for network analysis, http://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnet.org/attribution
+#  open source, and has the attribution requirements (GPL Section 7) at
+#  http://statnet.org/attribution
 #
-#  Copyright 2012 the statnet development team
-######################################################################
+#  Copyright 2003-2013 Statnet Commons
+#######################################################################
 ###############################################################################
 # The <summary.ergm> function prints a 'summary of model fit' table and returns
 # the components of this table and several others listed below
+#
+# --PARAMETERS--
+#   object     : an ergm object
+#
+#
+# --IGNORED PARAMETERS--
+#   ...        : used for flexibility
+#   digits     : significant digits for the coefficients;default=
+#                max(3,getOption("digits")-3), but the hard-coded value is 5
+#   correlation: whether the correlation matrix of the estimated parameters
+#                should be printed (T or F); default=FALSE
+#   covariance : whether the covariance matrix of the estimated parameters
+#                should be printed (T or F); default=FALSE
+#   eps        : the numerical tolerance inputted to the native R function
+#                <format.pval>; the code using 'eps' is now commented out;
+#                default=.0001
+#
+# --RETURNED--
+#   ans: a "summary.ergm" object as a list containing the following
+#      formula         : object$formula
+#      randomeffects   : object$re
+#      digits          : the 'digits' inputted to <summary.ergm> or the default
+#                        value (despite the fact the digits will be 5)
+#      correlation     : the 'correlation' passed to <summary.ergm>
+#      degeneracy.value: object$degenarcy.value
+#      offset          : object$offset
+#      drop            : object$drop
+#      covariance      : the 'covariance' passed to <summary.ergm>
+#      pseudolikelihood: whether pseudoliklelihood was used (T or F)
+#      independence    : whether ?? (T or F)
+#      iterations      : object$iterations
+#      samplesize      : NA if 'pseudolikelihood'=TRUE, object$samplesize otherwise
+#      message         : a message regarding the validity of the standard error
+#                        estimates
+#      aic             : the AIC goodness of fit measure
+#      bic             : the BIC goodness of fit measure
+#      coefs           : the dataframe of parameter coefficients and their
+#                        standard erros and p-values
+#      asycov          : the asymptotic covariance matrix
+#      asyse           : the asymptotic standard error matrix
+#      senderreceivercorrelation: 'randomeffects' if this is a matrix;
+#                        otherwise, the correlation between sender and receiver??
+#
 ################################################################################
 
 summary.ergm <- function (object, ..., 
@@ -32,7 +75,6 @@ summary.ergm <- function (object, ...,
   }
   
   nodes<- network.size(object$network)
-  dyads<- network.dyadcount(object$network)
   mc.se<- if(is.null(object$mc.se)) rep(NA, length(object$coef)) else object$mc.se
   
 
@@ -83,7 +125,7 @@ summary.ergm <- function (object, ...,
   
   ans$samplesize <- switch(object$estimate,
                            EGMME = if(!is.null(control$EGMME.main.method)) switch(control$EGMME.main.method,
-                             `Stochastic-Approximation`=control$SA.phase3n,
+                             `Gradient-Descent`=control$SA.phase3n,
                              stop("Unknown estimation method. This is a bug.")),
                            MPLE = NA,
                            MLE = if(!is.null(control$main.method)) switch(control$main.method,
@@ -98,7 +140,7 @@ summary.ergm <- function (object, ...,
 
   ans$iterations <- switch(object$estimate,
                            EGMME = if(!is.null(control$EGMME.main.method)) switch(control$EGMME.main.method,
-                             `Stochastic-Approximation`=NA,
+                             `Gradient-Descent`=NA,
                              stop("Unknown estimation method. This is a bug.")),
                            MPLE = NA,
                            MLE = if(!is.null(control$main.method)) switch(control$main.method,
@@ -111,7 +153,7 @@ summary.ergm <- function (object, ...,
                            )
   
   nodes<- network.size(object$network)
-  dyads<- network.dyadcount(object$network)
+  dyads<- network.dyadcount(object$network,FALSE)-network.edgecount(NVL(get.miss.dyads(object$constrained, object$constrained.obs),network.initialize(1)))
   df <- length(object$coef)
 
   rdf <- dyads - df
@@ -120,7 +162,7 @@ summary.ergm <- function (object, ...,
 
 # Convert to % error
   if(any(!is.na(mc.se))){
-   mc.se[!is.na(mc.se)] <- round(100*mc.se[!is.na(mc.se)]*mc.se[!is.na(mc.se)]/(asyse[!is.na(mc.se)]*asyse[!is.na(mc.se)]))
+   mc.se[!is.na(mc.se)] <- round(100*mc.se[!is.na(mc.se)]^2/asyse[!is.na(mc.se)]^2)
   }
 
   count <- 1
@@ -137,7 +179,7 @@ summary.ergm <- function (object, ...,
   rownames(tempmatrix) <- names(object$coef)
 
   devtext <- "Deviance:"
-  if (object$estimate!="MPLE" || !independence) {
+  if (object$estimate!="MPLE" || !independence || object$reference$name!="Bernoulli") {
     if (pseudolikelihood) {
       devtext <- "Pseudo-deviance:"
       ans$message <- "\nWarning:  The standard errors are based on naive pseudolikelihood and are suspect.\n"
@@ -145,29 +187,24 @@ summary.ergm <- function (object, ...,
     else if(object$estimate == "MLE" && any(is.na(mc.se)) && 
                       (!independence || control$force.main) ) {
       ans$message <- "\nWarning:  The standard errors are suspect due to possible poor convergence.\n"
-    }else if(object$estimate == "EGMME"){
-      ans$message <- "\nWarning:  The standard errors do not incorporate uncertainty due to the \"noisy\" estimation procedure.\n"
     }
   } else {
     ans$message <- "\nFor this model, the pseudolikelihood is the same as the likelihood.\n"
   }
-  llk<-try(logLik(object,...), silent=TRUE)
+  mle.lik<-try(logLik(object,...), silent=TRUE)
+  null.lik<-try(logLikNull(object,...), silent=TRUE)
 
-  if(!inherits(llk,"try-error")){
+  ans$null.lik.0 <- is.na(null.lik)
+
+  if(!inherits(mle.lik,"try-error")){
   
-    ans$devtable <- c("",apply(cbind(paste(format(c("   Null", 
-                                                    "Residual", ""), width = 8), devtext), 
-                                     format(c(object$null.deviance,
-                                              -2*llk, 
-                                              object$null.deviance+2*llk),
-                                            digits = 5), " on",
-                                     format(c(dyads, rdf, df),
-                                            digits = 5)," degrees of freedom\n"), 
+    ans$devtable <- c("",apply(cbind(paste(format(c("    Null", "Residual"), width = 8), devtext), 
+                                     format(c(if(is.na(null.lik)) 0 else -2*null.lik, -2*mle.lik), digits = digits), " on",
+                                     format(c(dyads, rdf), digits = digits)," degrees of freedom\n"), 
                                1, paste, collapse = " "),"\n")
     
-    
-    ans$aic <- AIC(llk)
-    ans$bic <- BIC(llk)
+    ans$aic <- AIC(mle.lik)
+    ans$bic <- BIC(mle.lik)
   }else ans$objname<-deparse(substitute(object))
   
   ans$coefs <- as.data.frame(tempmatrix)

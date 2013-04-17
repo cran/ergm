@@ -1,12 +1,11 @@
-/*
- *  File ergm/src/MHproposal.c
- *  Part of the statnet package, http://statnet.org
+/*  File src/MHproposal.c in package ergm, part of the Statnet suite
+ *  of packages for network analysis, http://statnet.org .
  *
  *  This software is distributed under the GPL-3 license.  It is free,
- *  open source, and has the attribution requirements (GPL Section 7) in
- *    http://statnet.org/attribution
+ *  open source, and has the attribution requirements (GPL Section 7) at
+ *  http://statnet.org/attribution
  *
- *  Copyright 2012 the statnet development team
+ *  Copyright 2003-2013 Statnet Commons
  */
 #include "MHproposal.h"
 
@@ -102,7 +101,10 @@ DegreeBound* DegreeBoundInitialize(int *attribs, int *maxout, int *maxin,
   int i,j;
   DegreeBound *bd;
 
-  if(!(minout||minin||maxout||maxin||condAllDegExact)) return NULL;
+  // This test no longer works, since the integer(0)->NULL no longer holds.
+  // if(!(minout||minin||maxout||maxin||condAllDegExact)) return NULL; 
+  
+  if(!condAllDegExact && !attriblength) return NULL;
   
 
   bd = (DegreeBound *) malloc(sizeof(DegreeBound));
@@ -148,8 +150,12 @@ DegreeBound* DegreeBoundInitialize(int *attribs, int *maxout, int *maxin,
 	  for (i=1;i<=nwp->nnodes;i++)
 	    bd->maxin[i-1] = bd->minin[i-1] = nwp->indegree[i];
 	}
+      return bd;
     }
-  return bd;
+  else
+    {
+      return NULL;
+    }
 }
 
 

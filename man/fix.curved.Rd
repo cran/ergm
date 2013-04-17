@@ -1,12 +1,12 @@
-%  File ergm/man/fix.curved.Rd
-%  Part of the statnet package, http://statnet.org
+%  File man/fix.curved.Rd in package ergm, part of the Statnet suite
+%  of packages for network analysis, http://statnet.org .
 %
 %  This software is distributed under the GPL-3 license.  It is free,
-%  open source, and has the attribution requirements (GPL Section 7) in
-%    http://statnet.org/attribution
+%  open source, and has the attribution requirements (GPL Section 7) at
+%  http://statnet.org/attribution
 %
-%  Copyright 2012 the statnet development team
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  Copyright 2003-2013 Statnet Commons
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{fix.curved}
 \alias{fix.curved.formula}
 \alias{fix.curved.ergm}
@@ -21,7 +21,7 @@ parameters are fixed. Note that each term has to be treated as a special case.
 }
 \usage{
 \method{fix.curved}{ergm}(object, ...)
-\method{fix.curved}{formula}(object, theta, ...)
+\method{fix.curved}{formula}(object, theta, response = NULL, ...)
 }
 \arguments{
   \item{object}{
@@ -30,6 +30,9 @@ parameters are fixed. Note that each term has to be treated as a special case.
 }
   \item{theta}{
     Curved model parameter configuration.
+}
+  \item{response}{
+    For valued ERGM, an edge attribute used as the response variable.
 }
   \item{\dots}{
     Unused at this time.

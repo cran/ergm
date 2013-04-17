@@ -1,96 +1,104 @@
-#  File ergm/R/InitMHP.R
-#  Part of the statnet package, http://statnet.org
+#  File R/InitMHP.R in package ergm, part of the Statnet suite
+#  of packages for network analysis, http://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnet.org/attribution
+#  open source, and has the attribution requirements (GPL Section 7) at
+#  http://statnet.org/attribution
 #
-#  Copyright 2012 the statnet development team
-######################################################################
+#  Copyright 2003-2013 Statnet Commons
+#######################################################################
+#===========================================================================
+# The <InitMHP> file contains the following 24 functions for
+# initializing the MHproposal object; each is prepended with 'InitMHP.'
+#       <randomtoggle>      <CondOutDegreeDist> 
+#       <TNT>               <ConstantEdges>    
+#       <TNT10>             <CondInDegree>      
+#       <CondDegree>        <CondOutDegree>     <HammingTNT>   
+#       <CondDegreeTetrad>         <HammingConstantEdges>
+#       <CondDegreeHexad>            <randomtoggleNonObserved>
+#       <CondDegreeDist>          <nobetweengroupties>
+#       <CondInDegreeDist>  
+#============================================================================
+
+
 ########################################################################
 # Each of the <InitMHP.X> functions initializes and returns a
 # MHproposal list; when appropriate, proposal types are checked against
 # covariates and network types for 1 of 2 side effects: to print warning
 # messages or to halt execution (only <InitMHP.nobetweengroupties> can
 # halt execution)
+#
+# --PARAMETERS--
+#   arguments: is ignored by all but <InitMHP.nobetweengroupties>,
+#              where 'arguments' is used to get the nodal attributes
+#              via <get.node.attr>
+#   nw       : the network given by the model
+#
+# --RETURNED--
+#   MHproposal: a list containing:
+#        name   : the name of the proposal
+#        inputs : a vector to be passed to the proposal
+#        package: is "ergm"
+#
 ############################################################################
-
-
 InitMHP.randomtoggle <- function(arguments, nw) {
-  MHproposal <- list(name = "randomtoggle", inputs=NULL, package="ergm")
-  if(is.bipartite(nw)){
-    MHproposal$name <- "Bipartiterandomtoggle"
-  }
+  MHproposal <- list(name = "randomtoggle", inputs=NULL)
   MHproposal
 }
 
 InitMHP.TNT <- function(arguments, nw) {
-  MHproposal <- list(name = "TNT", inputs=NULL, package="ergm")
-  if(is.bipartite(nw)){
-    MHproposal$name <- "BipartiteTNT"
-  }
+  MHproposal <- list(name = "TNT", inputs=NULL)
   MHproposal
 }
 
 InitMHP.TNT10 <- function(arguments, nw) {
-  MHproposal <- list(name = "TNT10", inputs=NULL, package="ergm")
-  if(is.bipartite(nw)){
-    MHproposal$name <- "BipartiteTNT"
-  }
-  MHproposal
-}
-
-InitMHP.CondDegreeSimple <- function(arguments, nw) {
-  MHproposal <- list(name = "CondDegreeSimple", inputs=NULL, package="ergm")
+  MHproposal <- list(name = "TNT10", inputs=NULL)
   MHproposal
 }
 
 InitMHP.CondDegree <- function(arguments, nw) {
-  MHproposal <- list(name = "CondDegree", inputs=NULL, package="ergm")
-  if (is.directed(nw)) {
-    cat("Warning:  Using the 'degree' constraint with a directed network\n",
-          "is currently perilous.  We recommend that you use 'outdegree' or\n",
-          "'indegree' instead.\n")
-  }
-  if(is.bipartite(nw)){
-    MHproposal$name <- "CondDegreeSimpleTetrad"
-  }
+  MHproposal <- list(name = "CondDegree", inputs=NULL)
   MHproposal
 }
 
-
-InitMHP.CondDegreeTetrad <- function(arguments, nw) {
-  MHproposal <- list(name = "CondDegreeTetradToggles", inputs=NULL, package="ergm")
-  if (is.directed(nw)) {
-    cat("Warning:  Using the 'degree' constraint with a directed network\n",
-          "is currently perilous.  We recommend that you use 'outdegree' or\n",
-          "'indegree' instead.\n")
-  }
-  if(is.bipartite(nw)){
-    MHproposal$name <- "BipartiteCondDegHexadToggles"
-  }
+InitMHP.CondOutDegree <- function(arguments, nw) {
+  MHproposal <- list(name = "CondOutDegree", inputs=NULL)
+  if (!is.directed(nw)) # Really, this should never trigger, since the InitConstraint function should check.
+    stop("The CondOutDegree proposal function does not work with an",
+          "undirected network.")
+  
   MHproposal
 }
 
-InitMHP.CondDegreeHexad <- function(arguments, nw) {
-  MHproposal <- list(name = "CondDegreeHexadToggles", inputs=NULL, package="ergm")
-  if (is.directed(nw)) {
-    cat("Warning:  Using the 'degree' constraint with a directed network\n",
-          "is currently perilous.  We recommend that you use 'outdegree' or\n",
-          "'indegree' instead.\n")
-  }
-  if(is.bipartite(nw)){
-    MHproposal$name <- "BipartiteCondDegHexadToggles"
-  }
+InitMHP.CondInDegree <- function(arguments, nw) {
+  MHproposal <- list(name = "CondInDegree", inputs=NULL)
+  if (!is.directed(nw)) # Really, this should never trigger, since the InitConstraint function should check.
+    stop("The CondInDegree proposal function does not work with an",
+          "undirected network.")
+  MHproposal
+}
+
+InitMHP.CondB1Degree <- function(arguments, nw) {
+  MHproposal <- list(name = "CondB1Degree", inputs=NULL)
+  if (!is.bipartite(nw)) # Really, this should never trigger, since the InitConstraint function should check.
+    stop("The CondB1Degree proposal function does not work with a non-bipartite network.")
+  
+  MHproposal
+}
+
+InitMHP.CondB2Degree <- function(arguments, nw) {
+  MHproposal <- list(name = "CondB2Degree", inputs=NULL)
+  if (!is.bipartite(nw)) # Really, this should never trigger, since the InitConstraint function should check.
+    stop("The CondB2Degree proposal function does not work with a non-bipartite network.")
   MHproposal
 }
 
 InitMHP.CondDegreeDist <- function(arguments, nw) {
-  MHproposal <- list(name = "CondDegreeDist", inputs=NULL, package="ergm")
+  MHproposal <- list(name = "CondDegreeDist", inputs=NULL)
   if (is.directed(nw)) {
     cat("Warning:  Using the 'degreedist' constraint with a directed network\n",
           "is currently perilous.  We recommend that you use 'outdegree' or\n",
-          "'indegree' instead.\n")
+          "'idegrees' instead.\n")
   }
   if(is.bipartite(nw)){
      MHproposal$name <- "BipartiteCondDegreeDist"
@@ -99,9 +107,9 @@ InitMHP.CondDegreeDist <- function(arguments, nw) {
 }
 
 InitMHP.CondInDegreeDist <- function(arguments, nw) {
-  MHproposal <- list(name = "CondInDegreeDist", inputs=NULL, package="ergm")
+  MHproposal <- list(name = "CondInDegreeDist", inputs=NULL)
   if (!is.directed(nw)) {
-    cat("Warning:  Using the 'indegreedist' constraint with an undirected network\n",
+    cat("Warning:  Using the 'idegreedist' constraint with an undirected network\n",
           "is currently perilous.  We recommend that you use 'degreedist'\n",
           " instead.\n")
   }
@@ -112,9 +120,9 @@ InitMHP.CondInDegreeDist <- function(arguments, nw) {
 }
 
 InitMHP.CondOutDegreeDist <- function(arguments, nw) {
-  MHproposal <- list(name = "CondOutDegreeDist", inputs=NULL, package="ergm")
+  MHproposal <- list(name = "CondOutDegreeDist", inputs=NULL)
   if (!is.directed(nw)) {
-    cat("Warning:  Using the 'outdegreedist' constraint with an undirected network\n",
+    cat("Warning:  Using the 'odegreedist' constraint with an undirected network\n",
           "is currently perilous.  We recommend that you use 'degreedist'\n",
           " instead.\n")
   }
@@ -124,37 +132,13 @@ InitMHP.CondOutDegreeDist <- function(arguments, nw) {
   MHproposal
 }
 
-#InitMHP.CondOutDegree <- function(arguments, nw) {
-#  MHproposal <- list(name = "CondOutDegree", inputs=NULL, package="ergm")
-#  if (!is.directed(nw)) {
-#    cat("Warning:  The 'outdegree' constraint does not work with an\n",
-#          "undirected network.  Switching to 'degree' constraint.\n")
-#    return(InitMHP.CondDegree(arguments, nw))
-#  }
-#  MHproposal
-#}
-
-#InitMHP.CondInDegree <- function(arguments, nw) {
-#  MHproposal <- list(name = "CondInDegree", inputs=NULL, package="ergm")
-#  if (!is.directed(nw)) {
-#    cat("Warning:  The 'indegree' constraint does not work with an\n",
-#          "undirected network.  Switching to 'degree' constraint.\n")
-#    return(InitMHP.CondDegree(arguments, nw))
-#  }
-#  MHproposal
-#}
-
 InitMHP.ConstantEdges <- function(arguments, nw) {
-  MHproposal <- list(name = "ConstantEdges", inputs=NULL, package="ergm")
-  if(is.bipartite(nw)){
-    MHproposal$name <- "BipartiteConstantEdges"
-  }
-
+  MHproposal <- list(name = "ConstantEdges", inputs=NULL)
   MHproposal
 }
 
 InitMHP.HammingConstantEdges <- function(arguments, nw) {
-  MHproposal <- list(name = "HammingConstantEdges", inputs=NULL, package="ergm")
+  MHproposal <- list(name = "HammingConstantEdges", inputs=NULL)
   if(is.bipartite(nw)){
     MHproposal$name <- "BipartiteHammingConstantEdges"
   }
@@ -162,7 +146,7 @@ InitMHP.HammingConstantEdges <- function(arguments, nw) {
 }
 
 InitMHP.HammingTNT <- function(arguments, nw) {
-  MHproposal <- list(name = "HammingTNT", inputs=NULL, package="ergm")
+  MHproposal <- list(name = "HammingTNT", inputs=NULL)
   if(is.bipartite(nw)){
     MHproposal$name <- "BipartiteHammingTNT"
   }
@@ -173,30 +157,7 @@ InitMHP.randomtoggleNonObserved <- function(arguments, nw) {
   if(network.naedgecount(nw)==0){
    stop("The passed network does not have any non-observed dyads.\n Hence constraining to the observed will hold the network fixed at this network.\n Either the network or the constraint need to be altered.")
   }
-  MHproposal <- list(name = "randomtoggleNonObserved", inputs=ergm.Cprepare.miss(nw), package="ergm")
-  if(is.bipartite(nw)){
-    MHproposal$name <- "BipartiterandomtoggleNonObserved"
-  }
+  MHproposal <- list(name = "randomtoggleList", inputs=ergm.Cprepare.miss(nw))
   MHproposal
 }
-
-
-# This one does not have a C function.
-InitMHP.nobetweengroupties <- function(arguments, nw) {
-  x <- get.node.attr(nw, arguments, "InitMHP.nobetweengroupties")
-  if(any(is.na(x)) || any(table(x)==1)) {
-    stop("nobetweengroups may not be used with a nodal covariate containing ",
-         "NAs or nonrepeated values")
-  }
-  a <- sort(x)
-  b <- table(a)
-  d <- unique(a)
-  e <- unlist(sapply(d, grep, x))
-  f <- b*(b-1)
-  inputs <- c(length(b), b, e)
-  MHproposal <- list(name="nobetweengroupties", inputs = inputs, package="ergm")
-  MHproposal
-}
-
-
 

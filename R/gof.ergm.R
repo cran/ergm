@@ -1,24 +1,94 @@
-#  File ergm/R/gof.ergm.R
-#  Part of the statnet package, http://statnet.org
+#  File R/gof.ergm.R in package ergm, part of the Statnet suite
+#  of packages for network analysis, http://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnet.org/attribution
+#  open source, and has the attribution requirements (GPL Section 7) at
+#  http://statnet.org/attribution
 #
-#  Copyright 2012 the statnet development team
-######################################################################
+#  Copyright 2003-2013 Statnet Commons
+#######################################################################
+#=============================================================================
+# This file contains the following 8 functions for assessing goodness of fit
+#         <gof>              <summary.gofobject>
+#         <gof.default>      <plot.gofobject>
+#         <gof.ergm>         <ergm.get.terms.formula>
+#         <gof.formula>      <ergm.rhs.formula>
+#=============================================================================
+
+
+
 ###############################################################################
 # Each of the <gof.X> functions assesses the goodness of fit of X by comparison
 # with 'control$nsim' ergm simulations of X
+#
+# --PARAMETERS--
+#   object/formula: either an ergm object or a formula
+#   ...           : additional parameters passed from within the program;
+#                   these are ignored
+#   init        : the parameters from which the simulations will be drawn;
+#                   default=NULL;
+#   control$nsim          : the number of simulated ergms, with which to compare X;
+#                   default=100
+#   burnin        : the number of proposals to disregard before any MCMC
+#                   sampling is done; this is passed along to the simulation
+#                   routines; default=10000
+#   interval      : the number of proposals between sampled ergm statistics;
+#                   this is passed along to the simulation rountines;
+#                   default=1000
+#   GOF           : a one-sided formula specifying which summary statistics
+#                   should be used in the GOF comparison; choices include
+#                       distance      espartners    dspartners
+#                       odegree       idegree       degree
+#                       triadcensus   model
+#                   default=NULL; is internally mapped to 
+#                   ~degree+espartners+distance if nw is undirected, and
+#                   ~idegree+odegree+espartners+distance otherwise
+#   constraints   : a one-sided formula of the constraint terms; options are
+#                         bd        degrees        nodegrees
+#                         edges     degreedist     idegreedist
+#                         observed  odegreedist
+#                   default="~ ."   
+#   control       : a list of parameters for controlling GOF evaluation, as
+#                   returned by <control.gof.X>; default=control.gof.X()
+#                   (note that <control.gof.X> has different defaults 
+#                    depending on the class of X)
+#   seed          : an integer value at which to set the random generator;
+#                   default=NULL
+#   verbose       : whether to print information on the progress of the
+#                   simulations; default=FALSE
+#
+# --RETURNED--
+#   returnlist: a list with the following components for each term
+#               G given in 'GOF'
+#      summary.G: a matrix of summary statistics for the observed and
+#                 simulated G's; if G takes on the values {G1, G2,...,Gq},
+#                 the entries of 'summary.G' are
+#         [i,1]-- the observed frequency of Gi
+#         [i,2]-- the minimum value of Gi from the simulations
+#         [i,3]-- the mean value of Gi from the simulations
+#         [i,4]-- the maximum value of Gi from the simulations
+#         [i,5]-- the p-value for the observed Gi estimated from the
+#                 distribution of simulations
+#      pobs.G   : a vector giving G's observed probability distribution
+#      psim.G   : a matrix of G's simulated probability distributions; each
+#                 row gives a distribution
+#      bds.G    : the estimatd confidence interval, as the .025 and .975
+#                 quantile values of the simulations
+#      obs.G    : the vector of summary statistics for the observed X
+#      sim.G    : the matrix of summary statistics for each simulated
+#                 version of X
+#
 ###############################################################################
 
-gof <- function(object, ...){
+.gof <- function(object, ...){
       UseMethod("gof")
     }
 
 
-gof.default <- function(object,...) {
-  stop("Either a ergm object, an ergmm object or a formula argument must be given")
+.gof.default <- function(object,...) {
+  classes <- setdiff(gsub(pattern="^gof.",replacement="",as.vector(methods("gof"))), "default")
+  stop("Goodness-of-Fit methods have been implemented only for class(es) ",
+       paste.and(paste('"',classes,'"',sep="")), " in the packages loaded.")
 }
 
 
@@ -28,7 +98,7 @@ gof.ergm <- function (object, ...,
                       constraints=NULL,
                       control=control.gof.ergm(),
                       verbose=FALSE) {
-  
+  check.control.class(c("gof.ergm","gof.formula"))
   nw <- as.network(object$network)
 
   #Set up the defaults, if called with GOF==NULL
@@ -58,6 +128,8 @@ gof.ergm <- function (object, ...,
   for(arg in control.transfer)
     if(is.null(control[[arg]]))
       control[arg] <- list(object$control[[arg]])
+
+  control <- set.control.class("control.gof.formula")
   
   if(is.null(constraints)) constraints <- object$constraints
   
@@ -76,6 +148,8 @@ gof.formula <- function(object, ...,
                         constraints=~.,
                         control=control.gof.formula(),
                         verbose=FALSE) {
+  check.control.class()
+  
   if(!is.null(control$seed)) {set.seed(as.integer(control$seed))}
   if (verbose) 
     cat("Starting GOF for the given ERGM formula.\n")
@@ -314,7 +388,7 @@ gof.formula <- function(object, ...,
     }
     tempnet <- simulate(object, nsim=1, coef=coef,
                         constraints=constraints, 
-                        control=control,
+                        control=set.control.class("control.simulate.formula",control),
                         basis=tempnet,
                         verbose=verbose)
     seed <- NULL # Don't re-seed after first iteration   
@@ -323,7 +397,7 @@ gof.formula <- function(object, ...,
 #     if ((i %% 10 == 0) || (i==control$nsim)) cat("\n")
 #    }
     if ('model' %in% all.gof.vars) {
-     sim.model[i,] <- summary(ergm.update.formula(object,tempnet ~ .))
+     sim.model[i,] <- summary(ergm.update.formula(object,tempnet ~ ., from.new="tempnet"))
     }
     if ('distance' %in% all.gof.vars) {
      sim.dist[i,] <- ergm.geodistdist(tempnet)
@@ -540,6 +614,13 @@ gof.formula <- function(object, ...,
 ################################################################
 # The <print.gofobject> function prints the summary matrices
 # of each GOF term included in the build of the gofobject
+#
+# --PARAMETERS--
+#   x  : a gofobject, as returned by one of the <gof.X> functions
+#   ...: additional printing parameters; these are ignored
+#
+# --RETURNED--
+#   NULL
 #################################################################
 
 print.gofobject <- function(x, ...){
@@ -578,6 +659,24 @@ summary.gofobject <- function(object, ...) {
 ###################################################################
 # The <plot.gofobject> function plots the GOF diagnostics for each
 # term included in the build of the gofobject
+#
+# --PARAMETERS--
+#   x          : a gofobject, as returned by one of the <gof.X>
+#                functions
+#   ...        : additional par arguments to send to the native R
+#                plotting functions
+#   cex.axis   : the magnification of the text used in axis notation;
+#                default=0.7
+#   plotlogodds: whether the summary results should be presented
+#                as their logodds; default=FALSE
+#   main       : the main title; default="Goodness-of-fit diagnostics"
+#   verbose    : this parameter is ignored; default=FALSE
+#   normalize.reachibility: whether to normalize the distances in
+#                the 'distance' GOF summary; default=FALSE
+#
+# --RETURNED--
+#   NULL
+#
 ###################################################################
 
 plot.gofobject <- function(x, ..., 

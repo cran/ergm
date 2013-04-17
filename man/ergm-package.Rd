@@ -1,12 +1,12 @@
-%  File ergm/man/ergm-package.Rd
-%  Part of the statnet package, http://statnet.org
+%  File man/ergm-package.Rd in package ergm, part of the Statnet suite
+%  of packages for network analysis, http://statnet.org .
 %
 %  This software is distributed under the GPL-3 license.  It is free,
-%  open source, and has the attribution requirements (GPL Section 7) in
-%    http://statnet.org/attribution
+%  open source, and has the attribution requirements (GPL Section 7) at
+%  http://statnet.org/attribution
 %
-%  Copyright 2012 the statnet development team
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  Copyright 2003-2013 Statnet Commons
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{ergm-package}
 \alias{ergm-package}
 \docType{package}
@@ -14,25 +14,18 @@
 Fit, Simulate and Diagnose Exponential-Family Models for Networks
 }
 \description{
-\code{\link[=ergm-package]{ergm}} is a collection of functions to plot, fit, diagnose, and simulate from random 
-graph models. For a list of functions type: \code{help(package='ergm')}
+\code{\link[=ergm-package]{ergm}} is a collection of functions to plot,
+fit, diagnose, and simulate from exponential-family random 
+graph models (ERGMs). For a list of functions type: \code{help(package='ergm')}
 
 For a complete list of the functions, use \code{library(help="ergm")} 
 or read the rest of the manual. For a simple demonstration,
 use \code{demo(packages="ergm")}.
 
-When publishing results obtained using this package the original authors
-are to be cited as:
-
-Mark S. Handcock, David R. Hunter, Carter T. Butts, Steven M. Goodreau,
-and Martina Morris. 2003 
-\emph{statnet: Software tools for the Statistical Modeling of Network Data}
-\cr
-\url{statnet.org}.
+When publishing results obtained using this package, please cite the
+original authors as described in \code{citation(package="ergm")}.
 
 All programs derived from this package must cite it.
-For complete citation information, use\cr
-\code{citation(package="ergm")}.
 }
 \details{
 Recent advances in the statistical modeling of random networks have had an
@@ -46,16 +39,30 @@ three interrelated factors: the complexity of realistic models, the lack of
 simulation tools for inference and validation, and a poor understanding of the
 inferential properties of nontrivial models.
 
-This manual introduces software tools for the representation, visualization,
-and analysis of network data that address each of these previous shortcomings.
-The package relies on the \code{\link[network]{network}} package which allows networks to be
-represented in \R. The \code{\link{ergm}} package allows maximum likelihood estimates of
-exponential random network models to be calculated using Markov Chain Monte
-Carlo.  The package also provides tools for plotting networks, simulating
-networks and assessing model goodness-of-fit.
+This manual introduces software tools for the representation,
+visualization, and analysis of network data that address each of these
+previous shortcomings.  The package relies on the
+\code{\link[network]{network}} package which allows networks to be
+represented in \R. The \code{\link[=ergm-package]{ergm}} package
+implements maximum likelihood estimates of ERGMs to be calculated using
+Markov Chain Monte Carlo (via \code{\link{ergm}}). The package also
+provides tools for simulating networks (via
+\code{\link{simulate.ergm}}) and assessing model
+goodness-of-fit (see \code{\link{mcmc.diagnostics}} and
+\code{\link{gof.ergm}}).
+
+A number of Statnet Project packages extend and enhance
+\code{\link[=ergm-package]{ergm}}. These include
+\code{\link[tergm:tergm-package]{tergm}} (Temporal ERGM), which provides
+extensions for modeling evolution of networks over time;
+\code{\link[ergm.count:ergm.count-package]{ergm.count}}, which
+facilitates exponential family modeling for networks whose dyadic
+measurements are counts; and
+\code{\link[ergm.userterms:ergm.userterms-package]{ergm.userterms}},
+which allows users to implement their own ERGM terms.
 
 For detailed information on how to download and install the software,
-go to the \code{\link{ergm}} website:
+go to the \code{\link[=ergm-package]{ergm}} website:
 \url{statnet.org}.
 A tutorial, support newsgroup, references and links to further resources are provided there.
 }
@@ -67,7 +74,7 @@ Steven M. Goodreau \email{goodreau@u.washington.edu},\cr
 Pavel N. Krivitsky \email{krivitsky@stat.psu.edu}, and\cr
 Martina Morris \email{morrism@u.washington.edu}
 
-Maintainer: David R. Hunter \email{dhunter@stat.psu.edu}
+Maintainer: Pavel N. Krivitsky \email{krivitsky@stat.psu.edu}
 }
 \references{
 Admiraal R, Handcock MS (2007).
@@ -138,13 +145,13 @@ Handcock MS, Hunter DR, Butts CT, Goodreau SM, Morris M (2003a).
  \pkg{ergm}: A Package to Fit, Simulate and Diagnose
   Exponential-Family Models for Networks.
  Statnet Project, Seattle, WA.
- Version 2, \url{statnet.org}.
+ Version 3, \url{statnet.org}.
 
 Handcock MS, Hunter DR, Butts CT, Goodreau SM, Morris M (2003b).
  \pkg{statnet}: Software Tools for the Statistical Modeling of
   Network Data.
  Statnet Project, Seattle, WA.
- Version 2, \url{statnet.org}.
+ Version 3, \url{statnet.org}.
 
 Hunter, D. R. and Handcock, M. S. (2006)
    Inference in curved exponential family models for networks,
@@ -164,6 +171,11 @@ Krivitsky PN, Handcock MS (2007).
  Seattle, WA.
  Version 2, \url{http://statnet.org}.
 
+Krivitsky PN (2012). Exponential-Family Random Graph Models for Valued
+Networks. \emph{Electronic Journal of Statistics}, 2012, 6,
+1100-1128. \href{http://dx.doi.org/10.1214/12-EJS696}{\code{doi:10.1214/12-EJS696}}
+
+ 
 Morris M, Handcock MS, Hunter DR (2008).
  Specification of Exponential-Family Random Graph Models:
   Terms and Computational Aspects.

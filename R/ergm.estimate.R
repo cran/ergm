@@ -1,15 +1,61 @@
-#  File ergm/R/ergm.estimate.R
-#  Part of the statnet package, http://statnet.org
+#  File R/ergm.estimate.R in package ergm, part of the Statnet suite
+#  of packages for network analysis, http://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnet.org/attribution
+#  open source, and has the attribution requirements (GPL Section 7) at
+#  http://statnet.org/attribution
 #
-#  Copyright 2012 the statnet development team
-######################################################################
+#  Copyright 2003-2013 Statnet Commons
+#######################################################################
 ##################################################################################
 # The <ergm.estimate> function searches for and returns a maximizer of the
 # log-likelihood function. This function is observation-process capable.
+#
+# --PARAMETERS--
+#   init          : the vector of theta parameters that produced 'statsmatrix'
+#   model           : the model, as returned by <ergm.getmodel>
+#   statsmatrix     : the matrix of observed statistics that has already had the
+#                     "observed statistics" vector subtracted out (i.e., the
+#                     "observed stats" are assumed to be zero here)
+#   statsmatrix.obs: the corresponding statsmatrix for the observation process;
+#                     default=NULL
+#   nr.maxit        : the maximum number of iterations to use within the <optim>
+#                     rountine; default=1000
+#   nr.reltol       : the relative tolerance to use within the <optim> rountine;
+#                     default=sqrt(.Machine$double.eps)
+#   metric          : the name of a metric to use, as either "Likelihood",
+#                     "lognormal", "Median.Likelihood", or "EF.Likelihood";
+#                     default="lognormal"
+#   method          : the method to be used by the <optim> routine;
+#                     default="Nelder-Mead"
+#   compress        : whether the matrix of statistics should be compressed
+#                     via <ergm.sufftoprob>; default=FALSE
+#   calc.mcmc.se    : whether to calculate the standard errors induced by the
+#                     MCMC algorithm; default=TRUE
+#   hessainflag     : whether the Hessian matrix of the likelihood function
+#                     should be computed; default=TRUE
+#   verbose         : whether the progress of the estimation should be printed;
+#                     default=FALSE
+#   trace           : a non-negative interger specifying how much tracing
+#                     information should be printed by the <optim> routine;
+#                     default=6*'verbose'
+#   trustregion     : the trust region parameter for the likelihood functions
+#   dampening       : (logical) should likelihood dampening be used?
+#  dampening.min.ess: effective sample size below which dampening is used
+#   dampening.level : proportional distance from boundary of the convex hull
+#                     move
+#   estimateonly    : whether only the estimates (vs. the estimates and the
+#                     standard errors) should be calculated; default=FALSE
+#
+#
+# --IGNORED PARAMETERS--
+#   epsilon         : ??; default=1e-10
+#
+#
+# --RETURNED--
+#   an ergm object as a list containing several components; for details
+#   see the return list in the <ergm> function header (<ergm.estimate>=^)
+#
 ###################################################################################         
 
 ergm.estimate<-function(init, model, statsmatrix, statsmatrix.obs=NULL,
@@ -19,6 +65,9 @@ ergm.estimate<-function(init, model, statsmatrix, statsmatrix.obs=NULL,
                         calc.mcmc.se=TRUE, hessianflag=TRUE,
                         verbose=FALSE, trace=6*verbose,
                         trustregion=20, 
+                        dampening=FALSE,
+                        dampening.min.ess=100,
+                        dampening.level=0.1,
                         cov.type="normal",# cov.type="robust", 
                         estimateonly=FALSE, ...) {
   # If there is an observation process to deal with, statsmatrix.obs will not be NULL;
@@ -209,6 +258,9 @@ ergm.estimate<-function(init, model, statsmatrix, statsmatrix.obs=NULL,
                       xsim=xsim, probs=probs,
                       xsim.obs=xsim.obs, probs.obs=probs.obs,
                       varweight=varweight, trustregion=trustregion,
+                      dampening=dampening,
+                      dampening.min.ess=dampening.min.ess,
+                      dampening.level=dampening.level,
                       eta0=eta0, etamap=model$etamap),
             silent=FALSE)
     Lout$par<-Lout$argument
@@ -271,26 +323,24 @@ ergm.estimate<-function(init, model, statsmatrix, statsmatrix.obs=NULL,
     mc.se <- rep(NA, length=length(theta))
     covar <- NA
     if(!hessianflag){
-     #  covar <- robust.inverse(cov(xsim))
-     #  Lout$hessian <- cov(xsim)
-     Lout$hessian <- Hessianfn(theta=theta, xobs=xobs, xsim=xsim,
-                               probs=probs, 
-                               xsim.obs=xsim.obs, probs.obs=probs.obs,
-                               varweight=varweight,
-                               eta0=eta0, etamap=model$etamap
-                               )
-     covar <- matrix(NA, ncol=length(theta), nrow=length(theta))
-     covar[!model$etamap$offsettheta,!model$etamap$offsettheta ] <- robust.inverse(-Lout$hessian)
-     dimnames(covar) <- list(names(theta),names(theta))
-    }else{
-     covar <- matrix(NA, ncol=length(theta), nrow=length(theta))
-     covar[!model$etamap$offsettheta,!model$etamap$offsettheta ] <- robust.inverse(-Lout$hessian)
-     dimnames(covar) <- list(names(theta),names(theta))
-     He <- matrix(NA, ncol=length(theta), nrow=length(theta))
-     He[!model$etamap$offsettheta,!model$etamap$offsettheta ] <- Lout$hessian
-     dimnames(He) <- list(names(theta),names(theta))
-     Lout$hessian <- He
+      #  covar <- robust.inverse(cov(xsim))
+      #  Lout$hessian <- cov(xsim)
+      Lout$hessian <- Hessianfn(theta=Lout$par, xobs=xobs, xsim=xsim,
+                                probs=probs, 
+                                xsim.obs=xsim.obs, probs.obs=probs.obs,
+                                varweight=varweight,
+                                eta0=eta0, etamap=model$etamap
+                                )
     }
+    
+    covar <- matrix(NA, ncol=length(theta), nrow=length(theta))
+    covar[!model$etamap$offsettheta,!model$etamap$offsettheta ] <- robust.inverse(-Lout$hessian)
+    dimnames(covar) <- list(names(theta),names(theta))
+    He <- matrix(NA, ncol=length(theta), nrow=length(theta))
+    He[!model$etamap$offsettheta,!model$etamap$offsettheta ] <- Lout$hessian
+    dimnames(He) <- list(names(theta),names(theta))
+    Lout$hessian <- He
+    
     if(calc.mcmc.se){
       if (verbose) { cat("Starting MCMC s.e. computation.\n") }
       if ((metric=="lognormal" || metric=="Likelihood")
@@ -354,7 +404,7 @@ ergm.estimate<-function(init, model, statsmatrix, statsmatrix.obs=NULL,
     return(structure(list(coef=theta, sample=statsmatrix, sample.obs=statsmatrix.obs, 
                           iterations=iteration, #mcmcloglik=mcmcloglik,
                           MCMCtheta=init, 
-                          loglikelihood=loglikelihood, gradient=gradient,
+                          loglikelihood=loglikelihood, gradient=gradient, hessian=Lout$hessian,
                           covar=covar, failure=FALSE,
                           mc.se=mc.se#, #acf=mcmcacf,
                           #fullsample=statsmatrix.all

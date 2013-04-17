@@ -1,12 +1,50 @@
-#  File ergm/R/InitErgmTerm.R
-#  Part of the statnet package, http://statnet.org
+#  File R/InitErgmTerm.R in package ergm, part of the Statnet suite
+#  of packages for network analysis, http://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnet.org/attribution
+#  open source, and has the attribution requirements (GPL Section 7) at
+#  http://statnet.org/attribution
 #
-#  Copyright 2012 the statnet development team
-######################################################################
+#  Copyright 2003-2013 Statnet Commons
+#######################################################################
+#===========================================================================
+# This file contains the following 74 new, easier-to-write ergm-term
+# initialization functions (each prepended with "InitErgmTerm"):
+#   A:   <absdiff>          <absdiffcat>      <altkstar>
+#        <asymmetric> 
+#   B:   <b1concurrent>     <b1degree>        <b1factor>
+#        <b1star>           <b1starmix>       <b1twostar>
+#        <b2concurrent>     <b2degree>        <b2factor>         
+#        <b2star>           <b2starmix>       <b2twostar>
+#        <balance>
+#   C:   <concurrent>       <cycle>           <ctriple>=<ctriad> 
+#   D:   <degree>           <degreepopularity><density>         <dsp>
+#        <dyadcov>          <degcrossprod>    <degcor>
+#   E:   <edgecov>          <edges>           <esp>
+#   G:   <gwb1degree>       <gwb2degree>      <gwdegree>
+#        <gwdsp>            <gwesp>           <gwidegree>
+#        <gwnsp>            <gwodegree>
+#   H:   <hamming>          <hammingmix>
+#   I:   <idegree>          <intransitive>    <idegreepopularity> 
+#        <isolates>         <istar>
+#   K:   <kstar>
+#   L:   <localtriangle>
+#   M:   <m2star>           <meandeg>         <mutual>
+#   N:   <nearsimmelian>    <nodefactor>      <nodecov>=<nodemain> 
+#        <nodeicov>         <nodeifactor>     <nodematch>=<match>
+#        <nodemix>          <nodeocov>        <nodeofactor>       
+#        <nsp>
+#   O:   <odegree>          <opentriad>       <ostar>
+#        <odegreepopularity>  
+#   P:   <pdegcor>
+#   R:   <receiver>         <rdegcor>
+#   S:   <sender>           <simmelian>       <simmelianties>
+#        <smalldiff>        <sociality>
+#   T:   <threepath>        <transitive>      <triangles>=<triangle>
+#        <triadcensus>      <tripercent>      <ttriple>=<ttriad>
+#        <transitiveties>   <twopath>
+#==========================================================================
+
 ################################################################################
 # The <InitErgmTerm.X> functions initialize each ergm term, X, by
 #   1) checking the validity of X and its arguments via <check.ErgmTerm> and
@@ -141,26 +179,6 @@ InitErgmTerm.absdiffcat <- function(nw, arglist, ...) {
 }
 
 
-
-################################################################################
-InitErgmTerm.adegcor<-function (nw, arglist, ...) {
-  a <- check.ErgmTerm(nw, arglist, directed=FALSE) 
-
-  deg=summary(nw ~ sociality(base=0))
-  el=as.edgelist(nw)
-  deg1<-deg[el[,1]]
-  deg2<-deg[el[,2]]
-  alldeg<-c(deg1,deg2)
-  sigma2<-(sum(alldeg*alldeg)-length(alldeg)*(mean(alldeg)^2))
-  ### Construct the list to return
-  list(name="adegcor",                            #name: required
-       coef.names = "adegcor",                    #coef.names: required
-       inputs=sigma2,
-       dependence = TRUE # So we don't use MCMC if not necessary
-       )
-}
-
-
 ################################################################################
 InitErgmTerm.altkstar <- function(nw, arglist, initialfit=FALSE, ...) {
   ### Check the network and arguments to make sure they are appropriate.
@@ -229,7 +247,7 @@ InitErgmTerm.asymmetric <- function(nw, arglist, ...) {
   out <- list(name="asymmetric",                      #name: required
               coef.names = "asymmetric",              #coef.names: required
               minval = 0,
-              maxval = network.dyadcount(nw)/2
+              maxval = network.dyadcount(nw,FALSE)/2
               ) 
   if (!is.null(a$attrname)) {
     if (a$diff) {
@@ -258,7 +276,7 @@ InitErgmTerm.b1concurrent<-function(nw, arglist, ...) {
   byarg <- a$byarg
   nb1 <- get.network.attribute(nw, "bipartite")       
   if(!is.null(byarg)) {
-    nodecov <- get.node.attr(nw, byarg, "b1concurrent")
+    nodecov <- get.node.attr(nw, byarg, "b1concurrent")[seq_len(nb1)]
     u<-sort(unique(nodecov))
     if(any(is.na(nodecov))){u<-c(u,NA)}
     nodecov <- match(nodecov,u) # Recode to numeric
@@ -282,6 +300,80 @@ InitErgmTerm.b1concurrent<-function(nw, arglist, ...) {
   list(name=name, coef.names=coef.names, inputs=inputs, dependence=TRUE, minval=0, maxval=nb1)
 }
 
+################################################################################
+InitErgmTerm.b1degrange<-function(nw, arglist, ...) {
+  a <- check.ErgmTerm(nw, arglist, directed=FALSE,
+                      varnames = c("from", "to", "byarg", "homophily"),
+                      vartypes = c("numeric", "numeric", "character", "logical"),
+                      defaultvalues = list(NULL, Inf, NULL, FALSE),
+                      required = c(TRUE, FALSE, FALSE, FALSE))
+  from<-a$from; to<-a$to; byarg <- a$byarg; homophily <- a$homophily
+  to <- ifelse(to==Inf, network.size(nw)+1, to)
+
+  if(length(to)==1 && length(from)>1) to <- rep(to, length(from))
+  else if(length(from)==1 && length(to)>1) from <- rep(from, length(to))
+  else if(length(from)!=length(to)) stop("The arguments of term odegrange must have arguments either of the same length, or one of them must have length 1.")
+  else if(any(from>=to)) stop("Term odegrange must have from<to.")
+
+  nb1 <- get.network.attribute(nw, "bipartite")
+  emptynwstats<-NULL
+  if(!is.null(byarg)) {
+    nodecov <- get.node.attr(nw, byarg, "b1degrange")
+    if(!homophily) nodecov <- nodecov[seq_len(nb1)]
+    u<-sort(unique(nodecov))
+    if(any(is.na(nodecov))){u<-c(u,NA)}
+    nodecov <- match(nodecov,u) # Recode to numeric
+    if (length(u)==1)
+         stop ("Attribute given to b1degrange() has only one value", call.=FALSE)
+  }
+  if(!is.null(byarg) && !homophily) {
+    # Combine b1degrange and u into 3xk matrix, where k=length(from)*length(u)
+    lu <- length(u)
+    du <- rbind(rep(from,lu), rep(to,lu), rep(1:lu, rep(length(from), lu)))
+    if (any(du[1,]==0)) {
+      emptynwstats <- rep(0, ncol(du))
+      tmp <- du[3,du[1,]==0]
+      for(i in 1:length(tmp)) tmp[i] <- sum(nodecov==tmp[i])
+        emptynwstats[du[1,]==0] <- tmp
+    }
+  } else {
+    if (any(from==0)) {
+      emptynwstats <- rep(0, length(from))
+      emptynwstats[from==0] <- network.size(nw)
+    }
+  }
+  if(is.null(byarg)) {
+    if(length(from)==0){return(NULL)}
+    coef.names <- ifelse(to>=network.size(nw)+1,
+                         paste("b1deg",from,"+",sep=""),
+                         paste("b1deg",from,"to",to,sep=""))
+    name <- "b1degrange"
+    inputs <- c(rbind(from,to))
+  } else if (homophily) {
+    if(length(from)==0){return(NULL)}
+    # See comment in d_b1degrange_w_homophily function
+    coef.names <- ifelse(to>=network.size(nw)+1,
+                         paste("b1deg",from,"+", ".homophily.",byarg,sep=""),
+                         paste("b1deg",from,"to",to, ".homophily.",byarg,sep=""))
+    name <- "b1degrange_w_homophily"
+    inputs <- c(rbind(from,to), nodecov)
+  } else {
+    if(ncol(du)==0) {return(NULL)}
+    #  No covariates here, so "ParamsBeforeCov" unnecessary
+    # See comment in d_b1degrange_by_attr function
+    coef.names <- ifelse(du[2,]>=network.size(nw)+1,
+                         paste("b1deg",du[1,],"+.", byarg, u[du[3,]],sep=""),
+                         paste("b1deg",du[1,],"to",du[2,],".",byarg, u[du[3,]],sep=""))
+    name <- "b1degrange_by_attr"
+    inputs <- c(as.vector(du), nodecov)
+  }
+  if (!is.null(emptynwstats)){
+    list(name=name,coef.names=coef.names, inputs=inputs,
+         emptynwstats=emptynwstats, dependence=TRUE, minval = 0)
+  }else{
+    list(name=name,coef.names=coef.names, inputs=inputs, dependence=TRUE, minval = 0, maxval=network.size(nw), conflicts.constraints="b1degreedist")
+  }
+}
 
 
 ################################################################################
@@ -295,7 +387,7 @@ InitErgmTerm.b1degree <- function(nw, arglist, ...) {
   ### Process the arguments
   nb1 <- get.network.attribute(nw, "bipartite")
   if (!is.null(a$byarg)) {  # CASE 1:  a$byarg GIVEN
-    nodecov <- get.node.attr(nw, a$byarg)
+    nodecov <- get.node.attr(nw, a$byarg)[seq_len(nb1)]
     u<-sort(unique(nodecov))
     if(any(is.na(nodecov))){u<-c(u,NA)}
     nodecov <- match(nodecov,u) # Recode to numeric
@@ -306,7 +398,7 @@ InitErgmTerm.b1degree <- function(nw, arglist, ...) {
     if (any(du[1,]==0)) { # Alter emptynwstats
       tmp <- du[2,du[1,]==0]
       for(i in 1:length(tmp)) 
-        tmp[i] <- sum(nodecov[1:nb1]==tmp[i])
+        tmp[i] <- sum(nodecov==tmp[i])
       emptynwstats[du[1,]==0] <- tmp
     }
     name <- "b1degree_by_attr"
@@ -478,7 +570,7 @@ InitErgmTerm.b2concurrent<-function(nw, arglist, ...) {
   byarg <- a$byarg
   nb1 <- get.network.attribute(nw, "bipartite")
   if(!is.null(byarg)) {
-    nodecov <- get.node.attr(nw, byarg, "b2concurrent")
+    nodecov <- get.node.attr(nw, byarg, "b2concurrent")[-seq_len(nb1)]
     u<-sort(unique(nodecov))
     if(any(is.na(nodecov))){u<-c(u,NA)}
     nodecov <- match(nodecov,u) # Recode to numeric
@@ -502,6 +594,80 @@ InitErgmTerm.b2concurrent<-function(nw, arglist, ...) {
   list(name=name, coef.names=coef.names, inputs=inputs, dependence=TRUE, minval = 0, maxval=network.size(nw)-nb1)
 }
 
+################################################################################
+InitErgmTerm.b2degrange<-function(nw, arglist, ...) {
+  a <- check.ErgmTerm(nw, arglist, directed=FALSE,
+                      varnames = c("from", "to", "byarg", "homophily"),
+                      vartypes = c("numeric", "numeric", "character", "logical"),
+                      defaultvalues = list(NULL, Inf, NULL, FALSE),
+                      required = c(TRUE, FALSE, FALSE, FALSE))
+  from<-a$from; to<-a$to; byarg <- a$byarg; homophily <- a$homophily
+  to <- ifelse(to==Inf, network.size(nw)+1, to)
+
+  if(length(to)==1 && length(from)>1) to <- rep(to, length(from))
+  else if(length(from)==1 && length(to)>1) from <- rep(from, length(to))
+  else if(length(from)!=length(to)) stop("The arguments of term odegrange must have arguments either of the same length, or one of them must have length 1.")
+  else if(any(from>=to)) stop("Term odegrange must have from<to.")
+
+  nb1 <- get.network.attribute(nw, "bipartite")
+  emptynwstats<-NULL
+  if(!is.null(byarg)) {
+    nodecov <- get.node.attr(nw, byarg, "b2degrange")
+    if(!homophily) nodecov <- nodecov[-seq_len(nb1)]
+    u<-sort(unique(nodecov))
+    if(any(is.na(nodecov))){u<-c(u,NA)}
+    nodecov <- match(nodecov,u) # Recode to numeric
+    if (length(u)==1)
+         stop ("Attribute given to b2degrange() has only one value", call.=FALSE)
+  }
+  if(!is.null(byarg) && !homophily) {
+    # Combine b2degrange and u into 3xk matrix, where k=length(from)*length(u)
+    lu <- length(u)
+    du <- rbind(rep(from,lu), rep(to,lu), rep(1:lu, rep(length(from), lu)))
+    if (any(du[1,]==0)) {
+      emptynwstats <- rep(0, ncol(du))
+      tmp <- du[3,du[1,]==0]
+      for(i in 1:length(tmp)) tmp[i] <- sum(nodecov==tmp[i])
+        emptynwstats[du[1,]==0] <- tmp
+    }
+  } else {
+    if (any(from==0)) {
+      emptynwstats <- rep(0, length(from))
+      emptynwstats[from==0] <- network.size(nw)
+    }
+  }
+  if(is.null(byarg)) {
+    if(length(from)==0){return(NULL)}
+    coef.names <- ifelse(to>=network.size(nw)+1,
+                         paste("b2deg",from,"+",sep=""),
+                         paste("b2deg",from,"to",to,sep=""))
+    name <- "b2degrange"
+    inputs <- c(rbind(from,to))
+  } else if (homophily) {
+    if(length(from)==0){return(NULL)}
+    # See comment in d_b2degrange_w_homophily function
+    coef.names <- ifelse(to>=network.size(nw)+1,
+                         paste("b2deg",from,"+", ".homophily.",byarg,sep=""),
+                         paste("b2deg",from,"to",to, ".homophily.",byarg,sep=""))
+    name <- "b2degrange_w_homophily"
+    inputs <- c(rbind(from,to), nodecov)
+  } else {
+    if(ncol(du)==0) {return(NULL)}
+    #  No covariates here, so "ParamsBeforeCov" unnecessary
+    # See comment in d_b2degrange_by_attr function
+    coef.names <- ifelse(du[2,]>=network.size(nw)+1,
+                         paste("b2deg",du[1,],"+.", byarg, u[du[3,]],sep=""),
+                         paste("b2deg",du[1,],"to",du[2,],".",byarg, u[du[3,]],sep=""))
+    name <- "b2degrange_by_attr"
+    inputs <- c(as.vector(du), nodecov)
+  }
+  if (!is.null(emptynwstats)){
+    list(name=name,coef.names=coef.names, inputs=inputs,
+         emptynwstats=emptynwstats, dependence=TRUE, minval = 0)
+  }else{
+    list(name=name,coef.names=coef.names, inputs=inputs, dependence=TRUE, minval = 0, maxval=network.size(nw), conflicts.constraints="b2degreedist")
+  }
+}
 
 
 ################################################################################
@@ -516,7 +682,7 @@ InitErgmTerm.b2degree <- function(nw, arglist, ...) {
   nb1 <- get.network.attribute(nw, "bipartite")
   n <- network.size(nw)
   if (!is.null(a$byarg)) {  # CASE 1:  a$byarg GIVEN
-    nodecov <- get.node.attr(nw, a$byarg)
+    nodecov <- get.node.attr(nw, a$byarg)[-seq_len(nb1)]
     u<-sort(unique(nodecov))
     if(any(is.na(nodecov))){u<-c(u,NA)}
     nodecov <- match(nodecov,u) # Recode to numeric
@@ -527,7 +693,7 @@ InitErgmTerm.b2degree <- function(nw, arglist, ...) {
     if (any(du[1,]==0)) { # Alter emptynwstats
       tmp <- du[2,du[1,]==0]
       for(i in 1:length(tmp)) 
-        tmp[i] <- sum(nodecov[(1+nb1):n]==tmp[i])
+        tmp[i] <- sum(nodecov==tmp[i])
       emptynwstats[du[1,]==0] <- tmp
     }
     name <- "b2degree_by_attr"
@@ -857,6 +1023,79 @@ InitErgmTerm.degcrossprod<-function (nw, arglist, ...) {
 }
 
 ################################################################################
+InitErgmTerm.degrange<-function(nw, arglist, ...) {
+  a <- check.ErgmTerm(nw, arglist, directed=FALSE,
+                      varnames = c("from", "to", "byarg", "homophily"),
+                      vartypes = c("numeric", "numeric", "character", "logical"),
+                      defaultvalues = list(NULL, Inf, NULL, FALSE),
+                      required = c(TRUE, FALSE, FALSE, FALSE))
+  from<-a$from; to<-a$to; byarg <- a$byarg; homophily <- a$homophily
+  to <- ifelse(to==Inf, network.size(nw)+1, to)
+
+  if(length(to)==1 && length(from)>1) to <- rep(to, length(from))
+  else if(length(from)==1 && length(to)>1) from <- rep(from, length(to))
+  else if(length(from)!=length(to)) stop("The arguments of term degrange must have arguments either of the same length, or one of them must have length 1.")
+  else if(any(from>=to)) stop("Term degrange must have from<to.")
+
+  emptynwstats<-NULL
+  if(!is.null(byarg)) {
+    nodecov <- get.node.attr(nw, byarg, "degrange")
+    u<-sort(unique(nodecov))
+    if(any(is.na(nodecov))){u<-c(u,NA)}
+    nodecov <- match(nodecov,u) # Recode to numeric
+    if (length(u)==1)
+         stop ("Attribute given to degrange() has only one value", call.=FALSE)
+  }
+  if(!is.null(byarg) && !homophily) {
+    # Combine degrange and u into 3xk matrix, where k=length(from)*length(u)
+    lu <- length(u)
+    du <- rbind(rep(from,lu), rep(to,lu), rep(1:lu, rep(length(from), lu)))
+    if (any(du[1,]==0)) {
+      emptynwstats <- rep(0, ncol(du))
+      tmp <- du[3,du[1,]==0]
+      for(i in 1:length(tmp)) tmp[i] <- sum(nodecov==tmp[i])
+        emptynwstats[du[1,]==0] <- tmp
+    }
+  } else {
+    if (any(from==0)) {
+      emptynwstats <- rep(0, length(from))
+      emptynwstats[from==0] <- network.size(nw)
+    }
+  }
+  if(is.null(byarg)) {
+    if(length(from)==0){return(NULL)}
+    coef.names <- ifelse(to>=network.size(nw)+1,
+                         paste("deg",from,"+",sep=""),
+                         paste("deg",from,"to",to,sep=""))
+    name <- "degrange"
+    inputs <- c(rbind(from,to))
+  } else if (homophily) {
+    if(length(from)==0){return(NULL)}
+    # See comment in d_degrange_w_homophily function
+    coef.names <- ifelse(to>=network.size(nw)+1,
+                         paste("deg",from,"+", ".homophily.",byarg,sep=""),
+                         paste("deg",from,"to",to, ".homophily.",byarg,sep=""))
+    name <- "degrange_w_homophily"
+    inputs <- c(rbind(from,to), nodecov)
+  } else {
+    if(ncol(du)==0) {return(NULL)}
+    #  No covariates here, so "ParamsBeforeCov" unnecessary
+    # See comment in d_degrange_by_attr function
+    coef.names <- ifelse(du[2,]>=network.size(nw)+1,
+                         paste("deg",du[1,],"+.", byarg, u[du[3,]],sep=""),
+                         paste("deg",du[1,],"to",du[2,],".",byarg, u[du[3,]],sep=""))
+    name <- "degrange_by_attr"
+    inputs <- c(as.vector(du), nodecov)
+  }
+  if (!is.null(emptynwstats)){
+    list(name=name,coef.names=coef.names, inputs=inputs,
+         emptynwstats=emptynwstats, dependence=TRUE, minval = 0)
+  }else{
+    list(name=name,coef.names=coef.names, inputs=inputs, dependence=TRUE, minval = 0, maxval=network.size(nw), conflicts.constraints="degreedist")
+  }
+}
+
+################################################################################
 InitErgmTerm.degree<-function(nw, arglist, ...) {
   a <- check.ErgmTerm(nw, arglist, directed=FALSE,
                       varnames = c("d", "byarg", "homophily"),
@@ -916,6 +1155,17 @@ InitErgmTerm.degree<-function(nw, arglist, ...) {
   }
 }
 
+################################################################################
+InitErgmTerm.degreepopularity<-function (nw, arglist, ...) {
+  a <- check.ErgmTerm(nw, arglist, directed=FALSE,
+                      varnames = NULL,
+                      vartypes = NULL,
+                      defaultvalues = list(),
+                      required = NULL)
+  list(name="degreepopularity", coef.names="degreepopularity",
+       minval=0, maxval=network.dyadcount(nw,FALSE)*sqrt(network.size(nw)-1), conflicts.constraints="degreedist")
+}
+
 
 ################################################################################
 InitErgmTerm.density<-function(nw, arglist, ...) {
@@ -947,7 +1197,7 @@ InitErgmTerm.dsp<-function(nw, arglist, ...) {
       nb2 <- network.size(nw) - nb1
       emptynwstats[d==0] <- nb1*(nb1-1)/2 + nb2*(nb2-1)/2
     }else{
-      emptynwstats[d==0] <- network.dyadcount(nw)
+      emptynwstats[d==0] <- network.dyadcount(nw,FALSE)
     }
   }else{
     emptynwstats <- NULL
@@ -1023,7 +1273,7 @@ InitErgmTerm.edgecov <- function(nw, arglist, ...) {
   ### Check the network and arguments to make sure they are appropriate.
   a <- check.ErgmTerm(nw, arglist, 
                       varnames = c("x", "attrname"),
-                      vartypes = c("matrix,network", "character"),
+                      vartypes = c("matrix,network,character", "character"),
                       defaultvalues = list(NULL, NULL),
                       required = c(TRUE, FALSE))
   ### Process the arguments
@@ -1060,7 +1310,7 @@ InitErgmTerm.edges<-function(nw, arglist, ...) {
                       required = NULL)
   
   list(name="edges", coef.names="edges", dependence=FALSE,
-       minval = 0, maxval = network.dyadcount(nw), conflicts.constraints="edges")
+       minval = 0, maxval = network.dyadcount(nw,FALSE), conflicts.constraints="edges")
 }
 
 
@@ -1394,7 +1644,7 @@ InitErgmTerm.gwidegree<-function(nw, arglist, initialfit=FALSE, ...) {
     }
     list(name="idegree", coef.names=paste("gwidegree#",d,sep=""), 
          inputs=c(d), params=list(gwidegree=NULL,gwidegree.decay=decay),
-         map=map, gradient=gradient, conflicts.constraints="indegreedist")
+         map=map, gradient=gradient, conflicts.constraints="idegreedist")
   } else { 
     if(!is.null(attrname)) {
       nodecov <- get.node.attr(nw, attrname, "gwidegree")
@@ -1416,7 +1666,7 @@ InitErgmTerm.gwidegree<-function(nw, arglist, initialfit=FALSE, ...) {
       name <- "gwidegree"
       coef.names <- "gwidegree"
       inputs <- c(decay)
-      list(name=name, coef.names=coef.names, inputs=inputs, conflicts.constraints="indegreedist")
+      list(name=name, coef.names=coef.names, inputs=inputs, conflicts.constraints="idegreedist")
     }
   }
 }
@@ -1497,7 +1747,7 @@ InitErgmTerm.gwodegree<-function(nw, arglist, initialfit=FALSE, ...) {
     }
     list(name="odegree", coef.names=paste("gwodegree#",d,sep=""),
          inputs=c(d), params=list(gwodegree=NULL,gwodegree.decay=decay),
-         map=map, gradient=gradient, conflicts.constraints="outdegreedist")
+         map=map, gradient=gradient, conflicts.constraints="odegreedist")
   } else {
     if(!is.null(attrname)) {
       nodecov <- get.node.attr(nw, attrname, "gwodegree")
@@ -1519,7 +1769,7 @@ InitErgmTerm.gwodegree<-function(nw, arglist, initialfit=FALSE, ...) {
       name <- "gwodegree"
       coef.names <- "gwodegree"
       inputs <- c(decay)
-      list(name=name, coef.names=coef.names, inputs=inputs, conflicts.constraints="outdegreedist")
+      list(name=name, coef.names=coef.names, inputs=inputs, conflicts.constraints="odegreedist")
     }
   }
 }
@@ -1557,7 +1807,7 @@ InitErgmTerm.hamming<-function (nw, arglist, ...) {
   coef.names <- "hamming"  # This might be modified later
   if (is.null(a$cov)) {
     minval <- 0
-    maxval <- network.dyadcount(nw)
+    maxval <- network.dyadcount(nw,FALSE)
     if (length(sc03)>1) 
       coef.names <- paste("hamming", as.character(sc03[[2]]), sep=".")
     covm <- NULL
@@ -1677,6 +1927,78 @@ InitErgmTerm.hammingmix<-function (nw, arglist, ...) {
 
 #=======================InitErgmTerm functions:  I============================#
 
+################################################################################
+InitErgmTerm.idegrange<-function(nw, arglist, ...) {
+  a <- check.ErgmTerm(nw, arglist, directed=FALSE,
+                      varnames = c("from", "to", "byarg", "homophily"),
+                      vartypes = c("numeric", "numeric", "character", "logical"),
+                      defaultvalues = list(NULL, Inf, NULL, FALSE),
+                      required = c(TRUE, FALSE, FALSE, FALSE))
+  from<-a$from; to<-a$to; byarg <- a$byarg; homophily <- a$homophily
+  to <- ifelse(to==Inf, network.size(nw)+1, to)
+
+  if(length(to)==1 && length(from)>1) to <- rep(to, length(from))
+  else if(length(from)==1 && length(to)>1) from <- rep(from, length(to))
+  else if(length(from)!=length(to)) stop("The arguments of term idegrange must have arguments either of the same length, or one of them must have length 1.")
+  else if(any(from>=to)) stop("Term idegrange must have from<to.")
+
+  emptynwstats<-NULL
+  if(!is.null(byarg)) {
+    nodecov <- get.node.attr(nw, byarg, "idegrange")
+    u<-sort(unique(nodecov))
+    if(any(is.na(nodecov))){u<-c(u,NA)}
+    nodecov <- match(nodecov,u) # Recode to numeric
+    if (length(u)==1)
+         stop ("Attribute given to idegrange() has only one value", call.=FALSE)
+  }
+  if(!is.null(byarg) && !homophily) {
+    # Combine idegrange and u into 3xk matrix, where k=length(from)*length(u)
+    lu <- length(u)
+    du <- rbind(rep(from,lu), rep(to,lu), rep(1:lu, rep(length(from), lu)))
+    if (any(du[1,]==0)) {
+      emptynwstats <- rep(0, ncol(du))
+      tmp <- du[3,du[1,]==0]
+      for(i in 1:length(tmp)) tmp[i] <- sum(nodecov==tmp[i])
+        emptynwstats[du[1,]==0] <- tmp
+    }
+  } else {
+    if (any(from==0)) {
+      emptynwstats <- rep(0, length(from))
+      emptynwstats[from==0] <- network.size(nw)
+    }
+  }
+  if(is.null(byarg)) {
+    if(length(from)==0){return(NULL)}
+    coef.names <- ifelse(to>=network.size(nw)+1,
+                         paste("ideg",from,"+",sep=""),
+                         paste("ideg",from,"to",to,sep=""))
+    name <- "idegrange"
+    inputs <- c(rbind(from,to))
+  } else if (homophily) {
+    if(length(from)==0){return(NULL)}
+    # See comment in d_idegrange_w_homophily function
+    coef.names <- ifelse(to>=network.size(nw)+1,
+                         paste("ideg",from,"+", ".homophily.",byarg,sep=""),
+                         paste("ideg",from,"to",to, ".homophily.",byarg,sep=""))
+    name <- "idegrange_w_homophily"
+    inputs <- c(rbind(from,to), nodecov)
+  } else {
+    if(ncol(du)==0) {return(NULL)}
+    #  No covariates here, so "ParamsBeforeCov" unnecessary
+    # See comment in d_idegrange_by_attr function
+    coef.names <- ifelse(du[2,]>=network.size(nw)+1,
+                         paste("ideg",du[1,],"+.", byarg, u[du[3,]],sep=""),
+                         paste("ideg",du[1,],"to",du[2,],".",byarg, u[du[3,]],sep=""))
+    name <- "idegrange_by_attr"
+    inputs <- c(as.vector(du), nodecov)
+  }
+  if (!is.null(emptynwstats)){
+    list(name=name,coef.names=coef.names, inputs=inputs,
+         emptynwstats=emptynwstats, dependence=TRUE, minval = 0)
+  }else{
+    list(name=name,coef.names=coef.names, inputs=inputs, dependence=TRUE, minval = 0, maxval=network.size(nw), conflicts.constraints="idegreedist")
+  }
+}
 
 ################################################################################
 InitErgmTerm.idegree<-function(nw, arglist, ...) {
@@ -1733,20 +2055,20 @@ InitErgmTerm.idegree<-function(nw, arglist, ...) {
     list(name=name, coef.names=coef.names, inputs=inputs,
          emptynwstats=emptynwstats, dependence=TRUE)
   }else{
-    list(name=name, coef.names=coef.names, inputs=inputs, dependence=TRUE, minval = 0, maxval=network.size(nw), conflicts.constraints="indegreedist")
+    list(name=name, coef.names=coef.names, inputs=inputs, dependence=TRUE, minval = 0, maxval=network.size(nw), conflicts.constraints="idegreedist")
   }
 }
 
 
 ################################################################################
-InitErgmTerm.indegreepopularity<-function (nw, arglist, ...) {
+InitErgmTerm.idegreepopularity<-function (nw, arglist, ...) {
   a <- check.ErgmTerm(nw, arglist, directed=TRUE,
                       varnames = NULL,
                       vartypes = NULL,
                       defaultvalues = list(),
                       required = NULL)
-  list(name="indegreepopularity", coef.names="indegreepopularity",
-       minval=0, maxval=network.dyadcount(nw)*sqrt(network.size(nw)-1), conflicts.constraints="indegreedist")
+  list(name="idegreepopularity", coef.names="idegreepopularity",
+       minval=0, maxval=network.dyadcount(nw,FALSE)*sqrt(network.size(nw)-1), conflicts.constraints="idegreedist")
 }
 
 
@@ -1811,7 +2133,7 @@ InitErgmTerm.istar<-function(nw, arglist, ...) {
     coef.names <- paste("istar",k,sep="")
     inputs <- c(k)
   }
-  list(name="istar", coef.names=coef.names, inputs=inputs, minval = 0, conflicts.constraints="indegreedist")
+  list(name="istar", coef.names=coef.names, inputs=inputs, minval = 0, conflicts.constraints="idegreedist")
 }
 
 
@@ -1866,6 +2188,10 @@ InitErgmTerm.localtriangle<-function (nw, arglist, ...) {
     xm<-as.matrix(nw, matrix.type="adjacency", x)
   else
     xm<-as.matrix(x)
+  if(!isSymmetric(xm)){
+    warning("localtriangle requires an undirected neighborhood. Using only mutual ties.", call.=FALSE)
+    xm <- pmin(xm[],(t(xm))[])
+  }
   if(!is.null(attrname))
     coef.names <- paste("localtriangle", attrname, sep = ".")
   else
@@ -1961,7 +2287,7 @@ InitErgmTerm.mutual<-function (nw, arglist, ...) {
        coef.names = coef.names,        #coef.names: required
        inputs=inputs,
        minval = 0,
-       maxval = network.dyadcount(nw)/2) 
+       maxval = network.dyadcount(nw,FALSE)/2) 
 }
 
 #=======================InitErgmTerm functions:  N============================#
@@ -1974,7 +2300,7 @@ InitErgmTerm.nearsimmelian<-function (nw, arglist, ...) {
                       vartypes = NULL,
                       defaultvalues = list(),
                       required = NULL)
-  list(name="nearsimmelian", coef.names="nearsimmelian", minval=0, maxval=network.dyadcount(nw)*network.size(nw)*0.5)
+  list(name="nearsimmelian", coef.names="nearsimmelian", minval=0, maxval=network.dyadcount(nw,FALSE)*network.size(nw)*0.5)
 }
 
 
@@ -2282,7 +2608,7 @@ InitErgmTerm.nsp<-function(nw, arglist, ...) {
       nb2 <- network.size(nw) - nb1
       emptynwstats[d==0] <- nb1*(nb1-1)/2 + nb2*(nb2-1)/2
     }else{
-      emptynwstats[d==0] <- network.dyadcount(nw)
+      emptynwstats[d==0] <- network.dyadcount(nw,FALSE)
     }
   }else{
     emptynwstats <- NULL
@@ -2303,6 +2629,79 @@ InitErgmTerm.nsp<-function(nw, arglist, ...) {
 
 
 #=======================InitErgmTerm functions:  O============================#
+
+################################################################################
+InitErgmTerm.odegrange<-function(nw, arglist, ...) {
+  a <- check.ErgmTerm(nw, arglist, directed=FALSE,
+                      varnames = c("from", "to", "byarg", "homophily"),
+                      vartypes = c("numeric", "numeric", "character", "logical"),
+                      defaultvalues = list(NULL, Inf, NULL, FALSE),
+                      required = c(TRUE, FALSE, FALSE, FALSE))
+  from<-a$from; to<-a$to; byarg <- a$byarg; homophily <- a$homophily
+  to <- ifelse(to==Inf, network.size(nw)+1, to)
+
+  if(length(to)==1 && length(from)>1) to <- rep(to, length(from))
+  else if(length(from)==1 && length(to)>1) from <- rep(from, length(to))
+  else if(length(from)!=length(to)) stop("The arguments of term odegrange must have arguments either of the same length, or one of them must have length 1.")
+  else if(any(from>=to)) stop("Term odegrange must have from<to.")
+
+  emptynwstats<-NULL
+  if(!is.null(byarg)) {
+    nodecov <- get.node.attr(nw, byarg, "odegrange")
+    u<-sort(unique(nodecov))
+    if(any(is.na(nodecov))){u<-c(u,NA)}
+    nodecov <- match(nodecov,u) # Recode to numeric
+    if (length(u)==1)
+         stop ("Attribute given to odegrange() has only one value", call.=FALSE)
+  }
+  if(!is.null(byarg) && !homophily) {
+    # Combine odegrange and u into 3xk matrix, where k=length(from)*length(u)
+    lu <- length(u)
+    du <- rbind(rep(from,lu), rep(to,lu), rep(1:lu, rep(length(from), lu)))
+    if (any(du[1,]==0)) {
+      emptynwstats <- rep(0, ncol(du))
+      tmp <- du[3,du[1,]==0]
+      for(i in 1:length(tmp)) tmp[i] <- sum(nodecov==tmp[i])
+        emptynwstats[du[1,]==0] <- tmp
+    }
+  } else {
+    if (any(from==0)) {
+      emptynwstats <- rep(0, length(from))
+      emptynwstats[from==0] <- network.size(nw)
+    }
+  }
+  if(is.null(byarg)) {
+    if(length(from)==0){return(NULL)}
+    coef.names <- ifelse(to>=network.size(nw)+1,
+                         paste("odeg",from,"+",sep=""),
+                         paste("odeg",from,"to",to,sep=""))
+    name <- "odegrange"
+    inputs <- c(rbind(from,to))
+  } else if (homophily) {
+    if(length(from)==0){return(NULL)}
+    # See comment in d_odegrange_w_homophily function
+    coef.names <- ifelse(to>=network.size(nw)+1,
+                         paste("odeg",from,"+", ".homophily.",byarg,sep=""),
+                         paste("odeg",from,"to",to, ".homophily.",byarg,sep=""))
+    name <- "odegrange_w_homophily"
+    inputs <- c(rbind(from,to), nodecov)
+  } else {
+    if(ncol(du)==0) {return(NULL)}
+    #  No covariates here, so "ParamsBeforeCov" unnecessary
+    # See comment in d_odegrange_by_attr function
+    coef.names <- ifelse(du[2,]>=network.size(nw)+1,
+                         paste("odeg",du[1,],"+.", byarg, u[du[3,]],sep=""),
+                         paste("odeg",du[1,],"to",du[2,],".",byarg, u[du[3,]],sep=""))
+    name <- "odegrange_by_attr"
+    inputs <- c(as.vector(du), nodecov)
+  }
+  if (!is.null(emptynwstats)){
+    list(name=name,coef.names=coef.names, inputs=inputs,
+         emptynwstats=emptynwstats, dependence=TRUE, minval = 0)
+  }else{
+    list(name=name,coef.names=coef.names, inputs=inputs, dependence=TRUE, minval = 0, maxval=network.size(nw), conflicts.constraints="odegreedist")
+  }
+}
 
 ################################################################################
 InitErgmTerm.odegree<-function(nw, arglist, ...) {
@@ -2360,20 +2759,20 @@ InitErgmTerm.odegree<-function(nw, arglist, ...) {
     list(name=name, coef.names=coef.names, inputs=inputs,
          emptynwstats=emptynwstats, dependence=TRUE, minval=0)
   }else{
-    list(name=name, coef.names=coef.names, inputs=inputs, dependence=TRUE, minval=0, maxval=network.size(nw), conflicts.constraints="outdegreedist")
+    list(name=name, coef.names=coef.names, inputs=inputs, dependence=TRUE, minval=0, maxval=network.size(nw), conflicts.constraints="odegreedist")
   }
 }
 
 
 ################################################################################
-InitErgmTerm.outdegreepopularity<-function (nw, arglist, ...) {
+InitErgmTerm.odegreepopularity<-function (nw, arglist, ...) {
   a <- check.ErgmTerm(nw, arglist, directed=TRUE,
                       varnames = NULL,
                       vartypes = NULL,
                       defaultvalues = list(),
                       required = NULL)
-  list(name="outdegreepopularity", coef.names="outdegreepopularity",
-       minval=0, maxval=network.dyadcount(nw)*sqrt(network.size(nw)-1), conflicts.constraints="outdegreedist")
+  list(name="odegreepopularity", coef.names="odegreepopularity",
+       minval=0, maxval=network.dyadcount(nw,FALSE)*sqrt(network.size(nw)-1), conflicts.constraints="odegreedist")
 }
 
 
@@ -2417,54 +2816,11 @@ InitErgmTerm.ostar<-function(nw, arglist, ...) {
     coef.names <- paste("ostar",k,sep="")
     inputs <- c(k)
   }
-  list(name="ostar", coef.names=coef.names, inputs=inputs, minval=0, conflicts.constraints="outdegreedist")  
-}
-
-
-#=======================InitErgmTerm functions:  P============================#
-
-################################################################################
-InitErgmTerm.pdegcor<-function (nw, arglist, ...) {
-  a <- check.ErgmTerm(nw, arglist, directed=TRUE) 
-
-  el=as.edgelist(nw)
-  deg1<-summary(nw ~ sender(base=0))[el[,1]]
-  deg2<-summary(nw ~ receiver(base=0))[el[,2]]
-  deg12na<-is.na(deg1)|is.na(deg2)
-  deg1<-deg1[!deg12na]
-  deg2<-deg2[!deg12na]
-  sigma1<-(sum(deg1*deg1)-length(deg1)*(mean(deg1)^2))
-  sigma2<-(sum(deg2*deg2)-length(deg2)*(mean(deg2)^2))
-  sigma1 <- 0
-  sigma2 <- 0
-  ### Construct the list to return
-  list(name="pdegcor",                            #name: required
-       coef.names = "pdegcor",                    #coef.names: required
-       inputs=sigma2,
-       dependence = TRUE # So we don't use MCMC if not necessary
-       )
+  list(name="ostar", coef.names=coef.names, inputs=inputs, minval=0, conflicts.constraints="odegreedist")  
 }
 
 
 #=======================InitErgmTerm functions:  R============================#
-
-################################################################################
-InitErgmTerm.rdegcor<-function (nw, arglist, ...) {
-  a <- check.ErgmTerm(nw, arglist, directed=FALSE) 
-
-  deg=summary(nw ~ sociality(base=0))
-  el=as.edgelist(nw)
-  deg1<-deg[el[,1]]
-  deg2<-deg[el[,2]]
-  alldeg<-c(deg1,deg2)
-  sigma2<-(sum(alldeg*alldeg)-length(alldeg)*(mean(alldeg)^2))
-  ### Construct the list to return
-  list(name="rdegcor",                            #name: required
-       coef.names = "rdegcor",                    #coef.names: required
-       inputs=sigma2,
-       dependence = TRUE # So we don't use MCMC if not necessary
-       )
-}
 
 ################################################################################
 InitErgmTerm.receiver<-function(nw, arglist, ...) {
@@ -2480,7 +2836,7 @@ InitErgmTerm.receiver<-function(nw, arglist, ...) {
   ld<-length(d)
   if(ld==0){return(NULL)}
   list(name="receiver", coef.names=paste("receiver",d,sep=""),
-       inputs=c(d), emptynwstats=rep(0,length(d)), dependence=FALSE, minval=0, maxval=network.size(nw)-1, conflicts.constraints="indegrees")
+       inputs=c(d), emptynwstats=rep(0,length(d)), dependence=FALSE, minval=0, maxval=network.size(nw)-1, conflicts.constraints="idegrees")
 }
 
 
@@ -2500,7 +2856,7 @@ InitErgmTerm.sender<-function(nw, arglist, ...) {
   ld<-length(d)
   if(ld==0){return(NULL)}
   list(name="sender", coef.names=paste("sender",d,sep=""),
-       inputs=c(d), emptynwstats=rep(0,length(d)), dependence=FALSE, minval=0, maxval=network.size(nw)-1, conflicts.constraints="outdegrees")
+       inputs=c(d), emptynwstats=rep(0,length(d)), dependence=FALSE, minval=0, maxval=network.size(nw)-1, conflicts.constraints="odegrees")
 }
 
 

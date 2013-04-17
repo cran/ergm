@@ -1,17 +1,18 @@
-#  File ergm/R/summary.network.list.R
-#  Part of the statnet package, http://statnet.org
+#  File R/summary.network.list.R in package ergm, part of the Statnet suite
+#  of packages for network analysis, http://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnet.org/attribution
+#  open source, and has the attribution requirements (GPL Section 7) at
+#  http://statnet.org/attribution
 #
-#  Copyright 2012 the statnet development team
-######################################################################
+#  Copyright 2003-2013 Statnet Commons
+#######################################################################
 summary.network.list <- function (object, stats.print=TRUE, 
                        net.print=FALSE, net.summary=FALSE, ...){
 
   cat("Number of Networks:",length(object),"\n")
   attrmap<-list(formula="Model: ",
+                reference="Reference: ",
                 constraints="Constraints: ",
                 coef="Parameters:\n",
                 stats="Stored network statistics:\n")

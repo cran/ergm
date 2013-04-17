@@ -1,18 +1,60 @@
-#  File ergm/R/ergm.MCMLE.R
-#  Part of the statnet package, http://statnet.org
+#  File R/ergm.MCMLE.R in package ergm, part of the Statnet suite
+#  of packages for network analysis, http://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnet.org/attribution
+#  open source, and has the attribution requirements (GPL Section 7) at
+#  http://statnet.org/attribution
 #
-#  Copyright 2012 the statnet development team
-######################################################################
+#  Copyright 2003-2013 Statnet Commons
+#######################################################################
 ############################################################################
 # The <ergm.MCMLE> function provides one of the styles of maximum
 # likelihood estimation that can be used. This one is the default and uses
 # optimization of an MCMC estimate of the log-likelihood.  (The other
 # MLE styles are found in functions <ergm.robmon>, <ergm.stocapprox>, and
 # <ergm.stepping> 
+#
+#
+# --PARAMETERS--
+#   init         : the initial theta values
+#   nw             : the network 
+#   model          : the model, as returned by <ergm.getmodel>
+#   initialfit     : an ergm object, as the initial fit, possibly returned
+#                    by <ergm.initialfit>
+#   control     : a list of parameters for controlling the MCMC sampling;
+#                    recognized components include
+#       samplesize : the number of MCMC sampled networks
+#       maxit      : the maximum number of iterations to use
+#       parallel   : the number of threads in which to run the sampling
+#       packagenames: names of packages; this is only relevant if "ergm" is given
+#       interval    : the number of proposals to ignore between sampled networks
+#       burnin      : the number of proposals to initially ignore for the burn-in
+#                     period
+#
+#       epsilon    : ??, this is essentially unused, except to print it if
+#                    'verbose'=T and to pass it along to <ergm.estimate>,
+#                    which ignores it;   
+#   MHproposal     : an MHproposal object for 'nw', as returned by
+#                    <MHproposal>
+#   MHproposal.obs : an MHproposal object for the observed network of'nw',
+#                    as returned by <MHproposal>
+#   verbose        : whether the MCMC sampling should be verbose (T or F);
+#                    default=FALSE
+#   sequential     : whether to update the network returned in
+#                    'v$newnetwork'; if the network has missing edges,
+#                    this is ignored; default=control$MCMLE.sequential
+#   estimate       : whether to optimize the init coefficients via
+#                    <ergm.estimate>; default=TRUE
+#   ...            : additional parameters that may be passed from within;
+#                    all are ignored
+#
+# --RETURNED--
+#   v: an ergm object as a list containing several items; for details see
+#      the return list in the <ergm> function header (<ergm.MCMLE>=*);
+#      note that if the model is degenerate, only 'coef' and 'sample' are
+#      returned; if 'estimate'=FALSE, the MCMC and se variables will be
+#      NA or NULL
+#
 #############################################################################
 
 ergm.MCMLE <- function(init, nw, model,
@@ -21,7 +63,8 @@ ergm.MCMLE <- function(init, nw, model,
                              MHproposal, MHproposal.obs,
                              verbose=FALSE,
                              sequential=control$MCMLE.sequential,
-                             estimate=TRUE, ...) {
+                             estimate=TRUE,
+                             response=NULL, ...) {
   # Initialize the history of parameters and statistics.
   coef.hist <- rbind(init)
   stats.hist <- matrix(NA, 0, length(model$nw.stats))
@@ -29,6 +72,15 @@ ergm.MCMLE <- function(init, nw, model,
   
   # Store information about original network, which will be returned at end
   nw.orig <- network.copy(nw)
+
+  if(control$MCMLE.density.guard>1){
+    # Calculate the density guard threshold.
+    control$MCMC.max.maxedges <- round(min(control$MCMC.max.maxedges,
+                                           max(control$MCMLE.density.guard*network.edgecount(nw,FALSE),
+                                               control$MCMLE.density.guard.min)))
+    control$MCMC.init.maxedges <- round(min(control$MCMC.max.maxedges, control$MCMC.init.maxedges))
+    if(verbose) cat("Density guard set to",control$MCMC.max.maxedges,"from an initial count of",network.edgecount(nw,FALSE)," edges.\n")
+  }  
 
   # statshift is the difference between the target.stats (if
   # specified) and the statistics of the networks in the LHS of the
@@ -43,9 +95,9 @@ ergm.MCMLE <- function(init, nw, model,
   
   if(obs){
     control.obs <- control
-    control.obs$MCMC.samplesize <- control$MCMLE.obs.MCMC.samplesize
-    control.obs$MCMC.interval <- control$MCMLE.obs.MCMC.interval
-    control.obs$MCMC.burnin <- control$MCMLE.obs.MCMC.burnin
+    control.obs$MCMC.samplesize <- control$obs.MCMC.samplesize
+    control.obs$MCMC.interval <- control$obs.MCMC.interval
+    control.obs$MCMC.burnin <- control$obs.MCMC.burnin
   }
   finished <- FALSE
   # mcmc.init will change at each iteration.  It is the value that is used
@@ -64,8 +116,10 @@ ergm.MCMLE <- function(init, nw, model,
 
     # Obtain MCMC sample
     mcmc.eta0 <- ergm.eta(mcmc.init, model$etamap)
-    z <- ergm.getMCMCsample(nw, model, MHproposal, mcmc.eta0, control, verbose)
-    
+    z <- ergm.getMCMCsample(nw, model, MHproposal, mcmc.eta0, control, verbose, response=response)
+
+    if(z$status==1) stop("Number of edges in a simulated network exceeds that in the observed by a factor of more than ",floor(control$MCMLE.density.guard),". This is a strong indicator of model degeneracy. If you are reasonably certain that this is not the case, increase the MCMLE.density.guard control.ergm() parameter.")
+
     # post-processing of sample statistics:  Shift each row by the
     # vector model$nw.stats - model$target.stats, store returned nw
     # The statistics in statsmatrix should all be relative to either the
@@ -83,7 +137,10 @@ ergm.MCMLE <- function(init, nw, model,
     
     ##  Does the same, if observation process:
     if(obs){
-      z.obs <- ergm.getMCMCsample(nw, model, MHproposal.obs, mcmc.eta0, control.obs, verbose)
+      z.obs <- ergm.getMCMCsample(nw, model, MHproposal.obs, mcmc.eta0, control.obs, verbose, response=response)
+
+      if(z.obs$status==1) stop("Number of edges in the simulated network exceeds that observed by a large factor (",control$MCMC.max.maxedges,"). This is a strong indication of model degeneracy. If you are reasonably certain that this is not the case, increase the MCMLE.density.guard control.ergm() parameter.")
+      
       statsmatrix.obs <- sweep(z.obs$statsmatrix, 2, statshift, "+")
       colnames(statsmatrix.obs) <- model$coef.names
       nw.obs.returned <- network.copy(z.obs$newnetwork)
@@ -96,7 +153,7 @@ ergm.MCMLE <- function(init, nw, model,
       statsmatrix.obs <- NULL
       if(sequential) {
         nw <- nw.returned
-        nw.obs <- summary(model$formula, basis=nw)
+        nw.obs <- summary(model$formula, basis=nw, response=response)
         namesmatch <- match(names(model$target.stats), names(nw.obs))
         statshift <- -model$target.stats
         statshift[!is.na(namesmatch)] <- statshift[!is.na(namesmatch)] + nw.obs[namesmatch[!is.na(namesmatch)]]
@@ -106,17 +163,22 @@ ergm.MCMLE <- function(init, nw, model,
     # If the model is linear, all non-offset statistics are passed. If
     # the model is curved, the (likelihood) estimating equations (3.1)
     # by Hunter and Handcock (2006) are given instead.
-    conv.pval <- approx.hotelling.diff.test(t(ergm.etagradmult(mcmc.init,t(statsmatrix),model$etamap))[,!model$etamap$offsettheta,drop=FALSE],
-
-                                            if(obs) t(ergm.etagradmult(mcmc.init,t(statsmatrix.obs),model$etamap))[,!model$etamap$offsettheta,drop=FALSE])
+    esteq <- t(ergm.etagradmult(mcmc.init,t(statsmatrix),model$etamap))[,!model$etamap$offsettheta,drop=FALSE]
+    names(esteq) <- names(mcmc.init)
+    esteq.obs <- if(obs) t(ergm.etagradmult(mcmc.init,t(statsmatrix.obs),model$etamap))[,!model$etamap$offsettheta,drop=FALSE] else NULL   
+    conv.pval <- approx.hotelling.diff.test(esteq, esteq.obs)$p.value
+                                            
     # We can either pretty-print the p-value here, or we can print the
     # full thing. What the latter gives us is a nice "progress report"
     # on whether the estimation is getting better..
 
-    # if(verbose) cat("P-value for equality of observed and simulated statistics:",format.pval(conv.pval,digits=4,eps=1e-4),"\n")
-    if(verbose) cat("P-value for equality of observed and simulated statistics:",conv.pval,"\n")
+    if(verbose){
+      cat("Average estimating equation values:\n")
+      print(if(obs) colMeans(esteq.obs)-colMeans(esteq) else colMeans(esteq))
+    }
+    cat("Convergence test P-value:",format(conv.pval, scientific=TRUE,digits=2),"\n")
     if(conv.pval>control$MCMLE.conv.min.pval){
-      cat("Convergence detected. Stopping early.\n")
+      cat("Convergence detected. Stopping.\n")
       finished <- TRUE
     }
     
@@ -163,17 +225,20 @@ ergm.MCMLE <- function(init, nw, model,
                          calc.mcmc.se=control$MCMC.addto.se, hessianflag=control$main.hessian,
                          trustregion=control$MCMLE.trustregion, method=control$MCMLE.method,
                          metric=control$MCMLE.metric,
+                         dampening=control$MCMLE.dampening,
+                         dampening.min.ess=control$MCMLE.dampening.min.ess,
+                         dampening.level=control$MCMLE.dampening.level,
                          compress=control$MCMC.compress, verbose=verbose,
                          estimateonly=TRUE)
       }
       if(v$loglikelihood < control$MCMLE.trustregion-0.001){
         current.scipen <- options()$scipen
         options(scipen=3)
-        cat("the log-likelihood improved by",
+        cat("The log-likelihood improved by",
             format.pval(v$loglikelihood,digits=4,eps=1e-4),"\n")
         options(scipen=current.scipen)
       }else{
-        cat("the log-likelihood did not improve.\n")
+        cat("The log-likelihood did not improve.\n")
       }
       if((adaptive.steplength==1) && (v$loglikelihood < control$MCMLE.adaptive.epsilon) ){break}
     }else{
@@ -197,17 +262,20 @@ ergm.MCMLE <- function(init, nw, model,
                        hessianflag=control$main.hessian,
                        trustregion=control$MCMLE.trustregion, 
                        method=control$MCMLE.method,
+                       dampening=control$MCMLE.dampening,
+                       dampening.min.ess=control$MCMLE.dampening.min.ess,
+                       dampening.level=control$MCMLE.dampening.level,
                        metric=control$MCMLE.metric,
                        compress=control$MCMC.compress, verbose=verbose,
                        estimateonly=!finished)
       if(v$loglikelihood < control$MCMLE.trustregion-0.001){
         current.scipen <- options()$scipen
         options(scipen=3)
-        cat("the log-likelihood improved by",
+        cat("The log-likelihood improved by",
             format.pval(v$loglikelihood,digits=4,eps=1e-4),"\n")
         options(scipen=current.scipen)
       }else{
-        cat("the log-likelihood did not improve.\n")
+        cat("The log-likelihood did not improve.\n")
       }
       if((control$MCMLE.steplength==1) && (v$loglikelihood < control$MCMLE.adaptive.epsilon) ){break}
     }
@@ -240,37 +308,8 @@ ergm.MCMLE <- function(init, nw, model,
   # v$allparamvals <- parametervalues
 
 
-  v$null.deviance <- 2*network.dyadcount(nw.orig)*log(2)
   v$etamap <- model$etamap
   v
-}
-
-approx.hotelling.diff.test<-function(x,y=NULL){
-  d <-  colMeans(x)
-  if(!is.null(y)) d <- d - colMeans(y)
-
-  # If a statistic doesn't vary and doesn't match, don't terminate.
-  x.n <- effectiveSize(x)
-  if(any(d[x.n==0]!=0)) return(0)
-
-  # If it doesn't vary and matches, ignore it.
-  d <- d[x.n!=0]
-  x <- x[,x.n!=0,drop=FALSE]
-
-  if(!is.null(y)){
-    y <- y[,x.n!=0,drop=FALSE]
-    # y, if it's given, is the constrained sample, so it's OK if it
-    # doesn't vary. (E.g, the extreme case --- completely observed
-    # network --- is just one configuration of statistics.)
-    y.n <- effectiveSize(y)
-    y.n[y.n==0] <- 1 # The actual number is irrelevant, since the cov. mat. will be 0.
-  }
-  x.n <- x.n[x.n!=0]
-  
-  v <- t(cov(x)/sqrt(x.n))/sqrt(x.n)
-  if(!is.null(y)) v <- v + t(cov(y)/sqrt(y.n))/sqrt(y.n)
-  chi2 <- t(d)%*%robust.inverse(v)%*%d
-  pchisq(chi2,ncol(x),lower.tail=FALSE)
 }
 
 #################

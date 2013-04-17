@@ -1,12 +1,12 @@
-#  File ergm/R/InitErgmTerm.transitiveties.R
-#  Part of the statnet package, http://statnet.org
+#  File R/InitErgmTerm.transitiveties.R in package ergm, part of the Statnet suite
+#  of packages for network analysis, http://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnet.org/attribution
+#  open source, and has the attribution requirements (GPL Section 7) at
+#  http://statnet.org/attribution
 #
-#  Copyright 2012 the statnet development team
-######################################################################
+#  Copyright 2003-2013 Statnet Commons
+#######################################################################
 # This new InitErgmTerm function still needs to be tested:
 
 #################################################################################
@@ -26,7 +26,7 @@ InitErgmTerm.transitiveties<-function (nw, arglist, ...) {
     nodecov <- match(nodecov,u,nomatch=length(u)+1)
     ui <- seq(along=u)
     if (length(u)==1)
-      stop ("Attribute given to transitiveties() has only one value", call.=FALSE)
+      warning ("Attribute given to transitiveties() has only one value", call.=FALSE)
     if (!diff) {
       coef.names <- paste("transitiveties",attrname,sep=".")
       inputs <- c(nodecov)
@@ -59,7 +59,7 @@ InitErgmTerm.cyclicalties<-function (nw, arglist, ...) {
     nodecov <- match(nodecov,u,nomatch=length(u)+1)
     ui <- seq(along=u)
     if (length(u)==1)
-      stop ("Attribute given to cyclicalties() has only one value", call.=FALSE)
+      warning ("Attribute given to cyclicalties() has only one value", call.=FALSE)
     if (!diff) {
       coef.names <- paste("cyclicalties",attrname,sep=".")
       inputs <- c(nodecov)

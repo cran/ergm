@@ -1,12 +1,12 @@
-%  File ergm/man/control.logLik.ergm.Rd
-%  Part of the statnet package, http://statnet.org
+%  File man/control.logLik.ergm.Rd in package ergm, part of the Statnet suite
+%  of packages for network analysis, http://statnet.org .
 %
 %  This software is distributed under the GPL-3 license.  It is free,
-%  open source, and has the attribution requirements (GPL Section 7) in
-%    http://statnet.org/attribution
+%  open source, and has the attribution requirements (GPL Section 7) at
+%  http://statnet.org/attribution
 %
-%  Copyright 2012 the statnet development team
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  Copyright 2003-2013 Statnet Commons
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{control.logLik.ergm}
 \alias{control.logLik.ergm}
 \title{ Auxiliary for Controlling logLik.ergm}
@@ -25,6 +25,7 @@ control.logLik.ergm(nsteps=20,
 
                     MCMC.prop.weights=NULL,
                     MCMC.prop.args=NULL,
+                    warn.dyads=TRUE,
 
                     MCMC.init.maxedges=NULL,
                     MCMC.packagenames=NULL,
@@ -66,10 +67,15 @@ control.logLik.ergm(nsteps=20,
   }
   \item{MCMC.prop.args}{An alternative, direct way of specifying additional arguments to proposal. 
   }
+  \item{warn.dyads}{Whether or not a warning should be issued when
+    sample space constraints render the observed number of dyads
+    ill-defined.
+  }
   \item{MCMC.init.maxedges}{Maximum number of edges expected in network.
   }
-  \item{MCMC.packagenames}{Names of packages in which change statistic
-    functions are found.
+  \item{MCMC.packagenames}{Names of packages in which to look for change statistic
+    functions in addition to those autodetected. This argument should not be
+    needed outside of very strange setups.
   }
   \item{seed}{Seed value (integer) for the random number generator.  
     See \code{\link[base]{set.seed}}
@@ -80,4 +86,5 @@ control.logLik.ergm(nsteps=20,
 }
 \seealso{ \code{\link{logLik.ergm}}
 }
+%\keyword{simulation}
 \keyword{models}

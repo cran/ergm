@@ -1,12 +1,11 @@
-/*
- *  File ergm/src/MHproposals.h
- *  Part of the statnet package, http://statnet.org
+/*  File src/MHproposals.h in package ergm, part of the Statnet suite
+ *  of packages for network analysis, http://statnet.org .
  *
  *  This software is distributed under the GPL-3 license.  It is free,
- *  open source, and has the attribution requirements (GPL Section 7) in
- *    http://statnet.org/attribution
+ *  open source, and has the attribution requirements (GPL Section 7) at
+ *  http://statnet.org/attribution
  *
- *  Copyright 2012 the statnet development team
+ *  Copyright 2003-2013 Statnet Commons
  */
 #ifndef MHproposals_H
 #define MHproposals_H
@@ -17,15 +16,11 @@ void MH_randomtoggle (MHproposal *MHp, Network *nwp);
 void MH_TNT (MHproposal *MHp, Network *nwp);
 void MH_TNT10 (MHproposal *MHp, Network *nwp);
 void MH_ConstantEdges (MHproposal *MHp, Network *nwp);
-void MH_CondDegreeTetrad (MHproposal *MHp, Network *nwp);
 void MH_CondDegreeDist (MHproposal *MHp, Network *nwp);
 void MH_CondOutDegreeDist (MHproposal *MHp, Network *nwp);
 void MH_CondInDegreeDist (MHproposal *MHp, Network *nwp);
-void MH_CondDegree (MHproposal *MHp, Network *nwp);
-void MH_CondDegreeHexadToggles (MHproposal *MHp, Network *nwp);
-void MH_CondDegreeTetradToggles (MHproposal *MHp, Network *nwp);
 void MH_RandomNode (MHproposal *MHp, Network *nwp);
-void MH_randomtoggleNonObserved (MHproposal *MHp, Network *nwp);
+void MH_randomtoggleList (MHproposal *MHp, Network *nwp);
 
 void MH_ConstrainedCondOutDegDist (MHproposal *MHp, Network *nwp);
 void MH_OneRandomTnTNode (MHproposal *MHp, Network *nwp);

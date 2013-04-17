@@ -1,16 +1,27 @@
-#  File ergm/R/anova.ergm.R
-#  Part of the statnet package, http://statnet.org
+#  File R/anova.ergm.R in package ergm, part of the Statnet suite
+#  of packages for network analysis, http://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnet.org/attribution
+#  open source, and has the attribution requirements (GPL Section 7) at
+#  http://statnet.org/attribution
 #
-#  Copyright 2012 the statnet development team
-######################################################################
+#  Copyright 2003-2013 Statnet Commons
+#######################################################################
 ################################################################################
 # The <anova.ergm> function computes an analysis of variance table for a
 # single model fit
+#
+# --PARAMETERS--
+#   object:  an ergm object
+#   ...   :  additional ergm objects. If this argument is provided,
+#            the <anova.ergmlist> function is used instead
+#
+#
+# --RETURNED--
+#   an anova object with the analysis of variance table for the given ergm
+#
 #################################################################################
+
 anova.ergm <- function (object, ..., eval.loglik=FALSE) 
 {
   if (length(list(object, ...)) > 1) 
@@ -21,14 +32,14 @@ anova.ergm <- function (object, ..., eval.loglik=FALSE)
     stop(nologLik.message(deparse(substitute(object))))
 
   nodes<- network.size(object$newnetwork)
-  n<- network.dyadcount(object$network)
+  n<- nobs(logl)
   df <- length(object$coef)
   Rdf <- n - df
 
   k <- 1 + (length(object$mplefit$glm$coef) >= 2)
   df <- c(0, df)
   Rdf <- c(n, Rdf)
-  logl <- c(-n*log(2), logl)
+  logl <- c(0, logl)
   pv <- pchisq(abs(2 * diff(logl)), abs(diff(df)), lower.tail = FALSE)
   table <- data.frame(c(NA, -diff(Rdf)), c(NA, diff(2 * logl)), 
                       Rdf, -2 * logl, c(NA, pv))

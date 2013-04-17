@@ -1,12 +1,12 @@
-%  File ergm/man/print.ergm.Rd
-%  Part of the statnet package, http://statnet.org
+%  File man/print.ergm.Rd in package ergm, part of the Statnet suite
+%  of packages for network analysis, http://statnet.org .
 %
 %  This software is distributed under the GPL-3 license.  It is free,
-%  open source, and has the attribution requirements (GPL Section 7) in
-%    http://statnet.org/attribution
+%  open source, and has the attribution requirements (GPL Section 7) at
+%  http://statnet.org/attribution
 %
-%  Copyright 2012 the statnet development team
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  Copyright 2003-2013 Statnet Commons
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{print.ergm}
 \alias{print.ergm}
 \title{Exponential Random Graph Models}
@@ -25,6 +25,7 @@
 }
 \details{Automatically called when an object of class \code{\link{ergm}} is printed.
   Currently, \code{\link{print.ergm}} summarizes 
+%  the number of Newton-Raphson iterations required, 
   the size of the MCMC sample, the theta vector
   governing the selection of the sample, and the Monte Carlo MLE.
 }

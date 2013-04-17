@@ -1,12 +1,12 @@
-%  File ergm/man/coef.ergm.Rd
-%  Part of the statnet package, http://statnet.org
+%  File man/coef.ergm.Rd in package ergm, part of the Statnet suite
+%  of packages for network analysis, http://statnet.org .
 %
 %  This software is distributed under the GPL-3 license.  It is free,
-%  open source, and has the attribution requirements (GPL Section 7) in
-%    http://statnet.org/attribution
+%  open source, and has the attribution requirements (GPL Section 7) at
+%  http://statnet.org/attribution
 %
-%  Copyright 2012 the statnet development team
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  Copyright 2003-2013 Statnet Commons
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{coef.ergm}
 \alias{coef.ergm}
 \alias{coefficients.ergm}
@@ -30,10 +30,23 @@
   from objects returned by the \code{\link{ergm}} function.  
   \code{coefficients} is an \emph{alias} for it.
 }
+%\details{
+%  All object classes which are returned by model fitting functions
+%  should provide a \code{coef} method or use the default one.
+%  (Note that the method is for \code{coef} and not \code{coefficients}.)
+%
+%  Class \code{"aov"} has a \code{coef} method that does not report
+%  aliased coefficients (see \code{\link{alias}}).
+%}
 \seealso{
   \code{\link{fitted.values}} and \code{\link{residuals}} for related methods;
   \code{\link{glm}}, \code{\link{lm}} for model fitting.
 }
+%\references{
+%  Chambers, J. M. and Hastie, T. J. (1992)
+%  \emph{Statistical Models in S}.
+%  Wadsworth \& Brooks/Cole.
+%}
 \examples{
 data(molecule)
 molecule \%v\% "atomic type" <- c(1,1,1,1,1,1,2,2,2,2,2,2,2,3,3,3,3,3,3,3)

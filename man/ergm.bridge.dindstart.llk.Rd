@@ -1,12 +1,12 @@
-%  File ergm/man/ergm.bridge.dindstart.llk.Rd
-%  Part of the statnet package, http://statnet.org
+%  File man/ergm.bridge.dindstart.llk.Rd in package ergm, part of the Statnet suite
+%  of packages for network analysis, http://statnet.org .
 %
 %  This software is distributed under the GPL-3 license.  It is free,
-%  open source, and has the attribution requirements (GPL Section 7) in
-%    http://statnet.org/attribution
+%  open source, and has the attribution requirements (GPL Section 7) at
+%  http://statnet.org/attribution
 %
-%  Copyright 2012 the statnet development team
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  Copyright 2003-2013 Statnet Commons
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{ergm.bridge.dindstart.llk}
 \alias{ergm.bridge.dindstart.llk}
 \title{
@@ -22,6 +22,8 @@
 }
 \usage{
   ergm.bridge.dindstart.llk(object, 
+                            response=NULL,
+                            constraints=~.,
                             coef, 
                             dind=NULL, 
                             coef.dind=NULL,  
@@ -33,6 +35,16 @@
 \arguments{
   \item{object}{
     A model formula. See \code{\link{ergm}} for details.
+  }
+  \item{response}{
+    The name of the edge attribute that is the response. Note that it's
+    included solely for consistency, since
+    \code{ergm.bridge.dindstart.llk} can only handle binary ERGMs.
+  }
+  \item{constraints}{
+    A model constraints formula. See \code{\link{ergm}} for
+    details. Note that only constraints that do not induce dyadic
+    dependence can be handled by \code{ergm.bridge.dindstart.llk}.
   }
   \item{coef}{
     A vector of coefficients for the configuration of interest.

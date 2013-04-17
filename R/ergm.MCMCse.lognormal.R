@@ -1,15 +1,34 @@
-#  File ergm/R/ergm.MCMCse.lognormal.R
-#  Part of the statnet package, http://statnet.org
+#  File R/ergm.MCMCse.lognormal.R in package ergm, part of the Statnet suite
+#  of packages for network analysis, http://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnet.org/attribution
+#  open source, and has the attribution requirements (GPL Section 7) at
+#  http://statnet.org/attribution
 #
-#  Copyright 2012 the statnet development team
-######################################################################
+#  Copyright 2003-2013 Statnet Commons
+#######################################################################
 #############################################################################
 # The <ergm.MCMCse.lognormal> function computes and returns the MCMC lognormal
 # standard errors 
+#
+# --PARAMETERS--
+#   theta           :  the vector of theta coefficients
+#   init          :  the vector of initial theta coefficients
+#   statsmatrix     :  the matrix of network statistics
+#   statsmatrix.obs :  the matrix of network statistics on the constrained network
+#   H               :  the Hessian matrix
+#   H.obs           :  the Hessian matrix on the constrained network
+#   model           :  the model, as returned by <ergm.getmodel>
+#   lag.max         :  the maximum lag at which to calculate the acf for the
+#                      the network corresponding to 'statsmatrix'; default=10
+#   lag.max.obs     :  the maximum lag at which to calculate the acf for the
+#                      the network corresponding to 'statsmatrix.obs';
+#                      default=lag.max
+#
+# --RETURNED--
+#   mc.se: the vector of MCMC lognormal standard error estimates for each theta
+#          parameter
+#
 ################################################################################
 
 ergm.MCMCse.lognormal<-function(theta, init, statsmatrix, statsmatrix.obs,

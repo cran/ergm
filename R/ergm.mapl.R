@@ -1,14 +1,49 @@
-#  File ergm/R/ergm.mapl.R
-#  Part of the statnet package, http://statnet.org
+#  File R/ergm.mapl.R in package ergm, part of the Statnet suite
+#  of packages for network analysis, http://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnet.org/attribution
+#  open source, and has the attribution requirements (GPL Section 7) at
+#  http://statnet.org/attribution
 #
-#  Copyright 2012 the statnet development team
-######################################################################
+#  Copyright 2003-2013 Statnet Commons
+#######################################################################
 ###############################################################################
 # The <ergm.mapl> function creates an initial fit for a specified formula
+#
+# --PARAMETERS--
+#   formula     :  a formula of the form 'nw ~ model term(s)'
+#   init      :  a vector of starting values for estimation, or optionally
+#                  if these are to be estimated, the string "MPLE";
+#                  default="MPLE"
+#   nsim        :  the number of simulations to use in forming the initial
+#                   fit
+#   burnin      :  the number of proposals to ignore before MCMC sampling
+#                  begins; default=10,000
+#   maxit       :  the number of MCMC parameter updates to the value
+#                  maximizing the MCMC likelihood; default=3
+#   constraints :  a one-sided formula of the constraint terms; options are
+#                      bd        degrees        nodegrees
+#                      edges     degreedist     idegreedist
+#                      observed  odegreedist
+#                  default="~ ."
+#   proposaltype:  presumably the MHproposal type, but this is only used
+#                  in calls to <ergm.san>, which doesn't accept a
+#                  'proposaltype' argument
+#   target.stats   :  a vector of the mean value parameters;
+#                  default=the observed statistic from the 'nw' in formula
+#   control     :  a list of control parameters returned from <control.ergm>;
+#                  default=control.ergm()
+#   tau         :  ??, is passed along to <ergm.san> where it is ignored;
+#                  see the <ergm.san> header for details; default=1
+#   invcov      :  the initial inverse covariance matrix used to calculate
+#                  the Mahalanobis distance; default=NULL
+#   verbose     :  whether ergm should be verbose (T or F); default=FALSE
+#
+#
+# --RETURNED--
+#   v: an ergm object as a list containing several items; for details see
+#      the return list in the <ergm> function header (<ergm.mapl>= #);
+#
 ################################################################################
 
 ergm.mapl <- function(formula, init="MPLE", 
@@ -21,9 +56,7 @@ ergm.mapl <- function(formula, init="MPLE",
                  control=control.ergm(MPLEtype="penalized"),
                  tau=1, invcov=NULL,
                  verbose=FALSE, ...) {
-
-  current.warn <- options()$warn
-  options(warn=0)
+  check.control.class("ergm")
   if (verbose) cat("Evaluating network in model\n")
 
   nw <- ergm.getnetwork(formula)
@@ -34,12 +67,12 @@ ergm.mapl <- function(formula, init="MPLE",
     
   if(control$drop){
    model.initial <- ergm.getmodel(formula, nw, initialfit=TRUE)
-#   obs.stats <- if(!is.null(target.stats)) target.stats else summary(formula)
+#   obs.stats <- if(!is.null(target.stats)) target.stats else summary(formula,response=response)
    obs.stats <- if(!is.null(target.stats)) target.stats else summary(formula)
    extremeval <- +(model.initial$maxval==obs.stats)-(model.initial$minval==obs.stats)
    model.initial$etamap$offsettheta[extremeval!=0] <- TRUE
   }else{
-#    model.initial <- ergm.getmodel(formula, nw, initialfit=TRUE)
+#    model.initial <- ergm.getmodel(formula, nw, response=response, initialfit=TRUE)
     model.initial <- ergm.getmodel(formula, nw)
     extremeval <- rep(0, length=length(model.initial$etamap$offsettheta))
   }

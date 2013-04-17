@@ -1,12 +1,12 @@
-#  File ergm/R/control.ergm.bridge.R
-#  Part of the statnet package, http://statnet.org
+#  File R/control.ergm.bridge.R in package ergm, part of the Statnet suite
+#  of packages for network analysis, http://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnet.org/attribution
+#  open source, and has the attribution requirements (GPL Section 7) at
+#  http://statnet.org/attribution
 #
-#  Copyright 2012 the statnet development team
-######################################################################
+#  Copyright 2003-2013 Statnet Commons
+#######################################################################
 control.ergm.bridge<-function(nsteps=20, # Number of geometric bridges to use
                               MCMC.burnin=10000,
                               MCMC.interval=100,
@@ -19,7 +19,7 @@ control.ergm.bridge<-function(nsteps=20, # Number of geometric bridges to use
                               MCMC.prop.args=list(),
 
                               MCMC.init.maxedges=20000,
-                              MCMC.packagenames="ergm",
+                              MCMC.packagenames=c(),
                               
                               seed=NULL){
 
@@ -28,7 +28,7 @@ control.ergm.bridge<-function(nsteps=20, # Number of geometric bridges to use
   for(arg in names(formal.args))
     control[arg]<-list(get(arg))
 
-  control
+  set.control.class()
 }
 
 

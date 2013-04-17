@@ -1,12 +1,12 @@
-#  File ergm/R/ergm.model.utils.R
-#  Part of the statnet package, http://statnet.org
+#  File R/ergm.model.utils.R in package ergm, part of the Statnet suite
+#  of packages for network analysis, http://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnet.org/attribution
+#  open source, and has the attribution requirements (GPL Section 7) at
+#  http://statnet.org/attribution
 #
-#  Copyright 2012 the statnet development team
-######################################################################
+#  Copyright 2003-2013 Statnet Commons
+#######################################################################
 # A helper function to reorder vector v (if named) into order specified by names.
 vector.namesmatch<-function(v,names,errname=NULL){
   if(is.null(errname)) errname <- deparse(substitute(v))
@@ -28,14 +28,14 @@ vector.namesmatch<-function(v,names,errname=NULL){
 }
 
 # A helper function to check for extreme statistics and inform the user.
-ergm.checkextreme.model <- function(model, nw, init, target.stats, drop, silent=FALSE){
+ergm.checkextreme.model <- function(model, nw, init, response, target.stats, drop, silent=FALSE){
   eta0 <- ergm.eta(init, model$etamap)
   
   # Check if any terms are at their extremes.
   obs.stats.eta <- if(!is.null(target.stats)){
-    if(is.null(names(target.stats))) names(target.stats) <- names(ergm.getglobalstats(nw, model))
+    if(is.null(names(target.stats))) names(target.stats) <- names(ergm.getglobalstats(nw, model, response=response))
     target.stats
-  }else ergm.getglobalstats(nw, model)
+  }else ergm.getglobalstats(nw, model, response=response)
 
   extremeval.eta <- +(model$maxval==obs.stats.eta)-(model$minval==obs.stats.eta)
   names.eta<-names(obs.stats.eta)      
@@ -85,7 +85,7 @@ ergm.checkconstraints.model <- function(model, MHproposal, init, silent=FALSE){
   # Get the list of all the constraints that the proposal imposes on the sample space.
   constraints.old<-names(MHproposal$arguments$constraints)
   repeat{
-    constraints <- unique(sort(c(constraints.old, unlist(ConstraintImplications[constraints.old]))))
+    constraints <- unique(sort(c(constraints.old, unlist(ergm.ConstraintImplications()[constraints.old]))))
     if(all(constraints==constraints.old)) break
     else constraints.old <- constraints
   }

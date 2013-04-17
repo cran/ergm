@@ -1,15 +1,24 @@
-#  File ergm/R/plot.ergm.R
-#  Part of the statnet package, http://statnet.org
+#  File R/plot.ergm.R in package ergm, part of the Statnet suite
+#  of packages for network analysis, http://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnet.org/attribution
+#  open source, and has the attribution requirements (GPL Section 7) at
+#  http://statnet.org/attribution
 #
-#  Copyright 2012 the statnet development team
-######################################################################
+#  Copyright 2003-2013 Statnet Commons
+#######################################################################
 #################################################################################
 # The <plot.ergm> function does it plotting via the <mcmc.diagnostics> function.
 # This function basically serves as a wrapper
+#
+# --PARAMETERS--
+#   x: an ergm object
+#   *: a host of parameters, all of which are ignored; for details see the
+#      R documentation for <plot.ergm>
+#
+# --RETURNED--
+#   NULL
+# 
 ###############################################################################
 
 "plot.ergm" <- function (x, ..., mle=FALSE, comp.mat = NULL,

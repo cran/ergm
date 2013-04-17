@@ -1,12 +1,11 @@
-/*
- *  File ergm/src/geodist.c
- *  Part of the statnet package, http://statnet.org
+/*  File src/geodist.c in package ergm, part of the Statnet suite
+ *  of packages for network analysis, http://statnet.org .
  *
  *  This software is distributed under the GPL-3 license.  It is free,
- *  open source, and has the attribution requirements (GPL Section 7) in
- *    http://statnet.org/attribution
+ *  open source, and has the attribution requirements (GPL Section 7) at
+ *  http://statnet.org/attribution
  *
- *  Copyright 2012 the statnet development team
+ *  Copyright 2003-2013 Statnet Commons
  */
 #include "geodist.h"
 
@@ -82,7 +81,7 @@ void node_geodesics (int *edgelist, int *nnodes, int *nodelist,
   Q[Qtop++]=*source;  /* Push source onto top of queue */
   while (Qbottom<Qtop) {  /* Repeat until queue is empty */
     u=Q[Qbottom++]; /* Pop vertex off bottom of queue (it must be NONWHITE) */
-    for (j=2*nodelist[u-1]; j<twoe && edgelist[j]==u; j+=2) {
+    for (j=2*nodelist[u-1]; edgelist[j]==u && j<twoe; j+=2) {
       v=edgelist[j+1];
       if (nodecolor[v-1]==0) { /* WHITE */
         nodecolor[v-1]=1; /* NONWHITE */

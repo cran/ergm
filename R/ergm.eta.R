@@ -1,15 +1,25 @@
-#  File ergm/R/ergm.eta.R
-#  Part of the statnet package, http://statnet.org
+#  File R/ergm.eta.R in package ergm, part of the Statnet suite
+#  of packages for network analysis, http://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnet.org/attribution
+#  open source, and has the attribution requirements (GPL Section 7) at
+#  http://statnet.org/attribution
 #
-#  Copyright 2012 the statnet development team
-######################################################################
+#  Copyright 2003-2013 Statnet Commons
+#######################################################################
 ##############################################################################
 # The <ergm.eta> function calculates and returns eta, mapped from
 # theta using the etamap object created by <ergm.etamap>.
+#
+# --PARAMETERS--
+#   theta :  the curved model parameters  
+#   etamap:  the list of values that constitutes the theta-> eta mapping
+#            and is returned by <ergm.etamap>
+#
+# --RETURNED--
+#   eta:  the canonical eta parameters as mapped from theta; infinite parameters
+#         are replaced by appropriately signed 1000
+#
 ###############################################################################
 
 ergm.eta <- function(theta, etamap) {

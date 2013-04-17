@@ -1,12 +1,11 @@
-/*
- *  File ergm/src/MPLEconddeg.c
- *  Part of the statnet package, http://statnet.org
+/*  File src/MPLEconddeg.c in package ergm, part of the Statnet suite
+ *  of packages for network analysis, http://statnet.org .
  *
  *  This software is distributed under the GPL-3 license.  It is free,
- *  open source, and has the attribution requirements (GPL Section 7) in
- *    http://statnet.org/attribution
+ *  open source, and has the attribution requirements (GPL Section 7) at
+ *  http://statnet.org/attribution
  *
- *  Copyright 2012 the statnet development team
+ *  Copyright 2003-2013 Statnet Commons
  */
 #include "MPLEconddeg.h"
 
@@ -21,7 +20,8 @@
 
  Wrapper for a call from R.
 *****************/
-void MPLEconddeg_wrapper (int *tails, int *heads, int *dnedges,
+void MPLEconddeg_wrapper(int *dnumnets, int *nedges,
+                         int *tails, int *heads,
                    int *dn, int *dflag, int *bipartite, 
                    int *nterms, char **funnames,
                    char **sonames, 
@@ -34,16 +34,14 @@ void MPLEconddeg_wrapper (int *tails, int *heads, int *dnedges,
                    int *attribs, int *maxout, int *maxin, int *minout,
                    int *minin, int *condAllDegExact, int *attriblength, 
                    int *maxedges,
-                   int *mtails, int *mheads, int *mdnedges) {
+                   int *status){
   int directed_flag;
   Vertex n_nodes, nmax, bip;
-  Edge n_edges;
-  Network nw[2];
+  Network nw[1];
   Model *m;
   MHproposal MH;
   
   n_nodes = (Vertex)*dn; /* coerce double *dn to type Vertex */
-  n_edges = (Edge)*dnedges; /* coerce double *dnedges to type Edge */
   nmax = (Edge)*maxedges; /* coerce double *maxedges to type Edge */
   bip = (Vertex)*bipartite; /* coerce double *bipartite to type Vertex */
   
@@ -54,7 +52,7 @@ void MPLEconddeg_wrapper (int *tails, int *heads, int *dnedges,
   m=ModelInitialize(*funnames, *sonames, &inputs, *nterms);
 
   /* Form the missing network */
-  nw[0]=NetworkInitialize(tails, heads, n_edges, 
+  nw[0]=NetworkInitialize(tails, heads, nedges[0], 
                           n_nodes, directed_flag, bip, 0, 0, NULL);
  
   MH_init(&MH,
@@ -64,17 +62,17 @@ void MPLEconddeg_wrapper (int *tails, int *heads, int *dnedges,
 	  nw, attribs, maxout, maxin, minout, minin,
 	  *condAllDegExact, *attriblength);
 
-  CondDegSampler (&MH,
+  *status = CondDegSampler (&MH,
 	      theta0, sample, *samplesize,
 	      *burnin, *interval,
-	      *fVerbose, nw, m);
+	      *fVerbose, nmax, nw, m);
 
   MH_free(&MH);
         
 /* Rprintf("Back! %d %d\n",nw[0].nedges, nmax); */
 
   /* record new generated network to pass back to R */
-  if(nmax>0 && newnetworktails && newnetworkheads)
+  if(*status == MCMC_OK && *maxedges>0 && newnetworktails && newnetworkheads)
     newnetworktails[0]=newnetworkheads[0]=EdgeTree2EdgeList(newnetworktails+1,newnetworkheads+1,nw,nmax-1);
   
   ModelDestroy(m);
@@ -85,7 +83,7 @@ void MPLEconddeg_wrapper (int *tails, int *heads, int *dnedges,
 
 
 /*********************
- void CondDegSampler
+ MCMCStatus CondDegSampler
 
  Using the parameters contained in the array theta, obtain the
  network statistics for a sample of size samplesize.  burnin is the
@@ -94,15 +92,13 @@ void MPLEconddeg_wrapper (int *tails, int *heads, int *dnedges,
  networks in the sample.  Put all the sampled statistics into
  the networkstatistics array. 
 *********************/
-void CondDegSampler (MHproposal *MHp,
+MCMCStatus CondDegSampler (MHproposal *MHp,
   double *theta, double *networkstatistics, 
   int samplesize, int burnin, 
-  int interval, int fVerbose,
+  int interval, int fVerbose, int nmax,
   Network *nwp, Model *m) {
-  int staken, tottaken, originterval;
+//int staken, tottaken;
   int i;
-  
-  originterval = interval;
   
   /*********************
   networkstatistics are modified in groups of m->n_stats, and they
@@ -117,28 +113,40 @@ void CondDegSampler (MHproposal *MHp,
    prepare covariance matrix for Mahalanobis distance calculations 
    in subsequent calls to M-H
    *********************/
-/*  Catch massive number of edges caused by degeneracy */
-   if(nwp->nedges > (50000-1000)){burnin=1;}
-   CondDegSample(MHp, theta, networkstatistics, burnin, &staken,
-		      fVerbose, nwp, m);  
+  /*  Catch more edges than we can return */
+ //     Rprintf("Sample size %d\n", samplesize);
+//      Rprintf("burnin %d interval %d\n", burnin, interval);
+//  if(CondDegSample(MHp, theta, networkstatistics, burnin, &staken,
+//                   fVerbose, nwp, m)!=MCMC_OK)
+//     return MCMC_MH_FAILED;
+//     if(nmax!=0 && nwp->nedges >= nmax-1){
+//       return MCMC_TOO_MANY_EDGES;
+//     }
 /*   if (fVerbose){ 
        Rprintf(".");
      } */
+  //    Rprintf("From %f theta0\n", 333);
+  MHp->logratio = 0;
   
   if (samplesize>1){
-    staken = 0;
-    tottaken = 0;
+//  staken = 0;
+//  tottaken = 0;
     
     /* Now sample networks */
     for (i=1; i < samplesize; i++){
       networkstatistics += m->n_stats;
       /* This then adds the change statistics to these values */
       
-      /* Catch massive number of edges caused by degeneracy */
-      if(nwp->nedges > (50000-1000)){interval=1;}
-      CondDegSample (MHp, theta, networkstatistics, interval, &staken,
-                           fVerbose, nwp, m);
-      tottaken += staken;
+      (*(MHp->func))(MHp, nwp); /* Call MH function to propose toggles */
+    
+      /* Calculate change statistics. */
+      ChangeStats(MHp->ntoggles, MHp->toggletail, MHp->togglehead, nwp, m);
+      
+      /* record network statistics for posterity */
+      for (unsigned int j = 0; j < m->n_stats; j++){
+        networkstatistics[j] += m->workspace[j];
+      }
+//    Rprintf("n_stats %d ns %f %f\n", m->n_stats,  networkstatistics[0],networkstatistics[1]);
 
 #ifdef Win32
       if( ((100*i) % samplesize)==0 && samplesize > 500){
@@ -146,7 +154,9 @@ void CondDegSampler (MHproposal *MHp,
     	R_ProcessEvents();
       }
 #endif
-      /*if (fVerbose){
+  //    Rprintf("Sample size %d\n", samplesize);
+  //    Rprintf("Sampled %d from CondDegSample\n", i);
+      /* if (fVerbose){
         if( ((3*i) % samplesize)==0 && samplesize > 500){
         Rprintf("Sampled %d from CondDegSample\n", i);}
       }
@@ -159,57 +169,6 @@ void CondDegSampler (MHproposal *MHp,
         Rprintf(".");  
       } */
     }
-    /*********************
-    Below is an extremely crude device for letting the user know
-    when the chain doesn't accept many of the proposed steps.
-    *********************/
-    if (fVerbose){
-      Rprintf("sampler accepted %6.3f%% of %d proposed steps.\n",
-      tottaken*100.0/(1.0*originterval*samplesize), originterval*samplesize); 
-    }
-  }else{
-    if (fVerbose){
-      Rprintf("sampler accepted %6.3f%% of %d proposed steps.\n",
-      staken*100.0/(1.0*burnin), burnin); 
-    }
   }
+  return MCMC_OK;
 }
-
-/*********************
- void CondDegSample
-
- In this function, theta is a m->n_stats-vector just as in CondDegSample,
- but now networkstatistics is merely another m->n_stats-vector because
- this function merely iterates nsteps times through the Markov
- chain, keeping track of the cumulative change statistics along
- the way, then returns, leaving the updated change statistics in
- the networkstatistics vector.  In other words, this function 
- essentially generates a sample of size one
-*********************/
-void CondDegSample (MHproposal *MHp,
-			 double *theta, double *networkstatistics,
-			 int nsteps, int *staken,
-			 int fVerbose,
-			 Network *nwp,
-			 Model *m) {
-  int step, taken;
-  int i;
-  
-  step = taken = 0;
-  while (step < nsteps) {
-    MHp->logratio = 0;
-    (*(MHp->func))(MHp, nwp); /* Call MH function to propose toggles */
-    
-    /* Calculate change statistics. */
-    ChangeStats(MHp->ntoggles, MHp->toggletail, MHp->togglehead, nwp, m);
-      
-    /* record network statistics for posterity */
-    for (i = 0; i < m->n_stats; i++){
-      networkstatistics[i] += m->workspace[i];
-    }
-    taken++;
-    step++;
-  }
-  *staken = taken;
-}
-

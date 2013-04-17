@@ -1,34 +1,75 @@
-#  File ergm/R/ergm.initialfit.R
-#  Part of the statnet package, http://statnet.org
+#  File R/ergm.initialfit.R in package ergm, part of the Statnet suite
+#  of packages for network analysis, http://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnet.org/attribution
+#  open source, and has the attribution requirements (GPL Section 7) at
+#  http://statnet.org/attribution
 #
-#  Copyright 2012 the statnet development team
-######################################################################
+#  Copyright 2003-2013 Statnet Commons
+#######################################################################
+####################################################################################
+# The <ergm.initialfit> function fits an initial ergm object using either ML or MPL
+# estimation.  If initial parameters are provided in 'init' and 'MLestimate' is 
+# TRUE, the number of parameters in 'init' is checked for correctness.
+# 
+# --PARAMETERS--
+#   init        :  either a vector whose first entry is "MPLE" or a vector
+#                    of initial coefficients
+#   MLestimate    :  whether a MLestimate should be used (T or F); 
+#                       if TRUE, this may be overriden by 'force.MPLE'=TRUE  or
+#                                init=c("MPLE", ...)
+#                       if FALSE, 'init' must have "MPLE" as its 1st entry to 
+#                                  avoid an error
+#   formula       :  a formula of the form (nw ~ term(s)) 
+#   nw            :  a network object, presumably that of 'formula'
+#   target.stats     :  the mean statistics
+#   m             :  the model as returned by <ergm.getmodel>
+#   MPLEtype      :  the method for MPL estimation as either "glm", "penalized",
+#                    or "logitreg"; this is ignored if ML estimation is used;
+#                    default="glm" 
+#   initial.loglik:  the initial log likelihood; default=NULL
+#   conddeg       :  a formula for the conditional degree terms
+#   control    :  a list of parameters for tuning the MCMC sampling;
+#                    the only recognized component is 'samplesize'
+#   MHproposal    :  an MHproposal object as returned by <getMHproposal>
+#   force.MPLE    :  whether MPL estimation should be forced instead of ML 
+#                    estimation (T or F); this is ignored if 'MLestimate'=FALSE
+#                    or "MPLE" is an entry into 'init'; default=FALSE
+#   verbose       :  whether the MPL estimation should be verbose (T or F); 
+#                    default=FALSE
+#   ...           :  addtional parameters that are used with MPL estimation;
+#                    the only recognized parameeter is 'compressflag' which
+#                    compresses the design matrix used by <ergm.mple>        
+#
+# --RETURNED--
+#    an ergm object as one of the following lists
+#     if MLE  -- a list with 2 components
+#                  coef   : 'init'
+#                  mle.lik:  the MLE likelihood
+#    if MPLE -- the list returned by <ergm.mple>
+#
+######################################################################################
 
 ergm.initialfit<-function(init, initial.is.final,
                           formula, nw, target.stats,
-                          m, method = NULL,
+                          m, reference=~Bernoulli, method = NULL,
                           MPLEtype="glm",
-                          conddeg=NULL, control=NULL, MHproposal=NULL,
+                          conddeg=NULL, control=NULL, MHproposal=NULL, MHproposal.obs=NULL,
                           verbose=FALSE, ...) {
-  method <- match.arg(method, c("MPLE","zeros"))
+  method <- match.arg(method, ergm.init.methods(MHproposal$reference$name))
  
   # conddeg, whatever it does.
-  if(!is.null(conddeg)){
-   formula.conddegmple <- ergm.update.formula(formula, ~ conddegmple + .)
+  if(method=="MPLE" && !is.null(conddeg)){
+   formula.conddegmple <- ergm.update.formula(formula, . ~ conddegmple + .)
    m.conddeg <- ergm.getmodel(formula.conddegmple, nw, initialfit=TRUE)
-   method <- "MPLE"
    Clist <- ergm.Cprepare(nw, m.conddeg)
    Clist.miss <- ergm.design(nw, m.conddeg, verbose=FALSE)
    m$target.stats=c(1,target.stats)
    conddeg <- list(m=m.conddeg, Clist=Clist, Clist.miss=Clist.miss)
   }
-  
+
   Clist <- ergm.Cprepare(nw, m)
-  Clist.miss <- ergm.design(nw, m, verbose=FALSE)
+  Clist.miss <- ergm.Cprepare(NVL(get.miss.dyads(MHproposal$arguments$constraints, MHproposal.obs$arguments$constraints), is.na(nw)), m)
   m$target.stats<-target.stats
   control$Clist.miss<-Clist.miss
 

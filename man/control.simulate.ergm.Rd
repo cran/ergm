@@ -1,12 +1,12 @@
-%  File ergm/man/control.simulate.ergm.Rd
-%  Part of the statnet package, http://statnet.org
+%  File man/control.simulate.ergm.Rd in package ergm, part of the Statnet suite
+%  of packages for network analysis, http://statnet.org .
 %
 %  This software is distributed under the GPL-3 license.  It is free,
-%  open source, and has the attribution requirements (GPL Section 7) in
-%    http://statnet.org/attribution
+%  open source, and has the attribution requirements (GPL Section 7) at
+%  http://statnet.org/attribution
 %
-%  Copyright 2012 the statnet development team
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  Copyright 2003-2013 Statnet Commons
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{control.simulate}
 \alias{control.simulate}
 \alias{control.simulate.formula}
@@ -22,7 +22,7 @@ control.simulate(MCMC.burnin=1000,
                  MCMC.prop.weights="default",
                  MCMC.prop.args=list(),
                  MCMC.init.maxedges=20000,
-                 MCMC.packagenames="ergm",
+                 MCMC.packagenames=c(),
                  MCMC.runtime.traceplot=FALSE,  
 
                  network.output="network",
@@ -37,7 +37,7 @@ control.simulate.formula(MCMC.burnin=1000,
                          MCMC.prop.weights="default",
                          MCMC.prop.args=list(),
                          MCMC.init.maxedges=20000,
-                         MCMC.packagenames="ergm",
+                         MCMC.packagenames=c(),
                          MCMC.runtime.traceplot=FALSE,  
 
                          network.output="network",
@@ -52,7 +52,7 @@ control.simulate.formula.ergm(MCMC.burnin=1000,
                               MCMC.prop.weights="default",
                               MCMC.prop.args=list(),
                               MCMC.init.maxedges=20000,
-                              MCMC.packagenames="ergm",
+                              MCMC.packagenames=c(),
                               MCMC.runtime.traceplot=FALSE,  
 
                               network.output="network",
@@ -61,7 +61,6 @@ control.simulate.formula.ergm(MCMC.burnin=1000,
                               parallel.type=NULL,
                               parallel.version.check=TRUE,
                               \dots)
-
 
 control.simulate.ergm(MCMC.burnin=NULL,
                       MCMC.interval=NULL,
@@ -106,8 +105,9 @@ control.simulate.ergm(MCMC.burnin=NULL,
   }
   \item{MCMC.init.maxedges}{Maximum number of edges expected in network.
   }
-  \item{MCMC.packagenames}{Names of packages in which change statistic
-    functions are found.
+  \item{MCMC.packagenames}{Names of packages in which to look for change statistic
+    functions in addition to those autodetected. This argument should not be
+    needed outside of very strange setups.
   }
   \item{MCMC.runtime.traceplot}{Logical:  If TRUE, plot traceplots of 
     the MCMC sample after every MCMC MLE iteration.
@@ -145,4 +145,5 @@ similar function for
 \code{\link{ergm}};
 \code{\link{control.gof}} performs a
 similar function for \code{\link{gof}}.   }
+%\keyword{simulation}
 \keyword{models}

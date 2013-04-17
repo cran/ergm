@@ -1,12 +1,11 @@
-/*
- *  File ergm/src/wtedgetree.c
- *  Part of the statnet package, http://statnet.org
+/*  File src/wtedgetree.c in package ergm, part of the Statnet suite
+ *  of packages for network analysis, http://statnet.org .
  *
  *  This software is distributed under the GPL-3 license.  It is free,
- *  open source, and has the attribution requirements (GPL Section 7) in
- *    http://statnet.org/attribution
+ *  open source, and has the attribution requirements (GPL Section 7) at
+ *  http://statnet.org/attribution
  *
- *  Copyright 2012 the statnet development team
+ *  Copyright 2003-2013 Statnet Commons
  */
 #include "wtedgetree.h"
 
@@ -41,11 +40,10 @@ WtNetwork WtNetworkInitialize(Vertex *tails, Vertex *heads, double *weights,
   GetRNGstate();  /* R function enabling uniform RNG */
 
   if(lasttoggle_flag){
-    unsigned int ndyads = bipartite? (nnodes-bipartite)*bipartite : (directed_flag? nnodes*(nnodes-1) : (nnodes*(nnodes-1))/2);
-    nw.duration_info.MCMCtimer=time;
-    nw.duration_info.lasttoggle = (int *) calloc(ndyads, sizeof(int));
+    nw.duration_info.time=time;
+    nw.duration_info.lasttoggle = (int *) calloc(DYADCOUNT(nnodes, bipartite, directed_flag), sizeof(int));
     if(lasttoggle)
-      memcpy(nw.duration_info.lasttoggle, lasttoggle, ndyads * sizeof(int));
+      memcpy(nw.duration_info.lasttoggle, lasttoggle, DYADCOUNT(nnodes, bipartite, directed_flag) * sizeof(int));
   }
   else nw.duration_info.lasttoggle = NULL;
 
@@ -131,16 +129,16 @@ WtNetwork *WtNetworkCopy(WtNetwork *dest, WtNetwork *src){
   memcpy(dest->outedges, src->outedges, maxedges*sizeof(WtTreeNode));
 
   int directed_flag = dest->directed_flag = src->directed_flag;
+  Vertex bipartite = dest->bipartite = src->bipartite;
 
   if(src->duration_info.lasttoggle){
-    dest->duration_info.MCMCtimer=src->duration_info.MCMCtimer;
-    dest->duration_info.lasttoggle = (int *) calloc(directed_flag? nnodes*(nnodes-1) : (nnodes*(nnodes-1))/2, sizeof(int));
-    memcpy(dest->duration_info.lasttoggle, src->duration_info.lasttoggle,(directed_flag? nnodes*(nnodes-1) : (nnodes*(nnodes-1))/2) * sizeof(int));
+    dest->duration_info.time=src->duration_info.time;
+    dest->duration_info.lasttoggle = (int *) calloc(DYADCOUNT(nnodes, bipartite, directed_flag), sizeof(int));
+    memcpy(dest->duration_info.lasttoggle, src->duration_info.lasttoggle,DYADCOUNT(nnodes, bipartite, directed_flag) * sizeof(int));
   }
   else dest->duration_info.lasttoggle = NULL;
 
   dest->nedges = src->nedges;
-  dest->bipartite = src->bipartite;
 
   return dest;
 }
@@ -301,7 +299,7 @@ int WtToggleEdgeWithTimestamp (Vertex tail, Vertex head, double weight, WtNetwor
       else
 	k = (head-1)*(head-2)/2 + tail - 1;    
     }
-    nwp->duration_info.lasttoggle[k] = nwp->duration_info.MCMCtimer;
+    nwp->duration_info.lasttoggle[k] = nwp->duration_info.time;
   }
 
   if (WtAddEdgeToTrees(tail,head,weight,nwp))
@@ -395,7 +393,7 @@ void WtSetEdgeWithTimestamp (Vertex tail, Vertex head, double weight, WtNetwork 
       else
 	k = (head-1)*(head-2)/2 + tail - 1;    
     }
-    nwp->duration_info.lasttoggle[k] = nwp->duration_info.MCMCtimer;
+    nwp->duration_info.lasttoggle[k] = nwp->duration_info.time;
   }
 
   WtSetEdge(tail,head,weight,nwp);
@@ -429,7 +427,7 @@ int WtElapsedTime (Vertex tail, Vertex head, WtNetwork *nwp){
       else
 	k = (head-1)*(head-2)/2 + tail - 1;    
     }
-    return nwp->duration_info.MCMCtimer - nwp->duration_info.lasttoggle[k];
+    return nwp->duration_info.time - nwp->duration_info.lasttoggle[k];
   }
   else return 0; 
   /* Should maybe return an error code of some sort, since 0 elapsed time
@@ -463,7 +461,7 @@ void WtTouchEdge(Vertex tail, Vertex head, WtNetwork *nwp){
       else
 	k = (head-1)*(head-2)/2 + tail - 1;    
     }
-    nwp->duration_info.lasttoggle[k] = nwp->duration_info.MCMCtimer;
+    nwp->duration_info.lasttoggle[k] = nwp->duration_info.time;
   }
 }
 
@@ -708,12 +706,19 @@ int WtFindithEdge (Vertex *tail, Vertex *head, double *weight, Edge i, WtNetwork
   Vertex taili=1;
   Edge e;
 
+  /* TODO: This could be speeded up by a factor of 3 or more by starting
+     the search from the tail n rather than tail 1 if i > ndyads/2. */
+
   if (i > nwp->nedges || i<=0)
     return 0;
   while (i > nwp->outdegree[taili]) {
     i -= nwp->outdegree[taili];
     taili++;
   }
+
+  /* TODO: This could be speeded up by a factor of 3 or more by starting
+     the search from the tree maximum rather than minimum (left over) i > outdegree[taili]. */
+
   e=WtEdgetreeMinimum(nwp->outedges,taili);
   while (i-- > 1) {
     e=WtEdgetreeSuccessor(nwp->outedges, e);
@@ -735,6 +740,7 @@ int WtFindithEdge (Vertex *tail, Vertex *head, double *weight, Edge i, WtNetwork
 
 int WtGetRandEdge(Vertex *tail, Vertex *head, double *weight, WtNetwork *nwp) {
   if(nwp->nedges==0) return(0);
+  // FIXME: The constant maxEattempts needs to be tuned.
   const unsigned int maxEattempts=10;
   unsigned int Eattempts = (nwp->maxedges-1)/nwp->nedges;
   Edge rane;
@@ -749,7 +755,7 @@ int WtGetRandEdge(Vertex *tail, Vertex *head, double *weight, WtNetwork *nwp) {
       // Note that the outedges array has maxedges elements, but the
       // 0th one is always blank, so there is actually space for
       // maxedges-1 nodes.
-      rane=1 + unif_rand() * (nwp->maxedges-1);
+      rane = 1 + unif_rand() * (nwp->maxedges-1);
     }while(nwp->outedges[rane].value==0);
 
     // Form the head and weight.
@@ -768,7 +774,7 @@ int WtGetRandEdge(Vertex *tail, Vertex *head, double *weight, WtNetwork *nwp) {
 }
 
 /*****************
-  int WtFindithnonEdge
+  int WtFindithNonedge
 
   Find the ith nonedge in the WtNetwork *nwp and
   update the values of tail and head appropriately.  Return
@@ -781,11 +787,90 @@ int WtGetRandEdge(Vertex *tail, Vertex *head, double *weight, WtNetwork *nwp) {
    be needed. */      
   /* *** but if it is needed, don't forget,  tail -> head */
 
-/* int WtFindithnonEdge (Vertex *tail, Vertex *head, Edge i, WtNetwork *nwp) {
-} */
+int WtFindithNonedge (Vertex *tail, Vertex *head, Edge i, WtNetwork *nwp) {
+  Vertex taili=1;
+  Edge e;
+  Edge ndyads = DYADCOUNT(nwp->nnodes, nwp->bipartite, nwp->directed_flag);
+  Vertex nheads = nwp->bipartite ? nwp->nnodes-nwp->bipartite : nwp->nnodes-1;
+  
+  // If the index is too high or too low, exit immediately.
+  if (i > ndyads - nwp->nedges || i<=0)
+    return 0;
+
+  /* TODO: This could be speeded up by a factor of 3 or more by starting
+     the search from the tail n rather than tail 1 if i > ndyads/2. */
 
 
+  while (i > nheads - nwp->outdegree[taili]) {   // nheads - nwp->oudegree[taili] is the number of nonoutties of taili.
+    i -= nheads - nwp->outdegree[taili];
+    taili++;
+  }
 
+  // Now, our tail is taili.
+
+  /* TODO: This could be speeded up by a factor of 3 or more by starting
+     the search from the tree maximum rather than minimum (left over) i > outdegree[taili]. */
+
+  Vertex lhead = 0;
+  e = WtEdgetreeMinimum(nwp->outedges,taili);
+  Vertex rhead = nwp->outedges[e].value;
+  // Note that rhead-lhead-1 is the number of nonties between two successive ties.
+  while (i > rhead-lhead-1) {
+    i -= rhead-lhead-1;
+    lhead = rhead;
+    e = WtEdgetreeSuccessor(nwp->outedges, e);
+    // If rhead was the highest-indexed head, then e is now 0.
+    if(e) rhead = nwp->outedges[e].value;
+    else break; // Note that we don't actually need rhead in the final step.
+  }
+
+  // Now, the head we are looking for is (left over) i after lhead.
+
+  *tail = taili;
+  *head = lhead + i;
+  return 1;
+}
+
+/*****************
+  int WtGetRandNonedge
+
+  Select an non-edge in the WtNetwork *nwp at random and update the values
+  of tail and head appropriately. Return 1 if successful, 0 otherwise.
+******************/
+
+/* *** don't forget tail->head, so this function now accepts tail before head */
+
+int WtGetRandNonedge(Vertex *tail, Vertex *head, WtNetwork *nwp) {
+  Edge ndyads = DYADCOUNT(nwp->nnodes, nwp->bipartite, nwp->directed_flag);
+  if(ndyads-nwp->nedges==0) return(0);
+
+  /* There are two ways to get a random nonedge: 1) keep trying dyads
+     at random until you find one that's not an edge or 2) generate i
+     at random and find ith nonedge. Method 1 works better in sparse
+     networks, while Method 2, which runs in deterministic time, works
+     better in dense networks.
+
+     The expected number of attempts for Method 1 is 1/(1-e/d) =
+     d/(d-e), where e is the number of edges and d is the number of
+     dyads.
+  */
+
+  // FIXME: The constant maxEattempts needs to be tuned.
+  const unsigned int maxEattempts=10;
+  unsigned int Eattempts = ndyads/(ndyads-nwp->nedges);
+  Edge rane;
+  
+  if(Eattempts>maxEattempts){
+    // If the network is too dense, use the deterministic-time method:
+    rane=1 + unif_rand() * (ndyads-nwp->nedges);
+    WtFindithNonedge(tail, head, rane, nwp);
+  }else{
+    do{
+      GetRandDyad(tail, head, nwp);
+    }while(WtEdgetreeSearch(*tail, *head, nwp->outedges));
+  }
+  return 1;
+}
 
 /* *** don't forget, edges are now given by tails -> heads, and as
        such, the function definitions now require tails to be passed

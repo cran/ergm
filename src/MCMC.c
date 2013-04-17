@@ -1,12 +1,11 @@
-/*
- *  File ergm/src/MCMC.c
- *  Part of the statnet package, http://statnet.org
+/*  File src/MCMC.c in package ergm, part of the Statnet suite
+ *  of packages for network analysis, http://statnet.org .
  *
  *  This software is distributed under the GPL-3 license.  It is free,
- *  open source, and has the attribution requirements (GPL Section 7) in
- *    http://statnet.org/attribution
+ *  open source, and has the attribution requirements (GPL Section 7) at
+ *  http://statnet.org/attribution
  *
- *  Copyright 2012 the statnet development team
+ *  Copyright 2003-2013 Statnet Commons
  */
 #include "MCMC.h"
 
@@ -40,13 +39,11 @@ void MCMC_wrapper(int *dnumnets, int *nedges,
 		  int *status){
   int directed_flag;
   Vertex n_nodes, nmax, bip;
-  Edge n_networks;
   Network nw[1];
   Model *m;
   MHproposal MH;
   
   n_nodes = (Vertex)*dn; 
-  n_networks = (Edge)*dnumnets; 
   nmax = (Edge)abs(*maxedges);
   bip = (Vertex)*bipartite; 
   
@@ -103,9 +100,7 @@ MCMCStatus MCMCSample(MHproposal *MHp,
 		Network *nwp, Model *m){
   int staken, tottaken;
   int i, j;
-  
-
-  
+    
   /*********************
   networkstatistics are modified in groups of m->n_stats, and they
   reflect the CHANGE in the values of the statistics from the
@@ -226,9 +221,23 @@ MCMCStatus MetropolisHastings(MHproposal *MHp,
       }
     }
     
+    if(fVerbose>=5){
+      Rprintf("Proposal: ");
+      for(unsigned int i=0; i<MHp->ntoggles; i++)
+	Rprintf(" (%d, %d)", MHp->toggletail[i], MHp->togglehead[i]);
+      Rprintf("\n");
+    }
+
     /* Calculate change statistics,
        remembering that tail -> head */
     ChangeStats(MHp->ntoggles, MHp->toggletail, MHp->togglehead, nwp, m);
+
+    if(fVerbose>=5){
+      Rprintf("Changes: (");
+      for(unsigned int i=0; i<m->n_stats; i++)
+	Rprintf(" %f ", m->workspace[i]);
+      Rprintf(")\n");
+    }
     
     /* Calculate inner product */
     double ip=0;
@@ -239,9 +248,17 @@ MCMCStatus MetropolisHastings(MHproposal *MHp,
        then let the MH probability equal min{exp(cutoff), 1.0}.
        But we'll do it in log space instead.  */
     double cutoff = ip + MHp->logratio;
+
+    if(fVerbose>=5){
+      Rprintf("log acceptance probability: %f + %f = %f\n", ip, MHp->logratio, cutoff);
+    }
     
     /* if we accept the proposed network */
     if (cutoff >= 0.0 || log(unif_rand()) < cutoff) { 
+      if(fVerbose>=5){
+	Rprintf("Accepted.\n");
+      }
+
       /* Make proposed toggles (updating timestamps--i.e., for real this time) */
       for(unsigned int i=0; i < MHp->ntoggles; i++){
 	ToggleEdge(MHp->toggletail[i], MHp->togglehead[i], nwp);
@@ -256,6 +273,10 @@ MCMCStatus MetropolisHastings(MHproposal *MHp,
 	networkstatistics[i] += m->workspace[i];
       }
       taken++;
+    }else{
+      if(fVerbose>=5){
+	Rprintf("Rejected.\n");
+      }
     }
   }
   
@@ -352,8 +373,6 @@ void MCMCSamplePhase12(MHproposal *MHp,
   
 /*Rprintf("nsubphases %d\n", nsubphases); */
 
-  nwp->duration_info.MCMCtimer=0;
-  
   /*if (fVerbose)
     Rprintf("The number of statistics is %i and the total samplesize is %d\n",
     m->n_stats,samplesize);*/

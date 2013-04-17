@@ -1,12 +1,11 @@
-/*
- *  File ergm/src/wtedgetree.h
- *  Part of the statnet package, http://statnet.org
+/*  File src/wtedgetree.h in package ergm, part of the Statnet suite
+ *  of packages for network analysis, http://statnet.org .
  *
  *  This software is distributed under the GPL-3 license.  It is free,
- *  open source, and has the attribution requirements (GPL Section 7) in
- *    http://statnet.org/attribution
+ *  open source, and has the attribution requirements (GPL Section 7) at
+ *  http://statnet.org/attribution
  *
- *  Copyright 2012 the statnet development team
+ *  Copyright 2003-2013 Statnet Commons
  */
 #ifndef WTEDGETREE_H
 #define WTEDGETREE_H
@@ -110,6 +109,8 @@ void WtTouchEdge(Vertex tail, Vertex head, WtNetwork *nwp);
 /* Utility functions. */
 int WtFindithEdge (Vertex *tail, Vertex *head, double *weight, Edge i, WtNetwork *nwp);
 int WtGetRandEdge(Vertex *tail, Vertex *head, double *weight, WtNetwork *nwp);
+int WtFindithNonedge (Vertex *tail, Vertex *head, Edge i, WtNetwork *nwp);
+int WtGetRandNonedge(Vertex *tail, Vertex *head, WtNetwork *nwp);
 void Wtprintedge(Edge e, WtTreeNode *edges);
 void WtInOrderTreeWalk(WtTreeNode *edges, Edge x);
 void WtNetworkEdgeList(WtNetwork *nwp);

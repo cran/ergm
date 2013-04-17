@@ -1,15 +1,25 @@
-#  File ergm/R/ergm.sample.eta2theta.R
-#  Part of the statnet package, http://statnet.org
+#  File R/ergm.sample.eta2theta.R in package ergm, part of the Statnet suite
+#  of packages for network analysis, http://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnet.org/attribution
+#  open source, and has the attribution requirements (GPL Section 7) at
+#  http://statnet.org/attribution
 #
-#  Copyright 2012 the statnet development team
-######################################################################
+#  Copyright 2003-2013 Statnet Commons
+#######################################################################
 ##############################################################################
 # The <ergm.theta.sample> function calculates and returns eta, mapped from
 # theta using the etamap object created by <ergm.etamap>.
+#
+# --PARAMETERS--
+#   sample:  MCMC sample statistics returned by <ergm>
+#   coef :  the curved model parameters  
+#   etamap:  the list of values that constitutes the theta-> eta mapping
+#            and is returned by <ergm.etamap>
+#
+# --RETURNED--
+#   sample:  MCMC sample statistics from curved model (conditional on MLE)
+#
 ###############################################################################
 
 

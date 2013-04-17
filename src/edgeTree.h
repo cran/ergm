@@ -1,12 +1,11 @@
-/*
- *  File ergm/src/edgetree.h
- *  Part of the statnet package, http://statnet.org
+/*  File src/edgetree.h in package ergm, part of the Statnet suite
+ *  of packages for network analysis, http://statnet.org .
  *
  *  This software is distributed under the GPL-3 license.  It is free,
- *  open source, and has the attribution requirements (GPL Section 7) in
- *    http://statnet.org/attribution
+ *  open source, and has the attribution requirements (GPL Section 7) at
+ *  http://statnet.org/attribution
  *
- *  Copyright 2012 the statnet development team
+ *  Copyright 2003-2013 Statnet Commons
  */
 #ifndef EDGETREE_H
 #define EDGETREE_H
@@ -18,6 +17,7 @@
 
 #define MIN(a,b) ((a)<(b) ? (a) : (b))
 #define MAX(a,b) ((a)<(b) ? (b) : (a))
+#define DYADCOUNT(nnodes, bipartite, directed) (bipartite? (nnodes-bipartite)*bipartite : (directed? nnodes*(nnodes-1) : (nnodes*(nnodes-1))/2))
 
 /*typedef unsigned int Vertex;
 typedef unsigned int Edge; */
@@ -46,7 +46,7 @@ typedef struct TreeNodestruct {
 edges in a network structure.
 */ 
 typedef struct Dur_Infstruct {
-  int MCMCtimer;
+  int time;
   int *lasttoggle;
 } Dur_Inf;
 
@@ -126,8 +126,26 @@ int ElapsedTime(Vertex tail, Vertex head, Network *nwp);
 void TouchEdge(Vertex tail, Vertex head, Network *nwp);
 
 /* Utility functions. */
-int FindithEdge (Vertex *tail, Vertex *head, Edge i, Network *nwp);
+int FindithEdge(Vertex *tail, Vertex *head, Edge i, Network *nwp);
 int GetRandEdge(Vertex *tail, Vertex *head, Network *nwp);
+// This one is implemented as a macro, since it's very simple and works exactly the same for weighted and unweighted.
+#define GetRandDyad(tail, head, nwp)					\
+  if((nwp)->bipartite){							\
+    *(tail) = 1 + unif_rand() * (nwp)->bipartite;			\
+    *(head) = 1 + (nwp)->bipartite + unif_rand() * ((nwp)->nnodes - (nwp)->bipartite); \
+  }else{								\
+    *(tail) = 1 + unif_rand() * (nwp)->nnodes;				\
+    *(head) = 1 + unif_rand() * ((nwp)->nnodes-1);			\
+    if(*(head)>=*(tail)) (*(head))++;					\
+    									\
+    if (!(nwp)->directed_flag && *(tail) > *(head)) {			\
+      Vertex tmp = *(tail);						\
+      *(tail) = *(head);						\
+      *(head) = tmp;							\
+    }									\
+  }
+int FindithNondge(Vertex *tail, Vertex *head, Edge i, Network *nwp);
+int GetRandNonedge(Vertex *tail, Vertex *head, Network *nwp);
 void printedge(Edge e, TreeNode *edges);
 void InOrderTreeWalk(TreeNode *edges, Edge x);
 void NetworkEdgeList(Network *nwp);

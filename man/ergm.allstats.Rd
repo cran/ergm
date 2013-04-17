@@ -1,12 +1,12 @@
-%  File ergm/man/ergm.allstats.Rd
-%  Part of the statnet package, http://statnet.org
+%  File man/ergm.allstats.Rd in package ergm, part of the Statnet suite
+%  of packages for network analysis, http://statnet.org .
 %
 %  This software is distributed under the GPL-3 license.  It is free,
-%  open source, and has the attribution requirements (GPL Section 7) in
-%    http://statnet.org/attribution
+%  open source, and has the attribution requirements (GPL Section 7) at
+%  http://statnet.org/attribution
 %
-%  Copyright 2012 the statnet development team
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  Copyright 2003-2013 Statnet Commons
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{ergm.allstats}
 \alias{ergm.allstats}
 \title{Calculate all possible vectors of statistics on a network for an ERGM}
@@ -21,7 +21,7 @@ ergm.allstats (formula, zeroobs = TRUE, force = FALSE,
   \code{\link{ergm.exact}} function.
 }
 \arguments{
- \item{formula}{an \R \code{link{formula}} object of the form
+ \item{formula}{an \R \code{\link{formula}} object of the form
    \code{y ~ <model terms>},
    where \code{y} is a network object or a matrix that can be
    coerced to a \code{\link[network]{network}} object.  For the details 

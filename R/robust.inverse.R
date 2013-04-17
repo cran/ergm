@@ -1,19 +1,33 @@
-#  File ergm/R/robust.inverse.R
-#  Part of the statnet package, http://statnet.org
+#  File R/robust.inverse.R in package ergm, part of the Statnet suite
+#  of packages for network analysis, http://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnet.org/attribution
+#  open source, and has the attribution requirements (GPL Section 7) at
+#  http://statnet.org/attribution
 #
-#  Copyright 2012 the statnet development team
-######################################################################
+#  Copyright 2003-2013 Statnet Commons
+#######################################################################
 ###############################################################################
 # The <robust.inverse> function attempts to return the inverse of a matrix H
 # by either direct means (via R's <solve>) or via computation from the
 # singular decomposition of H
+#
+# --PARAMETERS--
+#   H  : a matrix, presumably a Hessian
+#   tol: the tolerance, used for determining which of the singular values
+#        from the decompostion are postive; default=sqrt(.Machine$double.eps)
+#
+# --RETURNED--
+#   H : the original matrix, if H could not be inverted directly and the
+#       singular decomposition of H incurred an error
+#   0 : a p by q matrix of 0's, where H is q by p, if none of the singular
+#       values from the decomposition are positive
+#   iH: the inverse of H, computed directly if possible, otherwise computed
+#       from the components of the singular decomposition
+#
 ###############################################################################
 
-"robust.inverse" <- function (H, tol = sqrt(.Machine$double.eps)) 
+.robust.inverse <- function (H, tol = sqrt(.Machine$double.eps)) 
 {
     iH <- try(solve(H), silent=TRUE)
     if(inherits(iH,"try-error")){

@@ -1,12 +1,22 @@
-#  File ergm/R/check.ErgmTerm.R
-#  Part of the statnet package, http://statnet.org
+#  File R/check.ErgmTerm.R in package ergm, part of the Statnet suite
+#  of packages for network analysis, http://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnet.org/attribution
+#  open source, and has the attribution requirements (GPL Section 7) at
+#  http://statnet.org/attribution
 #
-#  Copyright 2012 the statnet development team
-######################################################################
+#  Copyright 2003-2013 Statnet Commons
+#######################################################################
+#====================================================================================
+# This file contains the following 6 files that help check the validity of ergm terms
+#       <check.ErgmTerm>               <get.InitErgm.fname>
+#       <assignvariables>              <zerowarnings>
+#       <check.ErgmTerm.summarystats>  <extremewarnings>
+#====================================================================================
+
+
+
+
 ######################################################################################
 # The <check.ErgmTerm> function ensures for the <InitErgmTerm.X> function that the
 # term X:
@@ -17,11 +27,31 @@
 #   3) has correct argument types if arguments where provided
 #   4) has default values assigned if defaults are available
 # by halting execution if any of the first 3 criteria are not met
+#
+# --PARAMETERS--
+#  nw           : the network that term X is being checked against  
+#  arglist      : the list of arguments for term X
+#  directed     : whether term X requires a directed network (T or F); default=NULL
+#  bipartite    : whether term X requires a bipartite network (T or F); default=NULL
+#  nonnegative  : whether term X requires a network with only nonnegative weights; default=FALSE
+#  varnames     : the vector of names of the possible arguments for term X;
+#                 default=NULL 
+#  vartypes     : the vector of types of the possible arguments for term X;
+#                 default=NULL 
+#  defaultvalues: the list of default values for the possible arguments of term X;
+#                 default=list()
+#  required     : the logical vector of whether each possible argument is required;
+#                 default=NULL
+#
+# --RETURNED--
+#   out: a list of the values for each possible argument of term X; user provided 
+#        values are used when given, default values otherwise.
+#
 ######################################################################################
 
 check.ErgmTerm <- function(nw, arglist, directed=NULL, bipartite=NULL, nonnegative=FALSE,
                            varnames=NULL, vartypes=NULL,
-                           defaultvalues=list(), required=NULL) {
+                           defaultvalues=list(), required=NULL, response=NULL) {
   fname <- get.InitErgm.fname() # From what InitErgm function was this called?
   fname <- sub('.*[.]', '', fname) # truncate up to last '.'
   message <- NULL
@@ -37,6 +67,9 @@ check.ErgmTerm <- function(nw, arglist, directed=NULL, bipartite=NULL, nonnegati
   }
   if (is.directed(nw) && bnw > 0) {
     message <- "directed bipartite networks"
+  }
+  if (is.null(message) && nonnegative && any(nw %e% response < 0)){
+    message <- "networks with negative dyad weights"
   }
   if (!is.null(message)) {
     stop(paste("The ERGM term",fname,"may not be used with",message))

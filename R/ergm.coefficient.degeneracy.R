@@ -1,18 +1,55 @@
-#  File ergm/R/ergm.coefficient.degeneracy.R
-#  Part of the statnet package, http://statnet.org
+#  File R/ergm.coefficient.degeneracy.R in package ergm, part of the Statnet suite
+#  of packages for network analysis, http://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnet.org/attribution
+#  open source, and has the attribution requirements (GPL Section 7) at
+#  http://statnet.org/attribution
 #
-#  Copyright 2012 the statnet development team
-######################################################################
+#  Copyright 2003-2013 Statnet Commons
+#######################################################################
+#######################################################################
+# The <ergm.coefficient.degeneracy> function
+#
+# --PARAMETERS--
+#   object   : an ergm object
+#   control  : a control list, whose only recognized component is:
+#     trustregion:  loglikelihoods above ('trustregion' - 0.1) obtain
+#                    -Inf degeneracy.values
+#              default= the list returned by <control.ergm>, which 
+#              yields 'trustregion'=20 
+#   test.only: whether the instability of the model should not be
+#              printed (T or F); if FALSE, the instability is printed;
+#              if TRUE, the instability is not printed, unless the
+#              returned 'degeneracy.type' is > 1; default=FALSE
+#   verbose  : whether the returned 'degeneracy.type' should be printed
+#              (T or F); default=FALSE
+#
+# --IGNORED--
+#   fast     : ?? ; default=TRUE 
+#
+# --RETURNED--
+#   the orginal ergm object with 2 new additional components:
+#      degeneracy.value: the degeneracy value, which may take on one of
+#                        three values:
+#            NA - if the ergm object's glm mplefit doesn't exist and 
+#                 cannot be fitted
+#            Inf- if the ergm's log likelihood is greater than
+#                'trustregion' - 0.1   or  if the non-MCMC fit of the
+#                 ergm doesn't have "glm" in its class
+#            the max 'degeneracy.type' value - in all other cases
+#      degeneracy.type :
+#            NULL - if the ergm object's glm mplefit doesn't exist and
+#                   cannot be fitted
+#            the loglikelihood of the MCMC fit - if an MCMC fit
+# 
+#######################################################################
+
 ergm.coefficient.degeneracy <- function(object, 
-                          control=control.ergm(),
+                          control=object$control,
                           fast=TRUE,
                           test.only=FALSE,
                           verbose=FALSE) {
-  
+  check.control.class(control, "ergm")
   if(!is.ergm(object)){
     stop("A ergm object argument must be given.")
   }

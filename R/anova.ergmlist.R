@@ -1,16 +1,34 @@
-#  File ergm/R/anova.ergmlist.R
-#  Part of the statnet package, http://statnet.org
+#  File R/anova.ergmlist.R in package ergm, part of the Statnet suite
+#  of packages for network analysis, http://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnet.org/attribution
+#  open source, and has the attribution requirements (GPL Section 7) at
+#  http://statnet.org/attribution
 #
-#  Copyright 2012 the statnet development team
-######################################################################
+#  Copyright 2003-2013 Statnet Commons
+#######################################################################
 #################################################################################
 # The <anova.ergmlist> function computes an analysis of variance table for one
 # or more linear model fits with the same response.
+#
+# --PARAMETERS--
+#   object:  an ergm object
+#   ...   :  additional ergm objects. If these have a different response than
+#            that of object, these are ignored. If this argument is not provided,
+#            the <anova.ergm> function is used instead
+#
+#
+# --IGNORED PARAMETERS--
+#   scale:  a numeric estimate of the noise variance, sigma^2; default=0, which
+#           estimates sigma^2 from the largest model considered
+#   test :  a character string, "F", "Chisq", or "Cp", specifying which
+#           test statistic to use; default="F"
+#
+# --RETURNED--
+#   an anova object with the analysis of variance table for the considered ergms
+#
 #################################################################################
+
 anova.ergmlist <- function (object, ..., eval.loglik=FALSE, scale = 0, test = "F") 
 {
   objects <- list(object, ...)
@@ -28,10 +46,10 @@ anova.ergmlist <- function (object, ..., eval.loglik=FALSE, scale = 0, test = "F
   logl <- df <- Rdf <- rep(0, nmodels)
   for (i in 1:nmodels) {
     nodes<- network.size(objects[[i]]$newnetwork)
-    n <- network.dyadcount(objects[[i]]$newnetwork)
+    n <- nobs(logLik(objects[[i]]))
     df[i] <- length(objects[[i]]$coef) 
     Rdf[i] <- n - df[i]
-    logl[i] <- logLik(objects[[i]],eval.loglik=eval.loglik)
+    logl[i] <- logLik(objects[[i]])
   }
   k <- nmodels
 # k <- 1 + length(objects[[i]]$glm$coef)
@@ -69,7 +87,7 @@ anova.ergmlist <- function (object, ..., eval.loglik=FALSE, scale = 0, test = "F
 #   Rdf <- c(object$glm$df.null, Rdf)
 #   logl <- c(-object$glm$null.deviance/2, logl)
     Rdf <- c(n, Rdf)
-    logl <- c(-n*log(2), logl)
+    logl <- c(0, logl)
 #  }
   pv <- pchisq(abs(2 * diff(logl)), abs(diff(df)), lower.tail = FALSE)
 

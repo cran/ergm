@@ -1,24 +1,68 @@
-#  File ergm/R/mcmc.diagnostics.ergm.R
-#  Part of the statnet package, http://statnet.org
+#  File R/mcmc.diagnostics.ergm.R in package ergm, part of the Statnet suite
+#  of packages for network analysis, http://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnet.org/attribution
+#  open source, and has the attribution requirements (GPL Section 7) at
+#  http://statnet.org/attribution
 #
-#  Copyright 2012 the statnet development team
-######################################################################
+#  Copyright 2003-2013 Statnet Commons
+#######################################################################
+#=================================================================================
+# This file contains the following 10 diagnostic tools and their helper functions
+#      <mcmc.diagnostics>            <traceplot.ergm>
+#      <mcmc.diagnostics.default>    <set.mfrow>
+#      <mcmc.diagnostics.ergm>       <nvar.mcmc>
+#      <is.mcmc.object>
+#      <is.mcmc.list.object>
+#      <plot.mcmc.ergm>              <varnames.mcmc>
+#=================================================================================
+
+
+
 #########################################################################
 # The <mcmc.diagnostics.X> functions create diagnostic plots for the
 # MCMC sampled statistics of the ergm X and prints the Raftery-Lewis
 # diagnostics, indicating whether they are sufficient or not; if X is not
 # an ergm, execution will halt
+#
+# --PARAMTERS--
+#   object : an ergm object, that has an MCMC established stats matrix
+#   sample : the name of the component in 'object' to base the diagnosis
+#            on; recognized strings are "observed", "sample", and
+#            "thetasample"; default="sample"
+#   smooth : whether to draw a smooth line through the trace plots;
+#            default=TRUE
+#   maxplot: the maximum number of statistics to plot; default=1000
+#   verbose: whether to print out additional information about the
+#            MCMC runs including lag correlations; default=TRUE
+#   center : whether the samples should be centered on the observed
+#            statistics; default=TRUE
+#   ...    : addtional parameters that are passed to <plot.mcmc.ergm>
+#   main, ylab, xlab: have their usual par-like meanings
+#
+#
+# --IGNORED PARAMETERS--
+#   r      : what percentile of the distribution to estimate; this is
+#            ignored: default=.0125
+#   digits : the number of digits to print; default=6
+#
+# --RETURNED--
+#   raft: a list containing
+#    params          : ?? 
+#    resmatrix       : ??
+#    degeneracy.value: the degeneracy.value of 'object', as computed by
+#                      <ergm.degeneracy>
+#    degeneracy.type : the degeneracy.type of 'object', as computed by
+#                      <ergm.compute.degeneracy> 
+#    simvals         :
+#
 ##########################################################################
 
-mcmc.diagnostics <- function(object, ...) {
+.mcmc.diagnostics <- function(object, ...) {
   UseMethod("mcmc.diagnostics")
 }
 
-mcmc.diagnostics.default <- function(object, ...) {
+.mcmc.diagnostics.default <- function(object, ...) {
   stop("An ergm object must be given as an argument ")
 }
 
@@ -81,26 +125,28 @@ mcmc.diagnostics.ergm <- function(object,
     cv <-  cov(as.matrix(sm))
     
     z <- ds/sds*sqrt(ns)
-    chi2<-t(sqrt(ns)*ds)%*%robust.inverse(cv)%*%(ds*sqrt(ns))
   }else{
     cat("\nAre unconstrained sample statistics significantly different from constrained?\n")
     ds <- colMeans.mcmc.list(sm) - if(!center) colMeans.mcmc.list(sm.obs) else 0
     sds <- apply(as.matrix(sm),2,sd)
     sds.obs <- apply(as.matrix(sm.obs),2,sd)
     ns <- effectiveSize(sm)
-    ns.obs <- effectiveSize(sm.obs)
+    # It's OK constrained sample doesn't vary. (E.g, the extreme case
+    # --- completely observed network --- is just one configuration of
+    # statistics.)
+    # Thus, the effective sample size for nonvarying is set to 1.
+    ns.obs <- pmax(effectiveSize(sm.obs),1)
 
     cv <-  cov(as.matrix(sm))
     cv.obs <-  cov(as.matrix(sm.obs))
 
-    
     z <- ds/sqrt(sds^2/ns+sds.obs^2/ns.obs)
-    chi2<-t(ds)%*%robust.inverse(t(cv/sqrt(ns))/sqrt(ns)+t(cv.obs/sqrt(ns.obs))/sqrt(ns.obs))%*%(ds)
   }
   p.z <- pnorm(abs(z),lower.tail=FALSE)*2
-  p.chi2 <- pchisq(chi2,nvar(sm),lower.tail=FALSE)
+
+  overall.test <- approx.hotelling.diff.test(sm,sm.obs,if(is.null(sm.obs) && !center) object$target.stats else NULL)
   
-  m <- rbind(c(ds,NA),c(z,chi2),c(p.z,p.chi2))
+  m <- rbind(c(ds,NA),c(z,overall.test$statistic),c(p.z,overall.test$p.value))
   rownames(m) <- c("diff.","test stat.","P-val.")
   colnames(m) <- c(varnames(sm),"Overall (Chi^2)")
   print(m)
@@ -136,7 +182,7 @@ mcmc.diagnostics.ergm <- function(object,
   }
 
   cat("\nSample statistics burn-in diagnostic (Geweke):\n")
-  sm.gw<-geweke.diag(sm)
+  sm.gw<-geweke.diag.ar(sm)
   for(i in seq_along(sm.gw)){
     cat("Chain", chain, "\n")
     print(sm.gw[[i]])
@@ -145,7 +191,7 @@ mcmc.diagnostics.ergm <- function(object,
   }
   if(!is.null(sm.obs)){
     cat("Sample statistics burn-in diagnostic (Geweke):\n")
-    sm.obs.gw<-geweke.diag(sm.obs)
+    sm.obs.gw<-geweke.diag.ar(sm.obs)
     for(i in seq_along(sm.obs.gw)){
       cat("Chain", chain, "\n")
       print(sm.obs.gw[[i]])
@@ -255,4 +301,32 @@ xyplot.mcmc.list.ergm <-
                main = main,
                ylab = ylab,
                ...)
+}
+
+## The following function is a modified version of geweke.diag
+## from the coda R package. The original code is Copyright (C)
+## 2005-2011 Martyn Plummer, Nicky Best, Kate Cowles, Karen
+## Vines
+##
+## It is incorporated into the ergm package under the terms of
+## the GPL v3 license.
+##
+## coda's implementation uses spectrum0, which is not robust
+## enough.
+geweke.diag.ar<-function (x, frac1 = 0.1, frac2 = 0.5){
+  if (is.mcmc.list(x)) 
+    return(lapply(x, geweke.diag.ar, frac1, frac2))
+  x <- as.mcmc(x)
+  xstart <- c(start(x), end(x) - frac2 * (end(x) - start(x)))
+  xend <- c(start(x) + frac1 * (end(x) - start(x)), end(x))
+  y.variance <- y.mean <- vector("list", 2)
+  for (i in 1:2) {
+    y <- window(x, start = xstart[i], end = xend[i])
+    y.mean[[i]] <- apply(as.matrix(y), 2, mean)
+    y.variance[[i]] <- spectrum0.ar(y)$spec/niter(y)
+  }
+  z <- (y.mean[[1]] - y.mean[[2]])/sqrt(y.variance[[1]] + y.variance[[2]])
+  out <- list(z = z, frac = c(frac1, frac2), p.val = pnorm(abs(z),0,1,lower.tail=FALSE)*2)
+  class(out) <- "geweke.diag"
+  return(out)
 }

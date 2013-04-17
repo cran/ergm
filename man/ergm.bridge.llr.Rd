@@ -1,12 +1,12 @@
-%  File ergm/man/ergm.bridge.llr.Rd
-%  Part of the statnet package, http://statnet.org
+%  File man/ergm.bridge.llr.Rd in package ergm, part of the Statnet suite
+%  of packages for network analysis, http://statnet.org .
 %
 %  This software is distributed under the GPL-3 license.  It is free,
-%  open source, and has the attribution requirements (GPL Section 7) in
-%    http://statnet.org/attribution
+%  open source, and has the attribution requirements (GPL Section 7) at
+%  http://statnet.org/attribution
 %
-%  Copyright 2012 the statnet development team
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  Copyright 2003-2013 Statnet Commons
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{ergm.bridge.llr}
 \alias{ergm.bridge.llr}
 \title{
@@ -21,6 +21,7 @@ two parameter vectors for an ERGM via repeated calls to
 }
 \usage{
   ergm.bridge.llr(object, 
+                  response=NULL, 
                   constraints=~., 
                   from, 
                   to, 
@@ -33,6 +34,8 @@ two parameter vectors for an ERGM via repeated calls to
 \arguments{
   \item{object}{
     A model formula. See \code{\link{ergm}} for details.
+  }
+  \item{response}{Not for release.
   }
   \item{constraints}{A one-sided formula specifying one or more constraints
     on the support of the distribution of the networks being

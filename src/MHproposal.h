@@ -1,12 +1,11 @@
-/*
- *  File ergm/src/MHproposal.h
- *  Part of the statnet package, http://statnet.org
+/*  File src/MHproposal.h in package ergm, part of the Statnet suite
+ *  of packages for network analysis, http://statnet.org .
  *
  *  This software is distributed under the GPL-3 license.  It is free,
- *  open source, and has the attribution requirements (GPL Section 7) in
- *    http://statnet.org/attribution
+ *  open source, and has the attribution requirements (GPL Section 7) at
+ *  http://statnet.org/attribution
  *
- *  Copyright 2012 the statnet development team
+ *  Copyright 2003-2013 Statnet Commons
  */
 #ifndef MHproposal_H
 #define MHproposal_H
@@ -80,8 +79,6 @@ typedef struct MHproposalstruct {
   DegreeBound *bd;
   Network **discord;
   double *inputs; /* may be used if needed, ignored if not. */
-  /* int multiplicity; Is this needed? I removed all references to
-       'multiplicity' everywhere */
 } MHproposal;
 
 
@@ -98,7 +95,22 @@ void MH_free(MHproposal *MHp);
 
 int CheckTogglesValid(MHproposal *MHp, Network *nwp);
 int CheckConstrainedTogglesValid(MHproposal *MHp, Network *nwp);
-unsigned int dEdgeListSearch(Vertex tail, Vertex head, double *el);
+
+#define BD_LOOP(proc) BD_COND_LOOP({proc}, TRUE, 1)
+
+#define BD_COND_LOOP(proc, cond, tryfactor)				\
+  unsigned int trytoggle;						\
+  for(trytoggle = 0; trytoggle < MAX_TRIES*tryfactor; trytoggle++){	\
+    {proc}								\
+    if((cond) && CheckTogglesValid(MHp,nwp)) break;			\
+  }									\
+  /* If no valid proposal found, signal a failed proposal. */		\
+  if(trytoggle>=MAX_TRIES*tryfactor){					\
+    MHp->toggletail[0]=MH_FAILED;					\
+    MHp->togglehead[0]=MH_UNSUCCESSFUL;					\
+  }									\
+  
+
 #endif 
 
 

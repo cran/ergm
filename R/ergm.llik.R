@@ -1,21 +1,71 @@
-#  File ergm/R/ergm.llik.R
-#  Part of the statnet package, http://statnet.org
+#  File R/ergm.llik.R in package ergm, part of the Statnet suite
+#  of packages for network analysis, http://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnet.org/attribution
+#  open source, and has the attribution requirements (GPL Section 7) at
+#  http://statnet.org/attribution
 #
-#  Copyright 2012 the statnet development team
-######################################################################
+#  Copyright 2003-2013 Statnet Commons
+#######################################################################
+#=================================================================================
+# This file contains the following 14 functions for computing log likelihoods,
+# gradients, hessians, and such:
+#      <llik.fun>            <llik.fun.EF>     <llik.grad3>
+#      <llik.grad>           <llik.fun2>       <llik.info3>
+#      <llik.hessian>        <llik.grad2>      <llik.mcmcvar3>
+#      <llik.hessian.naive>  <llik.hessian2>   <llik.fun.median>
+#      <llik.exp>            <llik.fun3>
+#=================================================================================
+
+
+
+
 ###################################################################################
 # Each of the <llik.X> functions computes either a likelihood function, a gradient
 # function, or a Hessian matrix;  Each takes the same set of input parameters and
 # these are described below; the return values differ however and so these are
 # described above each function.
+#
+# --PARAMETERS--
+#   theta      : the vector of theta parameters; this is only used to solidify
+#                offset coefficients; the not-offset terms are given by 'init'
+#                of the 'etamap'
+#   xobs       : the vector of observed statistics 
+#   xsim       : the matrix of simulated statistics 
+#   probs      : the probability weight for each row of the stats matrix
+#   varweight  : the weight by which the variance of the base predictions will be 
+#                scaled; the name of this param was changed from 'penalty' to better 
+#                reflect what this parameter actually is; default=0.5, which is the 
+#                "true"  weight, in the sense that the lognormal approximation is
+#                given by
+#                           sum(xobs * x) - mb - 0.5*vb 
+#   trustregion: the maximum value of the log-likelihood ratio that is trusted;
+#                default=20
+#   eta0       : the initial eta vector
+#   etamap     : the theta -> eta mapping, as returned by <ergm.etamap>
+#
+#
+# --IGNORED PARAMETERS--
+#   xsim.obs  : the 'xsim' counterpart for observation process; default=NULL
+#   probs.obs : the 'probs' counterpart for observation process; default=NULL
+#
 ####################################################################################
 
+
+
+
+
+#####################################################################################
+# --RETURNED--
+#   llr: the log-likelihood ratio of l(eta) - l(eta0) using a lognormal
+#        approximation; i.e., assuming that the network statistics are approximately
+#        normally  distributed so that exp(eta * stats) is lognormal
+#####################################################################################
+
 llik.fun <- function(theta, xobs, xsim, probs, xsim.obs=NULL, probs.obs=NULL,
-                     varweight=0.5, trustregion=20, eta0, etamap){
+                     varweight=0.5, trustregion=20, 
+                     dampening=FALSE,dampening.min.ess=100, dampening.level=0.1,
+                     eta0, etamap){
   theta.offset <- etamap$init
   theta.offset[!etamap$offsettheta] <- theta
   # Convert theta to eta
@@ -39,14 +89,12 @@ llik.fun <- function(theta, xobs, xsim, probs, xsim.obs=NULL, probs.obs=NULL,
 
   # trustregion is the maximum value of llr that we actually trust.
   # So if llr>trustregion, return a value less than trustregion instead.
-  if (llr>trustregion) {
+  if (is.numeric(trustregion) && llr>trustregion) {
     return(2*trustregion - llr)
   } else {
     return(llr)
   }
 }
-
-
 
 #llik.grad <- function(theta, xobs, xsim, probs,  xsim.obs=NULL, probs.obs=NULL,
 #                      varweight=0.5, trustregion=20, eta0, etamap){
@@ -79,8 +127,15 @@ llik.fun <- function(theta, xobs, xsim, probs, xsim.obs=NULL, probs.obs=NULL,
 
 
 
+#####################################################################################
+# --RETURNED--
+#   llg: the gradient of the not-offset eta parameters with ??
+#####################################################################################
+
 llik.grad <- function(theta, xobs, xsim, probs,  xsim.obs=NULL, probs.obs=NULL,
-                      varweight=0.5, trustregion=20, eta0, etamap){
+                     varweight=0.5, trustregion=20, 
+                     dampening=FALSE,dampening.min.ess=100, dampening.level=0.1,
+                     eta0, etamap){
   theta.offset <- etamap$init
   theta.offset[!etamap$offsettheta] <- theta
   eta <- ergm.eta(theta.offset, etamap)
@@ -123,8 +178,15 @@ llik.grad <- function(theta, xobs, xsim, probs,  xsim.obs=NULL, probs.obs=NULL,
 
 
 
+#####################################################################################
+# --RETURNED--
+#   He: the ?? Hessian matrix
+#####################################################################################
+
 llik.hessian <- function(theta, xobs, xsim, probs, xsim.obs=NULL, probs.obs=NULL,
-                         varweight=0.5, trustregion=20, eta0, etamap){
+                     varweight=0.5, trustregion=20, 
+                     dampening=FALSE,dampening.min.ess=100, dampening.level=0.1,
+                     eta0, etamap){
   theta.offset <- etamap$init
   theta.offset[!etamap$offsettheta] <- theta
 # xsim[,etamap$offsettheta] <- 0
@@ -178,8 +240,19 @@ llik.hessian <- function(theta, xobs, xsim, probs, xsim.obs=NULL, probs.obs=NULL
 
 
 
+#####################################################################################
+# --RETURNED--
+#   He: the naive approximation to the Hessian matrix - namely,
+#          (sum_i w_i g_i)(sum_i w_i g_i)^t - sum_i(w_i g_i g_i^t),  where
+#              g_i = the ith vector of statistics and
+#              w_i = normalized version of exp((eta-eta0)^t g_i) so that sum_i w_i=1
+#       this is equation (3.5) of Hunter & Handcock (2006)
+#####################################################################################
+
 llik.hessian.naive <- function(theta, xobs, xsim, probs, xsim.obs=NULL, probs.obs=NULL,
-                               varweight=0.5, eta0, etamap){
+                     varweight=0.5, trustregion=20,
+                     dampening=FALSE,dampening.min.ess=100, dampening.level=0.1,
+                     eta0, etamap){
   xsim <- xsim[,!etamap$offsettheta, drop=FALSE]
   theta.offset <- etamap$init
   theta.offset[!etamap$offsettheta] <- theta
@@ -223,8 +296,15 @@ llik.hessian.naive <- function(theta, xobs, xsim, probs, xsim.obs=NULL, probs.ob
 
 
 
+#####################################################################################
+# --RETURNED--
+#   llr: the log-likelihood ratio of l(eta) - l(eta0) using ?? (what sort of approach)
+#####################################################################################
+
 llik.fun.EF <- function(theta, xobs, xsim, probs, xsim.obs=NULL, probs.obs=NULL,
-                     varweight=0.5, trustregion=20, eta0, etamap){
+                     varweight=0.5, trustregion=20,
+                     dampening=FALSE,dampening.min.ess=100, dampening.level=0.1,
+                     eta0, etamap){
   theta.offset <- etamap$init
   theta.offset[!etamap$offsettheta] <- theta
   eta <- ergm.eta(theta.offset, etamap)
@@ -240,7 +320,11 @@ llik.fun.EF <- function(theta, xobs, xsim, probs, xsim.obs=NULL, probs.obs=NULL,
 #
 # Penalize changes to trustregion
 #
-  llr <- llr - 2*(llr-trustregion)*(llr>trustregion)
+  if (is.numeric(trustregion) && llr>trustregion) {
+    return(2*trustregion - llr)
+  } else {
+    return(llr)
+  }
 #
 # cat(paste("max, log-lik",maxbase,llr,"\n"))
 # aaa <- sum(xobs * etaparam) - log(sum(probs*exp(xsim %*% etaparam)))
@@ -252,8 +336,16 @@ llik.fun.EF <- function(theta, xobs, xsim, probs, xsim.obs=NULL, probs.obs=NULL,
 
 
 
+#####################################################################################
+# --RETURNED--
+#   llr: the log-likelihood ratio of l(eta) - l(eta0) using ?? (what sort of approach)
+#            "Simple convergence"
+#####################################################################################
+
 llik.fun2 <- function(theta, xobs, xsim, probs, xsim.obs=NULL, probs.obs=NULL, 
-                      varweight=0.5, trustregion=20, eta0, etamap){
+                     varweight=0.5, trustregion=20,
+                     dampening=FALSE,dampening.min.ess=100, dampening.level=0.1,
+                     eta0, etamap){
   theta.offset <- etamap$init
   theta.offset[!etamap$offsettheta] <- theta
   eta <- ergm.eta(theta.offset, etamap)
@@ -267,9 +359,15 @@ llik.fun2 <- function(theta, xobs, xsim, probs, xsim.obs=NULL, probs.obs=NULL,
 
 
 
+#####################################################################################
+# --RETURNED--
+#   the gradient of eta with ??
+#####################################################################################
 
 llik.grad2 <- function(theta, xobs, xsim, probs, xsim.obs=NULL, probs.obs=NULL,
-                       varweight=0.5, trustregion=20, eta0, etamap){
+                     varweight=0.5, trustregion=20,
+                     dampening=FALSE,dampening.min.ess=100, dampening.level=0.1,
+                     eta0, etamap){
   theta.offset <- etamap$init
   theta.offset[!etamap$offsettheta] <- theta
   eta <- ergm.eta(theta.offset, etamap)
@@ -301,7 +399,9 @@ llik.hessian2 <- llik.hessian
 #####################################################################################
 
 llik.fun3 <- function(theta, xobs, xsim, probs, xsim.obs=NULL, probs.obs=NULL, 
-                      varweight=0.5, trustregion=20, eta0, etamap){ # eqn (5)
+                     varweight=0.5, trustregion=20,
+                     dampening=FALSE,dampening.min.ess=100, dampening.level=0.1,
+                     eta0, etamap){ # eqn (5)
   theta.offset <- etamap$init
   theta.offset[!etamap$offsettheta] <- theta
   eta <- ergm.eta(theta.offset, etamap)
@@ -319,7 +419,9 @@ llik.fun3 <- function(theta, xobs, xsim, probs, xsim.obs=NULL, probs.obs=NULL,
 #####################################################################################
 
 llik.grad3 <- function(theta, xobs, xsim, probs,  xsim.obs=NULL, probs.obs=NULL,
-                       varweight=0.5, trustregion=20, eta0, etamap){ #eqn (11)
+                     varweight=0.5, trustregion=20,
+                     dampening=FALSE,dampening.min.ess=100, dampening.level=0.1,
+                     eta0, etamap){ #eqn (11)
   theta.offset <- etamap$init
   theta.offset[!etamap$offsettheta] <- theta
   eta <- ergm.eta(theta.offset, etamap)
@@ -339,7 +441,9 @@ llik.grad3 <- function(theta, xobs, xsim, probs,  xsim.obs=NULL, probs.obs=NULL,
 #####################################################################################
 
 llik.info3 <- function(theta, xobs, xsim, probs,  xsim.obs=NULL, probs.obs=NULL,
-                       varweight=0.5, eta0, etamap){ #eqn (12)
+                     varweight=0.5, trustregion=20,
+                     dampening=FALSE,dampening.min.ess=100, dampening.level=0.1,
+                     eta0, etamap){ #eqn (12)
   eta <- ergm.eta(theta, etamap)
   etagrad <- ergm.etagrad(theta,etamap)
   deta <- matrix(eta-eta0,ncol=1)
@@ -357,7 +461,9 @@ llik.info3 <- function(theta, xobs, xsim, probs,  xsim.obs=NULL, probs.obs=NULL,
 #####################################################################################
 
 llik.mcmcvar3 <- function(theta, xobs, xsim, probs,  xsim.obs=NULL, probs.obs=NULL,
-                          varweight=0.5, eta0, etamap){ #eqn (13) sort of
+                     varweight=0.5, trustregion=20,
+                     dampening=FALSE,dampening.min.ess=100, dampening.level=0.1,
+                     eta0, etamap){  #eqn (13) sort of
   eta <- ergm.eta(theta, etamap)
   deta <- matrix(eta-eta0,ncol=1)
   basepred <- as.vector(xsim %*% deta)
@@ -377,7 +483,9 @@ llik.mcmcvar3 <- function(theta, xobs, xsim, probs,  xsim.obs=NULL, probs.obs=NU
 #####################################################################################
 
 llik.fun.median <- function(theta, xobs, xsim, probs, xsim.obs=NULL, probs.obs=NULL,
-                     varweight=0.5, trustregion=20, eta0, etamap){
+                     varweight=0.5, trustregion=20,
+                     dampening=FALSE,dampening.min.ess=100, dampening.level=0.1,
+                     eta0, etamap){
   theta.offset <- etamap$init
   theta.offset[!etamap$offsettheta] <- theta
   # Convert theta to eta
@@ -410,7 +518,11 @@ llik.fun.median <- function(theta, xobs, xsim, probs, xsim.obs=NULL, probs.obs=N
 #
 # Penalize changes to trustregion
 #
-  llr <- llr - 2*(llr-trustregion)*(llr>trustregion)
+  if (is.numeric(trustregion) && llr>trustregion) {
+    return(2*trustregion - llr)
+  } else {
+    return(llr)
+  }
 #
 # cat(paste("max, log-lik",maxbase,llr,"\n"))
 # aaa <- sum(xobs * etaparam) - log(sum(probs*exp(xsim %*% etaparam)))

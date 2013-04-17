@@ -1,12 +1,12 @@
-%  File ergm/man/gof.ergm.Rd
-%  Part of the statnet package, http://statnet.org
+%  File man/gof.ergm.Rd in package ergm, part of the Statnet suite
+%  of packages for network analysis, http://statnet.org .
 %
 %  This software is distributed under the GPL-3 license.  It is free,
-%  open source, and has the attribution requirements (GPL Section 7) in
-%    http://statnet.org/attribution
+%  open source, and has the attribution requirements (GPL Section 7) at
+%  http://statnet.org/attribution
 %
-%  Copyright 2012 the statnet development team
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  Copyright 2003-2013 Statnet Commons
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{gof}
 \alias{gof.ergm}
 \alias{gof.default}
@@ -59,7 +59,9 @@
     directed graphs), geodesic distances (\dQuote{distance}), shared partner 
     distributions (\dQuote{espartners} and \dQuote{dspartners}), the triad
     census (\dQuote{triadcensus}), and the terms of the original model 
-    (\dQuote{model}).
+    (\dQuote{model}). The default formula for undirected networks is
+    \code{~ degree + espartners + distance}, and the default formula for
+    directed networks is \code{~ idegree + odegree + espartners + distance}.
   }
   \item{constraints}{A one-sided formula specifying one or more constraints
     on the support of the distribution of the networks being
@@ -101,6 +103,7 @@
 
 \seealso{ergm, network, simulate.ergm, summary.ergm, plot.gofobject}
 \examples{
+\donttest{
 data(florentine)
 gest <- ergm(flomarriage ~ edges + kstar(2))
 gest
@@ -121,7 +124,6 @@ plot(gofflo)
 plot(gofflo, plotlogodds=TRUE)
 
 # Use the formula version of gof
-\donttest{
 gofflo2 <-gof(flomarriage ~ edges + kstar(2), coef=c(-1.6339, 0.0049))
 plot(gofflo2)
 }

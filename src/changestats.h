@@ -1,12 +1,11 @@
-/*
- *  File ergm/src/changestats.h
- *  Part of the statnet package, http://statnet.org
+/*  File src/changestats.h in package ergm, part of the Statnet suite
+ *  of packages for network analysis, http://statnet.org .
  *
  *  This software is distributed under the GPL-3 license.  It is free,
- *  open source, and has the attribution requirements (GPL Section 7) in
- *    http://statnet.org/attribution
+ *  open source, and has the attribution requirements (GPL Section 7) at
+ *  http://statnet.org/attribution
  *
- *  Copyright 2012 the statnet development team
+ *  Copyright 2003-2013 Statnet Commons
  */
 #ifndef CHANGESTATS_H
 #define CHANGESTATS_H
@@ -17,7 +16,6 @@
 /********************  changestats:  A    ***********/
 D_CHANGESTAT_FN(d_absdiff);
 D_CHANGESTAT_FN(d_absdiffcat);
-D_CHANGESTAT_FN(d_adegcor); S_CHANGESTAT_FN(s_adegcor);
 D_CHANGESTAT_FN(d_altkstar);
 D_CHANGESTAT_FN(d_asymmetric);
 /********************  changestats:  B    ***********/
@@ -70,6 +68,7 @@ D_CHANGESTAT_FN(d_degcrossprod);
 D_CHANGESTAT_FN(d_degree);
 D_CHANGESTAT_FN(d_degree_by_attr);
 D_CHANGESTAT_FN(d_degree_w_homophily);
+D_CHANGESTAT_FN(d_degreepopularity);
 D_CHANGESTAT_FN(d_density);
 D_CHANGESTAT_FN(d_dsp);
 D_CHANGESTAT_FN(d_dyadcov);
@@ -103,6 +102,7 @@ D_CHANGESTAT_FN(d_hammingmix);
 D_CHANGESTAT_FN(d_idegree);
 D_CHANGESTAT_FN(d_idegree_by_attr);
 D_CHANGESTAT_FN(d_idegree_w_homophily);
+D_CHANGESTAT_FN(d_idegreepopularity);
 D_CHANGESTAT_FN(d_intransitive);
 D_CHANGESTAT_FN(d_isolates);
 S_CHANGESTAT_FN(s_isolates);
@@ -134,11 +134,8 @@ D_CHANGESTAT_FN(d_odegree_by_attr);
 D_CHANGESTAT_FN(d_odegree_w_homophily);
 D_CHANGESTAT_FN(d_opentriad);
 D_CHANGESTAT_FN(d_ostar);
-D_CHANGESTAT_FN(d_outdegreepopularity);
-/********************  changestats:   P    ***********/
-D_CHANGESTAT_FN(d_pdegcor); S_CHANGESTAT_FN(s_pdegcor);
+D_CHANGESTAT_FN(d_odegreepopularity);
 /********************  changestats:   R    ***********/
-D_CHANGESTAT_FN(d_rdegcor); S_CHANGESTAT_FN(s_rdegcor);
 D_CHANGESTAT_FN(d_receiver);
 /********************  changestats:   S    ***********/
 D_CHANGESTAT_FN(d_sender);

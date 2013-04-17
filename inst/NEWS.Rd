@@ -1,55 +1,152 @@
+%  File inst/NEWS.Rd in package ergm, part of the Statnet suite
+%  of packages for network analysis, http://statnet.org .
+%
+%  This software is distributed under the GPL-3 license.  It is free,
+%  open source, and has the attribution requirements (GPL Section 7) at
+%  http://statnet.org/attribution
+%
+%  Copyright 2003-2013 Statnet Commons
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{NEWS}
 \title{NEWS file for the \code{\link[=ergm-package]{ergm}} package}
 \encoding{UTF-8}
 
-\section{Changes in version 3.0-2}{
-  \subsection{NOTE}{
+% When a release is forked, copy the sections to a new release and
+% delete unused sections.
+\section{Changes in version 3.1}{
+ 
+  \subsection{NEW FEATURES}{
+    \itemize{ \item Infrastructure
+      has been added for fitting valued ERGMs of Krivitsky (2012). The
+      \dQuote{user interface} is subject to change, however. (The
+      implementation of reference measures for counts can be found in \R package
+      \code{\link{ergm.count}})
+
+      \item \code{\link[=ergm-package]{ergm}} itself now includes
+      rudimentary implementations for discrtete uniform and continuous
+      uniform reference measures. See \code{help('ergm-references')}.
+
+      \item A large number of ERGM terms for counts have been
+      implemented and documented. See \code{help('ergm-terms')}.
+
+      \item A number of new binary ERGM terms have been
+      implemented as well. Particularly, \code{\link{degrange}},
+      \code{\link{odegrange}}, \code{\link{idegrange}},
+      \code{\link{b1degrange}}, and \code{\link{b2degrange}}, which
+      generalize \code{\link{degree}} and \code{\link{concurrent}} by
+      allowing the user to specify contiguous ranges of degree values.
+
+      \item A rudimentary \dQuote{degeneracy} heuristic has been
+      implemented and enabled by default, immediately stopping MC MLE
+      optimization if simulating from a parameter configuration of
+      interest encounters produces networks with too many edges. See
+      \code{MCMLE.density.guard} argument in \code{\link{control.ergm}}
+      documentation for details. Note that this is intended mainly to
+      keep the fitting from bogging down on bad models, and it should
+      not be used as a formal degeneracy diagnostic.
+
+      \item \code{\link[=ergm-package]{ergm}} now keeps track of of when
+      it is and when it's not possible to evaluate the likelihood of the
+      null model (a model with no terms), and takes into account whether
+      a model is constrained, has missing dyads, etc.. This can also
+      improve the MPLE.
+      
+      A new generic, \code{\link{logLikNull}} has been added that
+      returns the null model likelihood.
+
+      For models where this is not possible, the
+      null likelihood (and deviance, etc.) is defined to be 0.
+      
+      \item A new constraint, \code{blockdiag} has been added, for
+      modeling networks with only within-block ties allowed. This is
+      useful for, e.g., fitting an ERGM to several networks jointly. See
+      \code{? 'ergm-constraints'} for available constraints.
+      
+    } 
+  }
+  
+  \subsection{OTHER USER-VISIBLE CHANGES}{
     \itemize{
-      \item This is a technical bugfix release. There are no user-visible
-      changes or changes in package behavior.
+      \item The implementation of dynamic network models has been moved to a
+      new package, \code{\link[=tergm-package]{tergm}}.
+
+      \item Sample space constraints \code{\link{degrees}},
+      \code{\link{idegrees}}, \code{\link{odegrees}},
+      \code{\link{b1degrees}}, \code{\link{b2degrees}} have
+      been reimplemented or fixed.
+
+      \item Certain functions are now only exported if they haven't
+      already be defined (e.g., by
+      \code{\link[=latentnet-package]{latentnet}}).
+
+      \item Documentation and citation information have been  cleaned up
+      and reorganized. In particular, see \code{? 'ergm-constraints'},
+      \code{? 'ergm-terms'} for an article on terms, and \code{?
+      'ergm-references'} for reference measures implemented.
     }
   }
 
-  \subsection{DEPRECATED & DEFUNCT}{
+  \subsection{C-LEVEL FACILITIES}{
     \itemize{
       
-      \item Suggestion dependency on
-      \code{\link[=latentnet-package]{latentnet}} has been removed.
+      \item \code{\link[=ergm-package]{ergm}} now exports header and
+      stub files for the \code{LinkingTo:} API, and package
+      \code{ergm.userterms} now uses it. Please see
+      \code{inst/include/README} before using it, however.
       
-      \item Parallel computing with PVM (via \code{rpvm}) has been
-      removed, since the package in question is no longer maintained.
-      
+    }
+  }
+
+  % \subsection{UTILITIES}{
+  %   \itemize{
+  %     \item Likewise, "UTILITIES" is probably unnecessary.
+  %   }
+  % }
+
+  % \subsection{INSTALLATION}{
+  %   \itemize{
+  %     \item ... as is "INSTALLATION".
+  %   }
+  % }
+
+  % \subsection{PACKAGE INSTALLATION}{
+  %   \itemize{
+  %     \item ditto.
+  %   }
+  % }
+
+  \subsection{DEPRECATED & DEFUNCT}{
+    \itemize{
+      \item Dynamic network modeling code has been moved to
+      \code{\link[=tergm-package]{tergm}} package.
+
+      \item Function \code{statnet.edit} has been removed.
     }
   }
 
   \subsection{BUG FIXES}{
     \itemize{
-      \item A variety of fixes have been applied to make the package
-      comply with more stringent package standards. In particular,
-      \code{ergm.update.formula} no longer uses the ``forbidden''
-      \code{.Internal()} call.
+      \item Some bugs introduced by the developers relying on a certain
+      behavior of the \code{\link{.C}} API which had changed have been
+      fixed. 
 
-      \item A number of miscellaneous \code{R CMD check} warnings have
-      been addressed.
-
-      \item Some nonstandard behavior exposed by changes in
-      \code{R-devel} has been addressed.
-
-      \item Some parallel capabilities had to be disabled in 3.0-1 due
-      to \R's handling of package environments. They have been reenabled.
+      \item Some undocumented terms have been fixed and documented,
+      including \code{\link{odegreepopularity}},
+      \code{\link{idegreepopularity}}, \code{\link{degreepopularity}},
+      and \code{\link{smalldiff}}.
+    
     }
   }
 }
 
-
-\section{Changes in version 3.0-1}{
+\section{Changes in version 3.0}{
  
   \subsection{NEW FEATURES}{
     \itemize{
       \item Facilities for fitting and simulating Separable Temporal
       ERGMs (STERGMs) of Krivitsky (2009) and, Krivitsky and Handcock
       (2010) have been added. See \code{\link{stergm}} and
-      \code{\link[=simulate.network]{smulate}}.
+      \code{\link[=simulate.network]{simulate}}.
       
       \item \code{\link{ergm}} MCMLE will now test if the optimization
       has converged to the MLE and stop if it detects convergence.
@@ -70,13 +167,13 @@
       \code{\link{control.ergm}} argument \code{MCMC.burnin.retries} for
       details.
 
-      \item \code{\link{ergm}} MCMLE now stores "history" of
+      \item \code{\link{ergm}} MCMLE now stores \dQuote{history} of
       \eqn{\theta} and simulated statistics.
 
       \item \code{\link{ergm}} extreme statistics detection (if
       \code{control.ergm(drop=TRUE)}) can now detect both extremely high
       and extremely low values, setting the coefficients to +Inf and
-      -Inf respectively. Direction of "dropping" is retruned.
+      -Inf respectively. Direction of \dQuote{dropping} is returned.
 
       \item An initial method \code{"zeros"} has been, to use a vector
       of zeros as starting parameters.
@@ -131,16 +228,22 @@
 	\item Plots now use \code{\link{lattice}} graphics, if available.
       }
 
-      \item Handling of networks with many edges has been improved somewhat.
+      \item Handling of networks with many edges has been improved
+      somewhat.
+
+      \item \code{\link{gof.ergm}} and \code{\link{gof.formula}} now set
+      the statistics used to diagnose the fit adaptively, depending on
+      the directedness of the network being modeled.
     }
   }
+
   \subsection{DEPRECATED & DEFUNCT}{
     \itemize{
       \item The following control parameters have been removed or
       renamed:
       \code{maxedges}, \code{prop.weights}, \code{prop.args},
       \code{packagename}, \code{summarizestats},    \code{nr.maxit},
-      \code{nr.reltol}, \code{maxNumDyadTypes}, \code{maxedges},
+      \code{nr.reltol}, \code{maxNumDyadTypes},
       \code{steplength}, \code{initialfit}, \code{style},
       \code{obs.MCMCsamplesize}, \code{obs.interval}, \code{obs.burnin},
       \code{compress}, \code{metric}, \code{force.mcmc},
@@ -177,6 +280,9 @@
       \item Several bugs relating to handling models with with offset
       terms have been fixed.
 
+      \item The bounded degree (\code{bd}) ERGM would sometimes tabulate
+      degrees incorrectly. This has been fixed.
+
       \item Miscellaneous robustification and bug fixes.
     }
   }
@@ -185,7 +291,7 @@
 \section{Changes in version 2.4}{
   \subsection{NEW FEATURES}{
     \itemize{
-      \item The "news" feature has been implemented. Type
+      \item The \dQuote{news} feature has been implemented. Type
   \code{news(package="ergm")} to see the version's updates.
       
       \item A function \code{\link{ergm.allstats}} was added to
@@ -223,13 +329,23 @@
       \code{theta0} argument). See the function documentation for usage
       scenarios.
 
-      \item The following new models terms have been added:  \code{\link{degcrossprod}} and \code{\link{degcor}}.
+      \item The following new models terms have been added:
+      \code{\link{degcrossprod}} and \code{\link{degcor}}.
+
+      \item Tests for change statistics have been added. 
   
-      \item For version 2.4-3, a new dataset has been added:  \code{\link{kapferer}}, the well-known
+      \item A new dataset has been added:  \code{\link{kapferer}}, the well-known
       tailor shop network dataset of Kapferer (1972).
     }
   }
 
+  \subsection{OTHER USER-VISIBLE CHANGES}{
+    \itemize{
+      \item The package has been \dQuote{standardized} to represent
+      directed ties as \code{(tail,head)}.   
+    }
+  }
+  
   \subsection{BUG FIXES}{
     \itemize{
       \item Log-likelihood calculation for dyad-dependent models has
@@ -245,4 +361,13 @@
       \item Bug in is.inCH in 2.4-2 fixed in 2.4-3.
     }
   }
+
+    \subsection{DEPRECATED & DEFUNCT}{
+    \itemize{
+      \item \code{as.directed} function has been removed.
+
+      \item All model terms included in the package have been
+      reimplemented using the new \code{InitErgmTerm} framework.
+    }
+  } 
 }

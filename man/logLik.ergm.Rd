@@ -1,20 +1,25 @@
-%  File ergm/man/logLik.ergm.Rd
-%  Part of the statnet package, http://statnet.org
+%  File man/logLik.ergm.Rd in package ergm, part of the Statnet suite
+%  of packages for network analysis, http://statnet.org .
 %
 %  This software is distributed under the GPL-3 license.  It is free,
-%  open source, and has the attribution requirements (GPL Section 7) in
-%    http://statnet.org/attribution
+%  open source, and has the attribution requirements (GPL Section 7) at
+%  http://statnet.org/attribution
 %
-%  Copyright 2012 the statnet development team
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  Copyright 2003-2013 Statnet Commons
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{logLik.ergm}
 \alias{logLik.ergm}
+\alias{logLikNull}
+\alias{logLikNull.ergm}
 \title{
   A \code{\link{logLik}} method for \code{\link[=ergm.object]{ergm}}.
 }
 \description{
-A function to return the log-likelihood associated with an
-\code{\link[=ergm.object]{ergm}} fit, evaluating it if necessary.
+  A function to return the log-likelihood associated with an
+  \code{\link[=ergm.object]{ergm}} fit, evaluating it if
+  necessary. \code{logLikNull} computes, when possible (see Value), the
+  log-probability of observing the observed, unconstrained dyads of the
+  network observed under the null model.
 }
 \usage{
 \method{logLik}{ergm}(object, 
@@ -23,10 +28,18 @@ A function to return the log-likelihood associated with an
                       eval.loglik=add || force.reeval, 
                       control=control.logLik.ergm(), 
                       \dots)
+
+logLikNull(object, \dots)
+
+\method{logLikNull}{ergm}(object, 
+                          control=control.logLik.ergm(), 
+                          \dots)
+
 }
 \arguments{
   \item{object}{
-    An \code{\link[=ergm.object]{ergm}} fit, returned by \code{\link{ergm}}.
+    An \code{\link[=ergm.object]{ergm}} fit, returned by
+                      \code{\link{ergm}}.
   }
   \item{add}{Logical:  If TRUE, instead of 
     returning the log-likelihood, return \code{object} with
@@ -51,9 +64,18 @@ A function to return the log-likelihood associated with an
   produces an error unless \code{eval.loglik=TRUE}
 }
 \value{
-  If \code{add=FALSE} (the default), a \code{\link{logLik}} object. If
+  The form of the output of \code{logLik.ergm} depends on \code{add}: \code{add=FALSE} (the default), a \code{\link{logLik}} object. If
   \code{add=TRUE} (the default), an \code{\link[=ergm.object]{ergm}}
   object with the log-likelihood set.
+
+  \code{logLikNull} returns an object of type
+  \code{\link{logLik}} if it is able to compute the null model
+  probability, and \code{NA} otherwise.
+
+  As of version 3.1, all likelihoods for which \code{logLikNull} is not
+  implemented are computed relative to the reference measure. (I.e., a
+  null model, with no terms, is defined to have likelihood of 0, and all
+  other models are defined relative to that.)
 }
 \references{
   Hunter, D. R. and Handcock, M. S. (2006)
@@ -72,7 +94,13 @@ gest <- ergm(flomarriage ~ kstar(1:2) + absdiff("wealth") + triangle, eval.logli
 summary(gest)
 # Evaluate the log-likelihood and attach it to the object.
 gest <- logLik(gest, add=TRUE)
-# Deviances, AIC, and BIC now shown:
+# Deviances, AIC, and BIC (relative to the null model) now shown:
 summary(gest)
+# Deviances, AIC, and BIC that use the probability under the null model
+#  as the baseline are shifted:
+
+-2*c(logLik(gest)+logLikNull(gest)) # Deviance
+AIC(gest)+AIC(logLikNull(gest)) # AIC
+BIC(gest)+BIC(logLikNull(gest)) # BIC
 }
 \keyword{ models  }

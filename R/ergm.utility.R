@@ -1,12 +1,40 @@
-#  File ergm/R/ergm.utility.R
-#  Part of the statnet package, http://statnet.org
+#  File R/ergm.utility.R in package ergm, part of the Statnet suite
+#  of packages for network analysis, http://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnet.org/attribution
+#  open source, and has the attribution requirements (GPL Section 7) at
+#  http://statnet.org/attribution
 #
-#  Copyright 2012 the statnet development team
-######################################################################
+#  Copyright 2003-2013 Statnet Commons
+#######################################################################
+#==============================================================
+# This file contains the following 21 utility functions:
+#      <ostar2deg>                  
+#      <is.invertible>          <summary.statsmatrix.ergm>
+#      <is.ergm>                <ergm.t.summary>
+#      <is.latent>
+#      <degreedist>             <is.latent.cluster>
+#      <degreedistfactor>       <newnw.extract>
+#      <espartnerdist>          <dspartnerdist>         
+#      <rspartnerdist>         
+#      <twopathdist>            <copy.named>
+#      <compress.data.frame>    <sort.data.frame>
+#==============================================================      
+
+
+
+###############################################################################
+# The <ostar2deg> function ??
+#
+# --PARAMETERS--
+#   object  : an ergm object
+#   ninflast: whether ??
+#
+# --RETURNED--
+#   odeg: the vector of ??
+#
+###############################################################################
+
 ostar2deg <- function(object, ninflast=TRUE){
  nnodes <- network.size(object$newnetwork)
  nodeg <- paste("odeg",1:(nnodes-1),sep="")
@@ -48,6 +76,19 @@ is.ergm <- function(object)
 ###############################################################################
 # The <degreedist> function computes and returns the degree distribution for
 # a given network
+#
+# --PARAMETERS--
+#   g    : a network object
+#   print: whether to print the degree distribution; default=TRUE
+#
+# --RETURNED--
+#   degrees:
+#      if directed  -- a matrix of the distributions of in and out degrees;
+#                      this is row bound and only contains degrees for which
+#                      one of the in or out distributions has a positive count
+#      if bipartite -- a list containing the degree distributions of b1 and b2
+#      otherwise    -- a vector of the positive values in the degree
+#                      distribution
 ###############################################################################
 
 degreedist <- function(g, print=TRUE)
@@ -98,6 +139,17 @@ degreedist <- function(g, print=TRUE)
 ###############################################################################
 # The <degreedistfactor> function returns the cross table of the degree
 # distribution for a network and a given factor
+#
+# --PARAMETERS--
+#   g: a network
+#   x: a nodal attribute, as a character string
+#
+# --RETURNED--
+#   degrees:
+#      if directed  -- a list containing 2 cross tables, the in degree
+#                      distributions by 'x', and out degree dist by 'x'
+#      otherwise    -- a table of the degree distribution by 'x'
+#
 ###############################################################################
 
 degreedistfactor <- function(g,x)
@@ -266,6 +318,24 @@ summary.statsmatrix.ergm <- function(object, ...){
 ###############################################################################
 # The <ergm.t.summary> function conducts a t test for comparing the mean of a
 # given vector and a hypothesized mean
+#
+# --PARAMETERS--
+#   x          : a numeric vector
+#   alternative: a string to indicate whether the test is two-sided or one-
+#                sided to the left or right, as either "two.sided", "less",
+#                or "greater"; default="two.sided"
+#   mu         : the hypothesized mean; default = 0
+#
+# --IGNORED PARAMETERS--
+#   var.equal : whether the variance of ?? is ??; default=FALSE
+#   conf.level: the confidence level; default=0.95
+#   ...       : ??
+#
+# --RETURNED--
+#   rval: a vetor of the standard error, the t statistic, the p value, and the
+#         standard deviation, consistent with 'alternative'; if the length of
+#         x is <2, this vector will be predominently NA's
+#
 ###############################################################################
 
 ergm.t.summary <-
@@ -319,18 +389,27 @@ function(x, alternative = c("two.sided", "less", "greater"),
     return(rval)
 }
 
-newnw.extract<-function(oldnw,z,output="network"){
+newnw.extract<-function(oldnw,z,output="network",response=NULL){
   if("newedgelist" %in% names(z)){
     newedgelist<-z$newedgelist[,1:2,drop=FALSE]
+    if(!is.null(response))
+       newnwweights<-z$newedgelist[,3]
   }else{
     nedges<-z$newnwtails[1]
     # *** don't forget - edgelists are cbind(tails, heads) now
     newedgelist <-
       if(nedges>0) cbind(z$newnwtails[2:(nedges+1)],z$newnwheads[2:(nedges+1)])
       else matrix(0, ncol=2, nrow=0)
+    newnwweights <- z$newnwweights[2:(nedges+1)]
   }
   
-  network.update(oldnw,newedgelist,matrix.type="edgelist",output=output)
+  newnw<-network.update(oldnw,newedgelist,matrix.type="edgelist",output=output)
+  if(!is.null(response)){
+    # It's very important that the order of weights here is the same
+    # as the one that network accepts.
+    newnw<-set.edge.attribute(newnw,attrname=response,newnwweights,e=apply(newedgelist,1,function(e) get.edgeIDs(newnw,e[1],e[2])))
+  }
+  newnw
 }
 
 nvattr.copy.network <- function(to, from, ignore=c("bipartite","directed","hyper","loops","mnext","multiple","n")){
@@ -346,46 +425,96 @@ nvattr.copy.network <- function(to, from, ignore=c("bipartite","directed","hyper
 }
 
 
-statnet.edit <- function(name,package=c("statnet","ergm","network")){
-  i <- 1
-  while(i < length(package)){
-   pkgpath <- .find.package(package[i],quiet=TRUE)
-   if(length(pkgpath)>0){
-    filepath <- file.path(pkgpath,name)
-    if(file.exists(filepath)){
-     i <- length(package)+1
-     file.edit(filepath)
+# Create a copy of a network of interest with certain guarantees about its internal representation:
+# * tails < heads
+# * no (tail,head) pair has more than one edge ID associated with it
+standardize.network <- function(nw, preserve.eattr=TRUE){
+  if(preserve.eattr){
+    el <- rbind(as.edgelist(nw),as.edgelist(is.na(nw)))
+    eids <- apply(el, 1, function(e) get.edgeIDs(nw, e[1], e[2], na.omit=FALSE))
+    if(is.list(eids)){ # I.e., apply() wasn't able to simplify.
+      bad.ei <- which(sapply(eids,length)>1)
+      for(ei in bad.ei){
+        dup.eids <- duplicated(nw$mel[eids[[ei]]])
+        if(sum(!dup.eids)!=1) stop("Edge (",el[ei,1],",",el[ei,2],") has multiple IDs with distinct attributes. Cannot repair.")
+        eids[[ei]] <- eids[[ei]][!dup.eids]
+      }
+      eids <- unlist(eids)
     }
-   }
-   i <- i + 1
+    
+    vals <- lapply(nw$mel,"[[","atl")[eids]
+    names <- lapply(vals, names)
+    el.na <- NULL
+  }else{
+    el <- rbind(as.edgelist(nw))
+    vals <- NULL
+    names <- NULL
+    el.na <- as.edgelist(is.na(nw))
   }
-  if(i != length(package)+2){
-   warning(paste("The file '",name,"' does not seem to exist in 'statnet'.",
-           sep=""), call. = FALSE)
+  
+  nw <- delete.edges(nw, seq_along(nw$mel))
+  nw <- add.edges(nw, el[,1], el[,2], names.eval=names, vals.eval=vals)
+  if(!is.null(el.na)) nw[el.na] <- NA
+  nw
+}
+
+get.free.dyads <- function(constraints){
+  y <- NULL
+  for(con in constraints){
+    if(!is.null(con$free.dyads)){
+      y <- if(is.null(y)) standardize.network(con$free.dyads(),FALSE) else y & standardize.network(con$free.dyads(),FALSE)
+    }
   }
-  invisible(filepath)
+  y
 }
 
-## Compress a data frame by eliminating duplicate rows while keeping
-## track of their frequency.
-compress.data.frame<-function(x){
-  x<-sort(x)
-  firsts<-which(!duplicated(x))
-  freqs<-diff(c(firsts,nrow(x)+1))
-  x<-x[firsts,]
-  list(rows=x,frequencies=freqs)
+get.miss.dyads <- function(constraints, constraints.obs){
+  free.dyads <- get.free.dyads(constraints)
+  free.dyads.obs <- get.free.dyads(constraints.obs)
+  
+  if(is.null(free.dyads)){
+    if(is.null(free.dyads.obs)) NULL
+    else free.dyads.obs
+  }else{
+    if(is.null(free.dyads.obs)) standardize.network(invert.network(free.dyads),FALSE)
+    else standardize.network(invert.network(free.dyads),FALSE) | free.dyads.obs
+  }
 }
 
-## Sorts rows of a data frame in lexicographic order.
-sort.data.frame<-function(x, decreasing=FALSE, ...){
-  x[do.call(order,c(sapply(seq_along(x),function(i)x[[i]],simplify=FALSE), decreasing=decreasing)),]
+.hash.el <- function(x){
+  apply(x, 1, paste, collapse="\r")
 }
 
-## Concatenate a character list with commas and ands in the right places.
-paste.and <- function(x, oq='', cq=''){
-  x <- paste(oq, x, cq, sep='')
-  if(length(x)==0) return('')
-  if(length(x)==1) return(x)
-  if(length(x)==2) return(paste(x[1],'and',x[2]))
-  if(length(x)>=3) return(paste(paste(x[-length(x)], collapse=", "),', and ',x[length(x)],sep=''))
+invert.network <- function(nw){
+  n <- network.size(nw)
+  m <- nw %n% "bipartite"
+
+  # Borrows from !.network:
+  el <- cbind(rep(1:n, each = n), rep(1:n, n))
+  if (!is.directed(nw)) 
+    el <- el[el[, 1] <= el[, 2], , drop=FALSE]
+  if (!has.loops(nw)) 
+    el <- el[el[, 1] != el[, 2], , drop=FALSE]
+
+  if(m) el <- el[(el[,1]<=m)!=(el[,2]<=m), , drop=FALSE]
+
+  # el now contains the set of possible dyads
+
+  el <- el[! .hash.el(el) %in% .hash.el(as.edgelist(nw)), , drop=FALSE]
+
+  network.update(nw, el, matrix.type="edgelist")
+  
+}
+
+
+# Return the name of the package containing function f visible from
+# environment env.
+which.package.InitFunction <- function(f, env = parent.frame()){
+  f <- as.character(f)
+  # Find the first entity named f in the search path, and get its name
+  # attribute (if present).
+  loc <- attr(findFunction(f, where=env)[[1]], "name")
+  # If name attribute is not NULL and begins with "package:", return
+  # the package name. Otherwise, return NULL.
+  if(!is.null(loc) && grepl("^package:", loc)) sub("^package:", "", loc) else NULL
 }

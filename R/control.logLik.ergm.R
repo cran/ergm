@@ -1,12 +1,12 @@
-#  File ergm/R/control.logLik.ergm.R
-#  Part of the statnet package, http://statnet.org
+#  File R/control.logLik.ergm.R in package ergm, part of the Statnet suite
+#  of packages for network analysis, http://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnet.org/attribution
+#  open source, and has the attribution requirements (GPL Section 7) at
+#  http://statnet.org/attribution
 #
-#  Copyright 2012 the statnet development team
-######################################################################
+#  Copyright 2003-2013 Statnet Commons
+#######################################################################
 control.logLik.ergm<-function(nsteps=20,
                               MCMC.burnin=NULL,
                               MCMC.interval=NULL,
@@ -18,6 +18,8 @@ control.logLik.ergm<-function(nsteps=20,
                               MCMC.prop.weights=NULL,
                               MCMC.prop.args=NULL,
 
+                              warn.dyads=TRUE,
+
                               MCMC.init.maxedges=NULL,
                               MCMC.packagenames=NULL,
                               
@@ -28,5 +30,5 @@ control.logLik.ergm<-function(nsteps=20,
   for(arg in names(formal.args))
     control[arg]<-list(get(arg))
 
-  control
+  set.control.class()
 }

@@ -1,18 +1,41 @@
-#  File ergm/R/ergm.stepping.R
-#  Part of the statnet package, http://statnet.org
+#  File R/ergm.stepping.R in package ergm, part of the Statnet suite
+#  of packages for network analysis, http://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnet.org/attribution
+#  open source, and has the attribution requirements (GPL Section 7) at
+#  http://statnet.org/attribution
 #
-#  Copyright 2012 the statnet development team
-######################################################################
+#  Copyright 2003-2013 Statnet Commons
+#######################################################################
 ############################################################################
 # The <ergm.stepping> function provides one of the styles of maximum
 # likelihood estimation that can be used. This one is attributed to ?? and
 # uses ?? approach. The other  MLE styles are found in functions <ergm.robmon>
 # <ergm.stocapprox> and <ergm.mainfitloop>
+#
+# --PARAMETERS--
+#   init         : the initial theta values
+#   nw             : the network
+#   model          : the model, as returned by <ergm.getmodel>
+#   Clist          : a list of several network and model parameters,
+#                    as returned by <ergm.Cprepare>
+#   initialfit     : an ergm object, as the initial fit
+#   control     : a list of parameters for controlling the MCMC sampling
+#   MHproposal     : an MHproposal object for 'nw', as returned by
+#                    <MHproposal>
+#   MHproposal.obs: an MHproposal object for the observed network of'nw',
+#                    as returned by <MHproposal>
+#   verbose        : whether the MCMC sampling should be verbose AND
+#                    the diagnostic plots should be printed ; default=FALSE
+#   ...            : additional paramters that are passed onto
+#                    <ergm.estimate> and <simulate.formula>
+#
+# --RETURNED--
+#   v: an ergm object as a list containing several items; for details see
+#      the return list in the <ergm> function header (<ergm.stepping>=@)
+#
 ###########################################################################      
+
 ergm.stepping = function(init, nw, model, initialfit, constraints,
                          control, MHproposal, MHproposal.obs, 
                          verbose=FALSE, ...){
@@ -44,7 +67,7 @@ ergm.stepping = function(init, nw, model, initialfit, constraints,
 		samples[[iter]]=simulate.formula(formula, nsim=control$Step.MCMC.samplesize,
                                      coef=eta[[iter]], statsonly=TRUE,
                                      constraints=constraints, 
-                                     control=control, ...)
+                                     control=set.control.class("control.simulate.formula",control), ...)
 		sampmeans[[iter]]=colMeans(samples[[iter]])
 		
 		hi <- control$Step.gridsize  # Goal: Let gamma be largest possible multiple of .01
@@ -136,7 +159,7 @@ ergm.stepping = function(init, nw, model, initialfit, constraints,
   finalsample <- simulate.formula(formula, nsim=control$MCMC.samplesize,
                                   coef=eta[[iter]], statsonly=TRUE, 
                                   constraints=constraints, 
-                                  control=control, ...)
+                                  control=set.control.class("control.simulate.formula",control), ...)
   sampmeans[[iter]] <- colMeans(finalsample)
   xi[[iter]] <- obsstats
 	v<-ergm.estimate(init=eta[[iter]], model=model, 
@@ -185,19 +208,15 @@ ergm.stepping = function(init, nw, model, initialfit, constraints,
 	
 	if(!v$failure & !any(is.na(v$coef))){
 		asyse <- mc.se
-		options(warn=-1)
 		if(is.null(v$covar)){
-			asyse[names(v$coef)] <- sqrt(diag(robust.inverse(-v$hessian)))
+			asyse[names(v$coef)] <- suppressWarnings(sqrt(diag(robust.inverse(-v$hessian))))
 		}else{
-			asyse[names(v$coef)] <- sqrt(diag(v$covar))
+			asyse[names(v$coef)] <- suppressWarnings(sqrt(diag(v$covar)))
 		}
-		options(warn=0)
 	}
 	
   v$sample <- ergm.sample.tomcmc(v$sample, control)
-  v$null.deviance <- 2*network.dyadcount(nw.orig)*log(2)
-	v$mle.lik <- mle.lik
-	v$etamap <- model$etamap
+  v$etamap <- model$etamap
   v$iterations <- iter
 
 	v

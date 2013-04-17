@@ -1,12 +1,21 @@
-#  File ergm/R/mvmodel.R
-#  Part of the statnet package, http://statnet.org
+#  File R/mvmodel.R in package ergm, part of the Statnet suite
+#  of packages for network analysis, http://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) in
-#    http://statnet.org/attribution
+#  open source, and has the attribution requirements (GPL Section 7) at
+#  http://statnet.org/attribution
 #
-#  Copyright 2012 the statnet development team
-######################################################################
+#  Copyright 2003-2013 Statnet Commons
+#######################################################################
+#=============================================================
+# This file contains the following 4 files for gathering
+# summary statistics from simulated networks:
+#      <mvmodel>           <mvmodel.formula>
+#      <mvmodel.default>   <mvmodel.ergm>
+#=============================================================
+
+
+
 mvmodel <- function(object, ...)
 UseMethod("mvmodel")
 
@@ -22,6 +31,40 @@ mvmodel.default <- function(object,...)
 # The <mvmodel.X> functions each perform a simulation study, which
 # simulates a given number of networks according to a provided formula
 # or ergm X and summarizes the given statistics 
+#
+# --PARAMETERS--
+#   formula/object: X, either a formula or ergm
+#   ...           : any parameters passed via ... are ignored
+#   init        : the vector of initial theta values to use when
+#                   simulating networks
+#   nsim          : the number of simulations to draw
+#   burnin        : the number of proposals to disregard for the initial
+#                   burn-in period
+#   interval      : the number of proposals to disregard in between
+#                   the drawn simulations
+#   constraints   : a one-sided formula specifying the constraints on the
+#                   support of the distribution of networks being simulated;
+#                   default=NULL
+#   control       : a list of control parameters for algorithm tuning, as
+#                   returned by <control.simulate.ergm> or
+#                   <control.simulate.formula>; default=<control.simulate.X>
+#   seed          : an integer at which to set the random number generator
+#   statistic     : this parameter may have one of two forms - either
+#                   a function that accepts a network 'nw' as input and
+#                   as output gives a summary statistic, or this may be
+#                   the character string "density", in which case, the
+#                   'statistic' function is defined for you; the
+#                   default is to return the sociomatrix of 'nw'
+#
+# --RETURNED--
+#   if 'statistic' takes on its default value, a "sociomatrix" is
+#      returned, where the ij entry is the percent of simulations in which
+#      edge ij was present;
+#   otherwise, the simulation summary is returned as a list containing:
+#     mean:  the vector of mean 'statistic's over the set of simulations
+#     sim :  the matrix of summary statistics where entry ij is the
+#            jth statistic returned by 'statistic' for the ith simulation
+#
 ########################################################################
 
 mvmodel.formula <- function (formula, ..., init, nsim=100,
@@ -31,6 +74,7 @@ mvmodel.formula <- function (formula, ..., init, nsim=100,
                              seed=NULL, 
                              statistic=NULL
 		      ) {
+  check.control.class("simulate.formula", "ERGM mvmodel.formula")
   trms <- ergm.getterms(formula)
   if(length(trms)>2){
     g <- eval(trms[[2]], sys.parent())
@@ -74,7 +118,7 @@ mvmodel.formula <- function (formula, ..., init, nsim=100,
 
   # Set up the output arrays
 
-  simcentrality <- statistic(SimGraphSeriesObj$networks[[1]])
+  simcentrality <- statistic(SimGraphSeriesObj[[1]])
 
   if(!probabilites){
     sim.mvmodel <-array(0,dim=c(nsim,length(simcentrality)))
@@ -86,7 +130,7 @@ mvmodel.formula <- function (formula, ..., init, nsim=100,
 
   for (i in 2:nsim)
   { 
-    simcentrality <- statistic(SimGraphSeriesObj$networks[[i]])
+    simcentrality <- statistic(SimGraphSeriesObj[[i]])
     if(!probabilites){
       sim.mvmodel[i,] <- simcentrality
     }else{
@@ -106,6 +150,12 @@ mvmodel.formula <- function (formula, ..., init, nsim=100,
 
 
 
+#######################################################################
+#
+#  (see the <mvmodel.formula> function for header details)
+#
+########################################################################
+
 mvmodel.ergm <- function (object, ..., nsim=100,
                           burnin=10000, interval=1000,
                           constraints=NULL,
@@ -113,6 +163,8 @@ mvmodel.ergm <- function (object, ..., nsim=100,
                           control=control.simulate.ergm(),
                           statistic=NULL) {
 
+  check.control.class("simulate.ergm")
+  
 # trms <- ergm.getterms(object$formula)
 # g <- as.network(eval(trms[[2]], sys.parent()))
   g <- object$network
@@ -144,7 +196,7 @@ mvmodel.ergm <- function (object, ..., nsim=100,
 
   # Set up the output arrays
 
-  simcentrality <- statistic(SimGraphSeriesObj$networks[[1]])
+  simcentrality <- statistic(SimGraphSeriesObj[[1]])
 
   if(!probabilites){
     sim.mvmodel <-array(0,dim=c(nsim,length(simcentrality)))
@@ -156,7 +208,7 @@ mvmodel.ergm <- function (object, ..., nsim=100,
 
   for (i in 2:nsim)
   { 
-    simcentrality <- statistic(SimGraphSeriesObj$networks[[i]])
+    simcentrality <- statistic(SimGraphSeriesObj[[i]])
     if(!probabilites){
       sim.mvmodel[i,] <- simcentrality
     }else{
