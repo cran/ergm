@@ -58,7 +58,7 @@ ergm.MCMCse<-function(theta, init, statsmatrix, statsmatrix.obs,
   xobs <- xobs[!offsetmap]
   xsim <- xsim[,!offsetmap, drop=FALSE]
 
-  # Take any theta offsets (values fixed at theta-1) into consideration
+  # Take any theta offsets (values fixed at init) into consideration
   theta.offset <- etamap$init
   theta.offset[!offsettheta] <- theta[!offsettheta]
 
@@ -91,6 +91,8 @@ ergm.MCMCse<-function(theta, init, statsmatrix, statsmatrix.obs,
   cov.zbar.offset <- matrix(0, ncol = length(offsetmap), 
                             nrow = length(offsetmap))
   cov.zbar <- suppressWarnings(chol(cov.zbar, pivot=TRUE))
+  pivot <- order(attr(cov.zbar, "pivot"))
+  cov.zbar <-cov.zbar[, pivot]
   cov.zbar.offset[!offsetmap,!offsetmap] <- cov.zbar
   cov.zbar.offset <- t(ergm.etagradmult(theta.offset, t(cov.zbar.offset), etamap))
   cov.zbar <- crossprod(cov.zbar.offset, cov.zbar.offset)
@@ -123,14 +125,15 @@ ergm.MCMCse<-function(theta, init, statsmatrix, statsmatrix.obs,
     cov.zbar.obs.offset <- matrix(0, ncol = length(offsetmap), 
                                   nrow = length(offsetmap))
     cov.zbar.obs <- suppressWarnings(chol(cov.zbar.obs, pivot=TRUE))
+    pivot <- order(attr(cov.zbar.obs, "pivot"))
+    cov.zbar.obs <-cov.zbar.obs[, pivot]
     cov.zbar.obs.offset[!offsetmap,!offsetmap] <- cov.zbar.obs
     cov.zbar.obs.offset <- t(ergm.etagradmult(theta.offset, t(cov.zbar.obs.offset), etamap))
     cov.zbar.obs <- crossprod(cov.zbar.obs.offset, cov.zbar.obs.offset)
     novar <- novar | (diag(H.obs)==0)
     H.obs <- H.obs[!novar,,drop=FALSE] 
     H.obs <- H.obs[,!novar,drop=FALSE] 
-    cov.zbar.obs <- cov.zbar.obs[!novar,,drop=FALSE] 
-    cov.zbar.obs <- cov.zbar.obs[,!novar,drop=FALSE] 
+    cov.zbar.obs <- cov.zbar.obs[!(novar|offsettheta),!(novar|offsettheta),drop=FALSE]
   }
   if(nrow(H)==1){
     H <- as.matrix(H[!novar,]) 
@@ -144,14 +147,14 @@ ergm.MCMCse<-function(theta, init, statsmatrix, statsmatrix.obs,
     mc.se <- rep(NA,length=length(theta))
     return(mc.se)
   }
-  cov.zbar <- cov.zbar[!novar,,drop=FALSE] 
-  cov.zbar <- cov.zbar[,!novar,drop=FALSE] 
+  cov.zbar <- cov.zbar[!(novar|offsettheta),!(novar|offsettheta),drop=FALSE]
   if(length(novar)==length(offsettheta)){
    novar <- novar | offsettheta
   }else{
    novar <- novar[!offsettheta]
   }
   mc.se <- rep(NA,length=length(theta))
+  if(inherits(try(solve(H)),"try-error")) warning("Approximate Hessian matrix is singular. Standard errors due to MCMC approximation of the likelihood cannot be evaluated. This is likely due to highly correlated model terms.")
   mc.se0 <- try(solve(H, cov.zbar), silent=TRUE)
   if(!(inherits(mc.se0,"try-error"))){
     mc.se0 <- try(diag(solve(H, t(mc.se0))), silent=TRUE)

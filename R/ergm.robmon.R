@@ -48,7 +48,7 @@
 ###########################################################################      
 
 ergm.robmon <- function(init, nw, model,
-                        burnin, interval, MHproposal,
+                        MHproposal,
                         verbose=FALSE, 
                         control=control.ergm() ){
   #phase 1:  Estimate diagonal elements of D matrix (covariance matrix for init)
@@ -61,10 +61,7 @@ ergm.robmon <- function(init, nw, model,
 #  stats[1,] <- model$nw.stats - model$target.stats
 ## stats[,]<-  rep(model$nw.stats - model$target.stats,rep(nrow(stats),model$etamap$etalength))
 ## control$stats <- stats
-  control <- c(control, 
-                  list(samplesize=n1, burnin=burnin, interval=interval,
-                       nmatrixentries = n1* model$etamap$etalength, #stats=stats, 
-                       parallel=control$parallel))
+  control$MCMC.samplesize=n1
   cat(paste("Phase 1: ",n1,"iterations"))
   cat(paste(" (interval=",control$MCMC.interval,")\n",sep=""))
   z <- ergm.getMCMCsample(nw, model, MHproposal, eta0, control, verbose)
@@ -118,7 +115,6 @@ ergm.robmon <- function(init, nw, model,
       # control$MCMC.burnin should perhaps be increased here, since
       # each iteration begins from the observed network, which must be 
       # "forgotten".
-      control$nmatrixentries = control$MCMC.samplesize * model$etamap$etalength
       z <- ergm.getMCMCsample(nw, model, MHproposal, eta, control, verbose=FALSE)
       # post-processing of sample statistics:  Shift each row by the
       # matrix model$nw.stats - model$target.stats, attach column names
@@ -191,7 +187,7 @@ cat(paste("theta new:",theta,"\n"))
   structure(c(ve, list(newnetwork=nw, 
                  theta.original=init,
                  rm.coef=theta,
-                 interval=interval, burnin=burnin, 
+                 interval=control$MCMC.interval, burnin=control$MCMC.burnin, 
                  network=nw)),
              class="ergm")
 }

@@ -153,14 +153,14 @@ san.formula <- function(object, response=NULL, reference=~Bernoulli, constraints
 
     if(is.null(control$coef)) {
       if(reference==~Bernoulli){
-        fit <- ergm.mple(Clist=Clist, Clist.miss=Clist.miss, 
+        fit <- try(ergm.mple(Clist=Clist, Clist.miss=Clist.miss, 
                          conddeg=conddeg,
                          control=control, MHproposal=MHproposal,
-                         m=model, verbose=verbose, ...)
-        control$coef <- fit$coef
+                         m=model, verbose=verbose, ...))
+        control$coef <- if(inherits(fit, "try-error")) rep(0,length(model$coef.names)) else fit$coef
         if(is.null(control$invcov)) { control$invcov <- fit$covar }
       }else{
-        control$coef<-rep(0,length(model$offset))
+        control$coef<-rep(0,length(model$coef.names))
         if(is.null(control$invcov)) control$invcov <- diag(length(control$coef))
       }
     }else{
@@ -211,7 +211,8 @@ san.formula <- function(object, response=NULL, reference=~Bernoulli, constraints
                 as.integer(MHproposal$arguments$constraints$bd$minout), as.integer(MHproposal$arguments$constraints$bd$minin),
                 as.integer(MHproposal$arguments$constraints$bd$condAllDegExact),
                 as.integer(length(MHproposal$arguments$constraints$bd$attribs)), 
-                as.integer(maxedges), 
+                as.integer(maxedges),
+                status = integer(1),
                 PACKAGE="ergm")
       }else{
         z <- .C("WtSAN_wrapper",
@@ -241,11 +242,13 @@ san.formula <- function(object, response=NULL, reference=~Bernoulli, constraints
                 as.integer(MHproposal$arguments$constraints$bd$condAllDegExact),
                 as.integer(length(MHproposal$arguments$constraints$bd$attribs)), 
                 as.integer(maxedges), 
+                status = integer(1),
                 PACKAGE="ergm")
       }
 
-      if(z$newnwtails[1] <= maxedges) break
-      maxedges <- 5*maxedges
+      if(z$status==1) maxedges <- 5*maxedges
+      else if(z$status==0) break
+      else stop("Error in SAN C code.")
     }
     #
     #   Next update the network to be the final (possibly conditionally)

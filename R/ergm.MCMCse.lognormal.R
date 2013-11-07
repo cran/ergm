@@ -79,7 +79,9 @@ ergm.MCMCse.lognormal<-function(theta, init, statsmatrix, statsmatrix.obs,
   cov.zbar <- (R[1,  ,  ] + part + t(part))/nrow(xsim)
   cov.zbar.offset <- matrix(0, ncol = length(offsetmap), 
                             nrow = length(offsetmap))
-  cov.zbar <- suppressWarnings(chol(cov.zbar, pivot=TRUE))
+  cov.zbar <- suppressWarnings(chol(cov.zbar,pivot=TRUE))
+  pivot <- order(attr(cov.zbar, "pivot"))
+  cov.zbar <-cov.zbar[, pivot]
   cov.zbar.offset[!offsetmap,!offsetmap] <- cov.zbar
   cov.zbar.offset <- t(ergm.etagradmult(theta.offset, t(cov.zbar.offset), etamap))
   cov.zbar <- crossprod(cov.zbar.offset, cov.zbar.offset)
@@ -89,6 +91,8 @@ ergm.MCMCse.lognormal<-function(theta, init, statsmatrix, statsmatrix.obs,
   # the same dimension in case of a curved EF model, in which case this 
   # is probably the wrong function to call!
   novar <- diag(H)==0
+  novar.offset <- rep(TRUE, length(offsettheta))
+  novar.offset[!offsettheta] <- novar # Note that novar.offset == TRUE where offsettheta==TRUE as well.
 
   #  Calculate the auto-covariance of the Conditional MCMC suff. stats.
   #  and hence the Conditional MCMC s.e.
@@ -104,14 +108,22 @@ ergm.MCMCse.lognormal<-function(theta, init, statsmatrix, statsmatrix.obs,
     }
     cov.zbar.obs <- (R[1,  ,  ] + part + t(part))/nrow(xsim.obs)
     cov.zbar.obs <- suppressWarnings(chol(cov.zbar.obs, pivot=TRUE))
+    pivot <- order(attr(cov.zbar.obs, "pivot"))
+    cov.zbar.obs <-cov.zbar.obs[, pivot]
     cov.zbar.offset[!offsetmap,!offsetmap] <- cov.zbar.obs
     cov.zbar.offset <- t(ergm.etagradmult(theta.offset, t(cov.zbar.offset), etamap))
     cov.zbar.obs <- crossprod(cov.zbar.offset, cov.zbar.offset)
-    novar <- novar | (diag(H.obs)==0)
+
+    novar.obs <- diag(H.obs)==0
+    novar.offset.obs <- rep(TRUE, length(offsettheta))
+    novar.offset.obs[!offsettheta] <- novar.obs
+
+    novar.offset <- novar.offset | novar.offset.obs
+    novar <- novar | novar.obs
+    
     H.obs <- H.obs[!novar,,drop=FALSE] 
     H.obs <- H.obs[,!novar,drop=FALSE] 
-    cov.zbar.obs <- cov.zbar.obs[!novar,,drop=FALSE] 
-    cov.zbar.obs <- cov.zbar.obs[,!novar,drop=FALSE] 
+    cov.zbar.obs <- cov.zbar.obs[!(novar.offset),!(novar.offset),drop=FALSE] 
   }
   if(nrow(H)==1){
     H <- as.matrix(H[!novar,]) 
@@ -125,15 +137,11 @@ ergm.MCMCse.lognormal<-function(theta, init, statsmatrix, statsmatrix.obs,
     mc.se <- rep(NA,length=length(theta))
     return(mc.se)
   }
-  cov.zbar <- cov.zbar[!novar,,drop=FALSE] 
-  cov.zbar <- cov.zbar[,!novar,drop=FALSE] 
+  cov.zbar <- cov.zbar[!(novar.offset),!(novar.offset),drop=FALSE]
   mc.se <- rep(NA,length=length(theta))
+  if(inherits(try(solve(H)),"try-error")) warning("Approximate Hessian matrix is singular. Standard errors due to MCMC approximation of the likelihood cannot be evaluated. This is likely due to highly correlated model terms.")
   mc.se0 <- try(solve(H, cov.zbar), silent=TRUE)
-  if(length(novar)==length(offsettheta)){
-   novar <- novar | offsettheta
-  }else{
-   novar <- novar[!offsettheta]
-  }
+
   if(!(inherits(mc.se0,"try-error"))){
     mc.se0 <- try(diag(solve(H, t(mc.se0))), silent=TRUE)
     if(!(inherits(mc.se0,"try-error"))){
@@ -142,15 +150,15 @@ ergm.MCMCse.lognormal<-function(theta, init, statsmatrix, statsmatrix.obs,
         if(!(inherits(mc.se.obs0,"try-error"))){
           mc.se.obs0 <- try(diag(solve(H.obs, t(mc.se.obs0))), silent=TRUE)
           if(!inherits(mc.se.obs0,"try-error")){
-            mc.se[!novar] <- sqrt(mc.se0 + mc.se.obs0)
+            mc.se[!novar.offset] <- sqrt(mc.se0 + mc.se.obs0)
           }else{
-            mc.se[!novar] <- sqrt(mc.se0)
+            mc.se[!novar.offset] <- sqrt(mc.se0)
           }
         }else{
-          mc.se[!novar] <- sqrt(mc.se0)
+          mc.se[!novar.offset] <- sqrt(mc.se0)
         }
       }else{
-        mc.se[!novar] <- sqrt(mc.se0)
+        mc.se[!novar.offset] <- sqrt(mc.se0)
       }
     }
   }

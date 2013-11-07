@@ -56,8 +56,6 @@
 \alias{as.edgelist}
 \alias{as.edgelist.compressed}
 \alias{as.network.uncompressed}
-\alias{autoboot.ergm}
-\alias{autoboot.se.ergm}
 \alias{central.network}
 \alias{check.ErgmTerm}
 \alias{coef.length.model}
@@ -78,7 +76,6 @@
 \alias{ergm.Cprepare.miss}
 \alias{ergm.MCMCse}
 \alias{ergm.MCMCse.lognormal}
-\alias{ergm.MCMCse.old}
 \alias{ergm.MCMLE}
 \alias{ergm.MPIcluster.started}
 \alias{ergm.bounddeg}
