@@ -13,14 +13,83 @@
 
 % When a release is forked, copy the sections to a new release and
 % delete unused sections.
-\section{Changes in version 3.1.1}{
- 
+\section{Changes in version 3.1.2}{
+
   \subsection{NEW FEATURES}{
-    \itemize{ 
-      \item This is a bugfix release.
+    \itemize{
+      \item \code{\link{ergmMPLE}} can now output an array of change
+      scores associated with each dyad. See the help page for more
+      details.
     } 
   }
+  
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item Some Metropolis-Hastings proposal functions would sometimes
+      return incorrect acceptance probabilities when combined with the
+      \code{\link[=ergm-constraints]{bd}} constraint. This has been
+      fixed.
 
+      \item In \code{\link{simulate.ergm}} and
+      \code{\link{simulate.formula}}, some combinations of
+      \code{control$parallel}, \code{statsonly}, and \code{sequential}
+      arguments would cause an error. This has been fixed. Note that the
+      current implementation of parallel simulation when
+      \code{statsonly=FALSE} or \code{sequential=FALSE} is very
+      inefficient.
+
+      \item A namespace bug in the likelihod calculation code, reported
+      by Matthew Hoover, has been fixed.
+
+      \item MPLE for some degree-based constrained has been reenabled.
+      
+    }
+  }
+
+  \subsection{DEPRECATED & DEFUNCT}{
+    \itemize{
+      \item Argument \code{fitmodel} to \code{\link{ergmMPLE}} has been
+      deprecated in favor of \code{output}.
+    }
+  }
+
+  
+  \subsection{OTHER USER-VISIBLE CHANGES}{
+    \itemize{
+      
+      \item Default \code{SAN.burnin} control parameter has been
+      increated to 100,000.
+      
+    }
+  }
+
+  % \subsection{C-LEVEL FACILITIES}{
+  %   \itemize{
+  %   }
+  % }
+
+  % \subsection{UTILITIES}{
+  %   \itemize{
+  %     \item Likewise, "UTILITIES" is probably unnecessary.
+  %   }
+  % }
+
+  % \subsection{INSTALLATION}{
+  %   \itemize{
+  %     \item ... as is "INSTALLATION".
+  %   }
+  % }
+
+  % \subsection{PACKAGE INSTALLATION}{
+  %   \itemize{
+  %     \item ditto.
+  %   }
+  % }
+
+}
+
+\section{Changes in version 3.1.1}{
+ 
   \subsection{BUG FIXES}{
     \itemize{
       \item Long-standing bugs in MCMC standard error calculation have
@@ -49,35 +118,6 @@
       actors.)
     }
   }
-
-  % \subsection{C-LEVEL FACILITIES}{
-  %   \itemize{
-  %   }
-  % }
-
-  % \subsection{UTILITIES}{
-  %   \itemize{
-  %     \item Likewise, "UTILITIES" is probably unnecessary.
-  %   }
-  % }
-
-  % \subsection{INSTALLATION}{
-  %   \itemize{
-  %     \item ... as is "INSTALLATION".
-  %   }
-  % }
-
-  % \subsection{PACKAGE INSTALLATION}{
-  %   \itemize{
-  %     \item ditto.
-  %   }
-  % }
-
-  % \subsection{DEPRECATED & DEFUNCT}{
-  %   \itemize{
-  %   }
-  % }
-
 }
 
 \section{Changes in version 3.1}{
