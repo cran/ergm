@@ -1279,8 +1279,12 @@ InitErgmTerm.edgecov <- function(nw, arglist, ...) {
   ### Process the arguments
   if(is.network(a$x))
     xm<-as.matrix.network(a$x,matrix.type="adjacency",a$attrname)
-  else if(is.character(a$x))
+  else if(is.character(a$x)){
     xm<-get.network.attribute(nw,a$x)
+    if (is.null(xm)){
+      stop("There is no network attributed named ",a$x,call.=FALSE)
+    }
+  }
   else
     xm<-as.matrix(a$x)
   
@@ -2929,10 +2933,10 @@ InitErgmTerm.sociality<-function(nw, arglist, ...) {
   if(ld==0){return(NULL)}
   if(!is.null(attrname)){
     coef.names <- paste("sociality",d,".",attrname,sep="")
-    inputs <- c(d, nodecov)
+    inputs <- c(d, 0, nodecov) # Input requires a "guard" value.
   }else{
     coef.names <- paste("sociality",d,sep="")
-    inputs <- c(d)
+    inputs <- c(d,0) # Input requires a "guard" value.
   }
   list(name="sociality", coef.names=coef.names, inputs=inputs, minval=0, maxval=network.size(nw)-1, conflicts.constraints="degrees")
 }

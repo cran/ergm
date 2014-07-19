@@ -1,9 +1,9 @@
 9213bf9bae382fb9c456e3d3fba74381 *BUGS
-14d4882d14e4a2a77fc6fed1453c67b9 *DESCRIPTION
+5de20a84bbbf604e5909403543731c98 *DESCRIPTION
 f5b04d7f05f4b13cacd2476a3b93570c *LICENSE
 969c64c5f9b1166f4571b6bbcafea883 *NAMESPACE
 75e8266dbc51af64174adc13fae10e2f *R/InitConstraint.R
-5ebc0c2a3caef50913b42322e5818cdb *R/InitErgmTerm.R
+913b96f6e61957ea8c3371d055439238 *R/InitErgmTerm.R
 9b9deeb925423006f807321933fa10f9 *R/InitErgmTerm.coincidence.R
 c2d6ecdc5903ec487e8980ceea334f31 *R/InitErgmTerm.indices.R
 477e4ce36eab1895ed2fa46224c3faed *R/InitErgmTerm.transitiveties.R
@@ -33,10 +33,10 @@ c3c315cb6b21976a85f3deaf06b04c15 *R/control.gof.R
 08abfdf2bc8dac17cd41a2d55aaebd9a *R/ergm.MCMCse.R
 6b123e3756fcbff40e2030a4859a898f *R/ergm.MCMCse.lognormal.R
 462b88229051414be4d1c00d66a16de0 *R/ergm.MCMLE.R
-bcbf8450ffe30abf39f62ef3abb3e79a *R/ergm.R
+358703ebd579729a82a81bb97c250ef2 *R/ergm.R
 c54fcec33ff6757d532abd89721e21e3 *R/ergm.allstats.R
 2dceba1ad3cf9bf0e2fffff94e035e0b *R/ergm.bounddeg.R
-66f411491c0db02893096c933435993e *R/ergm.bridge.R
+0993cc0fac604893869797787fb66cb1 *R/ergm.bridge.R
 591cb75a675b170b6fc20638fb85239b *R/ergm.check.R
 b7085cea4433063d68222e09c2e9da27 *R/ergm.coefficient.degeneracy.R
 c0ffb83fa92e5208ddf35e29da7cd068 *R/ergm.curved.statsmatrix.R
@@ -93,7 +93,7 @@ a9f3d65fc8b871187e0f3c3de225e7aa *R/print.network.list.R
 1d822893b0b62d0d1b74c443f5fb9745 *R/print.summary.ergm.R
 cccde49788ecbf79ae78ac4fc5677b91 *R/robust.inverse.R
 79de4249fe205e6820cf3c53ad34cb94 *R/simulate.ergm.R
-67999bb6c9008b7c865749b96da7f289 *R/summary.ergm.R
+bf38cc36dce52ce55d1be3fa3882a23b *R/summary.ergm.R
 4a4eea6ccdd3bf68421f44709e965c03 *R/summary.network.list.R
 8b22cf3117e940814f0a6ee344169380 *R/summary.statistics.network.R
 e5e16788fd5df287c9ff044affb84cf8 *R/wtd.median.R
@@ -113,7 +113,7 @@ c9ac6635a27dd1f293aeb259fadf9dc2 *data/molecule.RData
 6f631b1a5980372f1431aea8d4e08592 *data/samplk.RData
 bfca099b3de3022e00e256aa92e4e74f *data/sampson.RData
 b7313d1512860d41274504c0043e3046 *inst/CITATION
-b46dac62924a356a50a95bbbb3905d75 *inst/NEWS.Rd
+a6cb6831ac056040d9e651bcca316165 *inst/NEWS.Rd
 660715ff3cfcbcb990fee5c3f98dad2d *inst/doc/ergm.pdf
 e5e445841c4fec0dfacd39f0cfed28bf *inst/doc/index.html
 ad22fd4c34ff3b34d68f5ccc485e47e8 *inst/include/MCMC.h
@@ -146,7 +146,7 @@ c7cb7a32704497caa52d374678cea693 *man/enformulate.curved.Rd
 22a0b477daf8c1ddef4b913806d45fd3 *man/ergm-package.Rd
 641304370434b2423bac9902970dcd1e *man/ergm-parallel.Rd
 cc8f4343466ff35756b11574e77d36e0 *man/ergm-references.Rd
-1116cf0d42cbca6d71e8afa4bb88765d *man/ergm-terms.Rd
+3c154387c6dc15c7d0c815df7937fd5b *man/ergm-terms.Rd
 7cd5a9fa0a09acfb0d1007e0891c827c *man/ergm.Rd
 30118015024ce1fb9b832d165ac47e80 *man/ergm.allstats.Rd
 5817749561bdfc067f901458610a9da2 *man/ergm.bridge.dindstart.llk.Rd
@@ -204,7 +204,7 @@ f30f701d0ffda89813f86cf403ba2605 *src/MPLEconddeg.h
 dbbab554cf1bd0c4f3d36caa68db8e43 *src/allstatistics.c
 70c5069f5a538392f54cf7a0c52765ab *src/changestat.c
 5d23667ddb81ba78513c7d929f74bedf *src/changestat.h
-bb76360f4f61c88000721ab5a150bf9b *src/changestats.c
+8e0c9987a82682e4c37efe2fa1259853 *src/changestats.c
 ba25280706672e239e2c7430734f042a *src/changestats.h
 da85b633e993e4ee39e8ca567dbc78e5 *src/changestats_indices.c
 9be39dbffedb3234489724132239996d *src/changestats_indices.h
@@ -224,7 +224,7 @@ e7ad2a276560828f93de94433a3bad53 *src/wtMCMC.c
 986a13aef847286b804fbdd9aa33ca30 *src/wtMCMC.h
 5895089f223cf5ee40cf3caac4c69390 *src/wtMHproposal.c
 3c4701d3e5b7121ecd2b20f5f3ffe953 *src/wtMHproposal.h
-cbf52487e27dfd2230a24e46c60ec424 *src/wtMHproposals.c
+bc01a122e169b35fdd0515fd3c0d404a *src/wtMHproposals.c
 ddf69b5cc91905d0864302a7bbf555e5 *src/wtMHproposals.h
 556673468f2d36c0b43055cfdaab14fc *src/wtSAN.c
 dd0e76d668a03b5ac5f0a5941ad175b4 *src/wtSAN.h
@@ -263,10 +263,10 @@ edc8056c7ae6e2952d7bc7a8962f7823 *tests/runtime_diags.R
 470c6cbb4f3a2e2690fe526c7a72c1de *tests/scoping.R
 81abbebaf3a55811f914322209da3ae6 *tests/simpletests.R
 1d965cce78d4476c5d29ad77004ae9b2 *tests/steppingtest.R
-35dd029e4fe9a15f0a648115efd7a883 *tests/termTests.bipartite.R
-d13e9a90f0da1013e335f9462d52e0e5 *tests/termTests.directed.R
-8b223c54eb4ed2bbeeb9976fe6b2121a *tests/termTests.flexible.R
-5554a149684d25114d4223a0c10f0c6e *tests/termTests.undirected.R
+ffbc669bef9dc3e833e0da00c760d28a *tests/termTests.bipartite.R
+4b5c39da7fc08aecc0678ca46808c161 *tests/termTests.directed.R
+bb1cbf6d1e83b5594e5ba7c2f8158599 *tests/termTests.flexible.R
+76ef45204b7db4ceed7e690640e9c8b9 *tests/termTests.undirected.R
 7d6ca1920674e26dd24b53d2faaf203d *tests/testgflomiss.R
 ce94683a4092d1a898e06010f127daf8 *tests/testgmonkmiss.R
 50222ce8febfbec843b0cab5efd8a4d4 *tests/testnet3d.RData

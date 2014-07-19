@@ -188,8 +188,12 @@ s.x <- summary(samplike~edgecov(cov))
 e.x <- ergm(samplike ~ edgecov(cov))
 s.xa <- summary(samplike~edgecov(samplike, "YearsTrusted"))
 e.xa <- ergm(samplike ~ edgecov(samplike, "YearsTrusted"))
+n.x <- try(summary(samplike~edgecov('dummy')),silent=TRUE)
+set.network.attribute(samplike,'dummy',cov)
+n2.x <- summary(samplike~edgecov('dummy'))
 if (s.x!=134 || round(e.x$coef + .5022,3)!=0  ||
-    s.xa!=183 || e.xa$coef!=+Inf ) {
+    s.xa!=183 || e.xa$coef!=+Inf ||
+    !is(n.x,'try-error') || n2.x!=134) {
  print(list(s.x=s.x,e.x=e.x,s.xa=s.xa,e.xa=e.xa))
  stop("Failed edgecov test")
 }else{
@@ -232,8 +236,8 @@ if (!all(s.d==c(36,13)) ||
 # gwdsp, either
 num.tests=num.tests+1
 s.0 <- summary(fmh~gwdsp)
-e.0 <- ergm(samplike~gwdsp, estimate="MPLE")
-e.a <- ergm(samplike~gwdsp(.8), estimate="MPLE")
+e.0 <- ergm(samplike~gwdsp(fixed=TRUE), estimate="MPLE")
+e.a <- ergm(samplike~gwdsp(.8, fixed=TRUE), estimate="MPLE")
 s.f <- summary(fmh~gwdsp(fixed=TRUE))
 s.af <- summary(fmh~gwdsp(.3, fixed=TRUE))
 e.af <- ergm(samplike~gwdsp(.2, fixed=TRUE), estimate="MPLE")
@@ -255,8 +259,8 @@ if (!all(head(s.0)==c(431, 75, 23, 1, 1, 0)) ||
 # gwesp, either
 num.tests=num.tests+1
 s.0 <- summary(fmh~gwesp)
-e.0 <- ergm(samplike~gwesp, estimate="MPLE")
-e.a <- ergm(samplike~gwesp(.8), estimate="MPLE")
+e.0 <- ergm(samplike~gwesp(fixed=TRUE), estimate="MPLE")
+e.a <- ergm(samplike~gwesp(.8, fixed=TRUE), estimate="MPLE")
 s.f <- summary(fmh~gwesp(fixed=TRUE))
 s.af <- summary(fmh~gwesp(.3, fixed=TRUE))
 e.af <- ergm(samplike~gwesp(.2, fixed=TRUE), estimate="MPLE")
@@ -278,8 +282,8 @@ if (!all(head(s.0)==c(70,36,13,0,1,0)) ||
 # gwnsp, either
 num.tests=num.tests+1
 s.0 <- summary(fmh~gwnsp)
-e.0 <- ergm(samplike~gwnsp, estimate="MPLE")
-e.a <- ergm(samplike~gwnsp(.8), estimate="MPLE")
+e.0 <- ergm(samplike~gwnsp(fixed=TRUE), estimate="MPLE")
+e.a <- ergm(samplike~gwnsp(.8, fixed=TRUE), estimate="MPLE")
 s.f <- summary(fmh~gwnsp(fixed=TRUE))
 s.af <- summary(fmh~gwnsp(.3, fixed=TRUE))
 e.af <- ergm(samplike~gwnsp(.2, fixed=TRUE), estimate="MPLE")
