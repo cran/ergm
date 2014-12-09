@@ -5,7 +5,7 @@
  *  open source, and has the attribution requirements (GPL Section 7) at
  *  http://statnet.org/attribution
  *
- *  Copyright 2003-2013 Statnet Commons
+ *  Copyright 2003-2014 Statnet Commons
  */
 #include "wtedgetree.h"
 
@@ -28,7 +28,7 @@ WtNetwork WtNetworkInitialize(Vertex *tails, Vertex *heads, double *weights,
 			      int lasttoggle_flag, int time, int *lasttoggle) {
   WtNetwork nw;
 
-  nw.next_inedge = nw.next_outedge = (Edge)nnodes+1;
+  nw.last_inedge = nw.last_outedge = (Edge)nnodes;
   /* Calloc will zero the allocated memory for us, probably a lot
      faster. */
   nw.outdegree = (Vertex *) calloc((nnodes+1),sizeof(Vertex));
@@ -41,8 +41,8 @@ WtNetwork WtNetworkInitialize(Vertex *tails, Vertex *heads, double *weights,
 
   if(lasttoggle_flag){
     nw.duration_info.time=time;
-    nw.duration_info.lasttoggle = (int *) calloc(DYADCOUNT(nnodes, bipartite, directed_flag), sizeof(int));
     if(lasttoggle)
+      nw.duration_info.lasttoggle = (int *) calloc(DYADCOUNT(nnodes, bipartite, directed_flag), sizeof(int));
       memcpy(nw.duration_info.lasttoggle, lasttoggle, DYADCOUNT(nnodes, bipartite, directed_flag) * sizeof(int));
   }
   else nw.duration_info.lasttoggle = NULL;
@@ -113,8 +113,8 @@ void WtNetworkDestroy(WtNetwork *nwp) {
 *****************/
 WtNetwork *WtNetworkCopy(WtNetwork *dest, WtNetwork *src){
   Vertex nnodes = dest->nnodes = src->nnodes;
-  dest->next_inedge = src->next_inedge;
-  dest->next_outedge = src->next_outedge;
+  dest->last_inedge = src->last_inedge;
+  dest->last_outedge = src->last_outedge;
 
   dest->outdegree = (Vertex *) malloc((nnodes+1)*sizeof(Vertex));
   memcpy(dest->outdegree, src->outdegree, (nnodes+1)*sizeof(Vertex));
@@ -485,13 +485,12 @@ void WtTouchEdge(Vertex tail, Vertex head, WtNetwork *nwp){
 
 int WtAddEdgeToTrees(Vertex tail, Vertex head, double weight, WtNetwork *nwp){
   if (WtEdgetreeSearch(tail, head, nwp->outedges) == 0) {
-    WtAddHalfedgeToTree(tail, head, weight, nwp->outedges, nwp->next_outedge);
-    WtAddHalfedgeToTree(head, tail, weight, nwp->inedges, nwp->next_inedge);
+    WtAddHalfedgeToTree(tail, head, weight, nwp->outedges, &(nwp->last_outedge));
+    WtAddHalfedgeToTree(head, tail, weight, nwp->inedges, &(nwp->last_inedge));
     ++nwp->outdegree[tail];
     ++nwp->indegree[head];
     ++nwp->nedges;
-    WtUpdateNextedge (nwp->inedges, &(nwp->next_inedge), nwp); 
-    WtUpdateNextedge (nwp->outedges, &(nwp->next_outedge), nwp);
+    WtCheckEdgetreeFull(nwp); 
     return 1;
   }
   return 0;
@@ -500,7 +499,7 @@ int WtAddEdgeToTrees(Vertex tail, Vertex head, double weight, WtNetwork *nwp){
 /*****************
  void WtAddHalfedgeToTree:  Only called by WtAddEdgeToTrees
 *****************/
-void WtAddHalfedgeToTree (Vertex a, Vertex b, double weight, WtTreeNode *edges, Edge next_edge){
+void WtAddHalfedgeToTree (Vertex a, Vertex b, double weight, WtTreeNode *edges, Edge *last_edge){
   WtTreeNode *eptr = edges+a, *newnode;
   Edge e;
 
@@ -509,39 +508,38 @@ void WtAddHalfedgeToTree (Vertex a, Vertex b, double weight, WtTreeNode *edges, 
     eptr->weight = weight;  /*  Add weight too */
     return;
   }
-  (newnode = edges + next_edge)->value=b;  
+  (newnode = edges + (++*last_edge))->value=b;  
   newnode->left = newnode->right = 0;
   newnode->weight=weight;  /*  Add weight too */
   /* Now find the parent of this new edge */
   for (e=a; e!=0; e=(b < (eptr=edges+e)->value) ? eptr->left : eptr->right);
   newnode->parent=eptr-edges;  /* Point from the new edge to the parent... */
   if (b < eptr->value)  /* ...and have the parent point back. */
-    eptr->left=next_edge; 
+    eptr->left=*last_edge; 
   else
-    eptr->right=next_edge;
+    eptr->right=*last_edge;
 }
 
 /*****************
-void UpdateNextedge
+void CheckEdgetreeFull
 *****************/
-void WtUpdateNextedge (WtTreeNode *edges, Edge *nextedge, WtNetwork *nwp) {
+void WtCheckEdgetreeFull (WtNetwork *nwp) {
   const unsigned int mult=2;
   
-  while (++*nextedge < nwp->maxedges) {
-    if (edges[*nextedge].value==0) return;
+  // Note that maximum index in the nwp->*edges is nwp->maxedges-1, and we need to keep one element open for the next insertion.
+  if(nwp->last_outedge==nwp->maxedges-2 || nwp->last_inedge==nwp->maxedges-2){
+    // Only enlarge the non-root part of the array.
+    Edge newmax = nwp->maxedges + (nwp->maxedges - nwp->nnodes - 1)*mult;
+    nwp->inedges = (WtTreeNode *) realloc(nwp->inedges, 
+					  sizeof(WtTreeNode) * newmax);
+    memset(nwp->inedges+nwp->last_inedge+2,0,
+	   sizeof(WtTreeNode) * (newmax-nwp->maxedges));
+    nwp->outedges = (WtTreeNode *) realloc(nwp->outedges, 
+					   sizeof(WtTreeNode) * newmax);
+    memset(nwp->outedges+nwp->last_outedge+2,0,
+	   sizeof(WtTreeNode) * (newmax-nwp->maxedges));
+    nwp->maxedges = newmax;
   }
-  /* Reached end of allocated memory;  back to start and recheck for "holes" */
-  for (*nextedge = (Edge)nwp->nnodes+1; *nextedge < nwp->maxedges; ++*nextedge) {
-    if (edges[*nextedge].value==0) return;
-  }
-  /* There are no "holes" left, so this network overflows mem allocation */
-  nwp->maxedges *= mult;
-  nwp->inedges = (WtTreeNode *) realloc(nwp->inedges, 
-					sizeof(WtTreeNode) * nwp->maxedges);
-  memset(nwp->inedges+*nextedge,0,sizeof(WtTreeNode) * (nwp->maxedges-*nextedge));
-  nwp->outedges = (WtTreeNode *) realloc(nwp->outedges, 
-					 sizeof(WtTreeNode) * nwp->maxedges);
-  memset(nwp->outedges+*nextedge,0,sizeof(WtTreeNode) * (nwp->maxedges-*nextedge));
 }
 
 
@@ -561,11 +559,13 @@ void WtUpdateNextedge (WtTreeNode *edges, Edge *nextedge, WtNetwork *nwp) {
 /* *** don't forget tail->head, so this function now accepts tail before head */
 
 int WtDeleteEdgeFromTrees(Vertex tail, Vertex head, WtNetwork *nwp){
-  if (WtDeleteHalfedgeFromTree(tail, head, nwp->outedges,&(nwp->next_outedge))&&
-      WtDeleteHalfedgeFromTree(head, tail, nwp->inedges, &(nwp->next_inedge))) {
+  if (WtDeleteHalfedgeFromTree(tail, head, nwp->outedges,&(nwp->last_outedge))&&
+      WtDeleteHalfedgeFromTree(head, tail, nwp->inedges, &(nwp->last_inedge))) {
     --nwp->outdegree[tail];
     --nwp->indegree[head];
     --nwp->nedges;
+    if(nwp->last_outedge < nwp->nnodes) nwp->last_outedge=nwp->nnodes;
+    if(nwp->last_inedge < nwp->nnodes) nwp->last_inedge=nwp->nnodes;
     return 1;
   }
   return 0;
@@ -576,10 +576,10 @@ int WtDeleteEdgeFromTrees(Vertex tail, Vertex head, WtNetwork *nwp){
 
  Delete the WtTreeNode with value b from the tree rooted at edges[a].
  Return 0 if no such WtTreeNode exists, 1 otherwise.  Also update the
- value of *next_edge appropriately.
+ value of *last_edge appropriately.
 *****************/
 int WtDeleteHalfedgeFromTree(Vertex a, Vertex b, WtTreeNode *edges,
-		     Edge *next_edge){ 
+		     Edge *last_edge){ 
   Edge x, z, root=(Edge)a;
   WtTreeNode *xptr, *zptr, *ptr;
 
@@ -619,12 +619,28 @@ int WtDeleteHalfedgeFromTree(Vertex a, Vertex b, WtTreeNode *edges,
     else 
       ptr->right = x;
   }  
-  /* Clear z node, update *next_edge if necessary. */
+  /* Clear z node, update *last_edge if necessary. */
   zptr->value=0;
-  zptr->weight=0;
-  if (z < *next_edge)
-    *next_edge=z;
+  if(z!=root){
+    WtRelocateHalfedge(*last_edge,z,edges);
+    (*last_edge)--;
+  }
   return 1;
+}
+
+void WtRelocateHalfedge(Edge from, Edge to, WtTreeNode *edges){
+  if(from==to) return;
+  WtTreeNode *toptr=edges+to, *fromptr=edges+from;
+
+  if(fromptr->left) edges[fromptr->left].parent = to;
+  if(fromptr->right) edges[fromptr->right].parent = to;
+  if(fromptr->parent){
+    WtTreeNode *parentptr = edges+fromptr->parent;
+    if(parentptr->left==from) parentptr->left = to;
+    else parentptr->right =  to;
+  }
+  memcpy(toptr,fromptr,sizeof(WtTreeNode));
+  fromptr->value = 0;
 }
 
 /*****************
@@ -753,13 +769,13 @@ int WtGetRandEdge(Vertex *tail, Vertex *head, double *weight, WtNetwork *nwp) {
     // Otherwise, find a TreeNode which has a head.
     do{
       // Note that the outedges array has maxedges elements, but the
-      // 0th one is always blank, so there is actually space for
-      // maxedges-1 nodes.
-      rane = 1 + unif_rand() * (nwp->maxedges-1);
-    }while(nwp->outedges[rane].value==0);
+      // 0th one is always blank, and those with index >
+      // nwp->last_outedge are blank as well, so we need to generate
+      // an index from 1 through nwp->last_outedge (inclusive).
+      rane = 1 + unif_rand() * nwp->last_outedge;
+    }while((*head=nwp->outedges[rane].value)==0); // Form the head, while we are at it.
 
-    // Form the head and weight.
-    *head=nwp->outedges[rane].value;
+    // Get the weight.
     if(weight)
       *weight=nwp->outedges[rane].weight;
     
@@ -787,10 +803,10 @@ int WtGetRandEdge(Vertex *tail, Vertex *head, double *weight, WtNetwork *nwp) {
    be needed. */      
   /* *** but if it is needed, don't forget,  tail -> head */
 
-int WtFindithNonedge (Vertex *tail, Vertex *head, Edge i, WtNetwork *nwp) {
+int WtFindithNonedge (Vertex *tail, Vertex *head, Dyad i, WtNetwork *nwp) {
   Vertex taili=1;
   Edge e;
-  Edge ndyads = DYADCOUNT(nwp->nnodes, nwp->bipartite, nwp->directed_flag);
+  Dyad ndyads = DYADCOUNT(nwp->nnodes, nwp->bipartite, nwp->directed_flag);
   Vertex nheads = nwp->bipartite ? nwp->nnodes-nwp->bipartite : nwp->nnodes-1;
   
   // If the index is too high or too low, exit immediately.
@@ -841,7 +857,7 @@ int WtFindithNonedge (Vertex *tail, Vertex *head, Edge i, WtNetwork *nwp) {
 /* *** don't forget tail->head, so this function now accepts tail before head */
 
 int WtGetRandNonedge(Vertex *tail, Vertex *head, WtNetwork *nwp) {
-  Edge ndyads = DYADCOUNT(nwp->nnodes, nwp->bipartite, nwp->directed_flag);
+  Dyad ndyads = DYADCOUNT(nwp->nnodes, nwp->bipartite, nwp->directed_flag);
   if(ndyads-nwp->nedges==0) return(0);
 
   /* There are two ways to get a random nonedge: 1) keep trying dyads
@@ -858,11 +874,10 @@ int WtGetRandNonedge(Vertex *tail, Vertex *head, WtNetwork *nwp) {
   // FIXME: The constant maxEattempts needs to be tuned.
   const unsigned int maxEattempts=10;
   unsigned int Eattempts = ndyads/(ndyads-nwp->nedges);
-  Edge rane;
   
   if(Eattempts>maxEattempts){
     // If the network is too dense, use the deterministic-time method:
-    rane=1 + unif_rand() * (ndyads-nwp->nedges);
+    Dyad rane=1 + unif_rand() * (ndyads-nwp->nedges);
     WtFindithNonedge(tail, head, rane, nwp);
   }else{
     do{

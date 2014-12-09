@@ -5,7 +5,7 @@
  *  open source, and has the attribution requirements (GPL Section 7) at
  *  http://statnet.org/attribution
  *
- *  Copyright 2003-2013 Statnet Commons
+ *  Copyright 2003-2014 Statnet Commons
  */
 #include "MHproposals.h"
 #include "edgelist.h"
@@ -63,7 +63,7 @@ void MH_blockdiagTNT (MHproposal *MHp, Network *nwp)
   Edge nedges=nwp->nedges;
   static double comp=0.5;
   static double odds;
-  static Edge ndyads;
+  static Dyad ndyads;
   
   if(MHp->ntoggles == 0) { /* Initialize */
     MHp->ntoggles=1;

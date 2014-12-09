@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2013 Statnet Commons
+#  Copyright 2003-2014 Statnet Commons
 #######################################################################
 #=================================================================
 # This file contains the 2 following functions for controlling
@@ -70,7 +70,7 @@ control.gof.ergm<-function(nsim=100,
 
 
 control.gof.formula<-function(nsim=100,
-                              MCMC.burnin=1000,
+                              MCMC.burnin=10000,
                               MCMC.interval=1000,
                               MCMC.prop.weights="default",
                               MCMC.prop.args=list(),

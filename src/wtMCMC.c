@@ -5,7 +5,7 @@
  *  open source, and has the attribution requirements (GPL Section 7) at
  *  http://statnet.org/attribution
  *
- *  Copyright 2003-2013 Statnet Commons
+ *  Copyright 2003-2014 Statnet Commons
  */
 #include "wtMCMC.h"
 
@@ -261,13 +261,16 @@ WtMCMCStatus WtMetropolisHastings (WtMHproposal *MHp,
 
       /* Make proposed toggles (updating timestamps--i.e., for real this time) */
       for(unsigned int i=0; i < MHp->ntoggles; i++){
-	WtSetEdge(MHp->toggletail[i], MHp->togglehead[i], MHp->toggleweight[i], nwp);
+	Vertex t=MHp->toggletail[i], h=MHp->togglehead[i];
+	double w=MHp->toggleweight[i];
 	
 	if(MHp->discord)
 	  for(WtNetwork **nwd=MHp->discord; *nwd!=NULL; nwd++){
 	    // This could be speeded up by implementing an "incrementation" function.
-	    WtSetEdge(MHp->toggletail[i],  MHp->togglehead[i], MHp->toggleweight[i]-WtGetEdge(MHp->toggletail[i],  MHp->togglehead[i], *nwd) + MHp->toggleweight[i]-WtGetEdge(MHp->toggletail[i],  MHp->togglehead[i], nwp), *nwd);
+	    WtSetEdge(t, h, WtGetEdge(t,  h, *nwd) + w - WtGetEdge(t, h, nwp), *nwd);
 	  }
+
+	WtSetEdge(t, h, w, nwp);
       }
       /* record network statistics for posterity */
       for (unsigned int i = 0; i < m->n_stats; i++){

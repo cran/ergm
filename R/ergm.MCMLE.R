@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2013 Statnet Commons
+#  Copyright 2003-2014 Statnet Commons
 #######################################################################
 ############################################################################
 # The <ergm.MCMLE> function provides one of the styles of maximum
@@ -69,7 +69,11 @@ ergm.MCMLE <- function(init, nw, model,
   coef.hist <- rbind(init)
   stats.hist <- matrix(NA, 0, length(model$nw.stats))
   stats.obs.hist <- matrix(NA, 0, length(model$nw.stats))
-  
+  steplen.hist <- c()
+
+  control$MCMC.effectiveSize <- control$MCMLE.effectiveSize
+  control$MCMC.base.samplesize <- control$MCMC.samplesize
+
   # Store information about original network, which will be returned at end
   nw.orig <- network.copy(nw)
 
@@ -98,17 +102,19 @@ ergm.MCMLE <- function(init, nw, model,
     control.obs$MCMC.samplesize <- control$obs.MCMC.samplesize
     control.obs$MCMC.interval <- control$obs.MCMC.interval
     control.obs$MCMC.burnin <- control$obs.MCMC.burnin
+    control.obs$MCMC.burnin.min <- control$obs.MCMC.burnin.min
 
     nw.obs <- network.copy(nw)
     statshift.obs <- statshift
   }
-  finished <- FALSE
   # mcmc.init will change at each iteration.  It is the value that is used
   # to generate the MCMC samples.  init will never change.
   mcmc.init <- init
-  parametervalues <- init # Keep track of all parameter values
+  
+  calc.MCSE <- FALSE
+  last.adequate <- FALSE
+  
   for(iteration in 1:control$MCMLE.maxit){
-    if(iteration == control$MCMLE.maxit) finished <- TRUE
     if(verbose){
       cat("Iteration ",iteration," of at most ", control$MCMLE.maxit,
           " with parameter: \n", sep="")
@@ -119,10 +125,10 @@ ergm.MCMLE <- function(init, nw, model,
 
     # Obtain MCMC sample
     mcmc.eta0 <- ergm.eta(mcmc.init, model$etamap)
-    z <- ergm.getMCMCsample(nw, model, MHproposal, mcmc.eta0, control, verbose, response=response)
-
-    if(z$status==1) stop("Number of edges in a simulated network exceeds that in the observed by a factor of more than ",floor(control$MCMLE.density.guard),". This is a strong indicator of model degeneracy. If you are reasonably certain that this is not the case, increase the MCMLE.density.guard control.ergm() parameter.")
-
+    z <- ergm.getMCMCsample(nw, model, MHproposal, mcmc.eta0, control, verbose, response=response, theta=mcmc.init, etamap=model$etamap)
+        
+    if(z$status==1) stop("Number of edges in a simulated network exceeds that in the observed by a factor of more than ",floor(control$MCMLE.density.guard),". This is a strong indicator of model degeneracy or a very poor starting parameter configuration. If you are reasonably certain that neither of these is the case, increase the MCMLE.density.guard control.ergm() parameter.")
+        
     # post-processing of sample statistics:  Shift each row by the
     # vector model$nw.stats - model$target.stats, store returned nw
     # The statistics in statsmatrix should all be relative to either the
@@ -132,7 +138,7 @@ ergm.MCMLE <- function(init, nw, model,
     statsmatrix <- sweep(z$statsmatrix, 2, statshift, "+")
     colnames(statsmatrix) <- model$coef.names
     nw.returned <- network.copy(z$newnetwork)
-
+    
     if(verbose){
       cat("Back from unconstrained MCMC. Average statistics:\n")
       print(apply(statsmatrix, 2, mean))
@@ -140,8 +146,8 @@ ergm.MCMLE <- function(init, nw, model,
     
     ##  Does the same, if observation process:
     if(obs){
-      z.obs <- ergm.getMCMCsample(nw.obs, model, MHproposal.obs, mcmc.eta0, control.obs, verbose, response=response)
-
+      z.obs <- ergm.getMCMCsample(nw.obs, model, MHproposal.obs, mcmc.eta0, control.obs, verbose, response=response, theta=mcmc.init, etamap=model$etamap)
+      
       if(z.obs$status==1) stop("Number of edges in the simulated network exceeds that observed by a large factor (",control$MCMC.max.maxedges,"). This is a strong indication of model degeneracy. If you are reasonably certain that this is not the case, increase the MCMLE.density.guard control.ergm() parameter.")
       
       statsmatrix.obs <- sweep(z.obs$statsmatrix, 2, statshift.obs, "+")
@@ -154,42 +160,43 @@ ergm.MCMLE <- function(init, nw, model,
       }
     }else{
       statsmatrix.obs <- NULL
+      z.obs <- NULL
     }
     
     if(sequential) {
       nw <- nw.returned
       statshift <- summary(model$formula, basis=nw, response=response) - model$target.stats
-
+      
       if(obs){
         nw.obs <- nw.obs.returned
         statshift.obs <- summary(model$formula, basis=nw.obs, response=response) - model$target.stats
       }      
     }
+    
+    # Compute the sample estimating equations and the convergence p-value.
+    esteq <- .ergm.esteq(mcmc.init, model, statsmatrix)
+    if(isTRUE(all.equal(apply(esteq,2,sd), rep(0,ncol(esteq)), check.names=FALSE))&&!all(esteq==0))
+      stop("Unconstrained MCMC sampling did not mix at all. Optimization cannot continue.")
+    esteq.obs <- if(obs) .ergm.esteq(mcmc.init, model, statsmatrix.obs) else NULL
 
-    # If the model is linear, all non-offset statistics are passed. If
-    # the model is curved, the (likelihood) estimating equations (3.1)
-    # by Hunter and Handcock (2006) are given instead.
-    esteq <- t(ergm.etagradmult(mcmc.init,t(statsmatrix),model$etamap))[,!model$etamap$offsettheta,drop=FALSE]
-    names(esteq) <- names(mcmc.init)
-    esteq.obs <- if(obs) t(ergm.etagradmult(mcmc.init,t(statsmatrix.obs),model$etamap))[,!model$etamap$offsettheta,drop=FALSE] else NULL   
-    conv.pval <- approx.hotelling.diff.test(esteq, esteq.obs)$p.value
-                                            
+    # Update the interval to be used.
+    if(!is.null(control$MCMC.effectiveSize)){
+      control$MCMC.interval <- round(max(z$final.interval,2)/2)
+      if(verbose) cat("New interval =",control$MCMC.interval,".\n")
+      if(obs){
+        control.obs$MCMC.interval <- round(max(z.obs$final.interval,2)/2)
+        if(verbose) cat("New constrained interval =",control.obs$MCMC.interval,".\n")
+      }
+    }
+        
     # We can either pretty-print the p-value here, or we can print the
     # full thing. What the latter gives us is a nice "progress report"
     # on whether the estimation is getting better..
-
     if(verbose){
       cat("Average estimating equation values:\n")
       print(if(obs) colMeans(esteq.obs)-colMeans(esteq) else colMeans(esteq))
     }
-    cat("Convergence test P-value:",format(conv.pval, scientific=TRUE,digits=2),"\n")
-    if(conv.pval>control$MCMLE.conv.min.pval){
-      cat("Convergence detected. Stopping.\n")
-      finished <- TRUE
-    }
-    
-    # Removed block A of code here.  (See end of file.)
-    
+
     if(!estimate){
       if(verbose){cat("Skipping optimization routines...\n")}
       l <- list(coef=mcmc.init, mc.se=rep(NA,length=length(mcmc.init)),
@@ -213,7 +220,7 @@ ergm.MCMLE <- function(init, nw, model,
       while(v$loglikelihood > control$MCMLE.adaptive.trustregion){
         adaptive.steplength <- adaptive.steplength / 2
         if(!is.null(statsmatrix.0.obs)){
-          statsmatrix.obs <- statsmatrix.0.obs*adaptive.steplength+statsmatrix.0*(1-adaptive.steplength)
+          statsmatrix.obs <- sweep(statsmatrix.0.obs,2,(colMeans(statsmatrix.0.obs)-statsmean)*(1-adaptive.steplength))
         }else{
           statsmatrix <- sweep(statsmatrix.0,2,(1-adaptive.steplength)*statsmean,"-")
         }
@@ -246,16 +253,28 @@ ergm.MCMLE <- function(init, nw, model,
       }else{
         cat("The log-likelihood did not improve.\n")
       }
+      steplen.hist <- c(steplen.hist, adaptive.steplength)
     }else{
-
+      steplen <-
+        if(!is.null(control$MCMLE.steplength.margin))
+          .Hummel.steplength(
+            if(control$MCMLE.Hummel.esteq) esteq else statsmatrix.0[,!model$etamap$offsetmap,drop=FALSE], 
+            if(control$MCMLE.Hummel.esteq) esteq.obs else statsmatrix.0.obs[,!model$etamap$offsetmap,drop=FALSE],
+            control$MCMLE.steplength.margin, control$MCMLE.steplength)
+        else control$MCMLE.steplength
+      
+      if(steplen==control$MCMLE.steplength || is.null(control$MCMLE.steplength.margin) || iteration==control$MCMLE.maxit) calc.MCSE <- TRUE
+      
       if(verbose){cat("Calling MCMLE Optimization...\n")}
       statsmean <- apply(statsmatrix.0,2,mean)
       if(!is.null(statsmatrix.0.obs)){
-        statsmatrix.obs <- statsmatrix.0.obs*control$MCMLE.steplength+statsmatrix.0*(1-control$MCMLE.steplength)
+        statsmatrix.obs <- sweep(statsmatrix.0.obs,2,(colMeans(statsmatrix.0.obs)-statsmean)*(1-steplen))
       }else{
-        statsmatrix <- sweep(statsmatrix.0,2,(1-control$MCMLE.steplength)*statsmean,"-")
+        statsmatrix <- sweep(statsmatrix.0,2,(1-steplen)*statsmean,"-")
       }
-      if(verbose){cat(paste("Using Newton-Raphson Step with step length ",control$MCMLE.steplength," ...\n"))}
+      steplen.hist <- c(steplen.hist, steplen)
+      
+      if(verbose){cat(paste("Using Newton-Raphson Step with step length ",steplen," ...\n"))}
       # Use estimateonly=TRUE if this is not the last iteration.
       v<-ergm.estimate(init=mcmc.init, model=model,
                        statsmatrix=statsmatrix, 
@@ -272,7 +291,7 @@ ergm.MCMLE <- function(init, nw, model,
                        dampening.level=control$MCMLE.dampening.level,
                        metric=control$MCMLE.metric,
                        compress=control$MCMC.compress, verbose=verbose,
-                       estimateonly=!finished)
+                       estimateonly=!calc.MCSE)
       if(v$loglikelihood < control$MCMLE.trustregion-0.001){
         current.scipen <- options()$scipen
         options(scipen=3)
@@ -288,8 +307,70 @@ ergm.MCMLE <- function(init, nw, model,
     coef.hist <- rbind(coef.hist, mcmc.init)
     stats.obs.hist <- if(!is.null(statsmatrix.obs)) rbind(stats.obs.hist, apply(statsmatrix.obs, 2, mean)) else NULL
     stats.hist <- rbind(stats.hist, apply(statsmatrix, 2, mean))
-    parametervalues <- rbind(parametervalues, mcmc.init)
-    if(finished) break # This allows premature termination.
+    
+    # This allows premature termination.
+    
+    if(steplen<control$MCMLE.steplength){ # If step length is less than its maximum, don't bother with precision stuff.
+      last.adequate <- FALSE
+      control$MCMC.samplesize <- control$MCMC.base.samplesize
+      next
+    }
+    
+    if(control$MCMLE.termination == "precision"){
+      prec.loss <- (sqrt(diag(v$mc.cov+v$covar))-sqrt(diag(v$covar)))/sqrt(diag(v$mc.cov+v$covar))
+      if(verbose){
+        cat("Standard Error:\n")
+        print(sqrt(diag(v$covar)))
+        cat("MC SE:\n")
+        print(sqrt(diag(v$mc.cov)))
+        cat("Linear scale precision loss due to MC estimation of the likelihood:\n")
+        print(prec.loss)
+      }
+      if(sqrt(mean(prec.loss^2, na.rm=TRUE)) <= control$MCMLE.MCMC.precision){
+        if(last.adequate){
+          cat("Precision adequate twice. Stopping.\n")
+          break
+        }else{
+          cat("Precision adequate. Performing one more iteration.\n")
+          last.adequate <- TRUE
+        }
+      }else{
+        last.adequate <- FALSE
+        prec.scl <- max(sqrt(mean(prec.loss^2, na.rm=TRUE))/control$MCMLE.MCMC.precision, 1) # Never decrease it.
+        if (!is.null(control$MCMC.effectiveSize)) { # ESS-based sampling
+          control$MCMC.effectiveSize <- round(control$MCMC.effectiveSize * prec.scl)
+          if(control$MCMC.effectiveSize/control$MCMC.samplesize>control$MCMLE.MCMC.max.ESS.frac) control$MCMC.samplesize <- control$MCMC.effectiveSize/control$MCMLE.MCMC.max.ESS.frac
+          # control$MCMC.samplesize <- round(control$MCMC.samplesize * prec.scl)
+          cat("Increasing target MCMC sample size to ", control$MCMC.samplesize, ", ESS to",control$MCMC.effectiveSize,".\n")
+        } else { # Fixed-interval sampling
+          control$MCMC.samplesize <- round(control$MCMC.samplesize * prec.scl)
+          control$MCMC.burnin <- round(control$MCMC.burnin * prec.scl)
+          cat("Increasing MCMC sample size to ", control$MCMC.samplesize, ", burn-in to",control$MCMC.burnin,".\n")
+        }
+      }
+    }else if(control$MCMLE.termination=='Hotelling'){
+      # TODO: Move this to statnet.common.
+      ERRVL <- function(...){
+        for(x in list(...))
+          if(!inherits(x, "try-error")) return(x)
+        stop("No non-error expressions passed.")
+      }
+      conv.pval <- ERRVL(try(approx.hotelling.diff.test(esteq, esteq.obs)$p.value), NA)
+      cat("Nonconvergence test p-value:",conv.pval,"\n")
+      if(!is.na(conv.pval) && conv.pval>=control$MCMLE.conv.min.pval){
+        cat("No nonconvergence detected. Stopping.")
+        break
+      }      
+    }else if(control$MCMLE.termination=='Hummel'){
+      if(last.adequate){
+        cat("Step length converged twice. Stopping.\n")
+        break
+      }else{
+        cat("Step length converged once. Increasing MCMC sample size.\n")
+        last.adequate <- TRUE
+        control$MCMC.samplesize <- control$MCMC.base.samplesize * control$MCMLE.last.boost
+      }
+    }
   } # end of main loop
 
   # FIXME:  We should not be "tacking on" extra list items to the 
@@ -302,64 +383,19 @@ ergm.MCMLE <- function(init, nw, model,
   v$network <- nw.orig
   v$newnetwork <- nw.returned
   v$coef.init <- init
-  v$initialfit <- initialfit
-  
+  #v$initialfit <- initialfit
+  v$est.cov <- v$mc.cov
+  v$mc.cov <- NULL
+
   v$coef.hist <- coef.hist
   v$stats.hist <- stats.hist
   v$stats.obs.hist <- stats.obs.hist
-  # The following output is sometimes helpful.  It's the total history
-  # of all eta values, from the initial eta0 to the final estimate
-  # v$allparamvals <- parametervalues
-
-
+  v$steplen.hist <- steplen.hist
+  
+  v$iterations <- iteration
+  v$control <- control
+  
   v$etamap <- model$etamap
   v
 }
-
-#################
-# Block of code A removed from above:
-
-##  Check for degeneracy if new network has fewer than 49999 edges
-#    if(z$nedges >= 50000-1 || ergm.checkdegeneracy(statsmatrix, statsmatrix.obs, verbose=verbose)){
-#      if(iteration <= control$MCMLE.maxit){
-#        cat(paste("The MCMC sampler is producing degenerate samples.\n",
-#                  "Try starting the algorithm at an alternative model\n",
-#                  "(That is, changing the 'init' argument).\n",
-#                  "I am trying something simple...\n",
-#                  "The current init is:\n"))
-#        print(mcmc.init)
-#        mcmc.init <- 0.9*mcmc.init
-#        next
-#      }else{
-#        cat(paste("The MCMC sampler is producing degenerate samples.\n",
-#                  "Try starting the algorithm at an alternative model\n",
-#                  "(That is, changing the 'init' argument).\n",
-#                  "The current init is:\n"))
-#        print(mcmc.init)
-#        v$coef <- mcmc.init
-#        return(structure (v, class="ergm"))
-#      }
-#    }
-#    if(verbose){
-#      cat(paste("The density of the returned network is",
-#                network.density(nw.returned),"\n"))
-#      cat(paste("The density of the original network is",
-#                network.density(nw.orig),"\n"))
-#      cat("Summary of simulation, relative to observed network:\n")
-#      print(apply(statsmatrix,2,summary.statsmatrix.ergm),scipen=6)
-#      degreedist(nw.returned)
-#      cat("Meanstats of simulation, relative to observed network:\n")
-#      print(summary(model$formula, basis=nw.returned)-model$target.stats)
-#      if(network.naedgecount(nw) > 0){
-#        cat("Summary of simulation, relative to missing network:\n")
-#        a = apply(statsmatrix.miss,2,summary.statsmatrix.ergm)[4,]
-#        b = sweep(apply(statsmatrix,2,summary.statsmatrix.ergm),2,a,"-")
-#        print(b,scipen=6)
-#        degreedist(nw.miss.returned)
-#        cat("Meanstats of simulation, relative to missing network:\n")
-#        print(summary(model$formula, basis=nw.miss.returned)-model$target.stats)
-#        nw.returned <- network.copy(nw.miss.returned)
-#      }
-#    }
-
 

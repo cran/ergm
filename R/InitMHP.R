@@ -5,15 +5,15 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2013 Statnet Commons
+#  Copyright 2003-2014 Statnet Commons
 #######################################################################
 #===========================================================================
 # The <InitMHP> file contains the following 24 functions for
 # initializing the MHproposal object; each is prepended with 'InitMHP.'
 #       <randomtoggle>      <CondOutDegreeDist> 
 #       <TNT>               <ConstantEdges>    
-#       <TNT10>             <CondInDegree>      
-#       <CondDegree>        <CondOutDegree>     <HammingTNT>   
+#       <CondInDegree>      <CondDegree>
+#       <CondOutDegree>     <HammingTNT>   
 #       <CondDegreeTetrad>         <HammingConstantEdges>
 #       <CondDegreeHexad>            <randomtoggleNonObserved>
 #       <CondDegreeDist>          <nobetweengroupties>
@@ -51,13 +51,13 @@ InitMHP.TNT <- function(arguments, nw) {
   MHproposal
 }
 
-InitMHP.TNT10 <- function(arguments, nw) {
-  MHproposal <- list(name = "TNT10", inputs=NULL)
-  MHproposal
-}
-
 InitMHP.CondDegree <- function(arguments, nw) {
   MHproposal <- list(name = "CondDegree", inputs=NULL)
+  MHproposal
+}
+InitMHP.CondDegreeMix <- function(arguments, nw) {
+  MHproposal <- list(name = "CondDegreeMix",
+    inputs=get.vertex.attribute(nw,arguments$constraints$degreesmix$attrib))
   MHproposal
 }
 
@@ -160,4 +160,28 @@ InitMHP.randomtoggleNonObserved <- function(arguments, nw) {
   MHproposal <- list(name = "randomtoggleList", inputs=ergm.Cprepare.miss(nw))
   MHproposal
 }
+
+
+InitMHP.fixedas <- function(arguments, nw){
+	y0<-arguments$constraints$fixedas$free.dyads()
+	## Given the list of toggleable dyads, no formation-specific proposal function is needed:
+	MHproposal <- list(name = "randomtoggleList", inputs=c(ergm.Cprepare.el(y0)), pkgname="ergm")
+	
+	MHproposal
+	
+}
+
+
+InitMHP.fixallbut <- function(arguments, nw){
+	y0<-arguments$constraints$fixallbut$free.dyads()
+	## Given the list of toggleable dyads, no formation-specific proposal function is needed:
+	MHproposal <- list(name = "randomtoggleList", inputs=c(ergm.Cprepare.el(y0)), pkgname="ergm")
+	
+	MHproposal
+	
+}
+
+
+
+
 

@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2013 Statnet Commons
+#  Copyright 2003-2014 Statnet Commons
 #######################################################################
 #========================================================================
 # This file contains the following 2 functions for simulating ergms
@@ -72,6 +72,7 @@ simulate.ergm <- function(object, nsim=1, seed=NULL,
                           constraints=object$constraints,
                           monitor=NULL,
                           statsonly=FALSE,
+                          esteq=FALSE,
                           sequential=TRUE,
                           control=control.simulate.ergm(),
                           verbose=FALSE, ...) {
@@ -85,6 +86,7 @@ simulate.ergm <- function(object, nsim=1, seed=NULL,
   
   simulate.formula(object$formula, nsim=nsim, coef=coef, response=response, reference=reference,
                    statsonly=statsonly,
+                   esteq=esteq,
                    sequential=sequential, constraints=constraints,
                    monitor=monitor,
                    control=control, verbose=verbose, seed=seed, ...)
@@ -97,6 +99,7 @@ simulate.formula <- function(object, nsim=1, seed=NULL,
                                monitor=NULL,
                                basis=NULL,
                                statsonly=FALSE,
+                               esteq=FALSE,
                                sequential=TRUE,
                                control=control.simulate.formula(),
                                verbose=FALSE, ...) {
@@ -156,9 +159,6 @@ simulate.formula <- function(object, nsim=1, seed=NULL,
   MHproposal <- MHproposal(constraints,arguments=control$MCMC.prop.args,
                            nw=nw, weights=control$MCMC.prop.weights, class="c",reference=reference,response=response)  
 
-  if (any(is.infinite(coef))){
-   coef[is.infinite(coef)] <- sign(coef[is.infinite(coef)])*10000 
-  }
   if (any(is.nan(coef) | is.na(coef)))
     stop("Illegal value of coef passed to simulate.formula")
   
@@ -180,53 +180,54 @@ simulate.formula <- function(object, nsim=1, seed=NULL,
   
   #########################
   ## Main part of function:
-  if(sequential && statsonly){ 
-    # Call ergm.getMCMCsample only one time, using the C function to generate the whole
-    # matrix of network statistics.
+  if(sequential && statsonly){
+    # In this case, we can make one, parallelized run of
+    # ergm.getMCMCsample.
     control$MCMC.samplesize <- nsim
     z <- ergm.getMCMCsample(nw, m, MHproposal, eta0, control, verbose=verbose, response=response)
     
     # Post-processing:  Add term names to columns and shift each row by
     # observed statistics.
     colnames(z$statsmatrix) <- m$coef.names
-    return(sweep(z$statsmatrix[seq_len(nsim),,drop=FALSE], 2, curstats, "+"))
-  } 
-  
-  # If we get here, either sequential==FALSE or statsonly==FALSE.
-  # Create objects to store output
-  if (!statsonly) { 
-    nw.list <- list()
-  }
-  out.mat <- matrix(nrow=0, ncol=length(curstats), 
-                    dimnames = list(NULL, m$coef.names)) 
-
-  # Call ergm.getMCMCsample once for each network desired.  This is much slower
-  # than when sequential==TRUE and statsonly==TRUE, but here we have a 
-  # more complicated situation:  Either we want a network for each
-  # MCMC iteration (statsonly=FALSE) or we want to restart each chain
-  # at the original network (sequential=FALSE).
-  if(control$parallel) curstats <- matrix(curstats, nrow=control$parallel, ncol=length(curstats), byrow=TRUE)
-  
-  for(i in 1:ceiling(nsim/max(control$parallel,1))){
-    
-    control$MCMC.samplesize <- if(control$parallel==0) 1 else control$parallel
-    control$MCMC.burnin <- if(i==1 || sequential==FALSE) control$MCMC.burnin else control$MCMC.interval
-    z <- ergm.getMCMCsample(nw, m, MHproposal, eta0, control, verbose=verbose, response=response)
-    
-    out.mat <- rbind(out.mat, curstats + z$statsmatrix)
-
-    if(!statsonly) # then store the returned network:
-      if(control$parallel==0) nw.list[[length(nw.list)+1]] <- z$newnetwork else nw.list <- c(nw.list, z$newnetworks)
-
-    if(sequential){ # then update the network state:
-      nw <- if(control$parallel==0) z$newnetwork else z$newnetworks
-      curstats <- curstats + z$statsmatrix
+    out.mat <- sweep(z$statsmatrix[seq_len(nsim),,drop=FALSE], 2, curstats, "+")
+  }else{
+    # Create objects to store output
+    if (!statsonly) { 
+      nw.list <- list()
     }
+    out.mat <- matrix(nrow=0, ncol=length(curstats), 
+                      dimnames = list(NULL, m$coef.names)) 
+    
+    # Call ergm.getMCMCsample once for each network desired.  This is much slower
+    # than when sequential==TRUE and statsonly==TRUE, but here we have a 
+    # more complicated situation:  Either we want a network for each
+    # MCMC iteration (statsonly=FALSE) or we want to restart each chain
+    # at the original network (sequential=FALSE).
+    if(control$parallel) curstats <- matrix(curstats, nrow=control$parallel, ncol=length(curstats), byrow=TRUE)
+    
+    for(i in 1:ceiling(nsim/max(control$parallel,1))){
+      
+      control$MCMC.samplesize <- if(control$parallel==0) 1 else control$parallel
+      control$MCMC.burnin <- if(i==1 || sequential==FALSE) control$MCMC.burnin else control$MCMC.interval
+      z <- ergm.getMCMCsample(nw, m, MHproposal, eta0, control, verbose=verbose, response=response)
+      
+      out.mat <- rbind(out.mat, curstats + z$statsmatrix)
+      
+      if(!statsonly) # then store the returned network:
+        if(control$parallel==0) nw.list[[length(nw.list)+1]] <- z$newnetwork else nw.list <- c(nw.list, z$newnetworks)
+      
+      if(sequential){ # then update the network state:
+        nw <- if(control$parallel==0) z$newnetwork else z$newnetworks
+        curstats <- curstats + z$statsmatrix
+      }
 
-    if(verbose){cat(sprintf("Finished simulation %d of %d.\n",i, nsim))}
+      if(verbose){cat(sprintf("Finished simulation %d of %d.\n",i, nsim))}
+    }
   }
 
   out.mat <- out.mat[seq_len(nsim),,drop=FALSE]
+
+  if(esteq) out.mat <- .ergm.esteq(coef, m, out.mat)
   
   if (statsonly)
     return(out.mat)

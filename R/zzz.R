@@ -5,22 +5,13 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2013 Statnet Commons
+#  Copyright 2003-2014 Statnet Commons
 #######################################################################
 .onAttach <- function(lib, pkg){
   sm <- statnetStartupMessage("ergm", c("statnet","ergm.count","tergm"), TRUE)
   if(!is.null(sm)){
     packageStartupMessage(sm)
     packageStartupMessage(paste(c(strwrap(paste("NOTE: If you use custom ERGM terms based on ",sQuote("ergm.userterms")," version prior to 3.1, you will need to perform a one-time update of the package boilerplate files (the files that you did not write or modify) from ",sQuote("ergm.userterms")," 3.1 or later. See help('eut-upgrade') for instructions.",sep="")),""),collapse="\n"))
-    packageStartupMessage(paste(c(strwrap(paste("NOTE: Dynamic network modeling functionality (STERGMs) has been moved to a new package, ",sQuote("tergm"),".",sep="")),""),collapse="\n"))
-  }
-  
-  # If the following have already been defined in the latentnet package, don't duplicate. Otherwise, assign them.
-  IFNOTEXISTS <- c("robust.inverse","mcmc.diagnostics","mcmc.diagnostics.default","gof","gof.default")
-  for(fun in IFNOTEXISTS){
-    if(!exists(fun, mode="function")){
-      assign(fun, get(paste('.',fun,sep='')), pos="package:ergm")
-    }
   }
   
   .RegisterMHPs()
@@ -35,6 +26,7 @@
   ergm.MHP.table("c", "Bernoulli", "bd",  1, "TNT", "TNT")
   ergm.MHP.table("c", "Bernoulli", "", -1, "TNT10", "TNT10")
   ergm.MHP.table("c", "Bernoulli", "degrees",  0, "random", "CondDegree")
+  ergm.MHP.table("c", "Bernoulli", "degreesmix",  0, "random", "CondDegreeMix")
   ergm.MHP.table("c", "Bernoulli", "idegrees+odegrees",  0, "random", "CondDegree")
   ergm.MHP.table("c", "Bernoulli", "b1degrees+b2degrees",  0, "random", "CondDegree")
   ergm.MHP.table("c", "Bernoulli", "odegrees",  0, "random", "CondOutDegree")
@@ -56,6 +48,11 @@
   ergm.MHP.table("c", "Bernoulli", "bd+blockdiag", 1, "TNT", "blockdiagTNT")
   ergm.MHP.table("c", "Bernoulli", "blockdiag+observed",  0, "random", "blockdiagNonObserved")
   ergm.MHP.table("c", "Bernoulli", "bd+blockdiag+observed",  0, "random", "blockdiagNonObserved")
+  ergm.MHP.table("c", "Bernoulli", "fixedas",  0, "random", "fixedas")
+  ergm.MHP.table("c", "Bernoulli", "fixallbut",  0, "random", "fixallbut")
+  
+  
+  ergm.MHP.table("c", "StdNormal", "",  0, "random", "StdNormal")
 
   ergm.MHP.table("c", "Unif", "",  0, "random", "Unif")
   ergm.MHP.table("c", "Unif", "observed",  0, "random", "UnifNonObserved")
@@ -67,6 +64,7 @@
 .RegisterConstraintImplications <- function(){
   ergm.ConstraintImplications("edges", c())
   ergm.ConstraintImplications("degrees", c("edges", "idegrees", "odegrees", "idegreedist", "odegreedist", "degreedist", "bd"))
+  ergm.ConstraintImplications("degreesmix", c("edges", "idegrees", "odegrees", "idegreedist", "odegreedist", "degreedist", "bd"))
   ergm.ConstraintImplications("odegrees", c("edges", "odegreedist"))
   ergm.ConstraintImplications("idegrees", c("edges", "idegreedist"))
   ergm.ConstraintImplications("b1degrees", c("edges"))
@@ -82,6 +80,7 @@
 
 .RegisterInitMethods <- function(){
   ergm.init.methods("Bernoulli", c("MPLE", "zeros"))
+  ergm.init.methods("StdNormal", c("zeros"))
   ergm.init.methods("Unif", c("zeros"))
   ergm.init.methods("DiscUnif", c("zeros"))
 }

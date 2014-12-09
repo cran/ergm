@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2013 Statnet Commons
+#  Copyright 2003-2014 Statnet Commons
 #######################################################################
 ################################################################################
 # The <ergm.etagrad> function caculates and returns the gradient of eta
@@ -34,7 +34,6 @@ ergm.etagrad <- function(theta, etamap) {
       etagrad[cm$from,cm$to] <- cm$gradient(theta[cm$from], length(cm$to), cm$cov)  #Added by CTB on 1/28/06
     }
   }
-  etagrad[is.infinite(etagrad)] <- 10000*sign(etagrad)[is.infinite(etagrad)]
   etagrad
 }
 

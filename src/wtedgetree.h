@@ -5,7 +5,7 @@
  *  open source, and has the attribution requirements (GPL Section 7) at
  *  http://statnet.org/attribution
  *
- *  Copyright 2003-2013 Statnet Commons
+ *  Copyright 2003-2014 Statnet Commons
  */
 #ifndef WTEDGETREE_H
 #define WTEDGETREE_H
@@ -40,8 +40,8 @@ typedef struct WtTreeNodestruct {
      store all of the incoming and outgoing edges, respectively. 
    directed_flag is 1 or 0, depending on whether or not the 
      network is directed. 
-   next_inedge and next_outedge are continually updated to give
-     the smallest index of an edge object not being used.  
+   last_inedge and last_outedge are continually updated to give
+     the highest index of an edge object being used.  
    outdegree[] and indegree[] are continually updated to give
      the appropriate degree values for each vertex.  These should
      point to Vertex-vectors of length nnodes+1.  
@@ -57,8 +57,8 @@ typedef struct WtNetworkstruct {
   Vertex bipartite;  
   Vertex nnodes;
   Edge nedges;
-  Edge next_inedge;
-  Edge next_outedge;
+  Edge last_inedge;
+  Edge last_outedge;
   Vertex *indegree;
   Vertex *outdegree;
   double *value;  
@@ -96,11 +96,12 @@ void WtSetEdgeWithTimestamp (Vertex tail, Vertex head, double weight, WtNetwork 
 int WtToggleEdge (Vertex tail, Vertex head, double weight, WtNetwork *nwp);
 int WtToggleEdgeWithTimestamp (Vertex tail, Vertex head, double weight, WtNetwork *nwp);
 int WtAddEdgeToTrees(Vertex tail, Vertex head, double weight, WtNetwork *nwp);
-void WtAddHalfedgeToTree (Vertex a, Vertex b, double weight, WtTreeNode *edges, Edge next_edge);
-void WtUpdateNextedge (WtTreeNode *edges, Edge *nextedge, WtNetwork *nwp);
+void WtAddHalfedgeToTree (Vertex a, Vertex b, double weight, WtTreeNode *edges, Edge *last_edge);
+void WtCheckEdgetreeFull (WtNetwork *nwp);
 int WtDeleteEdgeFromTrees(Vertex tail, Vertex head, WtNetwork *nwp);
 int WtDeleteHalfedgeFromTree(Vertex a, Vertex b, WtTreeNode *edges,
-		     Edge *next_edge);
+		     Edge *last_edge);
+void WtRelocateHalfedge(Edge from, Edge to, WtTreeNode *edges);
 
 /* Duration functions. */
 int WtElapsedTime (Vertex tail, Vertex head, WtNetwork *nwp);
@@ -109,7 +110,7 @@ void WtTouchEdge(Vertex tail, Vertex head, WtNetwork *nwp);
 /* Utility functions. */
 int WtFindithEdge (Vertex *tail, Vertex *head, double *weight, Edge i, WtNetwork *nwp);
 int WtGetRandEdge(Vertex *tail, Vertex *head, double *weight, WtNetwork *nwp);
-int WtFindithNonedge (Vertex *tail, Vertex *head, Edge i, WtNetwork *nwp);
+int WtFindithNonedge (Vertex *tail, Vertex *head, Dyad i, WtNetwork *nwp);
 int WtGetRandNonedge(Vertex *tail, Vertex *head, WtNetwork *nwp);
 void Wtprintedge(Edge e, WtTreeNode *edges);
 void WtInOrderTreeWalk(WtTreeNode *edges, Edge x);

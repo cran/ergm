@@ -5,7 +5,7 @@
 %  open source, and has the attribution requirements (GPL Section 7) at
 %  http://statnet.org/attribution
 %
-%  Copyright 2003-2013 Statnet Commons
+%  Copyright 2003-2014 Statnet Commons
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{control.simulate}
 \alias{control.simulate}
@@ -17,14 +17,13 @@
   Auxiliary function as user interface for fine-tuning ERGM simulation.
 }
 \usage{
-control.simulate(MCMC.burnin=1000,
+control.simulate(MCMC.burnin=10000,
                  MCMC.interval=1000,
                  MCMC.prop.weights="default",
                  MCMC.prop.args=list(),
                  MCMC.init.maxedges=20000,
                  MCMC.packagenames=c(),
                  MCMC.runtime.traceplot=FALSE,  
-
                  network.output="network",
                                                      
                  parallel=0,
@@ -32,14 +31,13 @@ control.simulate(MCMC.burnin=1000,
                  parallel.version.check=TRUE,
                  \dots)
 
-control.simulate.formula(MCMC.burnin=1000,
+control.simulate.formula(MCMC.burnin=10000,
                          MCMC.interval=1000,
                          MCMC.prop.weights="default",
                          MCMC.prop.args=list(),
                          MCMC.init.maxedges=20000,
                          MCMC.packagenames=c(),
-                         MCMC.runtime.traceplot=FALSE,  
-
+                         MCMC.runtime.traceplot=FALSE,
                          network.output="network",
                                                      
                          parallel=0,
@@ -47,16 +45,15 @@ control.simulate.formula(MCMC.burnin=1000,
                          parallel.version.check=TRUE,
                          \dots)
 
-control.simulate.formula.ergm(MCMC.burnin=1000,
+control.simulate.formula.ergm(MCMC.burnin=10000,
                               MCMC.interval=1000,
                               MCMC.prop.weights="default",
                               MCMC.prop.args=list(),
                               MCMC.init.maxedges=20000,
                               MCMC.packagenames=c(),
-                              MCMC.runtime.traceplot=FALSE,  
-
+                              MCMC.runtime.traceplot=FALSE,
                               network.output="network",
-                                                     
+                                                         
                               parallel=0,
                               parallel.type=NULL,
                               parallel.version.check=TRUE,
@@ -69,7 +66,6 @@ control.simulate.ergm(MCMC.burnin=NULL,
                       MCMC.init.maxedges=NULL,
                       MCMC.packagenames=NULL,
                       MCMC.runtime.traceplot=FALSE,
-
                       network.output="network",
 
                       parallel=0,
@@ -123,8 +119,8 @@ control.simulate.ergm(MCMC.burnin=NULL,
   }
   \item{parallel.type}{API to use for parallel
     processing. Supported values are \code{"MPI"} and
-    \code{"SOCK"}. Defaults to using the \code{snow} package
-    default.
+    \code{"PSOCK"}. Defaults to using the \code{parallel} package with PSOCK clusters. See
+    \code{\link{ergm-parallel}}
   }
   \item{parallel.version.check}{Logical:  If TRUE, check that the version of
     \code{\link[=ergm-package]{ergm}} running on the slave nodes is the

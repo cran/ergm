@@ -5,13 +5,18 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2013 Statnet Commons
+#  Copyright 2003-2014 Statnet Commons
 #######################################################################
+
+#NOTE: a number of undocumented terms have been removed from this file
+# the terms still exist on the experimental_terms svn branch
+
+
 #===========================================================================
 # This file contains the following 74 new, easier-to-write ergm-term
 # initialization functions (each prepended with "InitErgmTerm"):
 #   A:   <absdiff>          <absdiffcat>      <altkstar>
-#        <asymmetric> 
+#        <asymmetric>       <adegcor>
 #   B:   <b1concurrent>     <b1degree>        <b1factor>
 #        <b1star>           <b1starmix>       <b1twostar>
 #        <b2concurrent>     <b2degree>        <b2factor>         
@@ -42,7 +47,7 @@
 #        <smalldiff>        <sociality>
 #   T:   <threepath>        <transitive>      <triangles>=<triangle>
 #        <triadcensus>      <tripercent>      <ttriple>=<ttriad>
-#        <transitiveties>   <twopath>
+#        <transitiveties>   <twopath
 #==========================================================================
 
 ################################################################################
@@ -177,6 +182,10 @@ InitErgmTerm.absdiffcat <- function(nw, arglist, ...) {
        dependence = FALSE # So we don't use MCMC if not necessary
        )
 }
+
+
+
+
 
 
 ################################################################################
@@ -429,6 +438,10 @@ InitErgmTerm.b1factor<-function (nw, arglist, ...) {
   base <- a$base
   nb1 <- get.network.attribute(nw, "bipartite")
   nodecov <- get.node.attr(nw, attrname, "b1factor")[1:nb1]
+  
+  if(all(is.na(nodecov)))
+	  stop("Argument to b1factor() does not exist", call.=FALSE)
+  
   u<-sort(unique(nodecov))
   if(any(is.na(nodecov))){u<-c(u,NA)}
   nodecov <- match(nodecov,u,nomatch=length(u)+1)
@@ -723,6 +736,10 @@ InitErgmTerm.b2factor<-function (nw, arglist, ...) {
   base <- a$base
   nb1 <- get.network.attribute(nw, "bipartite")
   nodecov <- get.node.attr(nw, attrname, "b2factor")[(nb1+1):network.size(nw)]
+  
+  if(all(is.na(nodecov)))
+	  stop("Argument to b2factor() does not exist", call.=FALSE)
+  
   u<-sort(unique(nodecov))
   if(any(is.na(nodecov))){u<-c(u,NA)}
   nodecov <- match(nodecov,u,nomatch=length(u)+1)
@@ -1793,7 +1810,15 @@ InitErgmTerm.hamming<-function (nw, arglist, ...) {
 
   ## Process hamming network ##
   if(is.network(a$x)){													# Arg to hamming is a network
-    xm<-as.edgelist(a$x,a$attrname)
+    # check for attribute existance before creating matrix
+  
+    if( is.null(a$attrname) || is.null(get.edge.attribute(a$x,a$attrname))){ 
+      xm<-as.edgelist(a$x)  # so call the non attribute version
+    } else {
+      xm<-as.edgelist(a$x,a$attrname)
+    }
+    
+    
   }else if(is.character(a$x)){												# Arg to hamming is the name of an attribute in nw
     xm<-get.network.attribute(nw,a$x)
     xm<-as.edgelist(xm)
@@ -1879,7 +1904,7 @@ InitErgmTerm.hammingmix<-function (nw, arglist, ...) {
     stop("The 'contrast' argument of the hammingmix term is deprecated.  Use 'base' instead")
   }
   if(is.network(x)){
-    xm<-as.edgelist(x,attrname)
+    xm<-as.edgelist(x)
     x<-paste(quote(x))
   }else if(is.character(x)){
     xm<-get.network.attribute(nw,x)
@@ -2824,7 +2849,14 @@ InitErgmTerm.ostar<-function(nw, arglist, ...) {
 }
 
 
+#=======================InitErgmTerm functions:  P============================#
+
+
+
+
 #=======================InitErgmTerm functions:  R============================#
+
+
 
 ################################################################################
 InitErgmTerm.receiver<-function(nw, arglist, ...) {

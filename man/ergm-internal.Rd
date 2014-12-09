@@ -5,7 +5,7 @@
 %  open source, and has the attribution requirements (GPL Section 7) at
 %  http://statnet.org/attribution
 %
-%  Copyright 2003-2013 Statnet Commons
+%  Copyright 2003-2014 Statnet Commons
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{ergm-internal}
 \title{Internal ergm Objects}
@@ -19,31 +19,10 @@
 \alias{ergm.MHP.table}
 \alias{ergm.init.methods}
 \alias{which.package.InitFunction}
-% MH proposals ought to get a documentation entry eventually.
 
-\alias{InitMHP.CondDegree}
-\alias{InitMHP.CondDegreeDist}
-\alias{InitMHP.CondInDegreeDist}
-\alias{InitMHP.CondOutDegreeDist}
-\alias{InitMHP.ConstantEdges}
 \alias{InitMHP.HammingConstantEdges}
 \alias{InitMHP.HammingTNT}
-\alias{InitMHP.TNT}
-\alias{InitMHP.TNT10}
 \alias{InitMHP.nobetweengroupties}
-\alias{InitMHP.randomtoggle}
-\alias{InitMHP.randomtoggleNonObserved}
-\alias{InitMHP.CondB1Degree}
-\alias{InitMHP.CondB2Degree}
-\alias{InitMHP.CondInDegree}
-\alias{InitMHP.CondOutDegree}
-\alias{InitMHP.blockdiag}
-\alias{InitMHP.blockdiagNonObserved}
-\alias{InitMHP.blockdiagTNT}
-\alias{InitWtMHP.DescRank}
-\alias{InitWtMHP.DescRankEquivalent}
-\alias{InitWtMHP.StdNormal}
-\alias{InitWtMHP.StdNormalRank}
 
 \alias{MHproposal}
 \alias{MHproposal.MHproposal}
@@ -162,7 +141,6 @@
 \alias{llik.info3}
 \alias{llik.mcmcvar3}
 \alias{logistftest}
-\alias{logp.rank.ergm}
 \alias{mcmc.diagnostics.default}
 \alias{midarrow}
 \alias{model.matrix.pen.glm}
@@ -215,6 +193,10 @@
 
 \alias{mk.edge.to.pos.lasttoggle.f}
 \alias{as.edgelist.matrix}
+
+% Redact?
+\alias{ergm.llik.wins}
+\alias{llik.fun.logtaylor}
 
 \alias{offset.info.formula}
 \alias{remove.offset.formula}

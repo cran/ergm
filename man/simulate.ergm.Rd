@@ -5,7 +5,7 @@
 %  open source, and has the attribution requirements (GPL Section 7) at
 %  http://statnet.org/attribution
 %
-%  Copyright 2003-2013 Statnet Commons
+%  Copyright 2003-2014 Statnet Commons
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{simulate.ergm}
 \alias{simulate.ergm}
@@ -21,9 +21,10 @@
                            monitor=NULL,
                            basis=NULL,
                            statsonly=FALSE,
+                           esteq=FALSE,
                            sequential=TRUE,
                            control=control.simulate.formula(),
-                           verbose=FALSE, 
+                           verbose=FALSE,   
                            \dots)
 \method{simulate}{ergm}(object, nsim=1, seed=NULL, 
                         coef=object$coef,
@@ -31,6 +32,7 @@
                         constraints=object$constraints,
                         monitor=NULL,
                         statsonly=FALSE,
+                        esteq=FALSE,
                         sequential=TRUE,
                         control=control.simulate.ergm(),
                         verbose=FALSE, 
@@ -97,6 +99,8 @@
   }
   \item{statsonly}{Logical:  If TRUE, return only the network statistics, 
     not the network(s) themselves.
+  }
+  \item{esteq}{Logical:    If TRUE, compute the sample estimating equations of an ERGM. If the model is linear, all non-offset statistics are passed. If the model is curved, the score estimating equations (3.1) by Hunter and Handcock (2006) are given instead.
   }
   \item{sequential}{Logical:  If FALSE, each of the \code{nsim} simulated
     Markov chains begins at the initial network.  If TRUE, the end of one 

@@ -5,7 +5,7 @@
  *  open source, and has the attribution requirements (GPL Section 7) at
  *  http://statnet.org/attribution
  *
- *  Copyright 2003-2013 Statnet Commons
+ *  Copyright 2003-2014 Statnet Commons
  */
 #include "MHproposals.h"
 #include "edgelist.h"
@@ -47,7 +47,7 @@ void MH_TNT (MHproposal *MHp, Network *nwp)
   Edge nedges=nwp->nedges;
   static double comp=0.5;
   static double odds;
-  static Edge ndyads;
+  static Dyad ndyads;
   
   if(MHp->ntoggles == 0) { /* Initialize */
     MHp->ntoggles=1;
@@ -95,7 +95,7 @@ void MH_TNT10 (MHproposal *MHp, Network *nwp)
   Edge nedges=nwp->nedges;
   static double comp=0.5;
   static double odds;
-  static Edge ndyads;
+  static Dyad ndyads;
   
   if(MHp->ntoggles == 0) { /* Initialize */
     MHp->ntoggles=10;
@@ -110,7 +110,7 @@ void MH_TNT10 (MHproposal *MHp, Network *nwp)
       for(unsigned int n = 0; n < 10; n++){
 	if (unif_rand() < comp && nedges > 0) { /* Select a tie at random */
 	  GetRandEdge(Mtail, Mhead, nwp);
-	  logratio = log(nedges  / (odds*ndyads + nedges));
+	  logratio += log(nedges  / (odds*ndyads + nedges));
 	}else{ /* Select a dyad at random */
 	  GetRandDyad(Mtail+n, Mhead+n, nwp);
 	  if(EdgetreeSearch(Mtail[n],Mhead[n],nwp->outedges)!=0){
@@ -644,8 +644,16 @@ void MH_NodePairedTiesToggles (MHproposal *MHp, Network *nwp) {
 void MH_OneRandomTnTNode (MHproposal *MHp, Network *nwp) {  
   Vertex tail=0, head, e, head1;
   int noutedge=0, ninedge=0, k0=0, fvalid=0, k;
+  /* int ndyad; */
 
   /* *** don't forget tail-> head now */
+  
+  /* if ( nwp->directed_flag )
+    {
+      ndyad = (nwp->nnodes - 1) * nwp->nnodes;
+    }else{
+      ndyad = (nwp->nnodes - 1) * nwp->nnodes / 2;
+    } */
 
   double logratio=0;
   fvalid=0;

@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2013 Statnet Commons
+#  Copyright 2003-2014 Statnet Commons
 #######################################################################
 #=========================================================================
 # This file contains 4 functions for created "SAN-ed" networks & formulas
@@ -127,7 +127,7 @@ san.formula <- function(object, response=NULL, reference=~Bernoulli, constraints
 # }
 # control$coef <- c(control$coef[1],rep(0,Clist$nstats-1))
   
-  if(MHproposal$name %in% c("CondDegree")){ 
+  if(MHproposal$name %in% c("CondDegree","CondDegreeMix")){ 
    formula.conddegmple <- ergm.update.formula(formula, . ~ conddegmple + .)
    m.conddeg <- ergm.getmodel(formula.conddegmple, nw, initialfit=TRUE)
    Clist.conddegmple <- ergm.Cprepare(nw, m.conddeg)
@@ -153,10 +153,10 @@ san.formula <- function(object, response=NULL, reference=~Bernoulli, constraints
 
     if(is.null(control$coef)) {
       if(reference==~Bernoulli){
-        fit <- try(ergm.mple(Clist=Clist, Clist.miss=Clist.miss, 
+        fit <- suppressWarnings(try(ergm.mple(Clist=Clist, Clist.miss=Clist.miss, 
                          conddeg=conddeg,
                          control=control, MHproposal=MHproposal,
-                         m=model, verbose=verbose, ...))
+                         m=model, verbose=verbose, ...)))
         control$coef <- if(inherits(fit, "try-error")) rep(0,length(model$coef.names)) else fit$coef
         if(is.null(control$invcov)) { control$invcov <- fit$covar }
       }else{
@@ -197,8 +197,8 @@ san.formula <- function(object, response=NULL, reference=~Bernoulli, constraints
                 as.character(MHproposal$name),
                 as.character(MHproposal$pkgname),
                 as.double(c(Clist$inputs,MHproposal$inputs)),
-                as.double(eta0),
-                as.double(tau),
+                as.double(.deinf(eta0)),
+                as.double(.deinf(tau)),
                 as.integer(1), # "samplesize"
                 s = as.double(stats),
                 as.integer(if(i==1 | !sequential) control$SAN.burnin else control$SAN.interval), as.integer(control$SAN.interval), 
@@ -226,8 +226,8 @@ san.formula <- function(object, response=NULL, reference=~Bernoulli, constraints
                 as.character(MHproposal$name),
                 as.character(MHproposal$pkgname),
                 as.double(c(Clist$inputs,MHproposal$inputs)),
-                as.double(eta0),
-                as.double(tau),
+                as.double(.deinf(eta0)),
+                as.double(.deinf(tau)),
                 as.integer(1), # "samplesize"
                 s = as.double(stats),
                 as.integer(if(i==1 | !sequential) control$SAN.burnin else control$SAN.interval), as.integer(control$SAN.interval), 

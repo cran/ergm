@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2013 Statnet Commons
+#  Copyright 2003-2014 Statnet Commons
 #######################################################################
 ##########################################################################
 # The <ergm.Cprepare> function builds an object called Clist that contains
@@ -56,7 +56,7 @@ ergm.Cprepare <- function(nw, m, response=NULL)
   bip <- nw$gal$bipartite
   if (is.null(bip)) bip <- 0
   Clist$bipartite <- bip
-  Clist$ndyads <- n * (n-1) / (2-dir)
+  Clist$ndyads <- network.dyadcount(nw)
   e<-as.edgelist(nw,attrname=response) # Ensures that for undirected networks, tail<head.
   if(length(e)==0){
     Clist$nedges<-0
@@ -148,7 +148,7 @@ mk.edge.to.pos.lasttoggle.f <- function(nw){
 ergm.el.lasttoggle <- function(nw){
   edge.to.pos <- mk.edge.to.pos.lasttoggle.f(nw)
   el <- as.edgelist(nw)
-  cbind(el,(nw %n% "lasttoggle")[apply(el,1,edge.to.pos)])
+  cbind(el,NVL((nw %n% "lasttoggle"),0)[apply(el,1,edge.to.pos)]) # change to 0 if null
 }
 
 to.matrix.lasttoggle <- function(nw){

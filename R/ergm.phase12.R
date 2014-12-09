@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2013 Statnet Commons
+#  Copyright 2003-2014 Statnet Commons
 #######################################################################
 ###############################################################################
 # The <ergm.phase12> function is a wrapper for the <MCMC.phase12.C> method,
@@ -73,7 +73,7 @@ ergm.phase12 <- function(g, model,
             as.character(Clist$snamestring),
             as.character(MHproposal$name), as.character(MHproposal$pkgname),
             as.double(Clist$inputs),
-            eta=as.double(eta0),
+            eta=as.double(.deinf(eta0)),
             as.integer(control$MCMC.samplesize),
             as.double(control$gain), as.double(control$stats),
             as.integer(control$phase1),

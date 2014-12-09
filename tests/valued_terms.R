@@ -10,6 +10,7 @@
 library(statnet.common)
 opttest({
 library(ergm)
+
 # Correct values. Note that for undirected networks, this needs to be
 # divied by 2.
 transitiveweights <- function(m,ties.f=pmin,combine.f=max,compare.f=min) sum(unlist(sapply(1:nrow(m),function(i) sapply(1:nrow(m),function(j) if(j==i) 0 else compare.f(m[i,j],combine.f(ties.f(m[i,-c(j,i)], m[-c(i,j),j])))))))

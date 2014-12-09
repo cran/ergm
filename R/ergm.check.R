@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2013 Statnet Commons
+#  Copyright 2003-2014 Statnet Commons
 #######################################################################
 #============================================================================
 # This file contains the following 4 functions for checking ergm arguments
@@ -102,7 +102,7 @@ ergm.checkargs <- function(fname, arglist, varnames=NULL, vartypes=NULL,
 
 
 #################################################################################
-# The <ergm.checkdirected> function halts execution for the <InitErgm> functions
+# The <ergm.checkbipartite> function halts execution for the <InitErgm> functions
 # with an error message if the given model term cannot be used with the network
 # because of its bipartite state
 #

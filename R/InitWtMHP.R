@@ -5,8 +5,14 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2013 Statnet Commons
+#  Copyright 2003-2014 Statnet Commons
 #######################################################################
+
+InitWtMHP.StdNormal <- function(arguments, nw, response) {
+  MHproposal <- list(name = "StdNormal", inputs=NULL)
+  MHproposal
+}
+
 InitWtMHP.DiscUnif <- function(arguments, nw, response) {
   a <- NVL(arguments$reference$a, -Inf)
   b <- NVL(arguments$reference$b, Inf)

@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2013 Statnet Commons
+#  Copyright 2003-2014 Statnet Commons
 #######################################################################
 ########################################################################
 # The <control.san> function creates a list of paramaters
@@ -58,7 +58,8 @@ control.san<-function(coef=NULL,
                       SAN.prop.weights="default",
                       SAN.prop.args=list(),
                       SAN.packagenames=c(),
-
+                      
+                      MPLE.max.dyad.types=1e6,
                       MPLE.samplesize=50000,
 
                       network.output="network",

@@ -5,10 +5,15 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2013 Statnet Commons
+#  Copyright 2003-2014 Statnet Commons
 #######################################################################
 InitReference.Bernoulli <- function(lhs.nw, ...){
   list(name="Bernoulli")  
+}
+
+
+InitReference.StdNormal <- function(lhs.nw, ...){
+  list(name="StdNormal")  
 }
 
 InitReference.Unif <- function(lhs.nw, a, b, ...){

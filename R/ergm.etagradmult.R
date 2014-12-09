@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2013 Statnet Commons
+#  Copyright 2003-2014 Statnet Commons
 #######################################################################
 ##############################################################################
 # The <ergm.etagradmult> function calculates and returns the product of the
@@ -39,7 +39,6 @@ ergm.etagradmult <- function(theta, v, etamap) {
       ans[cm$from,] <- cm$gradient(theta[cm$from], length(cm$to), cm$cov)%*%v[cm$to,]  
     }
   }
-  ans[is.infinite(ans)] <- 10000*sign(ans)[is.infinite(ans)]
   ans
 }
 

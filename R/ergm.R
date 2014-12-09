@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2013 Statnet Commons
+#  Copyright 2003-2014 Statnet Commons
 #######################################################################
 ###############################################################################
 # The <ergm> function fits ergms from a specified formula returning either
@@ -130,26 +130,22 @@ ergm <- function(formula, response=NULL,
     estimate <- "MPLE"
   }
 
-  
   if(!is.null(control$seed))  set.seed(as.integer(control$seed))
   if (verbose) cat("Evaluating network in model\n")
   
   nw <- ergm.getnetwork(formula)
   proposalclass <- "c"
 
-  MHproposal.obs<-constraints
-  
+
   # Missing data handling only needs to happen if the sufficient
   # statistics are not specified. If the sufficient statistics are
   # specified, the nw's dyad states are irrelevant.
-  if(network.naedgecount(nw)){
-    if(!is.null(target.stats)){
-      warning("Target statistics specified in a network with missing dyads. Missingness will be overridden.")
-      nw[as.matrix(is.na(nw),matrix.type="edgelist")] <- 0
-    }else MHproposal.obs<-ergm.update.formula(MHproposal.obs,~.+observed)
+  if(network.naedgecount(nw) && !is.null(target.stats)){
+    warning("Target statistics specified in a network with missing dyads. Missingness will be overridden.")
+    nw[as.matrix(is.na(nw),matrix.type="edgelist")] <- 0
   }
-  
-  if(constraints==MHproposal.obs) MHproposal.obs<-NULL
+ 
+  MHproposal.obs <- if(network.naedgecount(nw)==0) NULL else append.rhs.formula(constraints, list(as.name("observed")), TRUE)
 
   ## Construct approximate response network if target.stats are given.
   
@@ -161,6 +157,11 @@ ergm <- function(formula, response=NULL,
       stop("Incorrect length of the target.stats vector: should be ", length(nw.stats), " but is ",length(target.stats),". Note that offset() terms should *not* get target statistics.")
     }
     
+    # no need to pass the offset term's init to SAN
+    offset.terms <- offset.info.formula(formula)$term
+    san.control <- control$SAN.control
+    san.control$coef <- san.control$coef[!offset.terms]
+    
     if(verbose) cat("Constructing an approximate response network.\n")
     ## If target.stats are given, overwrite the given network and formula
     ## with SAN-ed network and formula.
@@ -170,7 +171,7 @@ ergm <- function(formula, response=NULL,
               response=response,
               reference=reference,
               constraints=constraints,
-              control=control$SAN.control,
+              control=san.control,
               verbose=verbose)
       formula<-ergm.update.formula(formula,nw~., from.new="nw")
       nw.stats <- summary(remove.offset.formula(formula),response=response)
@@ -205,13 +206,23 @@ ergm <- function(formula, response=NULL,
     # statistics, and have the rest of the code handle it
     # intelligently.
     target.stats <- tmp
+  } else {
+    if (network.edgecount(nw) == 0) warning("Network is empty and no target stats are specified.")
   }
   
-  if (verbose) { cat("Initializing Metropolis-Hastings proposal.\n") }
+  if (verbose) cat("Initializing Metropolis-Hastings proposal(s):") 
   
   MHproposal <- MHproposal(constraints, weights=control$MCMC.prop.weights, control$MCMC.prop.args, nw, class=proposalclass,reference=reference,response=response)
+  if (verbose) cat(" ",MHproposal$pkgname,":MH_",MHproposal$name,sep="")
+
+  
   # Note:  MHproposal function in CRAN version does not use the "class" argument for now
-  if(!is.null(MHproposal.obs)) MHproposal.obs <- MHproposal(MHproposal.obs, weights=control$MCMC.prop.weights, control$MCMC.prop.args, nw, class=proposalclass, reference=reference, response=response)
+  if(!is.null(MHproposal.obs)){
+      MHproposal.obs <- MHproposal(MHproposal.obs, weights=control$MCMC.prop.weights, control$MCMC.prop.args, nw, class=proposalclass, reference=reference, response=response)
+      if (verbose) cat(" ",MHproposal.obs$pkgname,":MH_",MHproposal.obs$name,sep="")
+  }
+
+  if(verbose) cat("\n")
 
   # conddeg MPLE only handles tetrad toggles, so it must be restricted:
   conddeg <- switch(!is.directed(nw) && ("degrees" %in% names(MHproposal$arguments$constraints) ||
@@ -222,7 +233,8 @@ ergm <- function(formula, response=NULL,
   if (verbose) cat("Initializing model.\n")
   
   # Construct the initial model.
-  model.initial <- ergm.getmodel(formula, nw, response=response, initialfit=TRUE)
+  control$init.method <- match.arg(control$init.method, ergm.init.methods(MHproposal$reference$name))
+  model.initial <- ergm.getmodel(formula, nw, response=response, initialfit=control$init.method=="MPLE")
    
   # If some control$init is specified...
   if(!is.null(control$init)){
@@ -283,26 +295,22 @@ ergm <- function(formula, response=NULL,
     MCMCflag <- FALSE
     warning("All terms are either offsets or extreme values. Skipping MCMC.")
   }
+
+  model.initial$nw.stats <- summary(model.initial$formula, response=response, initialfit=control$init.method=="MPLE")
+  model.initial$target.stats <- if(!is.null(target.stats)) target.stats else model.initial$nw.stats
   
   initialfit <- ergm.initialfit(init=control$init, initial.is.final=!MCMCflag,
-                                formula=formula, nw=nw, reference=reference, target.stats=target.stats,
+                                formula=formula, nw=nw, reference=reference, 
                                 m=model.initial, method=control$init.method,
                                 MPLEtype=control$MPLE.type, 
                                 conddeg=conddeg, control=control,
                                 MHproposal=MHproposal,
                                 MHproposal.obs=MHproposal.obs,
-                                verbose=verbose, 
+                                verbose=verbose, response=response,
                                 maxNumDyadTypes=control$MPLE.max.dyad.types,
                                 ...)
   
-  
-
-
-  if (MCMCflag) {
-    init <- initialfit$coef
-    names(init) <- model.initial$coef.names
-    init[is.na(init)] <- 0
-  } else { # Just return initial (non-MLE) fit and exit.
+  if (!MCMCflag){ # Just return initial (non-MLE) fit and exit.
     initialfit$offset <- model.initial$etamap$offsettheta
     initialfit$drop <- if(control$drop) extremecheck$extremeval.theta
     initialfit$estimable <- constrcheck$estimable
@@ -315,6 +323,10 @@ ergm <- function(formula, response=NULL,
     initialfit$constrained.obs <- MHproposal.obs$arguments$constraints
     initialfit$constraints <- constraints
     initialfit$target.stats <- model.initial$target.stats
+    initialfit$target.esteq <- if(!is.null(model.initial$target.stats)){
+      tmp <- .ergm.esteq(initialfit$coef, model.initial, rbind(model.initial$target.stats))
+      structure(c(tmp), names=colnames(tmp))
+    }
     initialfit$estimate <- estimate
 
     initialfit$control<-control
@@ -326,9 +338,17 @@ ergm <- function(formula, response=NULL,
     }
     return(initialfit)
   }
-  
-  # revise init to reflect additional parameters
-  init <- ergm.reviseinit(model, init)
+
+  # Otherwise, set up the main phase of estimation:
+  # Revise the initial value, if necessary:
+  init <- initialfit$coef
+  init[is.na(init)] <- 0
+  if(control$init.method=="MPLE"){ # Only MPLE requires these kludges.
+      names(init) <- model.initial$coef.names
+      # revise init to reflect additional parameters
+      init <- ergm.reviseinit(model, init)
+  }
+  names(init) <- .coef.names.model(model, FALSE)
 
   # Check if any terms are constrained to a constant and issue a warning.
   constrcheck <- ergm.checkconstraints.model(model, MHproposal, init=init, silent=TRUE)
@@ -358,14 +378,19 @@ ergm <- function(formula, response=NULL,
 				verbose=verbose,...),
     "MCMLE" = ergm.MCMLE(init, nw,
                           model, 
-                          initialfit,
+                          # no need to pass initialfit to MCMLE
+                          initialfit=(initialfit<-NULL),
                           control=control, MHproposal=MHproposal,
                           MHproposal.obs=MHproposal.obs,
                           verbose=verbose,
                       response=response,
                           ...),
+
+
               stop("Method ", control$main.method, " is not implemented.")
               )
+  
+  initialfit <- NULL
 
   if(!is.null(control$MCMLE.check.degeneracy) && control$MCMLE.check.degeneracy && (is.null(mainfit$theta1$independent) || !all(mainfit$theta1$independent))){
     if(verbose) {
@@ -380,12 +405,17 @@ ergm <- function(formula, response=NULL,
 
   mainfit$formula <- formula
   mainfit$target.stats <- model$target.stats
+  mainfit$target.esteq <- if(!is.null(model$target.stats)){
+    tmp <- .ergm.esteq(mainfit$coef, model, rbind(model$target.stats))
+    structure(c(tmp), names=colnames(tmp))
+  }
 
   mainfit$constrained <- MHproposal$arguments$constraints
   mainfit$constrained.obs <- MHproposal.obs$arguments$constraints
   mainfit$constraints <- constraints
 
-  mainfit$control<-control
+  # unless the main fitting algorithm passes back a modified control
+  if (is.null(mainfit$control)) mainfit$control<-control
 
   mainfit$response<-response
   mainfit$reference<-reference

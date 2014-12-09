@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2013 Statnet Commons
+#  Copyright 2003-2014 Statnet Commons
 #######################################################################
 ###############################################################################
 # The <robust.inverse> function attempts to return the inverse of a matrix H
@@ -27,7 +27,7 @@
 #
 ###############################################################################
 
-.robust.inverse <- function (H, tol = sqrt(.Machine$double.eps)) 
+robust.inverse <- function (H, tol = sqrt(.Machine$double.eps)) 
 {
     iH <- try(solve(H), silent=TRUE)
     if(inherits(iH,"try-error")){

@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2013 Statnet Commons
+#  Copyright 2003-2014 Statnet Commons
 #######################################################################
 ###########################################################################
 # The <control.ergm> function allows the ergm fitting process to be tuned
@@ -55,7 +55,7 @@
 #   mcmc.precision   : a vector of the upper bounds on the precision of the standard errors
 #                      induced by the MCMC algorithm; default=0.05
 #   metric           : the name of the optimization metric to use, as one of
-#                      "Median.Likelihood", "lognormal", "EF.Likelihood" or "naive";
+#                      "Median.Likelihood", "lognormal", "logtaylor","EF.Likelihood" or "naive";
 #                      default="Median.Likelihood"
 #   method           : the name of the optimaztion method to use, as either "BFGS" or
 #                      "Nelder-Mead"; this is an <optim> param; default="BFGS"
@@ -115,48 +115,55 @@
 ######################################################################################################
 
 control.ergm<-function(drop=TRUE,
-
+                       
                        init=NULL,
                        init.method=NULL,
                        
                        main.method=c("MCMLE","Robbins-Monro",
-                               "Stochastic-Approximation","Stepping"),
+                                     "Stochastic-Approximation","Stepping"),
                        force.main=FALSE,
                        main.hessian=TRUE,
-
+                       
                        MPLE.max.dyad.types=1e+6, 
                        MPLE.samplesize=50000,                       
                        MPLE.type=c("glm", "penalized"),
-                      
+                       
                        MCMC.prop.weights="default", MCMC.prop.args=list(),
-                       MCMC.burnin=10000,
-                       MCMC.interval=100,
-                       MCMC.samplesize=10000,
+                       MCMC.interval=1024,
+                       MCMC.burnin=MCMC.interval*16,
+                       MCMC.samplesize=1024,
+                       
+                       MCMC.effectiveSize=NULL,
+                       MCMC.effectiveSize.damp=10,
+                       MCMC.effectiveSize.maxruns=1000,
+                       MCMC.effectiveSize.base=1/2,
+                       MCMC.effectiveSize.points=5,
+                       MCMC.effectiveSize.order=1,
+                       
                        MCMC.return.stats=TRUE,
-                       MCMC.burnin.retries=0,
-                       MCMC.burnin.check.last=1/2,
-                       MCMC.burnin.check.alpha=0.01,
                        MCMC.runtime.traceplot=FALSE,
                        MCMC.init.maxedges=20000,
                        MCMC.max.maxedges=Inf,
                        MCMC.addto.se=TRUE,
                        MCMC.compress=FALSE,
                        MCMC.packagenames=c(),
-
+                       
                        SAN.maxit=10,
                        SAN.control=control.san(coef=init,
-                         SAN.prop.weights=MCMC.prop.weights,
-                         SAN.prop.args=MCMC.prop.args,
-                         SAN.init.maxedges=MCMC.init.maxedges,
-                         
-                         SAN.burnin=MCMC.burnin*10,
-                         SAN.interval=MCMC.interval,
-                         SAN.packagenames=MCMC.packagenames,
-
-                         parallel=parallel,
-                         parallel.type=parallel.type,
-                         parallel.version.check=parallel.version.check),
-
+                                               SAN.prop.weights=MCMC.prop.weights,
+                                               SAN.prop.args=MCMC.prop.args,
+                                               SAN.init.maxedges=MCMC.init.maxedges,
+                                               
+                                               SAN.burnin=MCMC.burnin*10,
+                                               SAN.interval=MCMC.interval,
+                                               SAN.packagenames=MCMC.packagenames,
+                                               MPLE.max.dyad.types=MPLE.max.dyad.types,
+                                               
+                                               parallel=parallel,
+                                               parallel.type=parallel.type,
+                                               parallel.version.check=parallel.version.check),
+                       
+                       MCMLE.termination=c("Hummel", "Hotelling", "precision", "none"),
                        MCMLE.maxit=20,
                        MCMLE.conv.min.pval=0.5,
                        MCMLE.NR.maxit=100,
@@ -164,48 +171,53 @@ control.ergm<-function(drop=TRUE,
                        obs.MCMC.samplesize=MCMC.samplesize,
                        obs.MCMC.interval=MCMC.interval,
                        obs.MCMC.burnin=MCMC.burnin,
+                       obs.MCMC.burnin.min=obs.MCMC.burnin/10,
                        MCMLE.check.degeneracy=FALSE,
-                       MCMLE.MCMC.precision=0.05,
-                       MCMLE.metric=c("lognormal",
-                         "Median.Likelihood",
-                         "EF.Likelihood", "naive"),
+                       MCMLE.MCMC.precision=0.005,
+                       MCMLE.MCMC.max.ESS.frac=0.1,
+                       MCMLE.metric=c("lognormal", "logtaylor",
+                                      "Median.Likelihood",
+                                      "EF.Likelihood", "naive"),
                        MCMLE.method=c("BFGS","Nelder-Mead"),
                        MCMLE.trustregion=20,
                        MCMLE.dampening=FALSE,
                        MCMLE.dampening.min.ess=20,
                        MCMLE.dampening.level=0.1,
-                       MCMLE.steplength=0.5,
+                       MCMLE.steplength.margin=0.05,
+                       MCMLE.steplength=if(is.null(MCMLE.steplength.margin)) 0.5 else 1,
                        MCMLE.adaptive.trustregion=3,
-                       MCMLE.adaptive.epsilon=0.01,
                        MCMLE.sequential=TRUE,
                        MCMLE.density.guard.min=10000,
                        MCMLE.density.guard=exp(3),
-
+                       MCMLE.effectiveSize=NULL,
+                       MCMLE.last.boost=4,
+                       MCMLE.Hummel.esteq=TRUE, 
+                       
                        SA.phase1_n=NULL, SA.initial_gain=NULL, 
-                       SA.nsubphases=MCMLE.maxit,
+                       SA.nsubphases=4,
                        SA.niterations=NULL, 
                        SA.phase3_n=NULL,
                        SA.trustregion=0.5,
-
+                       
                        RM.phase1n_base=7,
                        RM.phase2n_base=100,
                        RM.phase2sub=7,
                        RM.init_gain=0.5,
                        RM.phase3n=500,
-
+                       
                        Step.MCMC.samplesize=100,
                        Step.maxit=50,
                        Step.gridsize=100,
-
+                       
                        loglik.control=control.logLik.ergm(),
-
+                       
                        seed=NULL,
                        parallel=0,
                        parallel.type=NULL,
                        parallel.version.check=TRUE,
                        
                        ...
-                       ){
+){
   old.controls <- list(nr.maxit="MCMLE.NR.maxit",
                        nr.reltol="MCMLE.NR.reltol",
                        maxNumDyadTypes="MPLE.max.dyad.types",
@@ -221,7 +233,7 @@ control.ergm<-function(drop=TRUE,
                        force.mcmc="force.main",
                        adaptive.trustregion="MCMLE.adaptive.trustregion",
                        adaptive.epsilon="MCMLE.adaptive.epsilon",
-                       mcmc.precision="MCMLE.mcmc.precision",
+                       mcmc.precision="MCMLE.MCMC.precision",
                        method="MCMLE.method",
                        MPLEtype="MPLE.type",
                        check.degeneracy="MCMLE.check.degeneracy",
@@ -244,16 +256,16 @@ control.ergm<-function(drop=TRUE,
                        prop.weights="MCMC.prop.weights",
                        prop.args="MCMC.prop.args",
                        packagenames="MCMC.packagenames"
-                       )
-
-  match.arg.pars=c("MPLE.type","MCMLE.metric","MCMLE.method","main.method")
+  )
+  
+  match.arg.pars=c("MPLE.type","MCMLE.metric","MCMLE.method","main.method",'MCMLE.termination')
   
   control<-list()
   formal.args<-formals(sys.function())
   formal.args[["..."]]<-NULL
   for(arg in names(formal.args))
     control[arg]<-list(get(arg))
-
+  
   for(arg in names(list(...))){
     if(!is.null(old.controls[[arg]])){
       warning("Passing ",arg," to control.ergm(...) is deprecated and may be removed in a future version. Specify it as control.ergm(",old.controls[[arg]],"=...) instead.")
@@ -262,7 +274,7 @@ control.ergm<-function(drop=TRUE,
       stop("Unrecognized control parameter: ",arg,".")
     }
   }
-
+  
   for(arg in match.arg.pars)
     control[arg]<-list(match.arg(control[[arg]][1],eval(formal.args[[arg]])))
 

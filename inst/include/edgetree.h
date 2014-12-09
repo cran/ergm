@@ -17,14 +17,12 @@
 
 #define MIN(a,b) ((a)<(b) ? (a) : (b))
 #define MAX(a,b) ((a)<(b) ? (b) : (a))
-#define DYADCOUNT(nnodes, bipartite, directed) (bipartite? (unsigned long)(nnodes-bipartite)*(unsigned long)bipartite : (directed? (unsigned long)nnodes*(unsigned long)(nnodes-1) : (((unsigned long)nnodes*(unsigned long)(nnodes-1))/2)))
+#define DYADCOUNT(nnodes, bipartite, directed) ((bipartite)? (unsigned long)((nnodes)-(bipartite))*(unsigned long)(bipartite) : ((directed)? (unsigned long)(nnodes)*(unsigned long)((nnodes)-1) : (((unsigned long)(nnodes)*(unsigned long)((nnodes)-1))/2)))
 
-/*typedef unsigned int Vertex;
-typedef unsigned int Edge; */
+/*typedef unsigned int Vertex; */
 typedef int Vertex;
-typedef int Edge;
-
-
+typedef unsigned int Edge;
+typedef unsigned long int Dyad;
 
 /*  TreeNode is a binary tree structure, which is how the edgelists 
     are stored.  The root of the tree for vertex i will be inedges[i]
@@ -62,8 +60,8 @@ typedef struct Dur_Infstruct {
      store all of the incoming and outgoing edges, respectively. 
    directed_flag is 1 or 0, depending on whether or not the 
      network is directed. 
-   next_inedge and next_outedge are continually updated to give
-     the smallest index of an edge object not being used.  
+   last_inedge and last_outedge are continually updated to give
+     the highest index of an edge object being used.  
    outdegree[] and indegree[] are continually updated to give
      the appropriate degree values for each vertex.  These should
      point to Vertex-vectors of length nnodes+1.  
@@ -76,8 +74,8 @@ typedef struct Networkstruct {
   Vertex bipartite;  
   Vertex nnodes;
   Edge nedges;
-  Edge next_inedge;
-  Edge next_outedge;
+  Edge last_inedge;
+  Edge last_outedge;
   Vertex *indegree;
   Vertex *outdegree;
   double *value;  
@@ -115,11 +113,12 @@ Edge EdgetreeMaximum (TreeNode *edges, Edge x);
 int ToggleEdge (Vertex tail, Vertex head, Network *nwp);
 int ToggleEdgeWithTimestamp (Vertex tail, Vertex head, Network *nwp);
 int AddEdgeToTrees(Vertex tail, Vertex head, Network *nwp);
-void AddHalfedgeToTree (Vertex a, Vertex b, TreeNode *edges, Edge next_edge);
-void UpdateNextedge (TreeNode *edges, Edge *nextedge, Network *nwp);
+void AddHalfedgeToTree (Vertex a, Vertex b, TreeNode *edges, Edge *last_edge);
+void CheckEdgetreeFull (Network *nwp);
 int DeleteEdgeFromTrees(Vertex tail, Vertex head, Network *nwp);
 int DeleteHalfedgeFromTree(Vertex a, Vertex b, TreeNode *edges,
-		     Edge *next_edge);
+		     Edge *last_edge);
+void RelocateHalfedge(Edge from, Edge to, TreeNode *edges);
 
 /* Duration functions. */
 int ElapsedTime(Vertex tail, Vertex head, Network *nwp);
@@ -144,7 +143,7 @@ int GetRandEdge(Vertex *tail, Vertex *head, Network *nwp);
       *(head) = tmp;							\
     }									\
   }
-int FindithNondge(Vertex *tail, Vertex *head, Edge i, Network *nwp);
+int FindithNondge(Vertex *tail, Vertex *head, Dyad i, Network *nwp);
 int GetRandNonedge(Vertex *tail, Vertex *head, Network *nwp);
 void printedge(Edge e, TreeNode *edges);
 void InOrderTreeWalk(TreeNode *edges, Edge x);

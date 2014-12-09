@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2013 Statnet Commons
+#  Copyright 2003-2014 Statnet Commons
 #######################################################################
 ##############################################################################
 # The <ergm.eta> function calculates and returns eta, mapped from
@@ -17,8 +17,7 @@
 #            and is returned by <ergm.etamap>
 #
 # --RETURNED--
-#   eta:  the canonical eta parameters as mapped from theta; infinite parameters
-#         are replaced by appropriately signed 1000
+#   eta:  the canonical eta parameters as mapped from theta
 #
 ###############################################################################
 
@@ -32,7 +31,6 @@ ergm.eta <- function(theta, etamap) {
       eta[cm$to] <- cm$map(theta[cm$from],length(cm$to),cm$cov)
     }
   }
-  eta[is.infinite(eta)] <- sign(eta[is.infinite(eta)])*1000
   eta
 }
 

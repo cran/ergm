@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2013 Statnet Commons
+#  Copyright 2003-2014 Statnet Commons
 #######################################################################
 #==========================================================
 # This file contains the following 2 functions for
@@ -34,9 +34,10 @@
 #                   the only recognized package name is "ergm";
 #                   default="ergm"
 #   network.output: the R class with which to output networks; the
-#                   options are "network" and "edgelist.compressed"
+#                   options are "NULL", "network" and "edgelist.compressed"
 #                   (which saves space but only supports networks
-#                    without vertex attributes); default="network"
+#                   without vertex attributes); "NULL" does not
+#                   return networks; default="network"
 #   parallel      : number of threads in which to run the sampling
 #
 # --IGNORED--
@@ -56,7 +57,7 @@
 #
 #########################################################################
 
-control.simulate<-control.simulate.formula<-control.simulate.formula.ergm<-function(MCMC.burnin=1000,
+control.simulate<-control.simulate.formula<-control.simulate.formula.ergm<-function(MCMC.burnin=10000,
                                                      MCMC.interval=1000,
                                                      MCMC.prop.weights="default",
                                                      MCMC.prop.args=list(),

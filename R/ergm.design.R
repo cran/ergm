@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2013 Statnet Commons
+#  Copyright 2003-2014 Statnet Commons
 #######################################################################
 #################################################################################
 # The <ergm.design> function functions as <ergm.Cprepare> would, but acts on the
@@ -48,6 +48,6 @@ ergm.design <- function(nw, model, verbose=FALSE){
   Clist.miss
 }
 
-ergm.Cprepare.miss <- function(nw)
+ergm.Cprepare.miss <- function(nw){
   ergm.Cprepare.el(is.na(nw))
-
+}

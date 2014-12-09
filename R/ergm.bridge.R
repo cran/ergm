@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2013 Statnet Commons
+#  Copyright 2003-2014 Statnet Commons
 #######################################################################
 
 ## This is a helper function that constructs and returns the network
@@ -156,7 +156,7 @@ ergm.bridge.dindstart.llk<-function(object, response=NULL, constraints=~., coef,
   if(!is.dyad.independent(dind))
     stop("Reference model `dind' must be dyad-independent.")
 
-  ergm.dind<-ergm(dind,estimate="MPLE",constraints=constraints,eval.loglik=FALSE,control=control.ergm(drop=FALSE), offset.coef = offset.dind)
+  ergm.dind<-ergm(dind,estimate="MPLE",constraints=constraints,eval.loglik=FALSE,control=control.ergm(drop=FALSE, MPLE.max.dyad.types=control$MPLE.max.dyad.types), offset.coef = offset.dind)
   
   if(is.null(coef.dind)){
     coef.dind<-ifelse(is.na(coef(ergm.dind)),0,coef(ergm.dind))
@@ -179,4 +179,44 @@ ergm.bridge.dindstart.llk<-function(object, response=NULL, constraints=~., coef,
   if(llkonly) llk.dind + br$llr
   else c(br,llk.dind=llk.dind, llk=llk.dind + br$llr)
 }
+
+## ## A wrapper around ergm.bridge.llr that uses a model with a Hamming
+## ## distance to the LHS network itself as a starting point, either with
+## ## a specified coefficient `hamming.start' or with a coefficient such
+## ## that the log-likelihood for it is llk.guess.
+## ##
+## ## The idea is to use the Hamming term as "scaffolding", which is
+## ## slowly removed as the real model terms approach their objective
+## ## values.
+## ergm.bridge.hammingstart.llk<-function(object, response=NULL, coef, hamming.start=NULL, llk.guess=NULL, basis=NULL, ..., llkonly=TRUE, control=control.ergm.bridge()){
+##   check.control.class("ergm.bridge")
+##   if(!is.null(response)) stop("Only binary ERGMs are supported at this time.")
+##   # If basis is not null, replace network in formula by basis.
+##   # In either case, let nw be network object from formula.
+##   if(is.null(nw <- basis)) {
+##     nw <- ergm.getnetwork(object)
+##   }
+  
+##   nw <- as.network(nw)
+##   if(!is.network(nw)){
+##     stop("A network object on the LHS of the formula or via",
+##          " the 'basis' argument must be given")
+##   }
+
+##   if(is.null(hamming.start)){
+##     if(is.null(llk.guess))  llk.guess<-logLik(ergm(nw~edges)$mle.lik
+
+##     hamming.start<-log(expm1(-llk.guess/network.dyadcount(nw)))
+##   }
+
+##   form.aug<-ergm.update.formula(object, . ~ . + hamming(nw), from.new="nw")
+##   from<-c(rep(0,length(coef)), hamming.start)
+##   to<-c(coef,0)
+  
+##   llk.hamming<--network.dyadcount(nw)*log1p(exp(hamming.start))
+##   br<-ergm.bridge.llr(form.aug, response=response, from=from, to=to, basis=basis, control=control)
+
+##   if(llkonly) llk.hamming + br$llr
+##   else c(br,llk.hamming=llk.hamming, llk=llk.hamming + br$llr) 
+## }
 

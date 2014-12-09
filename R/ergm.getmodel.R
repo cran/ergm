@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2013 Statnet Commons
+#  Copyright 2003-2014 Statnet Commons
 #######################################################################
 #===================================================================================
 # This file contains the following 2 functions for creating the 'ergm.model' object
@@ -183,6 +183,8 @@ updatemodel.ErgmTerm <- function(model, outlist) {
     model$maxval <- c(model$maxval,
                       rep(if(!is.null(outlist$maxval)) outlist$maxval else +Inf,
                           length.out=length(outlist$coef.names)))
+    model$duration <- c(model$duration,
+                      if(!is.null(outlist$duration)) outlist$duration else FALSE)
     model$terms[[termnumber]] <- outlist
   }
   model

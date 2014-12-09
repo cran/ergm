@@ -5,7 +5,7 @@
  *  open source, and has the attribution requirements (GPL Section 7) at
  *  http://statnet.org/attribution
  *
- *  Copyright 2003-2013 Statnet Commons
+ *  Copyright 2003-2014 Statnet Commons
  */
 #include "wtMHproposals.h"
 
@@ -13,6 +13,31 @@
 #define Mtail (MHp->toggletail)
 #define Mhead (MHp->togglehead)
 #define Mweight (MHp->toggleweight)
+
+/*********************
+ void MH_StdNormal
+
+ Default MH algorithm for a standard-normal-reference ERGM
+*********************/
+void MH_StdNormal(WtMHproposal *MHp, WtNetwork *nwp)  {  
+  double oldwt;
+  
+  if(MHp->ntoggles == 0) { // Initialize StdNormal 
+    MHp->ntoggles=1;
+    return;
+  }
+  
+  GetRandDyad(Mtail, Mhead, nwp);
+  
+  oldwt = WtGetEdge(Mtail[0],Mhead[0],nwp);
+
+  const double propsd = 0.2; // This ought to be tunable.
+
+  Mweight[0] = rnorm(oldwt, propsd);    
+  
+  // Symmetric proposal, but depends on the reference measure
+  MHp->logratio += -(Mweight[0]*Mweight[0]-oldwt*oldwt)/2;
+}
 
 /*********************
  void MH_Unif
