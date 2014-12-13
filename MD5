@@ -1,5 +1,5 @@
 9213bf9bae382fb9c456e3d3fba74381 *BUGS
-e4dc712821633be2671b71da7581cf9f *DESCRIPTION
+2f84b5b9cc40dd0f83b15f45553b42eb *DESCRIPTION
 f5b04d7f05f4b13cacd2476a3b93570c *LICENSE
 178478a825a22bd4361b05479dc0b3ab *NAMESPACE
 b264a22901129a3efc8d33cc1f874013 *R/InitConstraint.R
@@ -103,7 +103,7 @@ f805543b0c4b00fb6571742508d5a199 *R/plot.ergm.R
 f3c58c4f576f8c21ac2dd71d0d12bb0e *R/summary.statistics.network.R
 7aafdc9d2c771f5ca21130a29b45eb82 *R/wtd.median.R
 50581ec9ed70043ef3c99a05bc38c733 *R/zzz.R
-896449d1def5b1bf3aed4323c3c89f77 *build/vignette.rds
+a38d553ca388cbb23805955fa3d99bf7 *build/vignette.rds
 34ef65b36c12d04ff00c9f31af9e0701 *data/datalist
 95785d09e7b4356b61cf6811e67c325b *data/ecoli.RData
 44e5c70641499322ec66c1764f042832 *data/faux.magnolia.high.RData
@@ -118,13 +118,13 @@ c9ac6635a27dd1f293aeb259fadf9dc2 *data/molecule.RData
 6f631b1a5980372f1431aea8d4e08592 *data/samplk.RData
 bfca099b3de3022e00e256aa92e4e74f *data/sampson.RData
 b7313d1512860d41274504c0043e3046 *inst/CITATION
-b6c9447e008adcc9f50539c9c212c4be *inst/NEWS.Rd
+c5b1342be27527b88e4e930b55299746 *inst/NEWS.Rd
 fcf010da77d54f604d730fb3d6add159 *inst/doc/ergm-term-crossRef.R
 a7643e84f2a60ede2d8f812c84522a92 *inst/doc/ergm-term-crossRef.Rmd
-aa49b516f05841f655831b5e1429bf6f *inst/doc/ergm-term-crossRef.html
+6390339a094a2557664abfcc7f54fed6 *inst/doc/ergm-term-crossRef.html
 8ad4ac17a68059145f463a8383846286 *inst/doc/ergm.R
 05e20a9c1cd3eb457dd7287bbf7ed8a1 *inst/doc/ergm.Rnw
-478e1279c45e30d30cb3ad756ea1aa02 *inst/doc/ergm.pdf
+741d9ce5a8365bffda02471bda61b3dc *inst/doc/ergm.pdf
 ad22fd4c34ff3b34d68f5ccc485e47e8 *inst/include/MCMC.h
 b29fba6415bd158400c1b7809031dae3 *inst/include/MHproposal.h
 e65660d7a0693c6889179d7fd54453e3 *inst/include/README
@@ -217,7 +217,7 @@ b6aeb8c3241e19137b9397afa56b81fb *src/MPLEconddeg.h
 54fe729e562e8d9b5a7fb4ca8ae4c2e7 *src/allstatistics.c
 ed44e4742fba235f669e59cef70a6e37 *src/changestat.c
 99bbbc6146d08eeb5547279c754946f4 *src/changestat.h
-d1591e9eb6958f57ce9b313e2a438714 *src/changestats.c
+7f774c030aba3ecdb583ad1f37d25801 *src/changestats.c
 13fc4c76a69d4526c4dcac0be78afd19 *src/changestats.h
 90cd2809585b339185acce0050709c98 *src/changestats_coincidence.c
 e619b2396a1c2010bd1aa126a0aac7a2 *src/changestats_coincidence.h
@@ -239,7 +239,7 @@ a2c8c006abcf4807f59c2cc9b7adecf0 *src/conddegmple.c
 05afebf3e3097953ffd425b6c261ce16 *src/edgelist.h
 faf895ca11de7fd74cf9b12c394e37f9 *src/edgetree.c
 2808b39e0bfadf5eb46e88669023f232 *src/edgetree.h
-73fe112284edf389fabbf44edc5c12c5 *src/geodist.c
+f2cbe9d27801ef9312e726b19f748787 *src/geodist.c
 507f7b0fb6645a650e2c04223773ffdd *src/geodist.h
 acd42b7f024468d4e8c9215b064f47d7 *src/model.c
 727056b80e973e868a30aaeecc76e706 *src/model.h
