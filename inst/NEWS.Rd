@@ -5,51 +5,80 @@
 %  open source, and has the attribution requirements (GPL Section 7) at
 %  http://statnet.org/attribution
 %
-%  Copyright 2003-2013 Statnet Commons
+%  Copyright 2003-2015 Statnet Commons
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{NEWS}
 \title{NEWS file for the \code{\link[=ergm-package]{ergm}} package}
 \encoding{UTF-8}
 
-
 % When a release is forked, copy the sections to a new release and
 % delete unused sections.
-\section{Changes in version 3.2.4}{
 
-  %%  \subsection{NEW FEATURES}{
-  %%    \itemize{
-  %%      \item
-  %% }
-  %% }
+\section{Changes in version 3.4}{
+
+  \subsection{NEW FEATURES}{
+    \itemize{
+      \item Added message to notify when ergm MCMLE does not converge after max iterations.
+      \item Copied the combined Sampson monks dataset to ergm. See \code{?sampson}.
+      \item ergm simulation, bridge, and logLik functions now "inherit"
+    the parallel setting from the ergm object and generally pass it
+    along when possible.
+    \item A new estimate type and source for initial values, contrastive
+    divergence, has been added. It is intended primarily for obtaining
+    initial values for MCMLE for valued ERGMs and ERGMs with complex
+    (e.g., degree and edge-count) constraints. For binary networks with
+    dyad-independent constraints, MPLE still generally works better and
+    remains the default.
+
+    To obtain the contrastive divergence estimate, call
+   \code{\link{ergm}} with \code{estimate="CD"}.
+   }
+  }
    
-  %%  \subsection{CHANGES}{
-  %%   \itemize{
-  %%     \item
-  %%     }
-  %% }
   
    \subsection{BUG FIXES}{
      \itemize{
-      \item{Some technical corrections were made in the documentation:
-	none of the examples use \code{T} and \code{F} for \code{TRUE}
-	and \code{FALSE}.}
-      \item{A few memory management issues exposed by Valgrind have been
-	addressed. No past results are invalidated.}
+      \item{Fixed issue where constraints was not appropriately compared to older version}
+      \item{Fixed bug where the deviance of dyad-independence models was incorrectly computed/reported for all models}
+      \item{Removed \code{Rglpk} package dependency; replaced it with \code{lpSolve} package dependency. See man page for \code{is.inCH} for details}
+      \item{Fixed integer overflow bug in sample size reporting}
+  
+      \item{Fixed bug in saving target.stats vector. Offset terms in target.stats output are now NA instead of the SAN network stats. (issue #1049)}
+      \item{Fixed ergm segfault when unknown node attributes are used in
+      ergm formulas. Modified get.node.attr function so that it will
+      check if specified attribute exists. (previous code only checked
+      if network was bipartite). (issue #1140, reported by Philip
+      Leifeld) }
+           \item{Implemented solution to MCMLE steplength getting stuck at 0 for some models where initial networks are very far from target stats. If the Hummel step length is < control$MCMLE.steplength.min, stop with an informative error message, reporting that the the starting value is poor. If using target stats, it try increasing SAN parameters, or your configuration may be impossible or unlikely. (This suggests a poor model for the observed data.) MCMLE.steplength.min=0.0001 by default. Estimation will stop with an error message when steplen is smaller than the min for 2 iterations. (issue #1089)}
+       \item Replaced the integer function abs() by floating point function fabs() in MHproposals_degree.c.
+       \item Various documentation corrections and fixes
+
     }
    }
 
-   %% \subsection{DEPRECATED & DEFUNCT}{
-   %%  \itemize{
-   %%    \item{ }
-   %%  }
-   %% }
-
   
-   %% \subsection{OTHER USER-VISIBLE CHANGES}{
-   %%   \itemize{
-   %%    \item{}
-   %%   }
-   %% }
+   \subsection{OTHER USER-VISIBLE CHANGES}{
+     \itemize{
+      \item{\code{\link{ergm}} with \code{estimate="MPLE"} will now
+	refuse to estimate the MPLE for valued ERGMs, curved ERGMs, and ERGMs with
+	certain complex constraints, as true MPLE
+	for these is not yet implemented.}
+       \item{ CRAN-requested code structure changes (generally not visable to user):
+        \itemize{
+        \item \code{require} and \code{library} calls changed to \code{requireNamespace} and namespace prefixes added to calls from other packages, 
+        \item S3 methods explicitly registered in \code{NAMESPACE}.
+        \item \code{packageDescription} is no longer used in package citation methods.
+	\item Many formerly 'internal' functions have been documented in a
+	semi-stable API for use by developers of other ergm-related packages.
+  \item{ Many formerly undocumented 'internal' functions have been made internal by the \code{NAMESPACE}. As far as we know, this avoids functions in use by reverse-Depending packages.  These currently appear as commented items in the \code{NAMESPACE} file.
+  }
+  \item{ Many undocumented 'internal' functions that do not appear to be used have been deprecated and will likely be removed in the next release.  See \code{?ergm_deprecated} for a list.  If called, these functions will give a Deprecation warning and suggest an alternate function where appropriate. 
+  
+  }
+        }
+       }
+     }
+   }
 
   % \subsection{C-LEVEL FACILITIES}{
   %   \itemize{
@@ -75,8 +104,7 @@
   % }
 
 }
-
-\section{Changes in version 3.2.3}{
+\section{Changes in version 3.2.4}{
 
    \subsection{NEW FEATURES}{
      \itemize{
@@ -109,7 +137,7 @@
     \item { Additional arguments added to the \code{network.update} function to control which attributes and properties are updated.}
     \item {  new \code{esteq} argument for \code{simulate.formula} and \code{simulate.ergm}:  Default is FALSE. If TRUE, compute the sample estimating equations of an ERGM. If the model is linear, all non-offset statistics are passed. If the model is curved, the score estimating equations (3.1) by Hunter and Handcock (2006) are given instead.}
     \item{ New and expanded tests of the ergm functions for use with R CMD CHECK tools. }
-    \item{ Addition of \code{is.durational} methods for models and formulas. These functions test whether the terms in an ERGM model or formula is durational dependent or not. If the formula or model does not include any terms that need information about the duration of existing ties, the ergm process can use more efficient internal data structures. This is mostly in support of \code{tergm} functionality.} 
+    \item{ Addition of \code{is.durational} methods for models and formulas. These functions test whether the terms in an ERGM model or formula is duration dependent or not. If the formula or model does not include any terms that need information about the duration of existing ties, the ergm process can use more efficient internal data structures. This is mostly in support of \code{tergm} functionality.} 
     \item{New ergm constraint terms: \code{fixallbut(free.dyads)}, \code{fixedas(present,absent)}. The former one can specify the set of dyads (as an edgelist or a network object) to be fixed, the latter one can specify two sets of dyads (as edgelists or networks objects), to be fixed present and fixed absent respectively. See \code{?ergm.constraints}}
     \item{Potential speed/memory usage improvement: sampling algorithms in both R can C levels are optimized.}
     \item{ergm now imports the \code{network} package via NAMESPACE to avoid internal namespace collisions when used with \code{iGraph}}
@@ -176,6 +204,30 @@ fixes issue reported by Sebastian Daza}
       \item{New help page for ergm MetropolisHastings Proposal methods.}
      }
    }
+
+  % \subsection{C-LEVEL FACILITIES}{
+  %   \itemize{
+  %   }
+  % }
+
+  % \subsection{UTILITIES}{
+  %   \itemize{
+  %     \item Likewise, "UTILITIES" is probably unnecessary.
+  %   }
+  % }
+
+  % \subsection{INSTALLATION}{
+  %   \itemize{
+  %     \item ... as is "INSTALLATION".
+  %   }
+  % }
+
+  % \subsection{PACKAGE INSTALLATION}{
+  %   \itemize{
+  %     \item ditto.
+  %   }
+  % }
+
 }
 
 \section{Changes in version 3.1.3}{

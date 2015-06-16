@@ -5,7 +5,7 @@
 %  open source, and has the attribution requirements (GPL Section 7) at
 %  http://statnet.org/attribution
 %
-%  Copyright 2003-2014 Statnet Commons
+%  Copyright 2003-2015 Statnet Commons
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{control.ergm}
 \alias{control.ergm}
@@ -49,11 +49,12 @@ control.ergm(drop=TRUE,
              MCMC.packagenames=c(),            
 
              SAN.maxit=10,
+             SAN.burnin.times=10,
              SAN.control=control.san(coef=init,
                          SAN.prop.weights=MCMC.prop.weights,
                          SAN.prop.args=MCMC.prop.args,
                          SAN.init.maxedges=MCMC.init.maxedges,
-                         SAN.burnin=MCMC.burnin*10,
+                         SAN.burnin=MCMC.burnin * SAN.burnin.times,
                          SAN.interval=MCMC.interval,
                          SAN.packagenames=MCMC.packagenames,
                          MPLE.max.dyad.types=MPLE.max.dyad.types,
@@ -70,6 +71,8 @@ control.ergm(drop=TRUE,
              obs.MCMC.interval=MCMC.interval,
              obs.MCMC.burnin=MCMC.burnin,
              obs.MCMC.burnin.min=obs.MCMC.burnin/10,
+             obs.MCMC.prop.weights=MCMC.prop.weights, obs.MCMC.prop.args=MCMC.prop.args,
+
              MCMLE.check.degeneracy=FALSE,
              MCMLE.MCMC.precision=0.005,
              MCMLE.MCMC.max.ESS.frac=0.1,
@@ -89,7 +92,8 @@ control.ergm(drop=TRUE,
              MCMLE.density.guard=exp(3),
              MCMLE.effectiveSize=NULL,
              MCMLE.last.boost=4,
-             MCMLE.Hummel.esteq=TRUE, 
+             MCMLE.Hummel.esteq=TRUE,
+             MCMLE.steplength.min=0.0001,
 
              SA.phase1_n=NULL, 
              SA.initial_gain=NULL, 
@@ -107,6 +111,27 @@ control.ergm(drop=TRUE,
              Step.MCMC.samplesize=100,
              Step.maxit=50,
              Step.gridsize=100,
+
+             CD.nsteps=8,
+             CD.multiplicity=1,
+             CD.nsteps.obs=128,
+             CD.multiplicity.obs=1,
+             CD.maxit=60,
+             CD.conv.min.pval=0.5,
+             CD.NR.maxit=100,
+             CD.NR.reltol=sqrt(.Machine$double.eps),
+             CD.metric=c("naive", "lognormal", "logtaylor",
+               "Median.Likelihood",
+               "EF.Likelihood"),
+             CD.method=c("BFGS","Nelder-Mead"),
+             CD.trustregion=20,
+             CD.dampening=FALSE,
+             CD.dampening.min.ess=20,
+             CD.dampening.level=0.1,
+             CD.steplength.margin=0.5,
+             CD.steplength=1,
+             CD.adaptive.trustregion=3,
+             CD.adaptive.epsilon=0.01,
 
              loglik.control=control.logLik.ergm(),
 
@@ -200,12 +225,12 @@ control.ergm(drop=TRUE,
     Meinhard Ploner, Daniela Dunkler, Harry
     Southworth, and Georg Heinze in the "logistf" package.
   }
-  \item{MCMC.prop.weights}{Specifies the proposal distribution used in the MCMC
-    Metropolis-Hastings algorithm.  Possible choices are \code{"TNT"} or 
-    \code{"random"}; the \code{"default"} is one of these two, depending on the
-    constraints in place (as defined by the \code{constraints}
-    argument of the \code{\link{ergm}} function), though not all weights
-    may be used with all constraints.  
+  \item{MCMC.prop.weights, obs.MCMC.prop.weights}{Specifies the proposal distribution used in the MCMC
+    Metropolis-Hastings algorithm.  Possible choices depending on
+    selected \code{reference} and \code{constraints} arguments of the \code{\link{ergm}} function,
+    but often include \code{"TNT"} and \code{"random"}, and the \code{"default"} is to use the one with the
+    highest priority available.
+    
     The \code{TNT} (tie / no tie) option puts roughly equal weight on selecting a
     dyad with or without a tie as a candidate for toggling, whereas the
     \code{random} option puts equal weight on all possible dyads, though the
@@ -213,8 +238,15 @@ control.ergm(drop=TRUE,
     place.  When no constraints are in place, the default is TNT, which 
     appears to improve Markov chain mixing particularly for networks with a
     low edge density, as is typical of many realistic social networks.
+
+    \code{obs.MCMC.prop.weights}, if given separately, specifies the
+    weights to be used for the constrained MCMC when missing dyads are
+    present, defaulting to the same as \code{MCMC.prop.weights}.
   }
-  \item{MCMC.prop.args}{An alternative, direct way of specifying additional arguments to proposal. 
+  \item{MCMC.prop.args, obs.MCMC.prop.args}{An alternative, direct way
+    of specifying additional arguments to proposal. \code{obs.MCMC.prop.args}, if given separately, specifies the
+    weights to be used for the constrained MCMC when missing dyads are
+    present, defaulting to the same as \code{MCMC.prop.args}.
   }
   \item{MCMC.interval}{Number of proposals between sampled statistics. Increasing interval will reduces the autocorrelation in the sample, and may increase the precision in estimates by reducing MCMC error, at the expense of time. Set the interval higher for larger networks.
   }
@@ -269,6 +301,7 @@ control.ergm(drop=TRUE,
   \code{\link{ergm}}, the maximum number of attempts to use
   \code{\link{san}} to obtain a network with statistics close to those
   specified.}  
+  \item{SAN.burnin.times}{Multiplier for \code{SAN.burnin} relative to \code{MCMC.burnin}. This lets one control the amount of SAN burn-in (arguably, the most important of SAN parameters) without overriding the other SAN.control defaults. }
   \item{SAN.control}{Control arguments to \code{\link{san}}.
     See \code{\link{control.san}} for details.
   }
@@ -278,7 +311,11 @@ control.ergm(drop=TRUE,
       \item{"Hummel"}
       {Terminate when the Hummel step length
     is 1 for two consecutive iterations. For the last iteration, the sample size is
-    boosted by a factor of \code{MCMLE.last.boost}. See Hummel et. al. (2012)}
+    boosted by a factor of \code{MCMLE.last.boost}. See Hummel et. al. (2012).
+
+    Note that this criterion is incompatible with
+   \code{MCMLE.steplength} \eqn{\ne} 1 or \code{MCMLE.steplength.margin}
+   \eqn{=} \code{NULL}.}
       \item{"Hotelling"}
       {After every MCMC sample, an autocorrelation-adjusted Hotelling's T^2
     test for equality of MCMC-simulated network statistics to observed
@@ -289,7 +326,12 @@ control.ergm(drop=TRUE,
       {Terminate when the estimated loss in estimating precision due to
 	using MCMC standard errors is below the precision bound specified by
       \code{MCMLE.MCMC.precision}, and the Hummel step length is 1 for two consecutive
-      iterations. See \code{MCMLE.MCMC.precision} for details. This feature is in experimental status until we verify the coverage of the standard errors.}
+      iterations. See \code{MCMLE.MCMC.precision} for details. This
+   feature is in experimental status until we verify the coverage of the
+   standard errors.
+
+   Note that this criterion is incompatible with
+   \eqn{\code{MCMLE.steplength}\ne 1} or \eqn{\code{MCMLE.steplength.margin}=\code{NULL}}.}
       \item{"none"}
       {Stop after \code{MCMLE.maxit} iterations.}
   }
@@ -339,7 +381,9 @@ control.ergm(drop=TRUE,
     The extra margin required for a Hummel step to count as being inside 
     the convex hull of the sample. 
     Set this to 0 if the step length gets stuck at the same value over
-    several iteraions. Set it to \code{NULL} to use fixed step length.
+    several iteraions. Set it to \code{NULL} to use fixed step
+    length. Note that this parameter is required to be non-\code{NULL}
+    for MCMLE termination using Hummel or precision criteria.
   }
   \item{MCMLE.steplength}{Multiplier for step length, which may 
     (for values less than one) 
@@ -349,7 +393,9 @@ control.ergm(drop=TRUE,
 
     If \code{MCMLE.steplength.margin} is not \code{NULL}, the step
     length will be set using the algorithm of Hummel et al. (2010). In
-    that case, it will serve as the maximum step length considered.
+    that case, it will serve as the maximum step length
+    considered. However, setting it to anything other than 1 will
+    preclude using Hummel or precision as termination criteria.
   }
   \item{MCMLE.adaptive.trustregion}{Maximum increase the algorithm
     will allow for the approximated loglikelihood at a given
@@ -377,6 +423,7 @@ control.ergm(drop=TRUE,
   \item{MCMLE.last.boost}{For the Hummel termination criterion, increase
   the MCMC sample size of the last iteration by this factor.}
   \item{MCMLE.Hummel.esteq}{For curved ERGMs, should the estimating function values be used to compute the Hummel step length? This allows the Hummel stepping algorithm converge when some sufficient statistics are at 0.}
+  \item{MCMLE.steplength.min}{Stops MCMLE estimation when the step length gets stuck below this minimum value.}
   
   \item{SA.phase1_n}{Number of MCMC samples to draw
     in Phase 1 of the stochastic approximation algorithm.
@@ -421,6 +468,45 @@ control.ergm(drop=TRUE,
     of \eqn{1/N}.
     See Hummel et al. (2012) for details.
   }
+
+  \item{CD.nsteps, CD.multiplicity}{
+    Main settings for contrastive divergence to obtain initial values for the
+    estimation: respectively, the number of Metropolis--Hastings steps to take before
+    reverting to the starting value and the number of tentative
+    proposals per step. Computational experiments indicate that
+    increasing \code{CD.multiplicity} improves the estimate faster than
+    increasing \code{CD.nsteps} --- up to a point --- but it also samples from the wrong
+    distribution, in the sense that while as
+    \code{CD.nsteps}\eqn{\rightarrow\infty}, the CD estimate approaches
+    the MLE, this is not the case for \code{CD.multiplicity}.
+
+    In practice, MPLE, when available, usually outperforms CD for even a very high
+    \code{CD.nsteps} (which is, in turn, not very stable), so CD is useful primarily when
+    MPLE is not available. This feature is to be considered
+    experimental and in flux.
+
+    The default values have been set experimentally, providing a
+    reasonably stable, if not great, starting values.
+  }
+  \item{CD.nsteps.obs, CD.multiplicity.obs}{
+    When there are missing dyads, \code{CD.nsteps} and
+    \code{CD.multiplicity} must be set to a relatively high value, as
+    the network passed is not necessarily a good start for
+    CD. Therefore, these settings are in effect if there are missing dyads in the observed
+    network, using a higher default number of steps.
+  }
+  \item{CD.maxit, CD.conv.min.pval, CD.NR.maxit, CD.NR.reltol,
+    CD.metric, CD.method, CD.trustregion, CD.dampening, CD.dampening.min.ess,
+    CD.dampening.level, CD.steplength.margin, CD.steplength, CD.adaptive.trustregion,
+    CD.adaptive.epsilon}{
+    Miscellaneous tuning parameters of the CD sampler and
+    optimizer. These have the same meaning as their \code{MCMC.*}
+    counterparts.
+
+    Note that only the Hotelling's stopping criterion is implemented for
+    CD.
+   }
+  
   \item{loglik.control}{See \code{\link{control.ergm.bridge}}
   }
   \item{seed}{Seed value (integer) for the random number generator.  
@@ -476,7 +562,7 @@ control.ergm(drop=TRUE,
     
     \item Hummel, R. M., Hunter, D. R., and Handcock, M. S. (2012),
     Improving Simulation-Based Algorithms for Fitting ERGMs,
-    Journal of Computational and Graphical Statistics, to appear.
+    Journal of Computational and Graphical Statistics, 21: 920-939.
 
     \item Kristoffer Sahlin. Estimating convergence of Markov chain
     Monte Carlo simulations. Master's Thesis. Stockholm University, 2011. \url{http://www2.math.su.se/matstat/reports/master/2011/rep2/report.pdf}

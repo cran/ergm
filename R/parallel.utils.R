@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2014 Statnet Commons
+#  Copyright 2003-2015 Statnet Commons
 #######################################################################
 # Set up a flag for whether we are in charge of MPI cluster.
 ergm.MPIcluster.started <- local({
@@ -111,8 +111,9 @@ ergm.getCluster <- function(control, verbose=FALSE){
 
 
 # Shuts down clusters.
-ergm.stopCluster <- function(object, ...)
+ergm.stopCluster <- function(object, ...){
   UseMethod("ergm.stopCluster")
+}
 
 # Only stop the MPI cluster if we were the ones who had started it.
 ergm.stopCluster.MPIcluster <- function(object, ...){

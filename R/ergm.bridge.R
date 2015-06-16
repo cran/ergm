@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2014 Statnet Commons
+#  Copyright 2003-2015 Statnet Commons
 #######################################################################
 
 ## This is a helper function that constructs and returns the network
@@ -68,7 +68,11 @@ ergm.bridge.llr<-function(object, response=NULL, constraints=~., from, to, basis
                          MCMC.interval=1,
                          MCMC.prop.args=control$MCMC.prop.args,
                          MCMC.prop.weights=control$MCMC.prop.weights,
-                         MCMC.packagenames=control$MCMC.packagenames), ...)
+                         MCMC.packagenames=control$MCMC.packagenames,
+                         parallel=control$parallel,
+                         parallel.type=control$parallel.type,
+                         parallel.version.check=control$parallel.version.check
+                                                        ), ...)
     ergm.update.formula(form,nw.state~., from.new="nw.state")
     stats[i,]<-apply(simulate(form, coef=theta, response=response, constraints=constraints, statsonly=TRUE, verbose=max(verbose-1,0),
                               control=control.simulate.formula(MCMC.burnin=0,
@@ -81,11 +85,17 @@ ergm.bridge.llr<-function(object, response=NULL, constraints=~., from, to, basis
                                MCMC.interval=1,
                                MCMC.prop.args=control$MCMC.prop.args,
                                MCMC.prop.weights=control$MCMC.prop.weights,
-                               MCMC.packagenames=control$MCMC.packagenames), ...)
+                               MCMC.packagenames=control$MCMC.packagenames,
+                               parallel=control$parallel,
+                               parallel.type=control$parallel.type,
+                               parallel.version.check=control$parallel.version.check), ...)
       ergm.update.formula(form.obs,nw.state.obs~., from.new="nw.state.obs")
       stats.obs[i,]<-apply(simulate(form.obs, coef=theta, response=response, constraints=constraints.obs, statsonly=TRUE, verbose=max(verbose-1,0),
                                 control=control.simulate.formula(MCMC.burnin=0,
-                                  MCMC.interval=control$obs.MCMC.interval),
+                                  MCMC.interval=control$obs.MCMC.interval,
+                                  parallel=control$parallel,
+                                  parallel.type=control$parallel.type,
+                                  parallel.version.check=control$parallel.version.check),
                                 nsim=ceiling(control$obs.MCMC.samplesize/control$nsteps), ...),2,mean)
     }
   }
@@ -180,43 +190,4 @@ ergm.bridge.dindstart.llk<-function(object, response=NULL, constraints=~., coef,
   else c(br,llk.dind=llk.dind, llk=llk.dind + br$llr)
 }
 
-## ## A wrapper around ergm.bridge.llr that uses a model with a Hamming
-## ## distance to the LHS network itself as a starting point, either with
-## ## a specified coefficient `hamming.start' or with a coefficient such
-## ## that the log-likelihood for it is llk.guess.
-## ##
-## ## The idea is to use the Hamming term as "scaffolding", which is
-## ## slowly removed as the real model terms approach their objective
-## ## values.
-## ergm.bridge.hammingstart.llk<-function(object, response=NULL, coef, hamming.start=NULL, llk.guess=NULL, basis=NULL, ..., llkonly=TRUE, control=control.ergm.bridge()){
-##   check.control.class("ergm.bridge")
-##   if(!is.null(response)) stop("Only binary ERGMs are supported at this time.")
-##   # If basis is not null, replace network in formula by basis.
-##   # In either case, let nw be network object from formula.
-##   if(is.null(nw <- basis)) {
-##     nw <- ergm.getnetwork(object)
-##   }
-  
-##   nw <- as.network(nw)
-##   if(!is.network(nw)){
-##     stop("A network object on the LHS of the formula or via",
-##          " the 'basis' argument must be given")
-##   }
-
-##   if(is.null(hamming.start)){
-##     if(is.null(llk.guess))  llk.guess<-logLik(ergm(nw~edges)$mle.lik
-
-##     hamming.start<-log(expm1(-llk.guess/network.dyadcount(nw)))
-##   }
-
-##   form.aug<-ergm.update.formula(object, . ~ . + hamming(nw), from.new="nw")
-##   from<-c(rep(0,length(coef)), hamming.start)
-##   to<-c(coef,0)
-  
-##   llk.hamming<--network.dyadcount(nw)*log1p(exp(hamming.start))
-##   br<-ergm.bridge.llr(form.aug, response=response, from=from, to=to, basis=basis, control=control)
-
-##   if(llkonly) llk.hamming + br$llr
-##   else c(br,llk.hamming=llk.hamming, llk=llk.hamming + br$llr) 
-## }
 

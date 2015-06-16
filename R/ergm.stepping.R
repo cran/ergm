@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2014 Statnet Commons
+#  Copyright 2003-2015 Statnet Commons
 #######################################################################
 ############################################################################
 # The <ergm.stepping> function provides one of the styles of maximum
@@ -230,6 +230,10 @@ ergm.stepping = function(init, nw, model, initialfit, constraints,
 #
 # This is a variant of Hummel et al. (2013)'s steplength algorithm,
 # also usable for missing data MLE.
+#
+# order, if specified, only checks for being in the convex hull for
+# each individual variable (i.e., min and max) or each pair of
+# variables.
 .Hummel.steplength <- function(x1, x2=NULL, margin=0.05, steplength.max=1){
   margin <- 1 + margin
   x1 <- rbind(x1); m1 <- colMeans(x1); x1 <- unique(x1)
@@ -238,6 +242,7 @@ ergm.stepping = function(init, nw, model, initialfit, constraints,
 
   # Note that S might only be the unique rows, while xM is the column
   # means of the whole matrix.
+  
   in.hull <- function(gamma, x, xM, M){ 
     is.inCH(margin*gamma * x + (1-margin*gamma) * xM, M)
   }

@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2014 Statnet Commons
+#  Copyright 2003-2015 Statnet Commons
 #######################################################################
 ###################################################################
 ## This file has utilities whose primary purpose is examining or ##
@@ -91,12 +91,6 @@ term.list.formula<-function(rhs, sign=+1){
   else {attr(rhs,"sign")<-sign; list(rhs)}
 }
 
-
-copy.named<-function(x){
-  y<-list()
-  for(name in names(x)) y[[name]]<-x[[name]]
-  y
-}
 
 
 model.transform.formula <- function(object, theta, response=NULL, recipes, ...){

@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2014 Statnet Commons
+#  Copyright 2003-2015 Statnet Commons
 #######################################################################
 ###############################################################################
 # The <ergm> function fits ergms from a specified formula returning either
@@ -117,7 +117,7 @@ ergm <- function(formula, response=NULL,
                  offset.coef=NULL,
                  target.stats=NULL,
                  eval.loglik=TRUE,
-                 estimate=c("MLE", "MPLE"),
+                 estimate=c("MLE", "MPLE", "CD"),
                  control=control.ergm(),
                  verbose=FALSE,...) {
   check.control.class()
@@ -128,6 +128,11 @@ ergm <- function(formula, response=NULL,
   if(!is.null(list(...)$MPLEonly) && list(...)$MPLEonly){
     warning("Argument MPLEonly is deprecated. Use ``estimate=\"MPLE\"'' instead." )
     estimate <- "MPLE"
+  }
+
+  if(estimate=="CD"){
+      control$init.method <- "CD"
+      eval.loglik <- FALSE
   }
 
   if(!is.null(control$seed))  set.seed(as.integer(control$seed))
@@ -196,7 +201,7 @@ ergm <- function(formula, response=NULL,
     tmp[!offinfo$eta] <- target.stats
     names(tmp)[!offinfo$eta] <- names(target.stats)
     s <- summary(formula,response=response)[offinfo$eta]
-    tmp[offinfo$eta] <- s
+    # tmp[offinfo$eta] <- s
     names(tmp)[offinfo$eta] <- names(s)
     
     # From this point on, target.stats has NAs corresponding to the
@@ -216,9 +221,8 @@ ergm <- function(formula, response=NULL,
   if (verbose) cat(" ",MHproposal$pkgname,":MH_",MHproposal$name,sep="")
 
   
-  # Note:  MHproposal function in CRAN version does not use the "class" argument for now
   if(!is.null(MHproposal.obs)){
-      MHproposal.obs <- MHproposal(MHproposal.obs, weights=control$MCMC.prop.weights, control$MCMC.prop.args, nw, class=proposalclass, reference=reference, response=response)
+      MHproposal.obs <- MHproposal(MHproposal.obs, weights=control$obs.MCMC.prop.weights, control$obs.MCMC.prop.args, nw, class=proposalclass, reference=reference, response=response)
       if (verbose) cat(" ",MHproposal.obs$pkgname,":MH_",MHproposal.obs$name,sep="")
   }
 
@@ -229,11 +233,26 @@ ergm <- function(formula, response=NULL,
                                          all(c("b1degrees","b2degrees") %in% names(MHproposal$arguments$constraints))),
                     control$drop,
                     NULL)
-  
+
   if (verbose) cat("Initializing model.\n")
   
   # Construct the initial model.
-  control$init.method <- match.arg(control$init.method, ergm.init.methods(MHproposal$reference$name))
+
+  # The following kludge knocks out MPLE if the sample space
+  # constraints are not dyad-independent. For example, ~observed
+  # constraint is dyad-independent, while ~edges is not. The exception
+  # is conddeg, which is a special case.
+  #
+  # TODO: Create a flexible and general framework to manage methods
+  # for obtaining initial values.
+  init.candidates <- ergm.init.methods(MHproposal$reference$name)
+  if("MPLE" %in% init.candidates && !is.dyad.independent(MHproposal$arguments$constraints,
+                          MHproposal.obs$arguments$constraints) && is.null(conddeg)){
+    init.candidates <- init.candidates[init.candidates!="MPLE"]
+    if(verbose) cat("MPLE cannot be used for this constraint structure.\n")
+  }
+  control$init.method <- match.arg(control$init.method, init.candidates)
+  if(verbose) cat(paste0("Using initial method '",control$init.method,"'.\n"))
   model.initial <- ergm.getmodel(formula, nw, response=response, initialfit=control$init.method=="MPLE")
    
   # If some control$init is specified...
@@ -273,8 +292,14 @@ ergm <- function(formula, response=NULL,
   # Construct the curved model, and check if it's different from the initial model. If so, we know that it's curved.
   model <- ergm.getmodel(formula, nw, response=response, expanded=TRUE, silent=TRUE)
   # MPLE is not supported for curved ERGMs.
-  if(length(model$etamap$offsetmap)!=length(model.initial$etamap$offsetmap) && estimate=="MPLE") stop("Maximum Pseudo-Likelihood (MPLE) estimation for curved ERGMs is not implemented at this time. You may want to pass fixed=TRUE parameter in curved terms to specify the curved parameters as fixed.")
-  
+  if(estimate=="MPLE"){
+    if(!is.null(response)) stop("Maximum Pseudo-Likelihood (MPLE) estimation for valued ERGMs is not implemented at this time. You may want to pass fixed=TRUE parameter in curved terms to specify the curved parameters as fixed.")
+    if(length(model$etamap$offsetmap)!=length(model.initial$etamap$offsetmap)) stop("Maximum Pseudo-Likelihood (MPLE) estimation for curved ERGMs is not implemented at this time. You may want to pass fixed=TRUE parameter in curved terms to specify the curved parameters as fixed.")
+    if(!is.dyad.independent(MHproposal$arguments$constraints,
+                            MHproposal.obs$arguments$constraints) && is.null(conddeg))
+      stop("Maximum Pseudo-Likelihood (MPLE) estimation for ERGMs with dyad-dependent constraints is only implemented for certain degree constraints at this time.")
+  }
+ 
   if (verbose) { cat("Fitting initial model.\n") }
 
   MPLE.is.MLE <- (MHproposal$reference$name=="Bernoulli"
@@ -290,14 +315,43 @@ ergm <- function(formula, response=NULL,
                || control$force.main)
 
   # Short-circuit the optimization if all terms are either offsets or dropped.
-  if(MCMCflag && all(model.initial$etamap$offsettheta)){
+  if(all(model.initial$etamap$offsettheta)){
     # Note that this cannot be overridden with control$force.main.
-    MCMCflag <- FALSE
-    warning("All terms are either offsets or extreme values. Skipping MCMC.")
+    cat("All terms are either offsets or extreme values. No optimization is performed.\n")
+    return(structure(list(coef=control$init,
+                          iterations=0,
+                          loglikelihood=NA,
+                          mle.lik=NULL,
+                          gradient=rep(NA,length=length(control$init)),
+                          failure=TRUE,
+                          offset=model.initial$etamap$offsettheta,
+                          drop=if(control$drop) extremecheck$extremeval.theta,
+                          estimable=constrcheck$estimable,
+                          network=nw,
+                          reference=reference,
+                          response=response,
+                          newnetwork=nw,
+                          formula=formula,
+                          constrained=MHproposal$arguments$constraints,
+                          constrained.obs=MHproposal.obs$arguments$constraints,
+                          constraints=constraints,
+                          target.stats=model.initial$target.stats,
+                          target.esteq=if(!is.null(model.initial$target.stats)){
+                            tmp <- .ergm.esteq(initialfit$coef, model.initial, rbind(model.initial$target.stats))
+                            structure(c(tmp), names=colnames(tmp))
+                          },
+                          estimate=estimate,
+                          control=control
+                          ),
+                     class="ergm"))
+
   }
 
   model.initial$nw.stats <- summary(model.initial$formula, response=response, initialfit=control$init.method=="MPLE")
   model.initial$target.stats <- if(!is.null(target.stats)) target.stats else model.initial$nw.stats
+
+  if(control$init.method=="CD") if(is.null(names(control$init)))
+      names(control$init) <- .coef.names.model(model.initial, FALSE)
   
   initialfit <- ergm.initialfit(init=control$init, initial.is.final=!MCMCflag,
                                 formula=formula, nw=nw, reference=reference, 
@@ -389,9 +443,9 @@ ergm <- function(formula, response=NULL,
 
               stop("Method ", control$main.method, " is not implemented.")
               )
-  
-  initialfit <- NULL
 
+  initialfit <- NULL
+  
   if(!is.null(control$MCMLE.check.degeneracy) && control$MCMLE.check.degeneracy && (is.null(mainfit$theta1$independent) || !all(mainfit$theta1$independent))){
     if(verbose) {
       cat("Checking for degeneracy.\n")

@@ -5,7 +5,7 @@
 %  open source, and has the attribution requirements (GPL Section 7) at
 %  http://statnet.org/attribution
 %
-%  Copyright 2003-2014 Statnet Commons
+%  Copyright 2003-2015 Statnet Commons
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{ergm-parallel}
 \alias{ergm-parallel}
@@ -13,9 +13,16 @@
 \alias{ergm.parallel}
 \alias{parallel.ergm}
 \alias{parallel-ergm}
+\alias{ergm.stopCluster}
+\alias{ergm.stopCluster.MPIcluster}
+\alias{ergm.stopCluster.default}
+\alias{ergm.getCluster}
+\alias{ergm.MPIcluster.started}
 
 \docType{methods}
 \title{Parallel Processing in the \code{\link[=ergm-package]{ergm}} Package}
+
+
 \description{
   For estimation that require MCMC, \code{\link[=ergm-package]{ergm}} 
   can take advantage of multiple
@@ -26,17 +33,25 @@
   The number of nodes used and the parallel API are controlled using the
   \code{parallel} and \code{parallel.type} arguments passed to the
   control functions, such as \code{\link{control.ergm}}.
+  
+    The \code{ergm.getCluster} function is usually called internally by the ergm process (in \code{\link{ergm.getMCMCsample}}) and will attempt to start the appropriate type of cluster indicated by the \code{\link{control.ergm}} settings. The \code{ergm.stopCluster} is helpful if the user has directly created a cluster.
+    
+  Further details on the various cluster types are included below.  
+  
 }
 
-% rpvm package is currently not maintained.
-%\section{PVM}{
-%  To use PVM to accelerate ERGM sampling, pass the control parameter
-%  \code{parallel.type="PVM"}.
-%  \code{\link[=ergm-package]{ergm}} and \code{\link[snow]{snow}} use
-%  \code{\link[rpvm]{rpvm}} package to communicate with a PVM
-%  cluster. \code{\link{ergm}} will check if an PVM daemon is already
-%  running and will attempt to start one if not.
-%}
+\usage{
+ergm.getCluster(control, verbose=FALSE)
+
+ergm.stopCluster(object, ...)
+}
+\arguments{
+\item{control}{a \code{\link{control.ergm}} list of parameter values from which the parallel settings should be read}
+\item{object}{an object, probably of class "cluster"}
+\item{verbose}{logical, should detailed status info be printed to console}
+\item{\dots}{not currently used}
+
+}
 
 \section{PSOCK clusters}{
   The \code{parallel} package is used with PSOCK clusters by default,
@@ -74,6 +89,9 @@
   for a multiple-machine high performance MPI cluster can be found at the statnet wiki: 
 \url{https://statnet.csde.washington.edu/trac/wiki/ergmParallel} 
 }
+
+
+
 
 \examples{
 \donttest{

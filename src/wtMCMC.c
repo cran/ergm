@@ -5,7 +5,7 @@
  *  open source, and has the attribution requirements (GPL Section 7) at
  *  http://statnet.org/attribution
  *
- *  Copyright 2003-2014 Statnet Commons
+ *  Copyright 2003-2013 Statnet Commons
  */
 #include "wtMCMC.h"
 
@@ -165,8 +165,14 @@ WtMCMCStatus WtMCMCSample(WtMHproposal *MHp,
     when the chain doesn't accept many of the proposed steps.
     *********************/
     if (fVerbose){
-      Rprintf("Sampler accepted %7.3f%% of %d proposed steps.\n",
-      tottaken*100.0/(1.0*interval*samplesize), interval*samplesize); 
+	  if (samplesize > 0 && interval > LONG_MAX / samplesize) {
+		// overflow
+		Rprintf("Sampler accepted %7.3f%% of %d proposed steps.\n",
+	      tottaken*100.0/(1.0*interval*samplesize), interval, samplesize); 
+	  } else {
+	    Rprintf("Sampler accepted %7.3f%% of %d proposed steps.\n",
+	      tottaken*100.0/(1.0*interval*samplesize), interval*samplesize); 
+	  }
     }
   }else{
     if (fVerbose){

@@ -5,13 +5,14 @@
 %  open source, and has the attribution requirements (GPL Section 7) at
 %  http://statnet.org/attribution
 %
-%  Copyright 2003-2014 Statnet Commons
+%  Copyright 2003-2015 Statnet Commons
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{ergm-terms}
 \alias{ergm-terms}
 \alias{ergm.terms}
 \alias{terms-ergm}
 \alias{terms.ergm}
+\alias{InitErgmTerm}
 
 \alias{absdiff}
 \alias{absdiffcat}
@@ -246,6 +247,8 @@
 \alias{InitWtErgmTerm.sum}
 \alias{InitWtErgmTerm.transitiveties}
 \alias{InitWtErgmTerm.transitiveweights}
+\alias{InitErgmTerm.conddegmple}
+\alias{InitErgmTerm.indices}
 \docType{methods}
 \title{Terms used in Exponential Family Random Graph Models}
 \description{

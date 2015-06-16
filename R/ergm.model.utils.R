@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2014 Statnet Commons
+#  Copyright 2003-2015 Statnet Commons
 #######################################################################
 # A helper function to reorder vector v (if named) into order specified by names.
 vector.namesmatch<-function(v,names,errname=NULL){
@@ -20,7 +20,7 @@ vector.namesmatch<-function(v,names,errname=NULL){
        && length(unique(names(v)))==length(v)
        && length(unique(names))==length(names)
        && all(sort(names(v)) == sort(names))){
-      namesmatch <- match(names(v), names)
+      namesmatch <- match(names, names(v))
       v <- v[namesmatch]
     }else stop('Name missmatch in "', errname,'". Specify by position.')
   }
@@ -86,7 +86,7 @@ ergm.checkconstraints.model <- function(model, MHproposal, init, silent=FALSE){
   constraints.old<-names(MHproposal$arguments$constraints)
   repeat{
     constraints <- unique(sort(c(constraints.old, unlist(ergm.ConstraintImplications()[constraints.old]))))
-    if(all(constraints==constraints.old)) break
+    if(all(constraints %in% constraints.old)) break
     else constraints.old <- constraints
   }
 

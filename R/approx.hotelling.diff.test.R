@@ -31,9 +31,9 @@ approx.hotelling.diff.test<-function(x,y=NULL, mu0=NULL, assume.indep=FALSE, var
     }else{
       vcovs <- lapply(lapply(v, .ergm.mvar.spec0), function(m) matrix(ifelse(is.na(c(m)), 0, c(m)),nrow(m),ncol(m)))
     }
-    ms <- lapply(v, colMeans)
+    ms <- lapply(v, base::colMeans)
     m <- colMeans(as.matrix(v))
-    ns <- sapply(v,nrow)
+    ns <- sapply(v,base::nrow)
     n <- sum(ns)
 
     # These are pooled estimates of the variance-covariance
@@ -128,25 +128,23 @@ approx.hotelling.diff.test<-function(x,y=NULL, mu0=NULL, assume.indep=FALSE, var
   out
 }
 
-## The following function uses small parts of geweke.diag from the
-## coda R package. The original code is Copyright (C) 2005-2011 Martyn
-## Plummer, Nicky Best, Kate Cowles, Karen Vines
-##
-## It is incorporated into the ergm package under the terms of the GPL
-## v3.
+## The following function's bookkeeping parts (e.g., handling of
+## mcmc.list and calculation of windows starts and ends) are loosely
+## based on parts of geweke.diag() from the coda R package.
 ##
 ## Rather than comparing each mean independently, compares them
 ## jointly. Note that it returns an htest object, not a geweke.diag
 ## object.
 ##
-## If approx.hotelling.diff.test returns an error, then
-
+## If approx.hotelling.diff.test returns an error, then assume that
+## burn-in is insufficient.
 .geweke.diag.mv <- function(x, frac1 = 0.1, frac2 = 0.5){
-  if (is.mcmc.list(x)) 
+  if(inherits(x, "mcmc.list"))
     return(lapply(x, .geweke.diag.mv, frac1, frac2))
   x <- as.mcmc(x)
-  x1 <- window(x, start=start(x), end=start(x) + frac1 * (end(x) - start(x)))
-  x2 <- window(x, start=end(x) - frac2 * (end(x) - start(x)), end=end(x))
+  x.len <- end(x) - start(x)
+  x1 <- window(x, start=start(x), end=start(x) + frac1*x.len)
+  x2 <- window(x, start=end(x) - frac2*x.len, end=end(x))
 
   test <- approx.hotelling.diff.test(x1,x2,var.equal=TRUE) # When converged, the chain should have the same variance throughout.
   if(is.na(test$p.value)) test$p.value <- 0 # Interpret too-small a sample size as insufficient burn-in.
@@ -180,20 +178,20 @@ approx.hotelling.diff.test<-function(x,y=NULL, mu0=NULL, assume.indep=FALSE, var
     p <- ncol(x)
 
     v <- matrix(NA,p,p)
-    novar <- apply(x,2,sd)==0 # FIXME: Add tolerance?
+    novar <- abs(apply(x,2,stats::sd))<.Machine$double.eps^0.5
     x <- x[,!novar,drop=FALSE]
 
     if(ncol(x)){
       arfit <- try(ar(x,aic=is.null(order.max), order.max=order.max, ...),silent=TRUE)
       if(inherits(arfit,"try-error")){
         warning("Excessive correlation among the statistics. Using a no-crosscorrelation approximation.")
-        arfits <- apply(x, 2, ar, aic=is.null(order.max), order.max=order.max, ..., simplify=FALSE)
+        arfits <- apply(x, 2, stats::ar, aic=is.null(order.max), order.max=order.max, ..., simplify=FALSE)
         arvar <- diag(sapply(arfits, "[[", "var.pred"), nrow=ncol(x))
         arcoefs <- diag(sapply(lapply(arfits, "[[", "ar"), sum), nrow=ncol(x))
       }else{
         arvar <- arfit$var.pred
         arcoefs <- arfit$ar
-        arcoefs <- if(is.null(dim(arcoefs))) sum(arcoefs) else apply(arcoefs,2:3,sum)
+        arcoefs <- if(is.null(dim(arcoefs))) sum(arcoefs) else apply(arcoefs,2:3,base::sum)
       }
 
       adj <- diag(1,nrow=p-sum(novar)) - arcoefs

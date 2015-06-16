@@ -9,7 +9,8 @@ logLik.ergm<-function(object, add=FALSE, force.reeval=FALSE, eval.loglik=add || 
   
   control.transfer <- c("MCMC.burnin", "MCMC.interval", "MCMC.prop.weights",
 "MCMC.prop.args", "MCMC.packagenames", "MCMC.init.maxedges", "MCMC.samplesize",
-"obs.MCMC.burnin", "obs.MCMC.interval", "obs.MCMC.samplesize","warn.dyads","MPLE.type","MPLE.max.dyad.types")
+"obs.MCMC.burnin", "obs.MCMC.interval", "obs.MCMC.samplesize","warn.dyads","MPLE.type","MPLE.max.dyad.types","parallel","parallel.type","parallel.version.check"
+)
   for(arg in control.transfer)
     if(is.null(control[[arg]]))
       control[arg] <- list(object$control[[arg]])
@@ -24,13 +25,13 @@ logLik.ergm<-function(object, add=FALSE, force.reeval=FALSE, eval.loglik=add || 
               if(!eval.loglik) stop(nologLik.message(deparse(substitute(object))))
               
               ## If dyad-independent or MPLE, just go from the deviance.
-              if(estimate=="MPLE"
+              if(object$estimate=="MPLE"
                  || (is.dyad.independent(object)
                      && is.null(object$sample)
                      && is.null(object$response)))
 			 if(control$MPLE.type=="penalized")
 				 object$glm$loglik - object$glm.null$loglik else
-                -object$glm$deviance/2 - -object$glm.null$deviance/2
+                -object$glm$deviance/2 - -object$glm$null.deviance/2
               else
                 ## If dyad-dependent but not valued and has a dyad-independent constraint, bridge from a dyad-independent model.
                 if(is.dyad.independent(object$constrained, object$constrained.obs)

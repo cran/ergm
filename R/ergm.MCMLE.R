@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2014 Statnet Commons
+#  Copyright 2003-2015 Statnet Commons
 #######################################################################
 ############################################################################
 # The <ergm.MCMLE> function provides one of the styles of maximum
@@ -65,6 +65,7 @@ ergm.MCMLE <- function(init, nw, model,
                              sequential=control$MCMLE.sequential,
                              estimate=TRUE,
                              response=NULL, ...) {
+  cat("Starting maximum likelihood estimation via MCMLE:\n",sep="")
   # Initialize the history of parameters and statistics.
   coef.hist <- rbind(init)
   stats.hist <- matrix(NA, 0, length(model$nw.stats))
@@ -74,8 +75,17 @@ ergm.MCMLE <- function(init, nw, model,
   control$MCMC.effectiveSize <- control$MCMLE.effectiveSize
   control$MCMC.base.samplesize <- control$MCMC.samplesize
 
+  nthreads <- max(
+    if(inherits(control$parallel,"cluster")) nrow(summary(control$parallel))
+    else control$parallel,
+    1)
+  
   # Store information about original network, which will be returned at end
   nw.orig <- network.copy(nw)
+
+  # Impute missing dyads.
+  nw <- single.impute.dyads(nw, response=response)
+  model$nw.stats <- summary(model$formula, response=response, basis=nw)
 
   if(control$MCMLE.density.guard>1){
     # Calculate the density guard threshold.
@@ -86,11 +96,13 @@ ergm.MCMLE <- function(init, nw, model,
     if(verbose) cat("Density guard set to",control$MCMC.max.maxedges,"from an initial count of",network.edgecount(nw,FALSE)," edges.\n")
   }  
 
+  nws <- rep(list(nw),nthreads) # nws is now a list of networks.
+
   # statshift is the difference between the target.stats (if
   # specified) and the statistics of the networks in the LHS of the
   # formula or produced by SAN. If target.stats is not speficied
   # explicitly, they are computed from this network, so statshift==0.
-  statshift <- model$nw.stats - model$target.stats
+  statshifts <- rep(list(model$nw.stats - model$target.stats), nthreads) # Each network needs its own statshift.
 
   # Is there observational structure?
   obs <- ! is.null(MHproposal.obs)
@@ -104,13 +116,12 @@ ergm.MCMLE <- function(init, nw, model,
     control.obs$MCMC.burnin <- control$obs.MCMC.burnin
     control.obs$MCMC.burnin.min <- control$obs.MCMC.burnin.min
 
-    nw.obs <- network.copy(nw)
-    statshift.obs <- statshift
+    nws.obs <- lapply(nws, network::network.copy)
+    statshifts.obs <- statshifts
   }
   # mcmc.init will change at each iteration.  It is the value that is used
   # to generate the MCMC samples.  init will never change.
   mcmc.init <- init
-  
   calc.MCSE <- FALSE
   last.adequate <- FALSE
   
@@ -125,7 +136,7 @@ ergm.MCMLE <- function(init, nw, model,
 
     # Obtain MCMC sample
     mcmc.eta0 <- ergm.eta(mcmc.init, model$etamap)
-    z <- ergm.getMCMCsample(nw, model, MHproposal, mcmc.eta0, control, verbose, response=response, theta=mcmc.init, etamap=model$etamap)
+    z <- ergm.getMCMCsample(nws, model, MHproposal, mcmc.eta0, control, verbose, response=response, theta=mcmc.init, etamap=model$etamap)
         
     if(z$status==1) stop("Number of edges in a simulated network exceeds that in the observed by a factor of more than ",floor(control$MCMLE.density.guard),". This is a strong indicator of model degeneracy or a very poor starting parameter configuration. If you are reasonably certain that neither of these is the case, increase the MCMLE.density.guard control.ergm() parameter.")
         
@@ -135,47 +146,49 @@ ergm.MCMLE <- function(init, nw, model,
     # observed statistics or, if given, the alternative target.stats
     # (i.e., the estimation goal is to use the statsmatrix to find 
     # parameters that will give a mean vector of zero)
-    statsmatrix <- sweep(z$statsmatrix, 2, statshift, "+")
-    colnames(statsmatrix) <- model$coef.names
-    nw.returned <- network.copy(z$newnetwork)
+    statsmatrices <- mapply(sweep, z$statsmatrices, statshifts, MoreArgs=list(MARGIN=2, FUN="+"), SIMPLIFY=FALSE)
+    for(i in seq_along(statsmatrices)) colnames(statsmatrices[[i]]) <- model$coef.names
+    nws.returned <- lapply(z$newnetworks,network::network.copy)
+    statsmatrix <- do.call("rbind",statsmatrices)
     
     if(verbose){
       cat("Back from unconstrained MCMC. Average statistics:\n")
-      print(apply(statsmatrix, 2, mean))
+      print(apply(statsmatrix, 2, base::mean))
     }
     
     ##  Does the same, if observation process:
     if(obs){
-      z.obs <- ergm.getMCMCsample(nw.obs, model, MHproposal.obs, mcmc.eta0, control.obs, verbose, response=response, theta=mcmc.init, etamap=model$etamap)
+      z.obs <- ergm.getMCMCsample(nws.obs, model, MHproposal.obs, mcmc.eta0, control.obs, verbose, response=response, theta=mcmc.init, etamap=model$etamap)
       
       if(z.obs$status==1) stop("Number of edges in the simulated network exceeds that observed by a large factor (",control$MCMC.max.maxedges,"). This is a strong indication of model degeneracy. If you are reasonably certain that this is not the case, increase the MCMLE.density.guard control.ergm() parameter.")
       
-      statsmatrix.obs <- sweep(z.obs$statsmatrix, 2, statshift.obs, "+")
-      colnames(statsmatrix.obs) <- model$coef.names
-      nw.obs.returned <- network.copy(z.obs$newnetwork)
+      statsmatrices.obs <- mapply(sweep, z.obs$statsmatrices, statshifts.obs, MoreArgs=list(MARGIN=2, FUN="+"), SIMPLIFY=FALSE)
+      for(i in seq_along(statsmatrices.obs)) colnames(statsmatrices.obs[[i]]) <- model$coef.names
+      nws.obs.returned <- lapply(z.obs$newnetworks, network::network.copy)
+      statsmatrix.obs <- do.call("rbind",statsmatrices.obs)
       
       if(verbose){
         cat("Back from constrained MCMC. Average statistics:\n")
-        print(apply(statsmatrix.obs, 2, mean))
+        print(apply(statsmatrix.obs, 2, base::mean))
       }
     }else{
-      statsmatrix.obs <- NULL
+      statsmatrices.obs <- statsmatrix.obs <- NULL
       z.obs <- NULL
     }
     
     if(sequential) {
-      nw <- nw.returned
-      statshift <- summary(model$formula, basis=nw, response=response) - model$target.stats
+      nws <- nws.returned
+      statshifts <- lapply(nws, function(nw) summary(model$formula, basis=nw, response=response) - model$target.stats)
       
       if(obs){
-        nw.obs <- nw.obs.returned
-        statshift.obs <- summary(model$formula, basis=nw.obs, response=response) - model$target.stats
+        nws.obs <- nws.obs.returned
+        statshifts.obs <- lapply(nws.obs, function(nw.obs) summary(model$formula, basis=nw.obs, response=response) - model$target.stats)
       }      
     }
-    
-    # Compute the sample estimating equations and the convergence p-value.
+
+    # Compute the sample estimating equations and the convergence p-value. 
     esteq <- .ergm.esteq(mcmc.init, model, statsmatrix)
-    if(isTRUE(all.equal(apply(esteq,2,sd), rep(0,ncol(esteq)), check.names=FALSE))&&!all(esteq==0))
+    if(isTRUE(all.equal(apply(esteq,2,stats::sd), rep(0,ncol(esteq)), check.names=FALSE))&&!all(esteq==0))
       stop("Unconstrained MCMC sampling did not mix at all. Optimization cannot continue.")
     esteq.obs <- if(obs) .ergm.esteq(mcmc.init, model, statsmatrix.obs) else NULL
 
@@ -206,7 +219,8 @@ ergm.MCMLE <- function(init, nw, model,
                 mle.lik=NULL,
                 gradient=rep(NA,length=length(mcmc.init)), #acf=NULL,
                 samplesize=control$MCMC.samplesize, failure=TRUE,
-                newnetwork = nw.returned)
+                newnetwork = nws.returned[[1]],
+                newnetworks = nws.returned)
       return(structure (l, class="ergm"))
     } 
 
@@ -215,7 +229,7 @@ ergm.MCMLE <- function(init, nw, model,
     if(control$MCMLE.steplength=="adaptive"){
       if(verbose){cat("Calling adaptive MCMLE Optimization...\n")}
       adaptive.steplength <- 2
-      statsmean <- apply(statsmatrix.0,2,mean)
+      statsmean <- apply(statsmatrix.0,2,base::mean)
       v <- list(loglikelihood=control$MCMLE.adaptive.trustregion*2)
       while(v$loglikelihood > control$MCMLE.adaptive.trustregion){
         adaptive.steplength <- adaptive.steplength / 2
@@ -266,7 +280,7 @@ ergm.MCMLE <- function(init, nw, model,
       if(steplen==control$MCMLE.steplength || is.null(control$MCMLE.steplength.margin) || iteration==control$MCMLE.maxit) calc.MCSE <- TRUE
       
       if(verbose){cat("Calling MCMLE Optimization...\n")}
-      statsmean <- apply(statsmatrix.0,2,mean)
+      statsmean <- apply(statsmatrix.0,2,base::mean)
       if(!is.null(statsmatrix.0.obs)){
         statsmatrix.obs <- sweep(statsmatrix.0.obs,2,(colMeans(statsmatrix.0.obs)-statsmean)*(1-steplen))
       }else{
@@ -305,16 +319,16 @@ ergm.MCMLE <- function(init, nw, model,
           
     mcmc.init <- v$coef
     coef.hist <- rbind(coef.hist, mcmc.init)
-    stats.obs.hist <- if(!is.null(statsmatrix.obs)) rbind(stats.obs.hist, apply(statsmatrix.obs, 2, mean)) else NULL
-    stats.hist <- rbind(stats.hist, apply(statsmatrix, 2, mean))
+    stats.obs.hist <- if(!is.null(statsmatrix.obs)) rbind(stats.obs.hist, apply(statsmatrix.obs[], 2, base::mean)) else NULL
+    stats.hist <- rbind(stats.hist, apply(statsmatrix, 2, base::mean))
     
     # This allows premature termination.
     
     if(steplen<control$MCMLE.steplength){ # If step length is less than its maximum, don't bother with precision stuff.
       last.adequate <- FALSE
       control$MCMC.samplesize <- control$MCMC.base.samplesize
-      next
-    }
+      
+    } else {
     
     if(control$MCMLE.termination == "precision"){
       prec.loss <- (sqrt(diag(v$mc.cov+v$covar))-sqrt(diag(v$covar)))/sqrt(diag(v$mc.cov+v$covar))
@@ -358,7 +372,7 @@ ergm.MCMLE <- function(init, nw, model,
       conv.pval <- ERRVL(try(approx.hotelling.diff.test(esteq, esteq.obs)$p.value), NA)
       cat("Nonconvergence test p-value:",conv.pval,"\n")
       if(!is.na(conv.pval) && conv.pval>=control$MCMLE.conv.min.pval){
-        cat("No nonconvergence detected. Stopping.")
+        cat("No nonconvergence detected. Stopping.\n")
         break
       }      
     }else if(control$MCMLE.termination=='Hummel'){
@@ -371,6 +385,17 @@ ergm.MCMLE <- function(init, nw, model,
         control$MCMC.samplesize <- control$MCMC.base.samplesize * control$MCMLE.last.boost
       }
     }
+    
+    }
+    
+    # stop if MCMLE is stuck (steplen stuck near 0)
+    if ((length(steplen.hist) > 2) && sum(tail(steplen.hist,2)) < 2*control$MCMLE.steplength.min) {
+      stop("MCMLE estimation stuck. There may be excessive correlation between model terms, suggesting a poor model for the observed data. If target.stats are specified, try increasing SAN parameters.")
+    }    
+    #Otherwise, don't stop before iterations are exhausted.
+    if (iteration == control$MCMLE.maxit) {
+      message("MCMLE estimation did not converge after ", control$MCMLE.maxit, " iterations. The estimated coefficients may not be accurate. Estimation may be resumed by passing the coefficients as initial values; see 'init' under ?control.ergm for details.\n")
+    }
   } # end of main loop
 
   # FIXME:  We should not be "tacking on" extra list items to the 
@@ -381,7 +406,8 @@ ergm.MCMLE <- function(init, nw, model,
   if(obs) v$sample.obs <- ergm.sample.tomcmc(statsmatrix.0.obs, control)
   
   v$network <- nw.orig
-  v$newnetwork <- nw.returned
+  v$newnetworks <- nws.returned
+  v$newnetwork <- nws.returned[[1]]
   v$coef.init <- init
   #v$initialfit <- initialfit
   v$est.cov <- v$mc.cov
