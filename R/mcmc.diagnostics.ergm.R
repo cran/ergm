@@ -68,7 +68,7 @@ mcmc.diagnostics.default <- function(object, ...) {
 
 mcmc.diagnostics.ergm <- function(object,
                                   center=TRUE,
-                                  curved=TRUE,
+                                  esteq=TRUE,
                                   vars.per.page=3,...) {
 #
   if(!is.null(object$degeneracy.value) && !is.na(object$degeneracy.value)){
@@ -103,9 +103,11 @@ mcmc.diagnostics.ergm <- function(object,
     }
   }
 
-  if(curved){
-    sm <- do.call(mcmc.list, lapply(sm, ergm.sample.eta2theta, coef=object$coef, etamap=object$etamap))
-    if(!is.null(sm.obs)) sm.obs <- do.call(mcmc.list, lapply(sm.obs, ergm.sample.eta2theta, coef=object$coef, etamap=object$etamap))
+  if(esteq){
+    if (!is.null(object$coef) && !is.null(object$etamap)) {
+      sm <- do.call(mcmc.list, lapply(sm, function(x) .ergm.esteq(theta=object$coef, model=object$etamap, x)))
+      if(!is.null(sm.obs)) sm.obs <- do.call(mcmc.list, lapply(sm.obs, function(x) .ergm.esteq(theta=object$coef, model=object$etamap, x)))
+    }
   }
 
   cat("Sample statistics summary:\n")
@@ -216,7 +218,7 @@ mcmc.diagnostics.ergm <- function(object,
     if(!is.null(sm.obs)) plot(sm.obs,...)
   }
   
-  cat("\nRecent changes in the ergm estimation algorithm mean that these plots can no longer be used to ensure that the mean statistics from the model match the observed network statistics. For that functionality, please use the GOF command: gof(ergmFitObject, GOF=~model).\n")
+  cat("\nMCMC diagnostics shown here are from the last round of simulation, prior to computation of final parameter estimates. Because the final estimates are refinements of those used for this simulation run, these diagnostics may understate model performance. To directly assess the performance of the final model on in-model statistics, please use the GOF command: gof(ergmFitObject, GOF=~model).\n")
 
   invisible(list(degeneracy.value=degeneracy.value,
                  degeneracy.type=degeneracy.type))

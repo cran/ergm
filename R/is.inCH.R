@@ -51,9 +51,26 @@ is.inCH <- function(p, M, ...) { # Pass extra arguments directly to LP solver
   if (length(p) != NCOL(M)) 
     stop("Number of columns in matrix (2nd argument) is not equal to dimension ",
          "of first argument.")
-         
-  q = c(1, p) 
-  L = cbind(1, M)
+
+  if(nrow(M)==1) return(isTRUE(all.equal(p, M, check.attributes = FALSE)))
+  
+  # Center p and M:
+  M <- sweep(M, 2, p, "-")
+  p <- p - p
+
+  # Rotate p and M onto their principal components, dropping linearly dependent dimensions:
+  e <- eigen(crossprod(M), symmetric=TRUE)
+  Q <- e$vec[,e$val>0 & sqrt(e$val/max(e$val))>sqrt(.Machine$double.eps)*2,drop=FALSE]
+  Mr <- M%*%Q # Columns of Mr are guaranteed to be linearly independent.
+  pr <- p%*%Q
+
+  # Scale p and M:
+  Mrsd <- if(nrow(Mr)>1) pmax(apply(Mr, 2, sd), sqrt(.Machine$double.eps)) else rep(1, length(p))
+  Mr <- sweep(Mr, 2, Mrsd, "/")
+  pr <- pr/Mrsd
+  
+  q = c(1, pr) 
+  L = cbind(1, Mr)
 ############################################
 # USE lp FUNCTION FROM lpSolve PACKAGE:
   ans <- lp(objective.in = c(-q, q),

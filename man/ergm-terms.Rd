@@ -112,6 +112,7 @@
 \alias{sociality}
 \alias{sum}
 \alias{threepath}
+\alias{threetrail}
 \alias{transitive}
 \alias{transitiveties}
 \alias{transitiveweights}
@@ -208,6 +209,7 @@
 \alias{InitErgmTerm.smalldiff}
 \alias{InitErgmTerm.sociality}
 \alias{InitErgmTerm.threepath}
+\alias{InitErgmTerm.threetrail}
 \alias{InitErgmTerm.transitive}
 \alias{InitErgmTerm.transitiveties}
 \alias{InitErgmTerm.triadcensus}
@@ -315,6 +317,21 @@ network
   \code{threshold}, which sets the value above which a dyad is conidered
   to have a tie. (Value less than or equal to \code{threshold} is
   considered a nontie.)
+}
+
+\section{Covariate transformations}{
+  Some terms taking nodal or dyadic covariates take optional
+  \code{transform} and \code{transformname} arguments. \code{transform}
+  should be a function with one argument, taking a data structure of the
+  same mode as the covariate and returning a similarly structured data
+  structure, transforming the covariate as needed.
+
+  For example, \code{nodecov("a", transform=function(x) x^2)}
+  will add a nodal covariate having the square of the value of the nodal attribute
+  \code{"a"}.
+
+  \code{transformname}, if given, will be added to the term's name to
+  help identify it.
 }
 
 \section{Terms to represent network statistics included in the
@@ -1268,8 +1285,8 @@ of the degrees of all pairs of nodes in the network which are tied.
     sub-graph of size three which is exactly one tie short of being complete.
     This term can only be used with directed networks.}
     
-    \item{\code{nodecov(attrname)}  (binary)  (dyad-independent)  (frequently-used)   (directed)  (undirected) (quantitative nodal attribute)
-    , \code{nodecov(attrname,
+    \item{\code{nodecov(attrname, transform, transformname)}  (binary)  (dyad-independent)  (frequently-used)   (directed)  (undirected) (quantitative nodal attribute)
+    , \code{nodecov(attrname, transform, transformname,
     form="sum")}  (valued)  (dyad-independent)  (directed)  (undirected) (quantitative nodal attribute)
     , a.k.a. \code{nodemain}  (binary)   (directed)  (undirected)}{\emph{Main effect of a covariate:} 
     The \code{attrname} argument is a character string giving the name of a
@@ -1319,8 +1336,8 @@ of the degrees of all pairs of nodes in the network which are tied.
     base=2:3)}. For an analogous term for quantitative vertex
     attributes, see \code{nodecov}. }
     
-    \item{\code{nodeicov(attrname)}  (binary)  (directed) (quantitative nodal attribute) (frequently-used)
-    , \code{nodeicov(attrname, form="sum")}  (valued)  (directed) (quantitative nodal attribute)
+    \item{\code{nodeicov(attrname, transform, transformname)}  (binary)  (directed) (quantitative nodal attribute) (frequently-used)
+    , \code{nodeicov(attrname, transform, transformname, form="sum")}  (valued)  (directed) (quantitative nodal attribute)
     }{\emph{Main effect of a covariate for
     in-edges:} 
     The \code{attrname} argument is a character string giving the name of a
@@ -1422,8 +1439,8 @@ of the degrees of all pairs of nodes in the network which are tied.
     should be included. By default (i.e., with \code{base=NULL} or
     \code{base=0}), all pairings are included.}
     
-    \item{\code{nodeocov(attrname)}  (binary)  (directed) (dyadic-independent)(quantitative nodal attribute)
-    , \code{nodeocov(attrname, form="sum")}  (valued)  (directed) (dyadic-independent)
+    \item{\code{nodeocov(attrname, transform, transformname)}  (binary)  (directed) (dyadic-independent)(quantitative nodal attribute)
+    , \code{nodeocov(attrname, transform, transformname, form="sum")}  (valued)  (directed) (dyadic-independent)
 	(quantitative nodal attribute)
     }{\emph{Main effect of a covariate for
     out-edges:} 
@@ -1654,32 +1671,37 @@ of the degrees of all pairs of nodes in the network which are tied.
     }
       
   
-    \item{\code{threepath(keep=1:4)}  (binary)  (directed)  (undirected) (triad-related)
-    }{\emph{ Three-paths:}
+    \item{\code{threetrail(keep=1:4)} (binary)  (directed)  (undirected)
+    (triad-related), 
+    }{\emph{ Three-trails:}
+    a.k.a. \code{threepath}.
     For an undirected network, this term adds one statistic equal to the number
-    of threepaths, where a threepath is defined as a path of length three that
+    of 3-trails, where a 3-trail is defined as a \dQuote{trail} of length three that
     traverses three distinct edges.
-    Note that a threepath need not
+    Note that a 3-trail need not
     include four distinct nodes; in particular, a triangle counts as three
-    threepaths.  For a directed network, this term adds four statistics 
+    3-trails.  For a directed network, this term adds four statistics 
     (or some subset of these four specified by the \code{keep} argument),
     one for each of the four distinct types of directed three-paths.  If the 
     nodes of the path are written from left to right such that the middle edge
     points to the right (R), then the four types are RRR, RRL, LRR, and LRL.
-    That is, an RRR threepath is of the form 
+    That is, an RRR 3-trail is of the form 
     \eqn{i\rightarrow j\rightarrow k\rightarrow l}{i-->j-->k-->l}, and RRL
-    threepath is of the form
+    3-trail is of the form
     \eqn{i\rightarrow j\rightarrow k\leftarrow l}{i-->j-->k<--l}, etc.
     Like in the undirected case, there is no requirement that the nodes be
-    distinct in a directed threepath.  However, the three edges must all be 
+    distinct in a directed 3-trail.  However, the three edges must all be 
     distinct.  Thus, a mutual tie \eqn{i\leftrightarrow j}{i<-->j} does not
-    count as a threepath of the form
+    count as a 3-trail of the form
     \eqn{i\rightarrow j\rightarrow i\leftarrow j}{i-->j-->i<--j}; however,
     in the subnetwork \eqn{i\leftrightarrow j \rightarrow k}{i<-->j-->k},
-    there are two directed threepaths, one LRR
+    there are two directed 3-trails, one LRR
     (\eqn{k\leftarrow j\rightarrow i\leftarrow j}{k<--j-->i-->j})
     and one RRR
     (\eqn{j\rightarrow i\rightarrow j\leftarrow k}{k<--j-->i-->j}).
+
+    This term used to be (inaccurately) called \code{threepath}. That
+    name has been deprecated and may be removed in a future version.
     }
 
     \item{\code{transitive}  (binary)  (directed)  (triad-related)}{\emph{Transitive triads:} 

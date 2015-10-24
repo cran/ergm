@@ -1,25 +1,37 @@
 
 useDynLib(ergm)
 
-importFrom(utils, packageDescription)
 importFrom(robustbase, lmrob, covMcd)
 importFrom(trust, trust)
 importFrom(Matrix, nearPD)
 importFrom(lpSolve, lp)
 import(statnet.common, network, coda, parallel)
 importFrom(stats,simulate)
+importFrom("grDevices", "colors", "dev.cur", "dev.off", "dev.set",
+             "pictex", "rainbow")
+importFrom("graphics", "boxplot", "lines", "mtext", "pairs", "par",
+             "plot", "points", "polygon")
+importFrom("stats", "AIC", "BIC", "ar", "as.formula", "coef", "cov",
+             "cov.wt", "dlogis", "end", "formula", "influence", "logLik",
+             "median", "model.extract", "model.frame", "model.matrix",
+             "na.omit", "nobs", "optim", "pchisq", "pf", "plogis",
+             "pnorm", "predict", "printCoefmat", "pt", "qf", "quantile",
+             "runif", "sd", "start", "terms", "uniroot", "update", "var",
+             "vcov", "weighted.mean", "window")
+importFrom("utils", "packageDescription","capture.output", "flush.console", "methods",
+             "packageVersion", "tail")
+importFrom("methods",'findFunction')
 
 # Export all names that do not begin with a dot.
 #exportPattern("^[^\\.]")
 export(
   anova.ergm,
   anova.ergmlist,                  
-  append.rhs.formula,
   approx.hotelling.diff.test,      
-  as.edgelist,
+  #as.edgelist,                  moved to network
   as.edgelist.compressed,          
-  as.edgelist.matrix,
-  as.edgelist.network,             
+  #as.edgelist.matrix,           moved to network
+  #as.edgelist.network,          moved to network  
   #as.network.numeric,           made internal
   #as.network.uncompressed,      made internal
   central.network, # deprecated
@@ -150,6 +162,11 @@ export(
   is.dyad.independent.ergm.model,
   is.dyad.independent.formula,     
   is.dyad.independent.NULL,
+  is.curved,             
+  is.curved.ergm,        
+  is.curved.ergm.model,
+  is.curved.formula,     
+  is.curved.NULL,
   is.ergm,                         
   is.inCH,
   is.invertible,           # deprecated
@@ -240,14 +257,12 @@ export(
   summary.statistics.network.list,
   summary.statsmatrix.ergm,        
   sweep.mcmc.list,
-  term.list.formula,               
   to.lasttoggle.matrix,
   to.matrix.lasttoggle,            
   # twopathdist,     proposed to make internal 
   # unset.offset.formula,      proposed to make internal      
   # updatemodel.ErgmTerm,    proposed to make internal 
   vcov.ergm,                       
-  vector.namesmatch,
   # which.package.InitFunction, proposed to make internal
   wtd.median
 )
@@ -284,8 +299,8 @@ S3method(anova,ergmlist)
 S3method(as.network,numeric)
 #S3method(as.network,uncompressed)
 S3method(as.edgelist,compressed)
-S3method(as.edgelist,matrix)
-S3method(as.edgelist,network)
+#S3method(as.edgelist,matrix)
+#S3method(as.edgelist,network)
 
 S3method(coef,ergm)
 S3method(coef,length.model)
@@ -313,6 +328,11 @@ S3method(is.dyad.independent,conlist)
 S3method(is.dyad.independent,ergm)
 S3method(is.dyad.independent,ergm.model)
 S3method(is.dyad.independent,formula)
+
+S3method(is.curved,NULL)
+S3method(is.curved,ergm)
+S3method(is.curved,ergm.model)
+S3method(is.curved,formula)
 
 S3method(logLik,ergm)
 S3method(logLikNull,ergm)

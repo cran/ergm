@@ -1,6 +1,6 @@
 Package: ergm
-Version: 3.4.0
-Date: 2015-06-16
+Version: 3.5.1
+Date: 2015-10-18
 Title: Fit, Simulate and Diagnose Exponential-Family Models for
         Networks
 Authors@R: c(
@@ -10,17 +10,19 @@ Authors@R: c(
            person("Steven M.", "Goodreau", role=c("aut"), email="goodreau@u.washington.edu"),
            person("Pavel N.", "Krivitsky", role=c("aut","cre"), email="pavel@uow.edu.au"),
      	   person("Martina", "Morris", role=c("aut"), email="morrism@u.washington.edu"),
-         person("Li","Wang",role=c("ctb"),email="lxwang@gmail.com"),
-         person("Kirk","Li",role=c("ctb"),email="kirkli@uw.edu"))
-Depends: statnet.common (>= 3.1-0), network (>= 1.11)
-Imports: robustbase (>= 0.9-10), coda, trust, Matrix, lpSolve, parallel
+           person("Li","Wang",role=c("ctb"),email="lxwang@gmail.com"),
+           person("Kirk","Li",role=c("ctb"),email="kirkli@uw.edu"),
+	   person("Skye", "Bender-deMoll", role=c("ctb"), email="skyebend@uw.edu"))
+Depends: statnet.common (>= 3.3), network (>= 1.13)
+Imports: robustbase (>= 0.9-10), coda (>= 0.18-1), trust, Matrix,
+        lpSolve, parallel, methods
 Suggests: lattice, latticeExtra, sna, latentnet, knitr
 Description: An integrated set of tools to analyze and simulate networks based on exponential-family random graph models (ERGM). "ergm" is a part of the "statnet" suite of packages for network analysis.
 License: GPL-3 + file LICENSE
 URL: http://statnet.org
 VignetteBuilder: knitr
 NeedsCompilation: yes
-Packaged: 2015-06-15 17:31:10 UTC; pavel
+Packaged: 2015-10-24 07:12:48 UTC; pavel
 Author: Mark S. Handcock [aut],
   David R. Hunter [aut],
   Carter T. Butts [aut],
@@ -28,7 +30,8 @@ Author: Mark S. Handcock [aut],
   Pavel N. Krivitsky [aut, cre],
   Martina Morris [aut],
   Li Wang [ctb],
-  Kirk Li [ctb]
+  Kirk Li [ctb],
+  Skye Bender-deMoll [ctb]
 Maintainer: Pavel N. Krivitsky <pavel@uow.edu.au>
 Repository: CRAN
-Date/Publication: 2015-06-16 11:24:10
+Date/Publication: 2015-10-24 18:19:29

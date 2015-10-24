@@ -158,8 +158,13 @@ approx.hotelling.diff.test<-function(x,y=NULL, mu0=NULL, assume.indep=FALSE, var
 # curved, the score estimating equations (3.1) by Hunter and
 # Handcock (2006) are given instead.
 .ergm.esteq <- function(theta, model, statsmatrix){
-  esteq <- t(ergm.etagradmult(theta,t(as.matrix(statsmatrix)),model$etamap))[,!model$etamap$offsettheta,drop=FALSE]
-  colnames(esteq) <- .coef.names.model(model, FALSE)[!model$etamap$offsettheta]
+  etamap <- NVL(model$etamap, model)
+  esteq <- t(ergm.etagradmult(theta,t(as.matrix(statsmatrix)),etamap))[,!etamap$offsettheta,drop=FALSE]
+  if(is.mcmc(statsmatrix)){
+    esteq <- mcmc(esteq, start=start(statsmatrix), end=end(statsmatrix), thin=thin(statsmatrix))
+    varnames(esteq) <- NVL(names(theta), .coef.names.model(model, FALSE))[!etamap$offsettheta]
+  }else  colnames(esteq) <- NVL(names(theta), .coef.names.model(model, FALSE))[!etamap$offsettheta]
+
   esteq
 }
 
@@ -169,34 +174,43 @@ approx.hotelling.diff.test<-function(x,y=NULL, mu0=NULL, assume.indep=FALSE, var
 # the mean of x if x is a multivatriate time series with AR(p)
 # structure, with p determined by AIC.
 #
-# ar() fails if crossprod(x) is singular, so do each chain independently when not.
+# ar() fails if crossprod(x) is singular, which is remedied by mapping
+# the variables onto the principal components of x, dropping redundant
+# dementions.
 #
 # FIXME: Actually, for MCMC with multiple chains, we should be using the pooled mean.
-.ergm.mvar.spec0 <- function(x, order.max=NULL, aic=is.null(order.max), ...){
+.ergm.mvar.spec0 <- function(x, order.max=NULL, aic=is.null(order.max), tol=.Machine$double.eps^0.5, ...){
     x <- cbind(x)
     n <- nrow(x)
     p <- ncol(x)
 
     v <- matrix(NA,p,p)
-    novar <- abs(apply(x,2,stats::sd))<.Machine$double.eps^0.5
+    novar <- abs(apply(x,2,stats::sd))<tol
     x <- x[,!novar,drop=FALSE]
 
     if(ncol(x)){
-      arfit <- try(ar(x,aic=is.null(order.max), order.max=order.max, ...),silent=TRUE)
-      if(inherits(arfit,"try-error")){
-        warning("Excessive correlation among the statistics. Using a no-crosscorrelation approximation.")
-        arfits <- apply(x, 2, stats::ar, aic=is.null(order.max), order.max=order.max, ..., simplify=FALSE)
-        arvar <- diag(sapply(arfits, "[[", "var.pred"), nrow=ncol(x))
-        arcoefs <- diag(sapply(lapply(arfits, "[[", "ar"), sum), nrow=ncol(x))
-      }else{
-        arvar <- arfit$var.pred
-        arcoefs <- arfit$ar
-        arcoefs <- if(is.null(dim(arcoefs))) sum(arcoefs) else apply(arcoefs,2:3,base::sum)
-      }
+      # Map the variables onto their principal components, dropping
+      # redundant (linearly-dependent) dimensions. Here, we keep the
+      # eigenvectors such that the reciprocal condition number defined
+      # as s.min/s.max, where s.min and s.max are the smallest and the
+      # biggest singular values, respectively, is greater than the
+      # tolerance.
+      e <- eigen(cov(x), symmetric=TRUE)
+      Q <- e$vec[,e$val>0 & sqrt(e$val/max(e$val))>tol*2,drop=FALSE]
+      xr <- x%*%Q # Columns of xr are guaranteed to be linearly independent.
 
-      adj <- diag(1,nrow=p-sum(novar)) - arcoefs
+      # Calculate the time-series variance of the mean on the PC scale.
+      arfit <- ar(xr,aic=is.null(order.max), order.max=order.max, ...)
+      arvar <- arfit$var.pred
+      arcoefs <- arfit$ar
+      arcoefs <- if(is.null(dim(arcoefs))) sum(arcoefs) else apply(arcoefs,2:3,base::sum)
+
+      adj <- diag(1,nrow=ncol(xr)) - arcoefs
       iadj <- solve(adj)
       v.var <- iadj %*% arvar %*% t(iadj)
+
+      # Reverse the mapping for the variance estimate.
+      v.var <- Q%*%v.var%*%t(Q)
     
       v[!novar,!novar] <- v.var
     }

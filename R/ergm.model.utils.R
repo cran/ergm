@@ -7,25 +7,6 @@
 #
 #  Copyright 2003-2015 Statnet Commons
 #######################################################################
-# A helper function to reorder vector v (if named) into order specified by names.
-vector.namesmatch<-function(v,names,errname=NULL){
-  if(is.null(errname)) errname <- deparse(substitute(v))
-
-  if (is.null(names(v))){
-    if(length(v) == length(names)){
-      names(v) <- names
-    }else stop('Length of "', errname, '" is ', length(v), " but should be ", length(names),".")
-  }else{
-    if(length(v) == length(names)
-       && length(unique(names(v)))==length(v)
-       && length(unique(names))==length(names)
-       && all(sort(names(v)) == sort(names))){
-      namesmatch <- match(names, names(v))
-      v <- v[namesmatch]
-    }else stop('Name missmatch in "', errname,'". Specify by position.')
-  }
-  v
-}
 
 # A helper function to check for extreme statistics and inform the user.
 ergm.checkextreme.model <- function(model, nw, init, response, target.stats, drop, silent=FALSE){
@@ -45,7 +26,7 @@ ergm.checkextreme.model <- function(model, nw, init, response, target.stats, dro
   # and only the elements of extremeval.eta corresponding to
   # canonical terms get copied into it.
   extremeval.theta <- rep(0, length(init))
-  extremeval.theta[model$etamap$canonical!=0]<-extremeval.eta[model$etamap$canonical]
+  extremeval.theta[model$etamap$canonical!=0 & !model$etamap$offsettheta]<-extremeval.eta[model$etamap$canonical[!model$etamap$offsettheta]]
   names.theta <- rep(NA, length(length(init)))
   names.theta[model$etamap$canonical!=0]<-names.eta[model$etamap$canonical]
   
@@ -75,7 +56,7 @@ ergm.checkextreme.model <- function(model, nw, init, response, target.stats, dro
       if(any(high.drop.theta)) warning(paste("Observed statistic(s)", paste.and(names.theta[high.drop.theta]), "are at their greatest attainable values and drop=FALSE. The MLE is poorly defined.", sep=" "))
     }
   }
-
+  
   list(model=model, init=init, extremeval.theta=extremeval.theta)
 }
 
