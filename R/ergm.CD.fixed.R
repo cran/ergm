@@ -60,6 +60,7 @@ ergm.CD.fixed <- function(init, nw, model,
   stats.hist <- matrix(NA, 0, length(model$nw.stats))
   stats.obs.hist <- matrix(NA, 0, length(model$nw.stats))
   steplen.hist <- c()
+  steplen <- control$CD.steplength
 
   nthreads <- max(
     if(inherits(control$parallel,"cluster")) nrow(summary(control$parallel))
@@ -131,7 +132,7 @@ ergm.CD.fixed <- function(init, nw, model,
     # parameters that will give a mean vector of zero)
     statsmatrices <- mapply(sweep, z$statsmatrices, statshifts, MoreArgs=list(MARGIN=2, FUN="+"), SIMPLIFY=FALSE)
     for(i in seq_along(statsmatrices)) colnames(statsmatrices[[i]]) <- model$coef.names
-    statsmatrix <- do.call("rbind",statsmatrices)
+    statsmatrix <- do.call(rbind,statsmatrices)
     
     if(verbose){
       cat("Back from unconstrained CD. Average statistics:\n")
@@ -144,7 +145,7 @@ ergm.CD.fixed <- function(init, nw, model,
 
       statsmatrices.obs <- mapply(sweep, z.obs$statsmatrices, statshifts.obs, MoreArgs=list(MARGIN=2, FUN="+"), SIMPLIFY=FALSE)
       for(i in seq_along(statsmatrices.obs)) colnames(statsmatrices.obs[[i]]) <- model$coef.names
-      statsmatrix.obs <- do.call("rbind",statsmatrices.obs)
+      statsmatrix.obs <- do.call(rbind,statsmatrices.obs)
       
       if(verbose){
         cat("Back from constrained MCMC. Average statistics:\n")
@@ -198,7 +199,7 @@ ergm.CD.fixed <- function(init, nw, model,
       while(v$loglikelihood > control$CD.adaptive.trustregion){
         adaptive.steplength <- adaptive.steplength / 2
         if(!is.null(statsmatrix.0.obs)){
-          statsmatrix.obs <- sweep(statsmatrix.0.obs,2,(colMeans(statsmatrix.0.obs)-statsmean)*(1-adaptive.steplength))
+          statsmatrix.obs <- t(adaptive.steplength*t(statsmatrix.0.obs) + (1-adaptive.steplength)*statsmean) # I.e., shrink each point of statsmatrix.obs towards the centroid of statsmatrix.
         }else{
           statsmatrix <- sweep(statsmatrix.0,2,(1-adaptive.steplength)*statsmean,"-")
         }
@@ -236,19 +237,24 @@ ergm.CD.fixed <- function(init, nw, model,
       steplen <-
         if(!is.null(control$CD.steplength.margin))
           .Hummel.steplength(
-            if(control$MCMLE.Hummel.esteq) esteq else statsmatrix.0[,!model$etamap$offsetmap,drop=FALSE], 
-            if(control$MCMLE.Hummel.esteq) esteq.obs else statsmatrix.0.obs[,!model$etamap$offsetmap,drop=FALSE],
-            control$CD.steplength.margin, control$CD.steplength)
+            if(control$CD.Hummel.esteq) esteq else statsmatrix.0[,!model$etamap$offsetmap,drop=FALSE], 
+            if(control$CD.Hummel.esteq) esteq.obs else statsmatrix.0.obs[,!model$etamap$offsetmap,drop=FALSE],
+            control$CD.steplength.margin, control$CD.steplength, steplength.prev=steplen, verbose=verbose,
+            x2.num.max=control$CD.Hummel.miss.sample, steplen.maxit=control$CD.Hummel.maxit)
         else control$CD.steplength
       
       if(verbose){cat("Calling MCMLE Optimization...\n")}
-      statsmean <- apply(statsmatrix.0,2,mean)
+      statsmean <- apply(statsmatrix.0,2,base::mean)
       if(!is.null(statsmatrix.0.obs)){
-        statsmatrix.obs <- sweep(statsmatrix.0.obs,2,(colMeans(statsmatrix.0.obs)-statsmean)*(1-steplen))
+        statsmatrix.obs <- t(steplen*t(statsmatrix.0.obs) + (1-steplen)*statsmean) # I.e., shrink each point of statsmatrix.obs towards the centroid of statsmatrix.
       }else{
         statsmatrix <- sweep(statsmatrix.0,2,(1-steplen)*statsmean,"-")
       }
       steplen.hist <- c(steplen.hist, steplen)
+      # stop if MCMLE is stuck (steplen stuck near 0)
+      if ((length(steplen.hist) > 2) && sum(tail(steplen.hist,2)) < 2*control$CD.steplength.min) {
+        stop("MCMLE estimation stuck. There may be excessive correlation between model terms, suggesting a poor model for the observed data. If target.stats are specified, try increasing SAN parameters.")
+      }    
       
       if(verbose){cat(paste("Using Newton-Raphson Step with step length ",steplen," ...\n"))}
       # Use estimateonly=TRUE if this is not the last iteration.

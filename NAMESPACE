@@ -6,7 +6,8 @@ importFrom(trust, trust)
 importFrom(Matrix, nearPD)
 importFrom(lpSolve, lp)
 import(statnet.common, network, coda, parallel)
-importFrom(stats,simulate)
+importFrom(stats,simulate, qnorm)
+importFrom(MASS,ginv)
 importFrom("grDevices", "colors", "dev.cur", "dev.off", "dev.set",
              "pictex", "rainbow")
 importFrom("graphics", "boxplot", "lines", "mtext", "pairs", "par",
@@ -19,7 +20,7 @@ importFrom("stats", "AIC", "BIC", "ar", "as.formula", "coef", "cov",
              "runif", "sd", "start", "terms", "uniroot", "update", "var",
              "vcov", "weighted.mean", "window")
 importFrom("utils", "packageDescription","capture.output", "flush.console", "methods",
-             "packageVersion", "tail")
+             "packageVersion", "tail","getAnywhere")
 importFrom("methods",'findFunction')
 
 # Export all names that do not begin with a dot.
@@ -115,7 +116,7 @@ export(
   #ergm.MCMCse.lognormal,  made internal
   ergm.mcmcslave,                  
   #ergm.MCMLE,             made internal
-  ergm.MHP.table,                  
+  ergm.MHP.table, 
   #ergm.MPIcluster.started,  made internal
   ergm.mple,                       
   ergmMPLE,
@@ -228,7 +229,7 @@ export(
   print.summary.ergm,              
   #prune.conlist,     # made internal
   remove.offset.formula,           
-  robust.inverse,
+  robust.inverse, # deprecated
   rspartnerdist,         # deprecated    
   san,
   san.default,                     
@@ -268,18 +269,18 @@ export(
 )
 
 # export all the ergm terms
-exportPattern("^InitErgmTerm.*")
+# exportPattern("^InitErgmTerm.*")
 # export all the weighted ergm terms
-exportPattern("^InitWtErgmTerm.*")
+# exportPattern("^InitWtErgmTerm.*")
 # export all the constaints
-exportPattern("^InitConstraint.*")
+#exportPattern("^InitConstraint.*")
 # export all the MH proposals
-exportPattern("^InitMHP.*")
+#exportPattern("^InitMHP.*")
 # export all the weighted MH proposals
-exportPattern("^InitWtMHP.*")
+#exportPattern("^InitWtMHP.*")
 
 # export all reference distributions
-exportPattern("^InitReference.*")
+#exportPattern("^InitReference.*")
 
   
 
@@ -374,12 +375,12 @@ S3method(summary,formula)
 S3method(summary,gofobject)
 S3method(summary,network.list)
 S3method(summary,statistics)
-S3method(summary,statistics.default)
-S3method(summary,statistics.ergm)
-S3method(summary,statistics.formula)
-S3method(summary,statistics.matrix)
-S3method(summary,statistics.network)
-S3method(summary,statistics.network.list)
+S3method(summary.statistics,default)
+S3method(summary.statistics,ergm)
+S3method(summary.statistics,formula)
+S3method(summary.statistics,matrix)
+S3method(summary.statistics,network)
+S3method(summary.statistics,network.list)
 S3method(summary,statsmatrix.ergm)
          
 S3method(vcov,ergm)

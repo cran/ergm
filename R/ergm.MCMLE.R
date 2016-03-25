@@ -71,6 +71,8 @@ ergm.MCMLE <- function(init, nw, model,
   stats.hist <- matrix(NA, 0, length(model$nw.stats))
   stats.obs.hist <- matrix(NA, 0, length(model$nw.stats))
   steplen.hist <- c()
+  steplen <- control$MCMLE.steplength
+  if(control$MCMLE.steplength=="adaptive") steplen <- 1
 
   control$MCMC.effectiveSize <- control$MCMLE.effectiveSize
   control$MCMC.base.samplesize <- control$MCMC.samplesize
@@ -153,7 +155,7 @@ ergm.MCMLE <- function(init, nw, model,
     statsmatrices <- mapply(sweep, z$statsmatrices, statshifts, MoreArgs=list(MARGIN=2, FUN="+"), SIMPLIFY=FALSE)
     for(i in seq_along(statsmatrices)) colnames(statsmatrices[[i]]) <- model$coef.names
     nws.returned <- lapply(z$newnetworks,network::network.copy)
-    statsmatrix <- do.call("rbind",statsmatrices)
+    statsmatrix <- do.call(rbind,statsmatrices)
     
     if(verbose){
       cat("Back from unconstrained MCMC. Average statistics:\n")
@@ -169,7 +171,7 @@ ergm.MCMLE <- function(init, nw, model,
       statsmatrices.obs <- mapply(sweep, z.obs$statsmatrices, statshifts.obs, MoreArgs=list(MARGIN=2, FUN="+"), SIMPLIFY=FALSE)
       for(i in seq_along(statsmatrices.obs)) colnames(statsmatrices.obs[[i]]) <- model$coef.names
       nws.obs.returned <- lapply(z.obs$newnetworks, network::network.copy)
-      statsmatrix.obs <- do.call("rbind",statsmatrices.obs)
+      statsmatrix.obs <- do.call(rbind,statsmatrices.obs)
       
       if(verbose){
         cat("Back from constrained MCMC. Average statistics:\n")
@@ -238,7 +240,7 @@ ergm.MCMLE <- function(init, nw, model,
       while(v$loglikelihood > control$MCMLE.adaptive.trustregion){
         adaptive.steplength <- adaptive.steplength / 2
         if(!is.null(statsmatrix.0.obs)){
-          statsmatrix.obs <- sweep(statsmatrix.0.obs,2,(colMeans(statsmatrix.0.obs)-statsmean)*(1-adaptive.steplength))
+          statsmatrix.obs <- t(adaptive.steplength*t(statsmatrix.0.obs) + (1-adaptive.steplength)*statsmean) # I.e., shrink each point of statsmatrix.obs towards the centroid of statsmatrix.
         }else{
           statsmatrix <- sweep(statsmatrix.0,2,(1-adaptive.steplength)*statsmean,"-")
         }
@@ -273,13 +275,15 @@ ergm.MCMLE <- function(init, nw, model,
         cat("The log-likelihood did not improve.\n")
       }
       steplen.hist <- c(steplen.hist, adaptive.steplength)
+      steplen <- adaptive.steplength
     }else{
       steplen <-
         if(!is.null(control$MCMLE.steplength.margin))
           .Hummel.steplength(
             if(control$MCMLE.Hummel.esteq) esteq else statsmatrix.0[,!model$etamap$offsetmap,drop=FALSE], 
             if(control$MCMLE.Hummel.esteq) esteq.obs else statsmatrix.0.obs[,!model$etamap$offsetmap,drop=FALSE],
-            control$MCMLE.steplength.margin, control$MCMLE.steplength)
+            control$MCMLE.steplength.margin, control$MCMLE.steplength,steplength.prev=steplen,verbose=verbose,
+            x2.num.max=control$MCMLE.Hummel.miss.sample, steplen.maxit=control$MCMLE.Hummel.maxit)
         else control$MCMLE.steplength
       
       if(steplen==control$MCMLE.steplength || is.null(control$MCMLE.steplength.margin) || iteration==control$MCMLE.maxit) calc.MCSE <- TRUE
@@ -287,7 +291,7 @@ ergm.MCMLE <- function(init, nw, model,
       if(verbose){cat("Calling MCMLE Optimization...\n")}
       statsmean <- apply(statsmatrix.0,2,base::mean)
       if(!is.null(statsmatrix.0.obs)){
-        statsmatrix.obs <- sweep(statsmatrix.0.obs,2,(colMeans(statsmatrix.0.obs)-statsmean)*(1-steplen))
+        statsmatrix.obs <- t(steplen*t(statsmatrix.0.obs) + (1-steplen)*statsmean) # I.e., shrink each point of statsmatrix.obs towards the centroid of statsmatrix.
       }else{
         statsmatrix <- sweep(statsmatrix.0,2,(1-steplen)*statsmean,"-")
       }

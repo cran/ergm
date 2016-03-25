@@ -40,7 +40,7 @@ ergm.bridge.llr<-function(object, response=NULL, constraints=~., from, to, basis
   check.control.class("ergm.bridge")
 
   if(!is.null(control$seed)) {set.seed(as.integer(control$seed))}
-  if(!is.null(basis)) ergm.update.formula(form,basis~., from.new="basis")
+  if(!is.null(basis)) ergm.update.formula(object,basis~., from.new="basis")
   
   ## Here, we need to get the model object to get the likelihood and gradient functions.
   tmp<-ergm.bridge.preproc(object,basis,response)
@@ -169,7 +169,7 @@ ergm.bridge.dindstart.llk<-function(object, response=NULL, constraints=~., coef,
   if(!is.dyad.independent(dind))
     stop("Reference model `dind' must be dyad-independent.")
 
-  ergm.dind<-ergm(dind,estimate="MPLE",constraints=constraints,eval.loglik=FALSE,control=control.ergm(drop=FALSE, MPLE.max.dyad.types=control$MPLE.max.dyad.types), offset.coef = offset.dind)
+  ergm.dind<-suppressWarnings(ergm(dind,estimate="MPLE",constraints=constraints,eval.loglik=FALSE,control=control.ergm(drop=FALSE, MPLE.max.dyad.types=control$MPLE.max.dyad.types), offset.coef = offset.dind))
   
   if(is.null(coef.dind)){
     coef.dind<-ifelse(is.na(coef(ergm.dind)),0,coef(ergm.dind))

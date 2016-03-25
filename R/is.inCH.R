@@ -43,44 +43,48 @@
 #  ...and if the minimum is strictly negative, return FALSE because the point
 #  is not in the CH in that case.
 
+## Note: p can be a matrix. In that case, every row of p is checked.
 
-is.inCH <- function(p, M, ...) { # Pass extra arguments directly to LP solver
-  p <- as.vector(p)
+is.inCH <- function(p, M, verbose=FALSE, ...) { # Pass extra arguments directly to LP solver
+
+  if(is.null(dim(p))) p <- rbind(p)
+
   if (!is.matrix(M)) 
     stop("Second argument must be a matrix.")
-  if (length(p) != NCOL(M)) 
+  if (ncol(p) != ncol(M)) 
     stop("Number of columns in matrix (2nd argument) is not equal to dimension ",
          "of first argument.")
 
-  if(nrow(M)==1) return(isTRUE(all.equal(p, M, check.attributes = FALSE)))
-  
-  # Center p and M:
-  M <- sweep(M, 2, p, "-")
-  p <- p - p
+  if(nrow(M)==1){
+    for(i in seq_len(nrow(p))){
+      if(!isTRUE(all.equal(p[i,], M, check.attributes = FALSE))) return(FALSE)
+    }
+    return(TRUE)
+  }
 
-  # Rotate p and M onto their principal components, dropping linearly dependent dimensions:
-  e <- eigen(crossprod(M), symmetric=TRUE)
-  Q <- e$vec[,e$val>0 & sqrt(e$val/max(e$val))>sqrt(.Machine$double.eps)*2,drop=FALSE]
-  Mr <- M%*%Q # Columns of Mr are guaranteed to be linearly independent.
-  pr <- p%*%Q
+  ##
+  ## NOTE: PCA code has been moved to .Hummel.steplength().
+  ##
 
-  # Scale p and M:
-  Mrsd <- if(nrow(Mr)>1) pmax(apply(Mr, 2, sd), sqrt(.Machine$double.eps)) else rep(1, length(p))
-  Mr <- sweep(Mr, 2, Mrsd, "/")
-  pr <- pr/Mrsd
-  
-  q = c(1, pr) 
-  L = cbind(1, Mr)
+  L = cbind(1, M)
+
+  for(i in seq_len(nrow(p))){
+   q = c(1, p[i,]) 
 ############################################
 # USE lp FUNCTION FROM lpSolve PACKAGE:
-  ans <- lp(objective.in = c(-q, q),
-            const.mat = rbind( c(q, -q), cbind(L, -L)),
-            const.dir = "<=",
-            const.rhs = c(1, rep(0, NROW(L))), 
-            ...
-            )
-  if(ans$objval==0)return(TRUE)  #if the min is zero, the point p is in the CH of the points M
-  else return(FALSE)
+   ans <- lp(objective.in = c(-q, q),
+             const.mat = rbind( c(q, -q), cbind(L, -L)),
+             const.dir = "<=",
+             const.rhs = c(1, rep(0, NROW(L))), 
+             ...
+             )
+   if(ans$objval!=0){
+    if(verbose) cat(sprintf("is.inCH: iter= %d, outside hull.\n",i))
+    return(FALSE)  #if the min is not zero, the point p[i,] is not in the CH of the points M
+   }
+  }
+  if(verbose) cat(sprintf("is.inCH: iter= %d, inside hull.\n",i))
+  return(TRUE) # If all points passed the test, return TRUE.
 
 ##############################################
 ## USE solveLP FUNCTION FROM linprog PACKAGE (deprecated)
@@ -107,7 +111,3 @@ is.inCH <- function(p, M, ...) { # Pass extra arguments directly to LP solver
 #  else return(FALSE)
 
 }
-
-
-
-
