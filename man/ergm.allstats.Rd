@@ -5,7 +5,7 @@
 %  open source, and has the attribution requirements (GPL Section 7) at
 %  http://statnet.org/attribution
 %
-%  Copyright 2003-2015 Statnet Commons
+%  Copyright 2003-2017 Statnet Commons
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{ergm.allstats}
 \alias{ergm.allstats}
@@ -69,7 +69,7 @@ of statistics.}
 # Count by brute force all the edge statistics possible for a 7-node 
 # undirected network
 mynw <- network(matrix(0,7,7),dir=FALSE)
-unix.time(a <- ergm.allstats(mynw~edges))
+system.time(a <- ergm.allstats(mynw~edges))
 
 # Summarize results
 rbind(t(a$statmat),a$weights)

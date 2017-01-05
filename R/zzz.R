@@ -5,13 +5,13 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2015 Statnet Commons
+#  Copyright 2003-2017 Statnet Commons
 #######################################################################
 .onAttach <- function(lib, pkg){
   sm <- statnetStartupMessage("ergm", c("statnet","ergm.count","tergm"), TRUE)
   if(!is.null(sm)){
     packageStartupMessage(sm)
-    packageStartupMessage(paste(c(strwrap(paste("NOTE: If you use custom ERGM terms based on ",sQuote("ergm.userterms")," version prior to 3.1, you will need to perform a one-time update of the package boilerplate files (the files that you did not write or modify) from ",sQuote("ergm.userterms")," 3.1 or later. See help('eut-upgrade') for instructions.",sep="")),""),collapse="\n"))
+    packageStartupMessage(paste(c(strwrap(paste("NOTE: Versions before 3.6.1 had a bug in the implementation of the bd() constriant which distorted the sampled distribution somewhat. In addition, Sampson's Monks datasets had mislabeled verteces. See the NEWS and the documentation for more details.",sep="")),""),collapse="\n"))
   }
 }
 

@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2015 Statnet Commons
+#  Copyright 2003-2017 Statnet Commons
 #######################################################################
 
 #NOTE: a number of undocumented terms have been removed from this file
@@ -2405,7 +2405,6 @@ InitErgmTerm.nodefactor<-function (nw, arglist, ...) {
   if (any(NVL(a$base,0)!=0)) {
     u <- u[-a$base]
     if (length(u)==0) { # Get outta here!  (can happen if user passes attribute with one value)
-      print("Warning:  nodefactor term deleted because it contributes no statistics")
       return()
     }
   }
@@ -2461,7 +2460,6 @@ InitErgmTerm.nodeifactor<-function (nw, arglist, ...) {
   if (any(NVL(a$base,0)!=0)) {
     u <- u[-a$base]
     if (length(u)==0) { # Get outta here!  (can happen if user passes attribute with one value)
-      print("Warning:  nodeifactor term deleted because it contributes no statistics")
       return()
     }
   }
@@ -2634,7 +2632,6 @@ InitErgmTerm.nodeofactor<-function (nw, arglist, ...) {
   if (any(NVL(a$base,0)!=0)) {
     u <- u[-a$base]
     if (length(u)==0) { # Get outta here!  (can happen if user passes attribute with one value)
-      print("Warning:  nodeofactor term deleted because it contributes no statistics")
       return()
     }
   }

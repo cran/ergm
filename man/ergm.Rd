@@ -5,7 +5,7 @@
 %  open source, and has the attribution requirements (GPL Section 7) at
 %  http://statnet.org/attribution
 %
-%  Copyright 2003-2015 Statnet Commons
+%  Copyright 2003-2017 Statnet Commons
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{ergm}
 \alias{ergm}
@@ -278,7 +278,7 @@ Bender-deMoll S, Morris M, Moody J (2008).
 
 Butts CT (2007).
  \pkg{sna}: Tools for Social Network Analysis.
-R package version 2.3-2. \url{http://CRAN.R-project.org/package=sna}.
+R package version 2.3-2. \url{https://cran.r-project.org/package=sna}.
 
 Butts CT (2008).
  \pkg{network}: A Package for Managing Relational Data in \R.
@@ -286,7 +286,7 @@ Butts CT (2008).
  \url{http://www.jstatsoft.org/v24/i02/}.
 
 Butts C (2015).
- \pkg{network}: The Statnet Project (http://www.statnet.org). R package version 1.12.0, \url{http://CRAN.R-project.org/package=network}.
+ \pkg{network}: The Statnet Project (http://www.statnet.org). R package version 1.12.0, \url{https://cran.r-project.org/package=network}.
 
 Goodreau SM, Handcock MS, Hunter DR, Butts CT, Morris M (2008a).
  A \pkg{statnet} Tutorial.
@@ -311,6 +311,8 @@ Handcock MS (2003b).
  Statnet Project, Seattle, WA.
  Version 1.0, \url{statnet.org}.
 
+Handcock MS and Gile KJ (2010). Modeling Social Networks from Sampled Data. \emph{Annals of Applied Statistics}, 4(1), 5-25. \doi{10.1214/08-AOAS221}
+ 
 Handcock MS, Hunter DR, Butts CT, Goodreau SM, Morris M (2003a).
  \pkg{ergm}: A Package to Fit, Simulate and Diagnose
   Exponential-Family Models for Networks.
@@ -335,7 +337,7 @@ Hunter DR, Handcock MS, Butts CT, Goodreau SM, Morris M (2008b).
 
 Krivitsky PN (2012). Exponential-Family Random Graph Models for Valued
 Networks. \emph{Electronic Journal of Statistics}, 2012, 6,
-1100-1128. \href{http://dx.doi.org/10.1214/12-EJS696}{\code{doi:10.1214/12-EJS696}}
+1100-1128. \doi{10.1214/12-EJS696}
  
 Morris M, Handcock MS, Hunter DR (2008).
  Specification of Exponential-Family Random Graph Models:

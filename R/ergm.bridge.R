@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2015 Statnet Commons
+#  Copyright 2003-2017 Statnet Commons
 #######################################################################
 
 ## This is a helper function that constructs and returns the network
@@ -154,9 +154,9 @@ ergm.bridge.dindstart.llk<-function(object, response=NULL, constraints=~., coef,
   offset.dind <- c()
   if(is.null(dind)){
     dind<-~.
-    terms.full<-term.list.formula(form[[3]])
+    terms.full<-term.list.formula(form[[3]])[!m$term.skipped] # Ensure that terms to be added to the dyad-independent formula are aligned with terms that had actually made it into the model.
     for(i in seq_along(terms.full))
-      if(!is.null(m$terms[[i]]$dependence) && m$terms[[i]]$dependence==FALSE){
+      if(NVL(m$terms[[i]]$dependence, TRUE) == FALSE){
         dind<-append.rhs.formula(dind,list(terms.full[[i]]))
         if(m$offset[i]) offset.dind <- c(offset.dind, coef[(p.pos.full[i]+1):p.pos.full[i+1]])
       }

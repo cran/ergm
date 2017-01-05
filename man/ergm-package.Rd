@@ -5,7 +5,7 @@
 %  open source, and has the attribution requirements (GPL Section 7) at
 %  http://statnet.org/attribution
 %
-%  Copyright 2003-2015 Statnet Commons
+%  Copyright 2003-2017 Statnet Commons
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{ergm-package}
 \alias{ergm-package}
@@ -105,14 +105,14 @@ Boer P, Huisman M, Snijders T, Zeggelink E (2003).
 
 Butts CT (2007).
  \pkg{sna}: Tools for Social Network Analysis.
- R package version 2.3-2. \url{http://CRAN.R-project.org/package=sna}
+ R package version 2.3-2. \url{https://cran.r-project.org/package=sna}
 
 Butts CT (2008).
  \pkg{network}: A Package for Managing Relational Data in \R.
  \emph{Journal of Statistical Software}, 24(2).
  \url{http://www.jstatsoft.org/v24/i02/}.
 
-Butts C (2015). \pkg{network}: Classes for Relational Data. The Statnet Project (\url{http://www.statnet.org}). R package version 1.12.0, \url{http://CRAN.R-project.org/package=network}.
+Butts C (2015). \pkg{network}: Classes for Relational Data. The Statnet Project (\url{http://www.statnet.org}). R package version 1.12.0, \url{https://cran.r-project.org/package=network}.
 
 Frank, O., and Strauss, D.(1986). Markov graphs. Journal of the American
 Statistical Association, 81, 832-842. 
@@ -172,7 +172,7 @@ Krivitsky PN, Handcock MS (2007).
 
 Krivitsky PN (2012). Exponential-Family Random Graph Models for Valued
 Networks. \emph{Electronic Journal of Statistics}, 2012, 6,
-1100-1128. \href{http://dx.doi.org/10.1214/12-EJS696}{\code{doi:10.1214/12-EJS696}}
+1100-1128. \doi{10.1214/12-EJS696}
 
  
 Morris M, Handcock MS, Hunter DR (2008).
