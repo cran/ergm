@@ -121,15 +121,10 @@ ergm <- function(formula, response=NULL,
                  control=control.ergm(),
                  verbose=FALSE,...) {
   check.control.class()
+  control.toplevel(control,...)
   
   estimate <- match.arg(estimate)
-  # Backwards-compatibility:
-  control<-control.ergm.toplevel(control,...)
-  if(!is.null(list(...)$MPLEonly) && list(...)$MPLEonly){
-    warning("Argument MPLEonly is deprecated. Use ``estimate=\"MPLE\"'' instead." )
-    estimate <- "MPLE"
-  }
-  
+
   if(estimate=="CD"){
     control$init.method <- "CD"
     eval.loglik <- FALSE
@@ -237,6 +232,7 @@ ergm <- function(formula, response=NULL,
                                            all(c("b1degrees","b2degrees") %in% names(MHproposal$arguments$constraints))),
                     control$drop,
                     NULL)
+  if(!is.null(conddeg)) .Deprecated("Contrastive Divergence", old="Degree-Conditioned MPLE")
   
   if (verbose) cat("Initializing model.\n")
   

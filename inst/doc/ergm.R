@@ -209,7 +209,7 @@ plot(flomodel.03.gof)
 ### code chunk number 25: ergm.Rnw:382-386
 ###################################################
 mesamodel.02 <- ergm(mesa~edges)
-mesamodel.02.gof <- gof(mesamodel.02~distance,nsim=10)
+mesamodel.02.gof <- gof(mesamodel.02~distance,control=control.gof.formula(nsim=10))
 plot(mesamodel.02.gof)
 
 

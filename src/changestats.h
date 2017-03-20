@@ -5,7 +5,7 @@
  *  open source, and has the attribution requirements (GPL Section 7) at
  *  http://statnet.org/attribution
  *
- *  Copyright 2003-2013 Statnet Commons
+ *  Copyright 2003-2017 Statnet Commons
  */
 #ifndef CHANGESTATS_H
 #define CHANGESTATS_H
@@ -71,6 +71,7 @@ D_CHANGESTAT_FN(d_degree_by_attr);
 D_CHANGESTAT_FN(d_degree_w_homophily);
 D_CHANGESTAT_FN(d_degreepopularity);
 D_CHANGESTAT_FN(d_density);
+D_CHANGESTAT_FN(d_diff);
 D_CHANGESTAT_FN(d_dsp);
 D_CHANGESTAT_FN(d_dyadcov);
 /********************  changestats:  E    ***********/
@@ -97,7 +98,6 @@ D_CHANGESTAT_FN(d_gwtesp);
 D_CHANGESTAT_FN(d_gwtnsp);
 /********************  changestats:   H    ***********/
 D_CHANGESTAT_FN(d_hamming);
-D_CHANGESTAT_FN(d_hammingmix_constant);
 D_CHANGESTAT_FN(d_hammingmix);
 /********************  changestats:   I    ***********/
 D_CHANGESTAT_FN(d_idegree);

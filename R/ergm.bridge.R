@@ -33,14 +33,14 @@ ergm.bridge.preproc<-function(object, basis, response){
 
 ## The workhorse function: Uses bridge sampling to estimate the
 ## log-likelihood-ratio between two configurations `to' and `from' for
-## a model `object', using `nsteps' MCMC samples. If llronly==TRUE,
+## a formula `object', using `nsteps' MCMC samples. If llronly==TRUE,
 ## returns only the estimate. Otherwise, returns a list with more
 ## details. Other parameters are same as simulate.ergm.
 ergm.bridge.llr<-function(object, response=NULL, constraints=~., from, to, basis=NULL, verbose=FALSE, ..., llronly=FALSE, control=control.ergm.bridge()){
   check.control.class("ergm.bridge")
+  control.toplevel(..., myname="ergm.bridge")
 
   if(!is.null(control$seed)) {set.seed(as.integer(control$seed))}
-  if(!is.null(basis)) ergm.update.formula(object,basis~., from.new="basis")
   
   ## Here, we need to get the model object to get the likelihood and gradient functions.
   tmp<-ergm.bridge.preproc(object,basis,response)
@@ -117,6 +117,8 @@ ergm.bridge.llr<-function(object, response=NULL, constraints=~., from, to, basis
 ## having log-likelihood of 0.
 ergm.bridge.0.llk<-function(object, response=response, coef, ..., llkonly=TRUE, control=control.ergm.bridge()){
   check.control.class("ergm.bridge")
+  control.toplevel(...,myname="ergm.bridge")
+
   br<-ergm.bridge.llr(object, from=rep(0,length(coef)), to=coef, response=response, control=control, ...)
   if(llkonly) br$llr
   else c(br,llk=br$llr)
@@ -132,6 +134,8 @@ ergm.bridge.0.llk<-function(object, response=response, coef, ..., llkonly=TRUE, 
 ## formula with an edges term added unless redundant.
 ergm.bridge.dindstart.llk<-function(object, response=NULL, constraints=~., coef, dind=NULL, coef.dind=NULL,  basis=NULL, ..., llkonly=TRUE, control=control.ergm.bridge()){
   check.control.class("ergm.bridge")
+  control.toplevel(...,myname="ergm.bridge")
+
   if(!is.null(response)) stop("Only binary ERGMs are supported at this time.")
 
   ## Here, we need to get the model object to get the list of

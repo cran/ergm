@@ -1,3 +1,12 @@
+#  File R/ergm.CD.fixed.R in package ergm, part of the Statnet suite
+#  of packages for network analysis, http://statnet.org .
+#
+#  This software is distributed under the GPL-3 license.  It is free,
+#  open source, and has the attribution requirements (GPL Section 7) at
+#  http://statnet.org/attribution
+#
+#  Copyright 2003-2017 Statnet Commons
+#######################################################################
 ############################################################################
 # The <ergm.CD> function provides one of the styles of maximum
 # likelihood estimation that can be used. This one is the default and uses
@@ -240,7 +249,7 @@ ergm.CD.fixed <- function(init, nw, model,
             if(control$CD.Hummel.esteq) esteq else statsmatrix.0[,!model$etamap$offsetmap,drop=FALSE], 
             if(control$CD.Hummel.esteq) esteq.obs else statsmatrix.0.obs[,!model$etamap$offsetmap,drop=FALSE],
             control$CD.steplength.margin, control$CD.steplength, steplength.prev=steplen, verbose=verbose,
-            x2.num.max=control$CD.Hummel.miss.sample, steplen.maxit=control$CD.Hummel.maxit)
+            x2.num.max=control$CD.Hummel.miss.sample, steplength.maxit=control$CD.Hummel.maxit)
         else control$CD.steplength
       
       if(verbose){cat("Calling MCMLE Optimization...\n")}

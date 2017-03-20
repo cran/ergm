@@ -5,7 +5,7 @@
  *  open source, and has the attribution requirements (GPL Section 7) at
  *  http://statnet.org/attribution
  *
- *  Copyright 2003-2013 Statnet Commons
+ *  Copyright 2003-2017 Statnet Commons
  */
 #ifndef WTCHANGESTATS_H
 #define WTCHANGESTATS_H
@@ -22,6 +22,10 @@ WtD_CHANGESTAT_FN(d_cyclicalweights_threshold); WtS_CHANGESTAT_FN(s_cyclicalweig
 
 /********************  changestats:   E    ***********/
 WtD_CHANGESTAT_FN(d_edgecov_nonzero); WtD_CHANGESTAT_FN(d_edgecov_sum);
+
+/********************  changestats:   D    ***********/
+WtD_CHANGESTAT_FN(d_diff_nonzero);
+WtD_CHANGESTAT_FN(d_diff_sum);
 
 /********************  changestats:   G    ***********/
 WtD_CHANGESTAT_FN(d_greaterthan);

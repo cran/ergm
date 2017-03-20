@@ -5,7 +5,7 @@
  *  open source, and has the attribution requirements (GPL Section 7) at
  *  http://statnet.org/attribution
  *
- *  Copyright 2003-2013 Statnet Commons
+ *  Copyright 2003-2017 Statnet Commons
  */
 #include "R_ext/Rdynload.h"
 #include "changestat.h"
@@ -313,6 +313,7 @@ fun(MH,theta,gain,meanstats,nphase1,nsubphases,networkstatistics,samplesize,burn
 #undef MH_UNRECOVERABLE
 #undef MH_IMPOSSIBLE
 #undef MH_UNSUCCESSFUL
+#undef MH_CONSTRAINT
 #undef MH_QUIT_UNSUCCESSFUL
 #undef XOR
 #undef XNOR
@@ -363,6 +364,7 @@ return fun(MHp,nwp);
 #undef MH_UNRECOVERABLE
 #undef MH_IMPOSSIBLE
 #undef MH_UNSUCCESSFUL
+#undef MH_CONSTRAINT
 #undef MH_QUIT_UNSUCCESSFUL
 #undef XOR
 #undef XNOR
@@ -496,6 +498,10 @@ fun(ntoggles,toggletail,togglehead,nwp,m);
 #undef SETWT_IF_MORE_TO_COME
 #undef UNDO_PREVIOUS_SETWTS
 #undef EXEC_THROUGH_TOGGLES
+#undef SAMEDYAD
+#undef GETOLDWT
+#undef GETNEWWT
+#undef GETNEWWTOLD
 #undef WtD_CHANGESTAT_FN
 #undef WtS_CHANGESTAT_FN
 #undef D_FROM_S
@@ -740,6 +746,10 @@ return fun(MHp,theta,statistics,nsteps,staken,fVerbose,nwp,m);
 #undef SETWT_IF_MORE_TO_COME
 #undef UNDO_PREVIOUS_SETWTS
 #undef EXEC_THROUGH_TOGGLES
+#undef SAMEDYAD
+#undef GETOLDWT
+#undef GETNEWWT
+#undef GETNEWWTOLD
 #undef WtD_CHANGESTAT_FN
 #undef WtS_CHANGESTAT_FN
 #undef D_FROM_S
@@ -754,6 +764,7 @@ return fun(MHp,theta,statistics,nsteps,staken,fVerbose,nwp,m);
 #undef MH_UNRECOVERABLE
 #undef MH_IMPOSSIBLE
 #undef MH_UNSUCCESSFUL
+#undef MH_CONSTRAINT
 #undef MH_QUIT_UNSUCCESSFUL
 #undef XOR
 #undef XNOR
@@ -782,6 +793,7 @@ fun(MH);
 #undef MH_UNRECOVERABLE
 #undef MH_IMPOSSIBLE
 #undef MH_UNSUCCESSFUL
+#undef MH_CONSTRAINT
 #undef MH_QUIT_UNSUCCESSFUL
 #undef XOR
 #undef XNOR
@@ -858,6 +870,10 @@ fun(ntoggles,toggletail,togglehead,toggleweight,nwp,m);
 #undef SETWT_IF_MORE_TO_COME
 #undef UNDO_PREVIOUS_SETWTS
 #undef EXEC_THROUGH_TOGGLES
+#undef SAMEDYAD
+#undef GETOLDWT
+#undef GETNEWWT
+#undef GETNEWWTOLD
 #undef WtD_CHANGESTAT_FN
 #undef WtS_CHANGESTAT_FN
 #undef D_FROM_S

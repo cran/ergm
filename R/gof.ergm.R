@@ -99,6 +99,7 @@ gof.ergm <- function (object, ...,
                       control=control.gof.ergm(),
                       verbose=FALSE) {
   check.control.class(c("gof.ergm","gof.formula"))
+  control.toplevel(...)
   nw <- as.network(object$network)
 
   if(!is.null(object$response)) stop("GoF for valued ERGMs is not implemented at this time.")
@@ -106,9 +107,14 @@ gof.ergm <- function (object, ...,
   #Set up the defaults, if called with GOF==NULL
   if(is.null(GOF)){
     if(is.directed(nw))
-      GOF<- ~idegree + odegree + espartners + distance
+      GOF<- ~idegree + odegree + espartners + distance + model
     else
-      GOF<- ~degree + espartners + distance
+      GOF<- ~degree + espartners + distance + model
+  }
+  # Add a model term, unless it is explicitly excluded
+  model_trms <- unlist(dimnames(attr(terms(GOF),"factors"))[1])
+  if(!("model" %in% model_trms)){
+    GOF <- nonsimp.update.formula(GOF, ~ . + model)
   }
 
   ## FIXME: Need to do this differently. This approach will (probably)
@@ -151,10 +157,11 @@ gof.formula <- function(object, ...,
                         control=control.gof.formula(),
 			unconditional=TRUE,
                         verbose=FALSE) {
-  check.control.class()
+  check.control.class(c("gof.formula","gof.ergm"))
+  control.toplevel(...)
 
   if("response" %in% names(list(...))) stop("GoF for valued ERGMs is not implemented at this time.")
-  
+
   if(!is.null(control$seed)) {set.seed(as.integer(control$seed))}
   if (verbose) 
     cat("Starting GOF for the given ERGM formula.\n")
@@ -184,10 +191,17 @@ gof.formula <- function(object, ...,
     }
     if(is.null(GOF)){
       if(is.directed(nw))
-        GOF<- ~idegree + odegree + espartners + distance
+        GOF<- ~idegree + odegree + espartners + distance + model
       else
-        GOF<- ~degree + espartners + distance
+        GOF<- ~degree + espartners + distance + model
     }
+
+    # Add a model term, unless it is explicitly excluded
+    model_trms <- unlist(dimnames(attr(terms(GOF),"factors"))[1])
+    if(!("model" %in% model_trms)){
+      GOF <- nonsimp.update.formula(GOF, ~ . + model)
+    }
+  
     all.gof.vars <- ergm.rhs.formula(GOF)
   }
 
@@ -196,7 +210,7 @@ gof.formula <- function(object, ...,
   for(i in seq(along=all.gof.vars)){
     all.gof.vars[i] <- match.arg(all.gof.vars[i],
                                  c('distance', 'espartners', 'dspartners', 'odegree', 'idegree', 
-                                   'degree','triadcensus','model'
+                                   'degree', 'triadcensus', 'model'
                                    )
                                  )
   }
@@ -469,6 +483,7 @@ gof.formula <- function(object, ...,
     dimnames(pval.model)[[2]] <- c("obs","min","mean","max","MC p-value")
     pobs.model <- pval.model.top
     psim.model <- apply(sim.model,2,rank)/nrow(sim.model)
+    psim.model <- matrix(psim.model, ncol=ncol(sim.model)) # Guard against the case of sim.model having only one row.
     bds.model <- apply(psim.model,2,quantile,probs=c(0.025,0.975))
 
     returnlist$summary.model <- returnlist$pval.model <- pval.model

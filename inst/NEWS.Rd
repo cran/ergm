@@ -14,47 +14,69 @@
 % When a release is forked, copy the sections to a new release and
 % delete unused sections.
 
+\section{Changes in version 3.7.0}{
 
-\section{Changes in version 3.6.1}{
+  \subsection{NEW FEATURES}{
+    \itemize{
 
-  %% \subsection{NEW FEATURES}{
-  %%   \itemize{
-  %%     \item{
-  %%     }
-  %%   }
-  %% }
+      \item{
+	New term \code{\link[ergm]{diff}}, a directed analogue to
+	\code{\link{absdiff}} has been added, allowing for different
+	ways to handle differences in nodal attributes.
+      }
+      
+      \item{
+	By default, \code{\link{gof}} now checks goodness-of-fit
+	with respect to the estimated model in addition to the specified
+	terms. This can be used to diagnose convergence.
+      }
+
+      
+    }
+  }
    
   
    \subsection{BUG FIXES}{
      \itemize{
        
-       \item{The implementation of the bounded degree
-	 (\code{\link[ergm-constraints]{bd}}) constraint had a bug that
-	 distorted somewhat the distribution of networks simulated (and
-	 therefore estimated) away from the boundary of the constraint.}
-       
-       \item{Vertex labels in the \code{\link{sampson}} and
-	 \code{\link{samplike}} datasets have been corrected. (Thanks to
-	 Dr. Linda Tan Siew Li for pointing this error out.)}
+       \item{Terms \code{\link{concurrent}}, \code{\link{degree}},
+	 \code{\link{degrange}}, and \code{concurrentties}
+	 \dQuote{\code{byarg}} argument has been corrected to
+	 \dQuote{\code{by}}.}
 
-       \item{Use of the deprecated \code{\link{unix.time}} has been
-       changed to \code{\link{system.time}}.}
-       
-       \item{Miscellaneous fixes to the documentation and robustifications.}
+       \item{The bug in the Contrastive Divergence code that caused ERGM
+	 fits with \code{bd} constraint to hang has been fixed.}
 
+       \item{Documentation for the curved ERGM terms has been clarified
+	 in a number of places.}
+       
+       \item{Miscellaneous fixes and robustifications in the step-length
+	 code.}
+       
      }
    }
 
   
-   %% \subsection{OTHER USER-VISIBLE CHANGES}{
-   %%   \itemize{
-   %%   }
-   %% }
+   \subsection{OTHER USER-VISIBLE CHANGES}{
+     \itemize{
+       \item{
+	 The geometric decay parameter in \code{gw*sp} and
+	 \code{dgw*sp} terms has been renamed from \code{alpha} to
+	 \code{decay}, for consistency with \code{gw*degree} terms.
+       }
 
-  % \subsection{C-LEVEL FACILITIES}{
-  %   \itemize{
-  %   }
-  % }
+       \item{
+	 It is now explicitly an error to pass a \code{control=}
+	 parameter to the function directly. (Previously, such
+	 parameters were silently ignored.)
+       }
+     }    
+   }
+
+  %% \subsection{C-LEVEL FACILITIES}{
+  %%   \itemize{
+  %%   }
+  %% }
 
   % \subsection{UTILITIES}{
   %   \itemize{
@@ -77,6 +99,30 @@
 }
 
 
+\section{Changes in version 3.6.1}{   
+  
+   \subsection{BUG FIXES}{
+     \itemize{
+       
+       \item{The implementation of the bounded degree
+	 (\code{\link[ergm-constraints]{bd}}) constraint had a bug that
+	 distorted somewhat the distribution of networks simulated (and
+	 therefore estimated) away from the boundary of the constraint.}
+       
+       \item{Vertex labels in the \code{\link{sampson}} and
+	 \code{\link{samplike}} datasets have been corrected. (Thanks to
+	 Dr. Linda Tan Siew Li for pointing this error out.)}
+
+       \item{Use of the deprecated \code{\link{unix.time}} has been
+       changed to \code{\link{system.time}}.}
+       
+       \item{Miscellaneous fixes to the documentation and robustifications.}
+
+     }
+   }
+}
+
+
 \section{Changes in version 3.6.0}{
 
   \subsection{NEW FEATURES}{
@@ -92,8 +138,8 @@
 	    partners (\code{\link{dgwnsp}})}
 	}
 	In addition, terms for specific shared partner counts
-	(\code{\link{ddsp}}, \code{\link{desp}}, and \code{\link{dnsp}}) are also
-	implemented. See \code{\link{ergm-terms}} for help.
+	(\code{\link{ddsp}}, \code{\link{desp}}, and \code{\link{dnsp}})
+	have been implemented. See \code{\link{ergm-terms}} for help.
       }
       
       \item{New terms (binary and valued) \code{\link{b1cov}} and \code{\link{b2cov}} have
