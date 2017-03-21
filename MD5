@@ -1,5 +1,5 @@
 9213bf9bae382fb9c456e3d3fba74381 *BUGS
-4a0e85cd2e861f5d9b12523fbb31db75 *DESCRIPTION
+72af5b13f576504aa2ba9f7d860f2789 *DESCRIPTION
 a01d0617fa916f74f223da55a54d3e51 *LICENSE
 5dbe566b47748a0ac78cdf1564259790 *NAMESPACE
 a9827508e5a55e1c156ed146fb26efb8 *R/InitConstraint.R
@@ -105,7 +105,7 @@ ca6d22025a9b9a1ba9c9342c95c9a198 *R/robust.inverse.R
 b69aa3948e031ebedc514b4d67561d54 *R/summary.statistics.network.R
 54bf23367868a9ca643d5ada5b5fbd4c *R/wtd.median.R
 e5f01ab5e499f2789aa6fca3da2c15c2 *R/zzz.R
-d15dba11dad01b134d64e1863f9e878b *build/partial.rdb
+913c4b07058e1ea029b508db69d50db6 *build/partial.rdb
 21ec54eca14cfad39cab9985f8ede1cb *build/vignette.rds
 43ab90abeda17eaa4319dafa6c9a5dc2 *data/datalist
 95785d09e7b4356b61cf6811e67c325b *data/ecoli.RData
@@ -123,10 +123,10 @@ c9ac6635a27dd1f293aeb259fadf9dc2 *data/molecule.RData
 0f45f79c22290a2780643092333e0432 *data/samplk.RData
 9730972435bc47a3d0792b53bdea761c *data/sampson.RData
 d94b4baa6ad23cd2f026e8d671cf6761 *inst/CITATION
-a58dc3ed2521612636037491a152417d *inst/NEWS.Rd
+40645ca64e35bd2330ef3a704116e258 *inst/NEWS.Rd
 da0b7f028e14042db20dd27f50840fbf *inst/doc/ergm.R
 eae87e58cc3a9e7b3d64e78e35be3c81 *inst/doc/ergm.Rnw
-47eb84e0d017e86b73ad82df954b6eab *inst/doc/ergm.pdf
+a9aded91596af1a87a7049813141652f *inst/doc/ergm.pdf
 da2175e9ce5524a0d8e542f80b9a8634 *inst/include/MCMC.h
 3dbaacbc6f2647a96d679b41706b5a0b *inst/include/MHproposal.h
 e65660d7a0693c6889179d7fd54453e3 *inst/include/README
@@ -250,7 +250,7 @@ d55791a3bb798709298c52d7723955b7 *src/MPLEconddeg.c
 e33d4106e82f86e186de9816cb004711 *src/changestat.c
 db49c46d5bf8bd50fa8259cebf682246 *src/changestat.h
 eeb34184dcdb62ec01c76b7f9756b5c5 *src/changestats.c
-5ae14687ad9493ce22033cd3013fe406 *src/changestats.dgw_sp.c
+4fb4e59fde8f35e56bd46ea13fa27df9 *src/changestats.dgw_sp.c
 c94de418548a0da8947edaab4b1e9d16 *src/changestats.dgw_sp.h
 fc6c38bc1b0025a4954eea33ad95b88d *src/changestats.h
 447b17f87e0ceb05ac448d8d2689ed9a *src/changestats_coincidence.c

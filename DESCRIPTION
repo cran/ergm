@@ -1,6 +1,6 @@
 Package: ergm
-Version: 3.7.0
-Date: 2017-03-18
+Version: 3.7.1
+Date: 2017-03-20
 Title: Fit, Simulate and Diagnose Exponential-Family Models for
         Networks
 Authors@R: c(
@@ -23,7 +23,7 @@ License: GPL-3 + file LICENSE
 URL: http://statnet.org
 VignetteBuilder: rmarkdown
 NeedsCompilation: yes
-Packaged: 2017-03-18 23:46:46 UTC; pavel
+Packaged: 2017-03-20 21:05:48 UTC; pavel
 Author: Mark S. Handcock [aut],
   David R. Hunter [aut],
   Carter T. Butts [aut],
@@ -35,4 +35,4 @@ Author: Mark S. Handcock [aut],
   Skye Bender-deMoll [ctb]
 Maintainer: Pavel N. Krivitsky <pavel@uow.edu.au>
 Repository: CRAN
-Date/Publication: 2017-03-20 07:07:53 UTC
+Date/Publication: 2017-03-21 07:50:03 UTC
