@@ -1207,7 +1207,20 @@ InitErgmTerm.degree<-function(nw, arglist, ...) {
 }
 
 ################################################################################
+InitErgmTerm.degree1.5<-function (nw, arglist, ...) {
+  a <- check.ErgmTerm(nw, arglist, directed=FALSE,
+                      varnames = NULL,
+                      vartypes = NULL,
+                      defaultvalues = list(),
+                      required = NULL)
+  list(name="degreepopularity", coef.names="degree1.5",
+       minval=0, maxval=network.dyadcount(nw,FALSE)*sqrt(network.size(nw)-1), conflicts.constraints="degreedist")
+}
+
+
+################################################################################
 InitErgmTerm.degreepopularity<-function (nw, arglist, ...) {
+  .Deprecated("degree1.5")
   a <- check.ErgmTerm(nw, arglist, directed=FALSE,
                       varnames = NULL,
                       vartypes = NULL,
@@ -1300,24 +1313,25 @@ InitErgmTerm.dsp<-function(nw, arglist, ...) {
 InitErgmTerm.dyadcov<-function (nw, arglist, ...) {
   a <- check.ErgmTerm(nw, arglist,
                       varnames = c("x","attrname"),
-                      vartypes = c("matrix,network","character"),
+                      vartypes = c("matrix,network,character","character"),
                       defaultvalues = list(NULL,NULL),
                       required = c(TRUE,FALSE))
-  x<-a$x;attrname<-a$attrname
-  #Coerce x to an adjacency matrix
-  if(is.network(x))
-    xm<-as.matrix.network(x,matrix.type="adjacency",attrname)
-  else if(is.character(x))
-#   xm<-as.matrix.network(nw,matrix.type="adjacency",x)
-    xm<-get.network.attribute(nw,x)
+  ### Process the arguments
+  if(is.network(a$x))
+    xm<-as.matrix.network(a$x,matrix.type="adjacency",a$attrname)
+  else if(is.character(a$x)){
+    xm<-get.network.attribute(nw,a$x)
+    if (is.null(xm)){
+      stop("There is no network attribute named ",a$x,call.=FALSE)
+    }
+  }
   else
-    xm<-as.matrix(x)
-
+    xm<-as.matrix(a$x)
 
 #Update the terms list, adding the vectorized adjacency matrix
-  if(!is.null(attrname))
+  if(!is.null(a$attrname))
     cn<-paste("dyadcov", as.character(sys.call(0)[[3]][2]), 
-              as.character(attrname), sep = ".")
+              as.character(a$attrname), sep = ".")
   else
     cn<-paste("dyadcov", as.character(sys.call(0)[[3]][2]), sep = ".")
  
@@ -2167,7 +2181,20 @@ InitErgmTerm.idegree<-function(nw, arglist, ...) {
 
 
 ################################################################################
+InitErgmTerm.idegree1.5<-function (nw, arglist, ...) {
+  a <- check.ErgmTerm(nw, arglist, directed=TRUE,
+                      varnames = NULL,
+                      vartypes = NULL,
+                      defaultvalues = list(),
+                      required = NULL)
+  list(name="idegreepopularity", coef.names="idegree1.5",
+       minval=0, maxval=network.dyadcount(nw,FALSE)*sqrt(network.size(nw)-1), conflicts.constraints="idegreedist")
+}
+
+
+################################################################################
 InitErgmTerm.idegreepopularity<-function (nw, arglist, ...) {
+  .Deprecated("idegree1.5")
   a <- check.ErgmTerm(nw, arglist, directed=TRUE,
                       varnames = NULL,
                       vartypes = NULL,
@@ -2868,7 +2895,20 @@ InitErgmTerm.odegree<-function(nw, arglist, ...) {
 
 
 ################################################################################
+InitErgmTerm.odegree1.5<-function (nw, arglist, ...) {
+  a <- check.ErgmTerm(nw, arglist, directed=TRUE,
+                      varnames = NULL,
+                      vartypes = NULL,
+                      defaultvalues = list(),
+                      required = NULL)
+  list(name="odegreepopularity", coef.names="odegree1.5",
+       minval=0, maxval=network.dyadcount(nw,FALSE)*sqrt(network.size(nw)-1), conflicts.constraints="odegreedist")
+}
+
+
+################################################################################
 InitErgmTerm.odegreepopularity<-function (nw, arglist, ...) {
+  .Deprecated("odegree1.5")
   a <- check.ErgmTerm(nw, arglist, directed=TRUE,
                       varnames = NULL,
                       vartypes = NULL,

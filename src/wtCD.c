@@ -190,8 +190,8 @@ WtMCMCStatus WtCDStep (WtMHproposal *MHp,
 	  continue;
 	  
 	case MH_CONSTRAINT:
-	  MHp->logratio = -INFINITY; // Force rejection of proposal.
-	  break; // Do not attempt any more proposals in this multiplicity chain.
+	  cumlr = MHp->logratio = -INFINITY; // Force rejection of proposal.
+	  goto REJECT;
 	}
       }
       
@@ -297,6 +297,7 @@ WtMCMCStatus WtCDStep (WtMHproposal *MHp,
       }
 
     }else{
+    REJECT:
       if(fVerbose>=5){
 	Rprintf("Rejected.\n");
       }
