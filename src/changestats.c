@@ -5,7 +5,7 @@
  *  open source, and has the attribution requirements (GPL Section 7) at
  *  http://statnet.org/attribution
  *
- *  Copyright 2003-2017 Statnet Commons
+ *  Copyright 2003-2018 Statnet Commons
  */
 #include "changestats.h"
 
@@ -361,28 +361,6 @@ D_CHANGESTAT_FN(d_b1degree_by_attr) {
     TOGGLE_IF_MORE_TO_COME(i);
   }
   UNDO_PREVIOUS_TOGGLES(i);
-}
-
-/*****************
- changestat: d_b1factor
-*****************/
-D_CHANGESTAT_FN(d_b1factor) { 
-  double s, factorval;
-  Vertex b1;
-  int i, j;
-  
-  /* *** don't forget tail -> head */  
-  ZERO_ALL_CHANGESTATS(i);
-  FOR_EACH_TOGGLE(i) {
-    b1 = TAIL(i);
-    s = IS_OUTEDGE(b1, HEAD(i)) ? -1.0 : 1.0;
-    for (j=0; j<(N_CHANGE_STATS); j++) {
-      factorval = (INPUT_PARAM[j]);
-      CHANGE_STAT[j] += ((INPUT_ATTRIB[b1-1] != factorval) ? 0.0 : s);
-    }
-    TOGGLE_IF_MORE_TO_COME(i); /* Needed in case of multiple toggles */
-  }
-  UNDO_PREVIOUS_TOGGLES(i); /* Needed on exit in case of multiple toggles */
 }
 
 /*****************
@@ -4043,10 +4021,10 @@ D_CHANGESTAT_FN(d_meandeg) {
 
   CHANGE_STAT[0] = 0.0;
   FOR_EACH_TOGGLE(i) {
-    CHANGE_STAT[0] += (IS_OUTEDGE(TAIL(i), HEAD(i)) ? -2.0 : 2.0);
+    CHANGE_STAT[0] += (IS_OUTEDGE(TAIL(i), HEAD(i)) ? -2 : 2);
     TOGGLE_IF_MORE_TO_COME(i);
   }
-  CHANGE_STAT[0]/=(double)N_NODES;
+  CHANGE_STAT[0]/=N_NODES*(DIRECTED+1); // Effectively, change is 2/n if undirected and 1/n if directed.
   UNDO_PREVIOUS_TOGGLES(i);
 }
 
@@ -4078,6 +4056,37 @@ D_CHANGESTAT_FN(d_mix) {
         CHANGE_STAT[j] += edgeflag ? -1.0 : 1.0;
       }
 	  }
+    TOGGLE_IF_MORE_TO_COME(i);
+  }
+  UNDO_PREVIOUS_TOGGLES(i);
+}
+
+/*****************
+ changestat: d_mixmat
+ General mixing matrix (mm) implementation.
+*****************/
+D_CHANGESTAT_FN(d_mixmat){
+  unsigned int symm = ((int)INPUT_PARAM[0]) & 1;
+  unsigned int marg = ((int)INPUT_PARAM[0]) & 2;
+  double *tx = INPUT_PARAM;
+  double *hx = BIPARTITE? INPUT_PARAM : INPUT_PARAM + N_NODES;
+  double *cells = BIPARTITE? INPUT_PARAM + N_NODES + 1: INPUT_PARAM + N_NODES*2 + 1;
+  
+  int i;
+  ZERO_ALL_CHANGESTATS(i);
+  FOR_EACH_TOGGLE(i){
+    Vertex tail=TAIL(i);
+    Vertex head=HEAD(i);
+    unsigned int edgeflag = IS_OUTEDGE(tail, head);
+    unsigned int diag = tx[tail]==tx[head] && hx[tail]==hx[head];
+    for(unsigned int j=0; j<N_CHANGE_STATS; j++){
+      unsigned int thmatch = tx[tail]==cells[j*2] && hx[head]==cells[j*2+1];
+      unsigned int htmatch = tx[head]==cells[j*2] && hx[tail]==cells[j*2+1];
+      
+      int w = DIRECTED || BIPARTITE? thmatch :
+	(symm ? thmatch||htmatch : thmatch+htmatch)*(symm && marg && diag?2:1);
+      if(w) CHANGE_STAT[j] += edgeflag ? -w : w;
+    }
     TOGGLE_IF_MORE_TO_COME(i);
   }
   UNDO_PREVIOUS_TOGGLES(i);
@@ -4220,9 +4229,9 @@ D_CHANGESTAT_FN(d_nodecov) {
  changestat: d_nodefactor
 *****************/
 D_CHANGESTAT_FN(d_nodefactor) { 
-  double s, factorval;
+  double s;
   Vertex tail, head;
-  int i, j, tailattr, headattr;
+  int i;
   
   /* *** don't forget tail -> head */    
   ZERO_ALL_CHANGESTATS(i);
@@ -4230,13 +4239,10 @@ D_CHANGESTAT_FN(d_nodefactor) {
     tail = TAIL(i);
     head = HEAD(i);
     s = IS_OUTEDGE(tail, head) ? -1.0 : 1.0;
-    tailattr = INPUT_ATTRIB[tail-1];
-    headattr = INPUT_ATTRIB[head-1];
-    for (j=0; j < N_CHANGE_STATS; j++) {
-      factorval = INPUT_PARAM[j];
-      if (tailattr == factorval) CHANGE_STAT[j] += s;
-      if (headattr == factorval) CHANGE_STAT[j] += s;
-    }
+    int tailpos = INPUT_ATTRIB[tail-1];
+    int headpos = INPUT_ATTRIB[head-1];
+    if (tailpos!=-1) CHANGE_STAT[tailpos] += s;
+    if (headpos!=-1) CHANGE_STAT[headpos] += s;
     TOGGLE_IF_MORE_TO_COME(i);
   }
   UNDO_PREVIOUS_TOGGLES(i);
@@ -4268,17 +4274,15 @@ D_CHANGESTAT_FN(d_nodeicov) {
 D_CHANGESTAT_FN(d_nodeifactor) { 
   double s;
   Vertex head;
-  int i, j, headattr;
+  int i;
   
   /* *** don't forget tail -> head */    
   ZERO_ALL_CHANGESTATS(i);
   FOR_EACH_TOGGLE(i) {
     head = HEAD(i);
     s = IS_OUTEDGE(TAIL(i), head) ? -1.0 : 1.0;
-    headattr = INPUT_ATTRIB[head-1];
-    for (j=0; j < N_CHANGE_STATS; j++) {
-      if (headattr == INPUT_PARAM[j]) CHANGE_STAT[j] += s;
-    }
+    int headpos = INPUT_ATTRIB[head-1];
+    if (headpos!=-1) CHANGE_STAT[headpos] += s;
     TOGGLE_IF_MORE_TO_COME(i);
   }
   UNDO_PREVIOUS_TOGGLES(i);
@@ -4379,17 +4383,15 @@ D_CHANGESTAT_FN(d_nodeocov) {
 D_CHANGESTAT_FN(d_nodeofactor) { 
   double s;
   Vertex tail;
-  int i, j, tailattr;
+  int i;
   
   /* *** don't forget tail -> head */    
   ZERO_ALL_CHANGESTATS(i);
   FOR_EACH_TOGGLE(i) {
     tail = TAIL(i);
     s = IS_OUTEDGE(tail, HEAD(i)) ? -1.0 : 1.0;
-    tailattr = INPUT_ATTRIB[tail-1];
-    for (j=0; j < N_CHANGE_STATS; j++) {
-      if (tailattr == INPUT_PARAM[j]) CHANGE_STAT[j] += s;
-    }
+    int tailpos = INPUT_ATTRIB[tail-1];
+    if (tailpos!=-1) CHANGE_STAT[tailpos] += s;
     TOGGLE_IF_MORE_TO_COME(i);
   }
   UNDO_PREVIOUS_TOGGLES(i);
@@ -5697,8 +5699,8 @@ D_CHANGESTAT_FN(d_cyclicalties) {
 *****************/
 D_CHANGESTAT_FN(d_triadcensus) { 
   int i, j, edgeflag, a, b, c, d, e, edgecount, t300, 
-  t210, t120C, t120U, t120D, t201, t030C, t030T, t111U, 
-  t111D, t021C, t021U, t021D, t102, t012, t003;
+      t210, t120C, t120U, t120D, t201, t030C, t030T, t111U, 
+      t111D, t021C, t021U, t021D, t102, t012, t003;
   Vertex triadtype, node3, tail, head;
 
   /* *** don't forget tail -> head */    
@@ -5707,17 +5709,17 @@ D_CHANGESTAT_FN(d_triadcensus) {
     /* directed version */
     FOR_EACH_TOGGLE(i) {      
       edgeflag = IS_OUTEDGE(tail = TAIL(i), head = HEAD(i));
-      t300 = 0;
-      t210 = 0;
-      t120C = 0;  t120U = 0;   t120D = 0;  t201 = 0;
-      t030C = 0;  t030T = 0;   t111U = 0;  t111D = 0;
-      t021C = 0;  t021U = 0;   t021D = 0;  t102 = 0;
-      t012 = 0;
+       t300 = 0;
+       t210 = 0;
+      t120C = 0; t120U = 0; t120D = 0;  t201 = 0;
+      t030C = 0; t030T = 0; t111U = 0; t111D = 0;
+      t021C = 0; t021U = 0; t021D = 0;  t102 = 0;
+       t012 = 0;
       
-      if ((EdgetreeMinimum(nwp->outedges, head) != 0) || 
-        (EdgetreeMinimum(nwp->inedges, head) != 0) || 
-        (EdgetreeMinimum(nwp->outedges, tail) != 0) ||
-        (EdgetreeMinimum(nwp->inedges, tail) != 0)) {      
+      if ( (MIN_OUTEDGE(head) != 0) || 
+           (MIN_INEDGE(head)  != 0) || 
+           (MIN_OUTEDGE(tail) != 0) ||
+           (MIN_INEDGE(tail)  != 0) ) {      
 
           /* ****** loop through node3 ****** */
           for (node3=1; node3 <= N_NODES; node3++) { 
@@ -5852,9 +5854,9 @@ D_CHANGESTAT_FN(d_triadcensus) {
               }
             }
           }    /* ******  move to next node3 ******** */
-        }
-        else 
+        }else{
           t012 = t012 + (N_NODES - 2);  
+	}
 
         for(j = 0; j < N_CHANGE_STATS; j++) { 
           triadtype = (Vertex)INPUT_PARAM[j]; 
@@ -5862,9 +5864,9 @@ D_CHANGESTAT_FN(d_triadcensus) {
           switch(triadtype) { /* SEARCH_ON_THIS_TO_TRACK_DOWN_TRIADCENSUS_CHANGE
                                  to undo triadcensus change, change - to plus in 
                                   next two lines: */
-            case 1:  t003 = -(t300+t210+t120C+t120U+t120D+t201+t030C+t030T);
-            t003 = t003-(t111U+t111D+t021C+t021U+t021D+t102+t012);
-            CHANGE_STAT[j] += edgeflag ? -(double)t003 : (double)t003;
+            case 1:   t003 = -(t300+t210+t120C+t120U+t120D+t201+t030C+t030T);
+                      t003 = t003-(t111U+t111D+t021C+t021U+t021D+t102+t012);
+                      CHANGE_STAT[j] += edgeflag ? -(double)t003 : (double)t003;
             break;
             case 2:   CHANGE_STAT[j] += edgeflag ? -(double)t012 : (double)t012;
             break;
@@ -5876,13 +5878,13 @@ D_CHANGESTAT_FN(d_triadcensus) {
             break;
             case 6:   CHANGE_STAT[j] += edgeflag ? -(double)t021C : (double)t021C;
             break;
-            case 7:	  CHANGE_STAT[j] += edgeflag ? -(double)t111D : (double)t111D;
+            case 7:   CHANGE_STAT[j] += edgeflag ? -(double)t111D : (double)t111D;
             break;
-            case 8:	  CHANGE_STAT[j] += edgeflag ? -(double)t111U : (double)t111U;
+            case 8:   CHANGE_STAT[j] += edgeflag ? -(double)t111U : (double)t111U;
             break;
-            case 9:	  CHANGE_STAT[j] += edgeflag ? -(double)t030T : (double)t030T;
+            case 9:   CHANGE_STAT[j] += edgeflag ? -(double)t030T : (double)t030T;
             break;
-            case 10:   CHANGE_STAT[j] += edgeflag ? -(double)t030C : (double)t030C;
+            case 10:  CHANGE_STAT[j] += edgeflag ? -(double)t030C : (double)t030C;
             break;
             case 11:  CHANGE_STAT[j] += edgeflag ? -(double)t201 : (double)t201;
             break;
@@ -5894,7 +5896,7 @@ D_CHANGESTAT_FN(d_triadcensus) {
             break;
             case 15:  CHANGE_STAT[j] += edgeflag ? -(double)t210 : (double)t210;
             break;
-  	        case 16:  CHANGE_STAT[j] += edgeflag ? -(double)t300 : (double)t300;
+            case 16:  CHANGE_STAT[j] += edgeflag ? -(double)t300 : (double)t300;
             break;
           }
         }
@@ -5908,10 +5910,10 @@ D_CHANGESTAT_FN(d_triadcensus) {
       edgeflag = IS_OUTEDGE(tail = TAIL(i), head = HEAD(i));
       t300 = 0; t201 = 0; t102 = 0; t012 = 0;
 
-      if ((EdgetreeMinimum(nwp->outedges, head) != 0) || 
-          (EdgetreeMinimum(nwp->inedges, head) != 0) || 
-          (EdgetreeMinimum(nwp->outedges, tail) != 0) ||
-          (EdgetreeMinimum(nwp->inedges, tail) != 0)) {      
+      if ( (MIN_OUTEDGE(head) != 0) || 
+           (MIN_INEDGE(head)  != 0) || 
+           (MIN_OUTEDGE(tail) != 0) ||
+           (MIN_INEDGE(tail)  != 0) ) {      
 
             /* ****** loop through node3 ****** */
             for (node3=1; node3 <= N_NODES; node3++) { 
@@ -5954,7 +5956,7 @@ D_CHANGESTAT_FN(d_triadcensus) {
                                   to undo triadcensus change, change - to plus in 
                                   next line: */
               case 1:  t003 = -(t102+t201+t300);
-              CHANGE_STAT[j] += edgeflag ? -(double)t003 : (double)t003;
+                       CHANGE_STAT[j] += edgeflag ? -(double)t003 : (double)t003;
               break;
               case 2:  CHANGE_STAT[j] += edgeflag ? -(double)t102 : (double)t102;
               break;

@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2017 Statnet Commons
+#  Copyright 2003-2018 Statnet Commons
 #######################################################################
 ##########################################################################
 # The <ergm.getterms> function returns the terms of a given formula and
@@ -23,7 +23,10 @@
 #          
 ###########################################################################
 
+#' @describeIn ergm-deprecated Use [statnet.common::list_rhs.formula()] and [statnet.common::eval_lhs.formula()] instead.
+#' @export
 ergm.getterms<-function(formula) {
+  .dep_once("statnet.common::list_rhs.formula() and statnet.common::eval_lhs.formula()")
     if ((dc<-data.class(formula)) != "formula")
         stop (paste("Invalid formula of class ",dc))
     trms<-terms(formula)

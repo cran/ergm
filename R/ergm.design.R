@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2017 Statnet Commons
+#  Copyright 2003-2018 Statnet Commons
 #######################################################################
 #################################################################################
 # The <ergm.design> function functions as <ergm.Cprepare> would, but acts on the
@@ -13,11 +13,11 @@
 #
 # --PARAMETERS--
 #   nw     : the network
-#   model  : the model, as returned by <ergm.getmodel>
+#   model  : the model, as returned by <ergm_model>
 #   verbose: whether the design matrix should be printed (T or F); default=FALSE
 #
 # --RETURNED--
-#   Clist.miss
+#   fd
 #      if 'nw' has missing edges, see the return list, 'Clist', from the
 #                                 <ergm.Cprepare> function header
 #      if 'nw' hasn't any missing edges, the list will only contain NULL
@@ -35,19 +35,23 @@
 #      missing edges, and the remainder a column-major edgelist
 ################################################################################
 
-ergm.design <- function(nw, model, verbose=FALSE){
-  if(network.naedgecount(nw)==0){
-    Clist.miss <- list(tails=NULL, heads=NULL, nedges=0, dir=is.directed(nw))
-  }else{
-    Clist.miss <- ergm.Cprepare(is.na(nw), model)
-    if(verbose){
-      message("Design matrix:")
-      .message_print(summary(is.na(nw)))
-    }
-  }
-  Clist.miss
+#' @rdname ergm_Clist
+#' @description \code{ergm.design} obtain the set of informative dyads based on the network structure. Note that `model=` argument is not needed and will be removed in a future release.
+#' @param model an [`ergm_model`].
+#' @return \code{ergm.design} returns a \code{\link{rlebdm}} of
+#'   informative (non-missing, non fixed) dyads.
+#' @export ergm.design
+ergm.design <- function(nw, model=NULL, verbose=FALSE){
+  if(!is.null(model)) .dep_once(msg="Argument model= to ergm.design() is no longer used and will be removed in a future release.")
+  basecon <- ergm_conlist(~.attributes, nw)
+  misscon <- if(network.naedgecount(nw)) ergm_conlist(~.attributes+observed, nw)
+  as.rlebdm(basecon, misscon, which="informative")
 }
 
+#' @rdname ergm-deprecated
+#' @description \code{ergm.Cprepare.miss} has been deprecated in favor of \code{\link{to_ergm_Cdouble}(is.na(nw))} or the [`rlebdm`]-based representations.
+#' @export ergm.Cprepare.miss
 ergm.Cprepare.miss <- function(nw){
+  .dep_once("to_ergm_Cdouble(is.na(nw))")
   ergm.Cprepare.el(is.na(nw))
 }

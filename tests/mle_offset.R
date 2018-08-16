@@ -5,13 +5,14 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2017 Statnet Commons
+#  Copyright 2003-2018 Statnet Commons
 #######################################################################
 library(statnet.common)
 opttest({
 library(ergm)
+options(ergm.eval.loglik=FALSE)
 data(florentine)
- 
+
 fit1 <- ergm(flomarriage ~ offset(edges) + kstar(2:3), offset.coef=-1, control=control.ergm(MCMLE.maxit=3))
 
 print(summary(fit1))

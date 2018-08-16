@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2017 Statnet Commons
+#  Copyright 2003-2018 Statnet Commons
 #######################################################################
 #############################################################################
 # The <ergm.MCMCse.lognormal> function computes and returns the MCMC lognormal
@@ -18,7 +18,7 @@
 #   statsmatrix.obs :  the matrix of network statistics on the constrained network
 #   H               :  the Hessian matrix
 #   H.obs           :  the Hessian matrix on the constrained network
-#   model           :  the model, as returned by <ergm.getmodel>
+#   model           :  the model, as returned by <ergm_model>
 #
 # --RETURNED--
 #   mc.se: the vector of MCMC lognormal standard error estimates for each theta
@@ -42,13 +42,13 @@ ergm.MCMCse.lognormal<-function(theta, init, statsmatrix, statsmatrix.obs,
   av <- apply(statsmatrix, 2, mean)
 # av <- apply(statsmatrix,2,median)
   xsim <- sweep(statsmatrix, 2, av, "-")
-  gsim <- .ergm.esteq(theta, model, xsim)
+  gsim <- ergm.estfun(xsim, theta, model)
   xobs <- -av
   if(!is.null(statsmatrix.obs)){
    av.obs <- apply(statsmatrix.obs, 2, mean)
 #  av.obs <- apply(statsmatrix.obs, 2, median)
    xsim.obs <- sweep(statsmatrix.obs, 2, av.obs,"-")
-   gsim.obs <- .ergm.esteq(theta, model, xsim.obs)
+   gsim.obs <- ergm.estfun(xsim.obs, theta, model)
    xsim.obs <- xsim.obs[,!offsetmap, drop=FALSE]
    xobs <- av.obs-av
   }
@@ -57,7 +57,7 @@ ergm.MCMCse.lognormal<-function(theta, init, statsmatrix, statsmatrix.obs,
 
   #  Calculate the auto-covariance of the MCMC suff. stats.
   #  and hence the MCMC s.e.
-  cov.zbar <- .ergm.mvar.spec0(gsim) / nrow(gsim)
+  cov.zbar <- spectrum0.mvar(gsim) / nrow(gsim)
 
   # Identify canonical parameters corresponding to non-offset statistics that do not vary
   novar <- rep(TRUE, nrow(H))
@@ -66,7 +66,7 @@ ergm.MCMCse.lognormal<-function(theta, init, statsmatrix, statsmatrix.obs,
   #  Calculate the auto-covariance of the Conditional MCMC suff. stats.
   #  and hence the Conditional MCMC s.e.
   if(!is.null(statsmatrix.obs)){
-    cov.zbar.obs <- .ergm.mvar.spec0(gsim.obs) / nrow(gsim.obs)
+    cov.zbar.obs <- spectrum0.mvar(gsim.obs) / nrow(gsim.obs)
 
     novar <- novar & (diag(H.obs)<sqrt(.Machine$double.eps))
   }else{

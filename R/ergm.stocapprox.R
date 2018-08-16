@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2017 Statnet Commons
+#  Copyright 2003-2018 Statnet Commons
 #######################################################################
 ############################################################################
 # The <ergm.stocapprox> function provides one of the styles of maximum
@@ -19,7 +19,7 @@
 # --PARAMETERS--
 #   init    : the initial theta values
 #   nw        : the network
-#   model     : the model, as returned by <ergm.getmodel>
+#   model     : the model, as returned by <ergm_model>
 #   Clist     : a list of several network and model parameters,
 #               as returned by <ergm.Cprepare>
 #   initialfit: an ergm object, as the initial fit
@@ -33,8 +33,8 @@
 #                  'interval'
 #               the use of these variables is explained in the
 #               <control.ergm> function header
-#   MHproposal: an MHproposal object for 'nw', as returned by
-#               <getMHproposal>
+#   proposal: an proposal object for 'nw', as returned by
+#               <getproposal>
 #   verbose   : whether the MCMC sampling should be verbose (T or F);
 #               default=FALSE
 #
@@ -45,7 +45,7 @@
 ###########################################################################      
 
 ergm.stocapprox <- function(init, nw, model, Clist,
-                            control, MHproposal,
+                            control, proposal,
                             verbose=FALSE){
     
   #phase 1:  Estimate diagonal elements of D matrix (covariance matrix for init)
@@ -55,7 +55,7 @@ ergm.stocapprox <- function(init, nw, model, Clist,
   message("Stochastic approximation algorithm with theta_0 equal to:")
   print(init)
   control <- c(control, list(phase1=n1,
-                  stats=summary.statistics.network(model$formula, basis=nw)-model$target.stats,
+                  stats=summary(model, nw)-model$target.stats,
                   target.stats=model$target.stats)
                  )
 # message(paste("Phase 1: ",n1,"iterations"))
@@ -86,7 +86,7 @@ ergm.stocapprox <- function(init, nw, model, Clist,
   }
 # message(paste("Phase 2: a=",a,"Total Samplesize",control$MCMC.samplesize,""))
 # aDdiaginv <- a * Ddiaginv
-  z <- ergm.phase12(nw, model, MHproposal, 
+  z <- ergm.phase12(nw, model, proposal, 
                     eta, control, verbose=TRUE)
   nw <- z$newnetwork
 # toggle.dyads(nw, head = z$changed[,2], tail = z$changed[,3])
@@ -108,13 +108,13 @@ ergm.stocapprox <- function(init, nw, model, Clist,
 #message(paste(" eta=",eta,")",sep=""))
 
   # Obtain MCMC sample
-  z <- ergm.getMCMCsample(nw, model, MHproposal, eta0, control, verbose)
+  z <- ergm_MCMC_sample(nw, model, proposal, control, eta=eta0, verbose=max(verbose-1,0))
   
   # post-processing of sample statistics:  Shift each row,
   # attach column names
-  statshift <- summary.statistics.network(model$formula, basis=nw) - model$target.stats
-  statsmatrix <- sweep(z$statsmatrix, 2, statshift, "+")
-  colnames(statsmatrix) <- model$coef.names
+  statshift <- summary(model, nw) - model$target.stats
+  statsmatrix <- sweep(as.matrix(z$stats), 2, statshift, "+")
+  colnames(statsmatrix) <- param_names(model,canonical=TRUE)
   #v$sample <- statsmatrix
 # ubar <- apply(z$statsmatrix, 2, mean)
 # hessian <- (t(z$statsmatrix) %*% z$statsmatrix)/n3 - outer(ubar,ubar)

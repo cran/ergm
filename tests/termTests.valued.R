@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2017 Statnet Commons
+#  Copyright 2003-2018 Statnet Commons
 #######################################################################
 
 library(ergm)
@@ -199,31 +199,29 @@ for(tol in unique(c(runif(1,0,2), dirvt, undvt, bipvt))){
 }
 
 # ininterval
+charospec <- function(o1, o2) paste0(if(o1)'('else'[',if(o2)')'else']')
 for(o1 in c(FALSE, TRUE)){
   for(o2 in c(FALSE, TRUE)){
     for(lv in c(-Inf,dirvt, Inf))
-      for(uv in c(-Inf,dirvt, Inf))
-        tst(sum(
-        ((o1 & dirm>lv) | (!o1 & dirm>=lv)) &
-        ((o2 & dirm<uv) | (!o2 & dirm<=uv)),
-        na.rm=TRUE),
-        summary(dirnw ~ ininterval(lv, uv, c(o1,o2)), response="w"))
-
+      for(uv in c(-Inf,dirvt, Inf)){
+        truth <- sum(((o1 & dirm>lv) | (!o1 & dirm>=lv)) & ((o2 & dirm<uv) | (!o2 & dirm<=uv)), na.rm=TRUE)
+        tst(truth, summary(dirnw ~ ininterval(lv, uv, c(o1,o2)), response="w"))
+        tst(truth, summary(dirnw ~ ininterval(lv, uv, charospec(o1,o2)), response="w"))
+      }
+    
     for(lv in c(-Inf,undvt, Inf))
-      for(uv in c(-Inf,undvt, Inf))
-        tst(sum(
-        ((o1 & undm>lv) | (!o1 & undm>=lv)) &
-        ((o2 & undm<uv) | (!o2 & undm<=uv)),
-        na.rm=TRUE)/2,
-        summary(undnw ~ ininterval(lv, uv, c(o1,o2)), response="w"))
-
+      for(uv in c(-Inf,undvt, Inf)){
+        truth <- sum(((o1 & undm>lv) | (!o1 & undm>=lv)) & ((o2 & undm<uv) | (!o2 & undm<=uv)), na.rm=TRUE)/2
+        tst(truth, summary(undnw ~ ininterval(lv, uv, c(o1,o2)), response="w"))
+        tst(truth, summary(undnw ~ ininterval(lv, uv, charospec(o1,o2)), response="w"))
+      }
+    
     for(lv in c(-Inf,bipvt, Inf))
-      for(uv in c(-Inf,bipvt, Inf))
-        tst(sum(
-        ((o1 & bipm>lv) | (!o1 & bipm>=lv)) &
-        ((o2 & bipm<uv) | (!o2 & bipm<=uv)),
-        na.rm=TRUE),
-        summary(bipnw ~ ininterval(lv, uv, c(o1,o2)), response="w"))
+      for(uv in c(-Inf,bipvt, Inf)){
+        truth <- sum(((o1 & bipm>lv) | (!o1 & bipm>=lv)) & ((o2 & bipm<uv) | (!o2 & bipm<=uv)), na.rm=TRUE)
+        tst(truth, summary(bipnw ~ ininterval(lv, uv, c(o1,o2)), response="w"))
+        tst(truth, summary(bipnw ~ ininterval(lv, uv, charospec(o1,o2)), response="w"))
+      }
   }
 }
 
@@ -296,29 +294,36 @@ for(base in list(0, 1, 2, 1:2, 3)){
   tst(sapply(sort(unique(f))[keep], function(x) sum((f==x)*(dirm!=0),na.rm=TRUE)), summary(dirnw ~ nodeofactor("f", base=base, form="nonzero"), response="w"))
 }
 
-
 # TODO: nodeosqrtcovar
 
 # TODO: nodesqrtcovar
+
+# receiver
+for(base in list(0, 1, 2, 1:2, 3)){
+  i <- seq_len(network.size(dirnw))
+  keep <- if(all(base==0)) i else i[-base]
+  tst(sapply(sort(unique(i))[keep], function(x) sum((i==x)*t(dirm),na.rm=TRUE)), summary(dirnw ~ receiver(base=base), response="w"))
+  tst(sapply(sort(unique(i))[keep], function(x) sum((i==x)*t(dirm!=0),na.rm=TRUE)), summary(dirnw ~ receiver(base=base, form="nonzero"), response="w"))
+}
+
+# sender
+for(base in list(0, 1, 2, 1:2, 3)){
+  i <- seq_len(network.size(dirnw))
+  keep <- if(all(base==0)) i else i[-base]
+  tst(sapply(sort(unique(i))[keep], function(x) sum((i==x)*dirm,na.rm=TRUE)), summary(dirnw ~ sender(base=base), response="w"))
+  tst(sapply(sort(unique(i))[keep], function(x) sum((i==x)*(dirm!=0),na.rm=TRUE)), summary(dirnw ~ sender(base=base, form="nonzero"), response="w"))
+}
+
+# sociality
+for(base in list(0, 1, 2, 1:2, 3)){
+  i <- seq_len(network.size(dirnw))
+  keep <- if(all(base==0)) i else i[-base]
+  tst(sapply(sort(unique(i))[keep], function(x) sum((i==x)*undm,na.rm=TRUE)), summary(undnw ~ sociality(base=base), response="w"))
+  tst(sapply(sort(unique(i))[keep], function(x) sum((i==x)*(undm!=0),na.rm=TRUE)), summary(undnw ~ sociality(base=base, form="nonzero"), response="w"))
+}
+
 
 # sum
 tst(sum(dirm,na.rm=TRUE), summary(dirnw ~ sum, response="w"))
 tst(sum(undm,na.rm=TRUE)/2, summary(undnw ~ sum, response="w"))
 tst(sum(bipm,na.rm=TRUE), summary(bipnw ~ sum, response="w"))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

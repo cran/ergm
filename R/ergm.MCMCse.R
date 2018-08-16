@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2017 Statnet Commons
+#  Copyright 2003-2018 Statnet Commons
 #######################################################################
 #############################################################################
 # The <ergm.MCMCse> function computes and returns the MCMC standard errors
@@ -15,7 +15,7 @@
 #   init          :  the vector of initial theta coefficients
 #   statsmatrix     :  the matrix of network statistics
 #   statsmatrix.obs :  the matrix of network statistics on the constrained network
-#   model           :  the model, as returned by <ergm.getmodel>
+#   model           :  the model, as returned by <ergm_model>
 #
 # --RETURNED--
 #   the variance of the MCMC sampling as a list containing:
@@ -41,13 +41,13 @@ ergm.MCMCse<-function(theta, init, statsmatrix, statsmatrix.obs,
   av <- apply(statsmatrix, 2, mean)
 # av <- apply(statsmatrix,2,median)
   xsim <- sweep(statsmatrix, 2, av, "-")
-  gsim <- .ergm.esteq(theta, model, xsim)
+  gsim <- ergm.estfun(xsim, theta, model)
   xobs <- -av
   if(!is.null(statsmatrix.obs)){
    av.obs <- apply(statsmatrix.obs, 2, mean)
 #  av.obs <- apply(statsmatrix.obs, 2, median)
    xsim.obs <- sweep(statsmatrix.obs, 2, av.obs,"-")
-   gsim.obs <- .ergm.esteq(theta, model, xsim.obs)
+   gsim.obs <- ergm.estfun(xsim.obs, theta, model)
    xsim.obs <- xsim.obs[,!offsetmap, drop=FALSE]
    xobs <- av.obs-av
   }
@@ -67,7 +67,7 @@ ergm.MCMCse<-function(theta, init, statsmatrix, statsmatrix.obs,
 
   #  Calculate the auto-covariance of the MCMC suff. stats.
   #  and hence the MCMC s.e.
-  cov.zbar <- .ergm.mvar.spec0(gsim) * sum(prob^2)
+  cov.zbar <- spectrum0.mvar(gsim) * sum(prob^2)
   imp.factor <- sum(prob^2)*length(prob)
 
   # Identify canonical parameters corresponding to non-offset statistics that do not vary
@@ -84,7 +84,7 @@ ergm.MCMCse<-function(theta, init, statsmatrix, statsmatrix.obs,
     htmp.obs <- sweep(sweep(gsim.obs, 2, E.obs, "-"), 1, sqrt(prob.obs), "*")
     H.obs <- crossprod(htmp.obs, htmp.obs)
 
-    cov.zbar.obs <- .ergm.mvar.spec0(gsim.obs) * sum(prob.obs^2)
+    cov.zbar.obs <- spectrum0.mvar(gsim.obs) * sum(prob.obs^2)
     imp.factor.obs <- sum(prob.obs^2)*length(prob.obs)
 
     novar <- novar & (diag(H.obs)<sqrt(.Machine$double.eps))
@@ -110,11 +110,11 @@ ergm.MCMCse<-function(theta, init, statsmatrix, statsmatrix.obs,
 
   mc.cov <- matrix(NA,ncol=length(novar),nrow=length(novar))
 
-  if(sum(!novar)==0 || inherits(try(solve(H)),"try-error")){
+  if(sum(!novar)==0 || inherits(try(solve(H,tol=1e-20)),"try-error")){
     warning("Approximate Hessian matrix is singular. Standard errors due to MCMC approximation of the likelihood cannot be evaluated. This is likely due to insufficient MCMC sample size or highly correlated model terms.")
   }else{
-    mc.cov0 <- solve(H, cov.zbar)
-    mc.cov0 <- solve(H, t(mc.cov0))
+    mc.cov0 <- solve(H, cov.zbar, tol=1e-20)
+    mc.cov0 <- solve(H, t(mc.cov0), tol=1e-20)
     mc.cov[!novar,!novar] <- mc.cov0
   }
 

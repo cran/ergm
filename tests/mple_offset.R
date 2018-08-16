@@ -5,11 +5,12 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2017 Statnet Commons
+#  Copyright 2003-2018 Statnet Commons
 #######################################################################
 library(statnet.common)
 opttest({
 library(ergm)
+options(ergm.eval.loglik=FALSE)
 data(sampson)
 
 set.seed(0)
@@ -17,10 +18,10 @@ set.seed(0)
 total.theta <- coef(ergm(samplike~edges))
 offset.theta <- pi
 
-stopifnot(all.equal(total.theta, coef(ergm(samplike~edges+offset(edges), offset.coef=c(pi)))[1],
+stopifnot(all.equal(coef(ergm(samplike~edges+offset(edges), offset.coef=c(pi)))[1],
           total.theta-offset.theta, tolerance=0.00001))
 
-stopifnot(all.equal(total.theta, coef(ergm(samplike~offset(edges)+edges, offset.coef=c(pi)))[1], 
+stopifnot(all.equal(coef(ergm(samplike~offset(edges)+edges, offset.coef=c(pi)))[2], 
           total.theta-offset.theta, tolerance=0.00001))
 
 data(florentine)

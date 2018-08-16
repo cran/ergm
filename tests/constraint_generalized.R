@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2017 Statnet Commons
+#  Copyright 2003-2018 Statnet Commons
 #######################################################################
 library(statnet.common)
 
@@ -88,14 +88,9 @@ opttest({
 			stopifnot(all(!sapply(s1,function(x)as.data.frame(t(as.edgelist(absent))) %in% as.data.frame(t(as.edgelist(x))))))
 			
 			
-		})
 		
 		
 # fixallbut
-
-opttest({
-			
-	library(ergm)
 	
 	net1 <- network(10,directed=FALSE,density=0.5)
 
@@ -104,10 +99,11 @@ opttest({
 	t1 <- ergm(net1~edges,constraint=~fixallbut(free.dyads=free.dyads))
 	
 	s1 <-simulate(t1,1000)
+
+        fixed.dyads <- as.edgelist(!network.update(net1,free.dyads,matrix.type="edgelist"))
+	fixed.dyads.state <- net1[fixed.dyads]
 	
-	fixed.dyads.state <- net1[as.edgelist(invert.network(network.update(net1,free.dyads,matrix.type="edgelist")))]
-	
-	stopifnot(all(sapply(s1,function(x) all.equal(x[as.edgelist(invert.network(network.update(x,free.dyads,matrix.type="edgelist")))],fixed.dyads.state))))
+	stopifnot(all(sapply(s1,function(x) all.equal(x[fixed.dyads],fixed.dyads.state))))
 	
 	
 })

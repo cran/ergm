@@ -5,8 +5,10 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2017 Statnet Commons
+#  Copyright 2003-2018 Statnet Commons
 #######################################################################
+#' @describeIn network.list A [print()] method for network lists.
+#' @export
 print.network.list <- function(x, stats.print=FALSE, ...) {
   summary.network.list(x, stats.print=stats.print, ...)
   invisible(x)

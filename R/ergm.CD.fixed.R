@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2017 Statnet Commons
+#  Copyright 2003-2018 Statnet Commons
 #######################################################################
 ############################################################################
 # The <ergm.CD> function provides one of the styles of maximum
@@ -18,7 +18,7 @@
 # --PARAMETERS--
 #   init         : the initial theta values
 #   nw             : the network 
-#   model          : the model, as returned by <ergm.getmodel>
+#   model          : the model, as returned by <ergm_model>
 #   initialfit     : an ergm object, as the initial fit, possibly returned
 #                    by <ergm.initialfit>
 #   control     : a list of parameters for controlling the MCMC sampling;
@@ -34,10 +34,10 @@
 #       epsilon    : ??, this is essentially unused, except to print it if
 #                    'verbose'=T and to pass it along to <ergm.estimate>,
 #                    which ignores it;   
-#   MHproposal     : an MHproposal object for 'nw', as returned by
-#                    <MHproposal>
-#   MHproposal.obs : an MHproposal object for the observed network of'nw',
-#                    as returned by <MHproposal>
+#   proposal     : an proposal object for 'nw', as returned by
+#                    <proposal>
+#   proposal.obs : an proposal object for the observed network of'nw',
+#                    as returned by <proposal>
 #   verbose        : whether the MCMC sampling should be verbose (T or F);
 #                    default=FALSE
 #   sequential     : whether to update the network returned in
@@ -59,7 +59,7 @@
 
 ergm.CD.fixed <- function(init, nw, model,
                              control, 
-                             MHproposal, MHproposal.obs,
+                             proposal, proposal.obs,
                              verbose=FALSE,
                              estimate=TRUE,
                              response=NULL, ...) {
@@ -80,8 +80,8 @@ ergm.CD.fixed <- function(init, nw, model,
   nw.orig <- network.copy(nw)
 
   # Impute missing dyads.
-  nw <- single.impute.dyads(nw, response=response)
-  model$nw.stats <- summary(model$formula, response=response, basis=nw)
+  nw <- single.impute.dyads(nw, response=response, constraints=proposal$arguments$constraints, constraints.obs=proposal.obs$arguments$constraints, min_informative = control$obs.MCMC.impute.min_informative, default_density = control$obs.MCMC.impute.default_density, verbose=verbose)
+  model$nw.stats <- summary(model, nw, response=response)
 
   nws <- rep(list(nw),nthreads) # nws is now a list of networks.
 
@@ -96,7 +96,7 @@ ergm.CD.fixed <- function(init, nw, model,
   statshifts <- rep(list(statshift), nthreads) # Each network needs its own statshift.
   
   # Is there observational structure?
-  obs <- ! is.null(MHproposal.obs)
+  obs <- ! is.null(proposal.obs)
   if(obs){
     control$CD.nsteps<-control$CD.nsteps.obs
     control$CD.multiplicity<-control$CD.multiplicity.obs
@@ -124,14 +124,14 @@ ergm.CD.fixed <- function(init, nw, model,
     if(verbose){
       message("Iteration ",iteration," of at most ", control$CD.maxit,
           " with parameter: ")
-      .message_print(mcmc.init)
+      message_print(mcmc.init)
     }else{
       message("Iteration ",iteration," of at most ", control$CD.maxit,": ")
     }
 
     # Obtain MCMC sample
     mcmc.eta0 <- ergm.eta(mcmc.init, model$etamap)
-    z <- ergm.getCDsample(nws, model, MHproposal, mcmc.eta0, control, verbose, response=response, theta=mcmc.init, etamap=model$etamap)
+    z <- ergm.getCDsample(nws, model, proposal, mcmc.eta0, control, verbose, response=response, theta=mcmc.init, etamap=model$etamap)
 
     # post-processing of sample statistics:  Shift each row by the
     # vector model$nw.stats - model$target.stats, store returned nw
@@ -140,44 +140,50 @@ ergm.CD.fixed <- function(init, nw, model,
     # (i.e., the estimation goal is to use the statsmatrix to find 
     # parameters that will give a mean vector of zero)
     statsmatrices <- mapply(sweep, z$statsmatrices, statshifts, MoreArgs=list(MARGIN=2, FUN="+"), SIMPLIFY=FALSE)
-    for(i in seq_along(statsmatrices)) colnames(statsmatrices[[i]]) <- model$coef.names
+    for(i in seq_along(statsmatrices)) colnames(statsmatrices[[i]]) <- param_names(model,canonical=TRUE)
     statsmatrix <- do.call(rbind,statsmatrices)
     
     if(verbose){
-      message("Back from unconstrained CD. Average statistics:")
-      .message_print(apply(statsmatrix, 2, mean))
+      message("Back from unconstrained CD.")
+      if(verbose>1){
+        message("Average statistics:")
+        message_print(colMeans(statsmatrix))
+      }
     }
     
     ##  Does the same, if observation process:
     if(obs){
-      z.obs <- ergm.getCDsample(nws.obs, model, MHproposal.obs, mcmc.eta0, control.obs, verbose, response=response, theta=mcmc.init, etamap=model$etamap)
+      z.obs <- ergm.getCDsample(nws.obs, model, proposal.obs, mcmc.eta0, control.obs, verbose, response=response, theta=mcmc.init, etamap=model$etamap)
 
       statsmatrices.obs <- mapply(sweep, z.obs$statsmatrices, statshifts.obs, MoreArgs=list(MARGIN=2, FUN="+"), SIMPLIFY=FALSE)
-      for(i in seq_along(statsmatrices.obs)) colnames(statsmatrices.obs[[i]]) <- model$coef.names
+      for(i in seq_along(statsmatrices.obs)) colnames(statsmatrices.obs[[i]]) <- param_names(model,canonical=TRUE)
       statsmatrix.obs <- do.call(rbind,statsmatrices.obs)
       
       if(verbose){
-        message("Back from constrained MCMC. Average statistics:")
-        .message_print(apply(statsmatrix.obs, 2, mean))
+        message("Back from constrained CD.")
+        if(verbose>1){
+          message("Average statistics:")
+          message_print(colMeans(statsmatrix.obs))
+        }
       }
     }else{
       statsmatrices.obs <- statsmatrix.obs <- NULL
       z.obs <- NULL
     }
 
-    # Compute the sample estimating equations and the convergence p-value. 
-    esteq <- .ergm.esteq(mcmc.init, model, statsmatrix)
+    # Compute the sample estimating functions and the convergence p-value. 
+    esteq <- ergm.estfun(statsmatrix, mcmc.init, model)
     if(isTRUE(all.equal(apply(esteq,2,sd), rep(0,ncol(esteq)), check.names=FALSE))&&!all(esteq==0))
       stop("Unconstrained CD sampling did not mix at all. Optimization cannot continue.")
-    esteq.obs <- if(obs) .ergm.esteq(mcmc.init, model, statsmatrix.obs) else NULL   
+    esteq.obs <- if(obs) ergm.estfun(statsmatrix.obs, mcmc.init, model) else NULL   
     conv.pval <- suppressWarnings(approx.hotelling.diff.test(esteq, esteq.obs, assume.indep=TRUE)$p.value)
                                             
     # We can either pretty-print the p-value here, or we can print the
     # full thing. What the latter gives us is a nice "progress report"
     # on whether the estimation is getting better..
     if(verbose){
-      message("Average estimating equation values:")
-      .message_print(if(obs) colMeans(esteq.obs)-colMeans(esteq) else colMeans(esteq))
+      message("Average estimating function values:")
+      message_print(if(obs) colMeans(esteq.obs)-colMeans(esteq) else -colMeans(esteq))
     }
     message("Convergence test P-value:",format(conv.pval, scientific=TRUE,digits=2),"")
     if(conv.pval>control$CD.conv.min.pval){
@@ -201,7 +207,7 @@ ergm.CD.fixed <- function(init, nw, model,
     statsmatrix.0 <- statsmatrix
     statsmatrix.0.obs <- statsmatrix.obs
     if(control$CD.steplength=="adaptive"){
-      if(verbose){message("Calling adaptive MCMLE Optimization...")}
+      if(verbose){message("Calling adaptive CD-MCMLE Optimization...")}
       adaptive.steplength <- 2
       statsmean <- apply(statsmatrix.0,2,mean)
       v <- list(loglikelihood=control$CD.adaptive.trustregion*2)
@@ -235,7 +241,7 @@ ergm.CD.fixed <- function(init, nw, model,
       if(v$loglikelihood < control$CD.trustregion-0.001){
         current.scipen <- options()$scipen
         options(scipen=3)
-        message("The log-likelihood improved by",
+        message("The log-likelihood improved by ",
             format.pval(v$loglikelihood,digits=4,eps=1e-4),"")
         options(scipen=current.scipen)
       }else{
@@ -252,7 +258,7 @@ ergm.CD.fixed <- function(init, nw, model,
             x2.num.max=control$CD.Hummel.miss.sample, steplength.maxit=control$CD.Hummel.maxit)
         else control$CD.steplength
       
-      if(verbose){message("Calling MCMLE Optimization...")}
+      if(verbose){message("Calling CD-MCMLE Optimization...")}
       statsmean <- apply(statsmatrix.0,2,base::mean)
       if(!is.null(statsmatrix.0.obs)){
         statsmatrix.obs <- t(steplen*t(statsmatrix.0.obs) + (1-steplen)*statsmean) # I.e., shrink each point of statsmatrix.obs towards the centroid of statsmatrix.
@@ -262,7 +268,7 @@ ergm.CD.fixed <- function(init, nw, model,
       steplen.hist <- c(steplen.hist, steplen)
       # stop if MCMLE is stuck (steplen stuck near 0)
       if ((length(steplen.hist) > 2) && sum(tail(steplen.hist,2)) < 2*control$CD.steplength.min) {
-        stop("MCMLE estimation stuck. There may be excessive correlation between model terms, suggesting a poor model for the observed data. If target.stats are specified, try increasing SAN parameters.")
+        stop("CD-MCMLE estimation stuck. There may be excessive correlation between model terms, suggesting a poor model for the observed data. If target.stats are specified, try increasing SAN parameters.")
       }    
       
       if(verbose){message(paste("Using Newton-Raphson Step with step length ",steplen," ..."))}
@@ -286,7 +292,7 @@ ergm.CD.fixed <- function(init, nw, model,
       if(v$loglikelihood < control$CD.trustregion-0.001){
         current.scipen <- options()$scipen
         options(scipen=3)
-        message("The log-likelihood improved by",
+        message("The log-likelihood improved by ",
             format.pval(v$loglikelihood,digits=4,eps=1e-4),"")
         options(scipen=current.scipen)
       }else{
@@ -296,7 +302,7 @@ ergm.CD.fixed <- function(init, nw, model,
           
     mcmc.init <- v$coef
     coef.hist <- rbind(coef.hist, mcmc.init)
-    stats.obs.hist <- if(!is.null(statsmatrix.obs)) rbind(stats.obs.hist, apply(statsmatrix.obs[], 2, mean)) else NULL
+    stats.obs.hist <- NVL3(statsmatrix.obs, rbind(stats.obs.hist, apply(.[], 2, mean)))
     stats.hist <- rbind(stats.hist, apply(statsmatrix, 2, mean))
     if(finished) break # This allows premature termination.
   } # end of main loop

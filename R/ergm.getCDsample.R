@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2017 Statnet Commons
+#  Copyright 2003-2018 Statnet Commons
 #######################################################################
 #==============================================================================
 # This file contains the 2 following functions for getting an MCMC sample
@@ -25,9 +25,9 @@
 #
 # --PARAMETERS--
 #   nw        :  a network object
-#   model     :  a model for the given 'nw' as returned by <ergm.getmodel>
-#   MHproposal:  a list of the parameters needed for Metropolis-Hastings proposals and
-#                the result of calling <MHproposal>
+#   model     :  a model for the given 'nw' as returned by <ergm_model>
+#   proposal:  a list of the parameters needed for Metropolis-Hastings proposals and
+#                the result of calling <proposal>
 #   eta0      :  the initial eta coefficients
 #   verbose   :  whether the C functions should be verbose; default=FALSE
 #   control:  list of MCMC tuning parameters; those recognized include
@@ -41,7 +41,7 @@
 # Note:  In reality, there should be many fewer arguments to this function,
 # since most info should be passed via Clist (this is, after all, what Clist
 # is for:  Holding all arguments required for the .C call).  In particular,
-# the elements of MHproposal, control, verbose should certainly
+# the elements of proposal, control, verbose should certainly
 # be part of Clist.  But this is a project for another day!
 #
 # --RETURNED--
@@ -53,7 +53,7 @@
 #
 #########################################################################################
 
-ergm.getCDsample <- function(nw, model, MHproposal, eta0, control, 
+ergm.getCDsample <- function(nw, model, proposal, eta0, control, 
                              verbose, response=NULL, ...) {
   nthreads <- max(
     if(inherits(control$parallel,"cluster")) nrow(summary(control$parallel))
@@ -70,14 +70,14 @@ ergm.getCDsample <- function(nw, model, MHproposal, eta0, control,
   Clists <- lapply(nws, ergm::ergm.Cprepare, model, response=response)
 
   control.parallel <- control
-  if(!is.null(control$MCMC.samplesize)) control.parallel$MCMC.samplesize <- ceiling(control$MCMC.samplesize / nthreads)
+  control.parallel$MCMC.samplesize <- NVL3(control$MCMC.samplesize, ceiling(. / nthreads))
 
   flush.console()
 
   doruns <- function(prev.runs=rep(list(NULL),nthreads), burnin=NULL, samplesize=NULL, interval=NULL){
     if(!is.null(cl)) clusterMap(cl,ergm.cdslave,
-                                  Clist=Clists, prev.run=prev.runs, MoreArgs=list(MHproposal=MHproposal,eta0=eta0,control=control.parallel,verbose=verbose,...,burnin=burnin,samplesize=samplesize,interval=interval))
-    else list(ergm.cdslave(Clist=Clists[[1]], prev.run=prev.runs[[1]],burnin=burnin,samplesize=samplesize,interval=interval,MHproposal=MHproposal,eta0=eta0,control=control.parallel,verbose=verbose,...))
+                                  Clist=Clists, prev.run=prev.runs, MoreArgs=list(proposal=proposal,eta0=eta0,control=control.parallel,verbose=verbose,...,burnin=burnin,samplesize=samplesize,interval=interval))
+    else list(ergm.cdslave(Clist=Clists[[1]], prev.run=prev.runs[[1]],burnin=burnin,samplesize=samplesize,interval=interval,proposal=proposal,eta0=eta0,control=control.parallel,verbose=verbose,...))
   }
   
   outl <- doruns()
@@ -87,7 +87,7 @@ ergm.getCDsample <- function(nw, model, MHproposal, eta0, control,
   
   if(control.parallel$MCMC.runtime.traceplot){
     esteq <- lapply(outl, function(out)
-      if(all(c("theta","etamap") %in% names(list(...)))) .ergm.esteq(list(...)$theta, list(etamap=list(...)$etamap), out$s)
+      if(all(c("theta","etamap") %in% names(list(...)))) ergm.estfun(out$s, list(...)$theta, list(etamap=list(...)$etamap))
       else out$s[,Clists[[1]]$diagnosable,drop=FALSE]
                     )
     for (i in seq_along(esteq)) colnames(esteq[[i]]) <- names(list(...)$theta)
@@ -121,7 +121,7 @@ ergm.getCDsample <- function(nw, model, MHproposal, eta0, control,
   ergm.stopCluster(cl)
 
   statsmatrix <- do.call(rbind,statsmatrices)
-  colnames(statsmatrix) <- model$coef.names
+  colnames(statsmatrix) <- param_names(model,canonical=TRUE)
 
   if(verbose){message("Sample size = ",nrow(statsmatrix)," by ",
                   control.parallel$MCMC.samplesize,".")}
@@ -140,7 +140,7 @@ ergm.getCDsample <- function(nw, model, MHproposal, eta0, control,
 #
 # --PARAMETERS--
 #   Clist     : the list of parameters returned by <ergm.Cprepare>
-#   MHproposal: the MHproposal list as returned by <getMHproposal>
+#   proposal: the proposal list as returned by <getproposal>
 #   eta0      : the canonical eta parameters
 #   control: a list of parameters for controlling the MCMC algorithm;
 #               recognized components include:
@@ -159,7 +159,7 @@ ergm.getCDsample <- function(nw, model, MHproposal, eta0, control,
 #
 ###############################################################################
 
-ergm.cdslave <- function(Clist,MHproposal,eta0,control,verbose,...,prev.run=NULL, burnin=NULL, samplesize=NULL, interval=NULL) {
+ergm.cdslave <- function(Clist,proposal,eta0,control,verbose,...,prev.run=NULL, burnin=NULL, samplesize=NULL, interval=NULL) {
 
   numnetworks <- 0
 
@@ -193,14 +193,14 @@ ergm.cdslave <- function(Clist,MHproposal,eta0,control,verbose,...,prev.run=NULL
             as.integer(Clist$nterms),
             as.character(Clist$fnamestring),
             as.character(Clist$snamestring),
-            as.character(MHproposal$name), as.character(MHproposal$pkgname),
-            as.double(c(Clist$inputs,MHproposal$inputs)), as.double(.deinf(eta0)),
+            as.character(proposal$name), as.character(proposal$pkgname),
+            as.double(c(Clist$inputs,proposal$inputs)), as.double(.deinf(eta0)),
             as.integer(samplesize), as.integer(c(control$CD.nsteps,control$CD.multiplicity)),
             s = as.double(rep(stats, samplesize)),
-            as.integer(verbose), as.integer(MHproposal$arguments$constraints$bd$attribs),
-            as.integer(MHproposal$arguments$constraints$bd$maxout), as.integer(MHproposal$arguments$constraints$bd$maxin),
-            as.integer(MHproposal$arguments$constraints$bd$minout), as.integer(MHproposal$arguments$constraints$bd$minin),
-            as.integer(MHproposal$arguments$constraints$bd$condAllDegExact), as.integer(length(MHproposal$arguments$constraints$bd$attribs)),
+            as.integer(verbose), as.integer(proposal$arguments$constraints$bd$attribs),
+            as.integer(proposal$arguments$constraints$bd$maxout), as.integer(proposal$arguments$constraints$bd$maxin),
+            as.integer(proposal$arguments$constraints$bd$minout), as.integer(proposal$arguments$constraints$bd$minin),
+            as.integer(proposal$arguments$constraints$bd$condAllDegExact), as.integer(length(proposal$arguments$constraints$bd$attribs)),
             status = integer(1),
             PACKAGE="ergm")
     
@@ -215,8 +215,8 @@ ergm.cdslave <- function(Clist,MHproposal,eta0,control,verbose,...,prev.run=NULL
             as.integer(Clist$nterms),
             as.character(Clist$fnamestring),
             as.character(Clist$snamestring),
-            as.character(MHproposal$name), as.character(MHproposal$pkgname),
-            as.double(c(Clist$inputs,MHproposal$inputs)), as.double(.deinf(eta0)),
+            as.character(proposal$name), as.character(proposal$pkgname),
+            as.double(c(Clist$inputs,proposal$inputs)), as.double(.deinf(eta0)),
             as.integer(samplesize), as.integer(c(control$CD.nsteps,control$CD.multiplicity)),
             s = as.double(rep(stats, samplesize)),
             as.integer(verbose), 

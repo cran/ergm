@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2017 Statnet Commons
+#  Copyright 2003-2018 Statnet Commons
 #######################################################################
 #################################################################################
 # The <anova.ergmlist> function computes an analysis of variance table for one
@@ -29,6 +29,14 @@
 #
 #################################################################################
 
+#' @rdname anova.ergm
+#' @param test a character string specifying the test statistic to be used. Can
+#' be one of \code{"F"}, \code{"Chisq"} or \code{"Cp"}, with partial matching
+#' allowed, or \code{NULL} for no test.
+#' @param scale numeric. An estimate of the noise variance
+#' \eqn{\sigma^2}{sigma^2}. If zero this will be estimated from the largest
+#' model considered.
+#' @export
 anova.ergmlist <- function (object, ..., eval.loglik=FALSE, scale = 0, test = "F") 
 {
   objects <- list(object, ...)
@@ -44,6 +52,7 @@ anova.ergmlist <- function (object, ..., eval.loglik=FALSE, scale = 0, test = "F
     return(anova.ergm(object))
   n <- network.size(object$newnetwork)
   logl <- df <- Rdf <- rep(0, nmodels)
+  logl.null <- if(is.null(objects[[1]][["null.lik"]])) 0 else objects[[1]][["null.lik"]]
   for (i in 1:nmodels) {
     nodes<- network.size(objects[[i]]$newnetwork)
     n <- nobs(logLik(objects[[i]]))
@@ -87,7 +96,7 @@ anova.ergmlist <- function (object, ..., eval.loglik=FALSE, scale = 0, test = "F
 #   Rdf <- c(object$glm$df.null, Rdf)
 #   logl <- c(-object$glm$null.deviance/2, logl)
     Rdf <- c(n, Rdf)
-    logl <- c(0, logl)
+    logl <- c(logl.null, logl)
 #  }
   pv <- pchisq(abs(2 * diff(logl)), abs(diff(df)), lower.tail = FALSE)
 

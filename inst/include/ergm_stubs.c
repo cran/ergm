@@ -1,3 +1,12 @@
+/*  File inst/include/ergm_stubs.c in package ergm, part of the Statnet suite
+ *  of packages for network analysis, http://statnet.org .
+ *
+ *  This software is distributed under the GPL-3 license.  It is free,
+ *  open source, and has the attribution requirements (GPL Section 7) at
+ *  http://statnet.org/attribution
+ *
+ *  Copyright 2003-2018 Statnet Commons
+ */
 #include "R_ext/Rdynload.h"
 #include "changestat.h"
 double my_choose(double n, int r){
@@ -220,6 +229,15 @@ return fun(tails,heads,nwp,nmax);
 #undef MAX
 #undef DYADCOUNT
 #undef GetRandDyad
+#include "R_ext/Rdynload.h"
+#include "ergm_rlebdm.h"
+#undef MIN
+#undef MAX
+#undef DYADCOUNT
+#undef GetRandDyad
+#undef TH2Dyad
+#undef Dyad2T
+#undef Dyad2H
 #include "R_ext/Rdynload.h"
 #include "MCMC.h"
 void MCMC_wrapper(int *dnumnets, int *dnedges,int *tails, int *heads,int *dn, int *dflag, int *bipartite,int *nterms, char **funnames,char **sonames,char **MHproposaltype, char **MHproposalpackage,double *inputs, double *theta0, int *samplesize,double *sample, int *burnin, int *interval,int *newnetworktails,int *newnetworkheads,int *fVerbose,int *attribs, int *maxout, int *maxin, int *minout,int *minin, int *condAllDegExact, int *attriblength,int *maxedges,int *status){

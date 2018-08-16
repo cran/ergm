@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2017 Statnet Commons
+#  Copyright 2003-2018 Statnet Commons
 #######################################################################
 ##################################################################################
 # The <ergm.estimate> function searches for and returns a maximizer of the
@@ -13,7 +13,7 @@
 #
 # --PARAMETERS--
 #   init          : the vector of theta parameters that produced 'statsmatrix'
-#   model           : the model, as returned by <ergm.getmodel>
+#   model           : the model, as returned by <ergm_model>
 #   statsmatrix     : the matrix of observed statistics that has already had the
 #                     "observed statistics" vector subtracted out (i.e., the
 #                     "observed stats" are assumed to be zero here)
@@ -70,6 +70,7 @@ ergm.estimate<-function(init, model, statsmatrix, statsmatrix.obs=NULL,
                         dampening.level=0.1,
                         cov.type="normal",# cov.type="robust", 
                         estimateonly=FALSE, ...) {
+  estimateonly <- estimateonly & !calc.mcmc.se
   # If there is an observation process to deal with, statsmatrix.obs will not be NULL;
   # in this case, do some preprocessing.  Otherwise, skip ahead.
   obsprocess <- !is.null(statsmatrix.obs)
@@ -107,7 +108,8 @@ ergm.estimate<-function(init, model, statsmatrix, statsmatrix.obs=NULL,
   # of center (e.g., the column means).  Since this shifts the scale, the
   # value of xobs (playing the role of "observed statistics") must be
   # adjusted accordingly.
-# av <- apply(sweep(statsmatrix0,1,probs,"*"), 2, sum)
+  # av <- apply(sweep(statsmatrix0,1,probs,"*"), 2, sum)
+  #' @importFrom robustbase covMcd
   if(cov.type=="robust"){
    av <- apply(statsmatrix0,2,wtd.median,weight=probs)
    V=try(
@@ -205,7 +207,13 @@ ergm.estimate<-function(init, model, statsmatrix, statsmatrix.obs=NULL,
       (metric=="lognormal" || metric=="Likelihood")) {
     if (obsprocess) {
       if (verbose) { message("Using log-normal approx with missing (no optim)") }
-      Lout <- list(hessian = -(V-V.obs))
+      # Here, setting posd.tol=0 ensures that the matrix is
+      # nonnegative-definite: it is possible for some simulated
+      # statistics not to change, but it is not possible for the
+      # constrained sample to have a higher variance than the
+      # unconstrained.
+      #' @importFrom Matrix nearPD
+      Lout <- list(hessian = -as.matrix(nearPD(V-V.obs,posd.tol=0)$mat))
     } else {
       if (verbose) { message("Using log-normal approx (no optim)") }
       Lout <- list(hessian = -V)
@@ -216,6 +224,7 @@ ergm.estimate<-function(init, model, statsmatrix, statsmatrix.obs=NULL,
     # If there's an error, first try a robust matrix inverse.  This can often
     # happen if the matrix of simulated statistics does not ever change for one
     # or more statistics.
+    #' @importFrom MASS ginv
     if(inherits(Lout$par,"try-error")){
       Lout$par <- try(eta0[!model$etamap$offsetmap] 
                       - ginv(Lout$hessian) %*% 
@@ -224,6 +233,7 @@ ergm.estimate<-function(init, model, statsmatrix, statsmatrix.obs=NULL,
     }
     # If there's still an error, use the Matrix package to try to find an 
     # alternative Hessian approximant that has no zero eigenvalues.
+    #' @importFrom Matrix nearPD
     if(inherits(Lout$par,"try-error")){
       if (obsprocess) {
         Lout <- list(hessian = -(as.matrix(nearPD(V-V.obs)$mat)))
@@ -249,13 +259,14 @@ ergm.estimate<-function(init, model, statsmatrix, statsmatrix.obs=NULL,
       grad<-gradientfn(trustregion=trustregion, ...)
       hess<-Hessianfn(...)
       hess[upper.tri(hess)]<-t(hess)[upper.tri(hess)]
-#      .message_print(value)
-#      .message_print(grad)
-#      .message_print(hess)
+#      message_print(value)
+#      message_print(grad)
+#      message_print(hess)
       list(value=value,gradient=as.vector(grad),hessian=hess)
     }
 
     if (verbose) { message("Optimizing loglikelihood") }
+    #' @importFrom trust trust
     Lout <- try(trust(objfun=loglikelihoodfn.trust, parinit=guess,
                       rinit=1, 
                       rmax=100, 

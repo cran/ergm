@@ -5,14 +5,14 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2017 Statnet Commons
+#  Copyright 2003-2018 Statnet Commons
 #######################################################################
 ###############################################################################
 # The <ergm.reviseinit> function revises 'init' to reflect additional
 # parameters introduced by curved model terms
 #
 # --PARAMETERS--
-#   m     :  the model, as returned by <ergm.getmodel>
+#   m     :  the model, as returned by <ergm_model>
 #   init:  the vector of initial theta parameters
 #
 #

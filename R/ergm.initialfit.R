@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2017 Statnet Commons
+#  Copyright 2003-2018 Statnet Commons
 #######################################################################
 ####################################################################################
 # The <ergm.initialfit> function fits an initial ergm object using either ML or MPL
@@ -23,15 +23,14 @@
 #   formula       :  a formula of the form (nw ~ term(s)) 
 #   nw            :  a network object, presumably that of 'formula'
 #   target.stats     :  the mean statistics
-#   m             :  the model as returned by <ergm.getmodel>
+#   m             :  the model as returned by <ergm_model>
 #   MPLEtype      :  the method for MPL estimation as either "glm", "penalized",
 #                    or "logitreg"; this is ignored if ML estimation is used;
 #                    default="glm" 
 #   initial.loglik:  the initial log likelihood; default=NULL
-#   conddeg       :  a formula for the conditional degree terms
 #   control    :  a list of parameters for tuning the MCMC sampling;
 #                    the only recognized component is 'samplesize'
-#   MHproposal    :  an MHproposal object as returned by <getMHproposal>
+#   proposal    :  an proposal object as returned by <getproposal>
 #   force.MPLE    :  whether MPL estimation should be forced instead of ML 
 #                    estimation (T or F); this is ignored if 'MLestimate'=FALSE
 #                    or "MPLE" is an entry into 'init'; default=FALSE
@@ -54,22 +53,8 @@ ergm.initialfit<-function(init, initial.is.final,
                           formula, nw,
                           m, response=NULL, reference=~Bernoulli, method = NULL,
                           MPLEtype="glm",
-                          conddeg=NULL, control=NULL, MHproposal=NULL, MHproposal.obs=NULL,
+                          control=NULL, proposal=NULL, proposal.obs=NULL,
                           verbose=FALSE, ...) {
-  # conddeg, whatever it does.
-  if(method=="MPLE" && !is.null(conddeg)){
-   formula.conddegmple <- ergm.update.formula(formula, . ~ conddegmple + .)
-   m.conddeg <- ergm.getmodel(formula.conddegmple, nw, initialfit=TRUE)
-   Clist <- ergm.Cprepare(nw, m.conddeg)
-   Clist.miss <- ergm.design(nw, m.conddeg, verbose=FALSE)
-   m$target.stats=c(1,m$target.stats)
-   conddeg <- list(m=m.conddeg, Clist=Clist, Clist.miss=Clist.miss)
-  }
-
-  Clist <- ergm.Cprepare(nw, m)
-  Clist.miss <- ergm.Cprepare(NVL(get.miss.dyads(MHproposal$arguments$constraints, MHproposal.obs$arguments$constraints), is.na(nw)), m)
-  control$Clist.miss<-Clist.miss
-
   # Respect init elements that are not offsets if it's only a starting value.
   if(!initial.is.final){ 
     m$etamap$offsettheta[!is.na(init)] <- TRUE
@@ -80,13 +65,17 @@ ergm.initialfit<-function(init, initial.is.final,
     # supplied by the user, use MPLE.   
     # Also make sure that any initial values specified by the user are respected.
     fit <- switch(method,
-                  MPLE = ergm.mple(Clist, Clist.miss, m, MPLEtype=MPLEtype,
-                    init=init, conddeg=conddeg, 
-                    control=control, MHproposal=MHproposal,
-                    verbose=verbose, ...),
+                  MPLE = {
+                    nw <- single.impute.dyads(nw, response=response, constraints=proposal$arguments$constraints, constraints.obs=proposal.obs$arguments$constraints, min_informative = control$obs.MCMC.impute.min_informative, default_density = control$obs.MCMC.impute.default_density, output="pending", verbose=verbose)
+                    fd <- as.rlebdm(proposal$arguments$constraints, proposal.obs$arguments$constraints, which="informative")
+                    ergm.mple(nw, fd, m, MPLEtype=MPLEtype,
+                              init=init,
+                              control=control, proposal=proposal,
+                              verbose=verbose, ...)
+                  },
                   zeros = structure(list(coef=ifelse(is.na(init),0,init)),class="ergm"),
                   CD = ergm.CD.fixed(ifelse(is.na(init),0,init),
-                      nw, m, control, MHproposal, MHproposal.obs, verbose,response=response,...),
+                      nw, m, control, proposal, proposal.obs, verbose,response=response,...),
                   stop(paste("Invalid method specified for initial parameter calculation. Available methods are ",paste.and(formals()$method),".",sep=""))
                   )
   }else{

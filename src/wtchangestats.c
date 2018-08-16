@@ -5,7 +5,7 @@
  *  open source, and has the attribution requirements (GPL Section 7) at
  *  http://statnet.org/attribution
  *
- *  Copyright 2003-2017 Statnet Commons
+ *  Copyright 2003-2018 Statnet Commons
  */
 #include "wtchangestats.h"
 
@@ -663,19 +663,12 @@ WtD_CHANGESTAT_FN(d_nodeocov_sum){
  stat: nodefactor (nonzero)
 *****************/
 WtD_CHANGESTAT_FN(d_nodefactor_nonzero){ 
-  double s, factorval;
-  int j, tailattr, headattr;
-  
-  
   EXEC_THROUGH_TOGGLES({
-      s = (NEWWT!=0) - (OLDWT!=0);
-      tailattr = INPUT_ATTRIB[TAIL-1];
-      headattr = INPUT_ATTRIB[HEAD-1];
-      for (j=0; j < N_CHANGE_STATS; j++){
-	factorval = INPUT_PARAM[j];
-	if (tailattr == factorval) CHANGE_STAT[j] += s;
-	if (headattr == factorval) CHANGE_STAT[j] += s;
-      }
+      double s = (NEWWT!=0) - (OLDWT!=0);
+      int tailpos = INPUT_ATTRIB[TAIL-1];
+      int headpos = INPUT_ATTRIB[HEAD-1];
+      if (tailpos != -1) CHANGE_STAT[tailpos] += s;
+      if (headpos != -1) CHANGE_STAT[headpos] += s;
     });
 }
 
@@ -683,20 +676,183 @@ WtD_CHANGESTAT_FN(d_nodefactor_nonzero){
  stat: nodefactor (sum)
 *****************/
 WtD_CHANGESTAT_FN(d_nodefactor_sum){ 
-  double s, factorval;
-  int j, tailattr, headattr;
-  
-  
   EXEC_THROUGH_TOGGLES({
-    s = NEWWT - OLDWT;
-    tailattr = INPUT_ATTRIB[TAIL-1];
-    headattr = INPUT_ATTRIB[HEAD-1];
-    for (j=0; j < N_CHANGE_STATS; j++){
-      factorval = INPUT_PARAM[j];
-      if (tailattr == factorval) CHANGE_STAT[j] += s;
-      if (headattr == factorval) CHANGE_STAT[j] += s;
-    }
-  });
+      double s = NEWWT - OLDWT;
+      int tailpos = INPUT_ATTRIB[TAIL-1];
+      int headpos = INPUT_ATTRIB[HEAD-1];
+      if (tailpos != -1) CHANGE_STAT[tailpos] += s;
+      if (headpos != -1) CHANGE_STAT[headpos] += s;
+    });
+}
+
+/*****************
+ changestat: receiver (nonzero)
+*****************/
+WtD_CHANGESTAT_FN(d_receiver_nonzero){ 
+  EXEC_THROUGH_TOGGLES({
+      double s = (NEWWT!=0) - (OLDWT!=0);
+      unsigned int j=0;
+      Vertex deg = (Vertex)INPUT_PARAM[j];
+      while((deg != HEAD) && (j < (N_CHANGE_STATS-1))){
+	j++;
+	deg = (Vertex)INPUT_PARAM[j];
+      }
+      if(deg==HEAD) CHANGE_STAT[j] += s;
+    });
+}
+
+/*****************
+ changestat: receiver (sum)
+*****************/
+WtD_CHANGESTAT_FN(d_receiver_sum){ 
+  EXEC_THROUGH_TOGGLES({
+      double s = NEWWT - OLDWT;
+      unsigned int j=0;
+      Vertex deg = (Vertex)INPUT_PARAM[j];
+      while((deg != HEAD) && (j < (N_CHANGE_STATS-1))){
+	j++;
+	deg = (Vertex)INPUT_PARAM[j];
+      }
+      if(deg==HEAD) CHANGE_STAT[j] += s;
+    });
+}
+
+/*****************
+ changestat: sender (nonzero)
+*****************/
+WtD_CHANGESTAT_FN(d_sender_nonzero){ 
+  EXEC_THROUGH_TOGGLES({
+      double s = (NEWWT!=0) - (OLDWT!=0);
+      unsigned int j=0;
+      Vertex deg = (Vertex)INPUT_PARAM[j];
+      while((deg != TAIL) && (j < (N_CHANGE_STATS-1))){
+	j++;
+	deg = (Vertex)INPUT_PARAM[j];
+      }
+      if(deg==TAIL) CHANGE_STAT[j] += s;
+    });
+}
+
+/*****************
+ changestat: sender (sum)
+*****************/
+WtD_CHANGESTAT_FN(d_sender_sum){ 
+  EXEC_THROUGH_TOGGLES({
+      double s = NEWWT - OLDWT;
+      unsigned int j=0;
+      Vertex deg = (Vertex)INPUT_PARAM[j];
+      while((deg != TAIL) && (j < (N_CHANGE_STATS-1))){
+	j++;
+	deg = (Vertex)INPUT_PARAM[j];
+      }
+      if(deg==TAIL) CHANGE_STAT[j] += s;
+    });
+}
+
+/*****************
+ changestat: sociality (nonzero)
+*****************/
+WtD_CHANGESTAT_FN(d_sociality_nonzero) { 
+  int ninputs, nstats;
+  
+  ninputs = (int)N_INPUT_PARAMS;
+  nstats  = (int)N_CHANGE_STATS;
+
+  if(ninputs>nstats+1){
+    /* match on attributes */
+    EXEC_THROUGH_TOGGLES({
+	double s = (NEWWT!=0) - (OLDWT!=0);
+	double tailattr = INPUT_ATTRIB[TAIL-1+nstats+1]; // +1 for the "guard" value between vertex IDs and attribute vector
+	if(tailattr == INPUT_ATTRIB[HEAD-1+nstats+1]){
+	  unsigned int j=0;
+	  Vertex deg = (Vertex)INPUT_PARAM[j];
+	  while(deg != TAIL && j < nstats){
+	    j++;
+	    deg = (Vertex)INPUT_PARAM[j];
+	  }
+	  if(j < nstats) CHANGE_STAT[j] += s;
+	  j=0;
+	  deg = (Vertex)INPUT_PARAM[j];
+	  while(deg != HEAD && j < nstats){
+	    j++;
+	    deg = (Vertex)INPUT_PARAM[j];
+	  }
+	  if(j < nstats) CHANGE_STAT[j] += s;
+      }
+      });
+  }else{
+    /* *** don't forget TAIL -> HEAD */    
+    EXEC_THROUGH_TOGGLES({
+	double s = (NEWWT!=0) - (OLDWT!=0);
+	unsigned int j=0;
+	Vertex deg = (Vertex)INPUT_PARAM[j];
+	while(deg != TAIL && j < nstats){
+	  j++;
+	  deg = (Vertex)INPUT_PARAM[j];
+	}
+	if(j < nstats) CHANGE_STAT[j] += s;
+	j=0;
+	deg = (Vertex)INPUT_PARAM[j];
+	while(deg != HEAD && j < nstats){
+	  j++;
+	  deg = (Vertex)INPUT_PARAM[j];
+	}
+	if(j < nstats) CHANGE_STAT[j] += s;
+      });
+  }
+}
+
+/*****************
+ changestat: sociality (sum)
+*****************/
+WtD_CHANGESTAT_FN(d_sociality_sum) { 
+  int ninputs, nstats;
+  
+  ninputs = (int)N_INPUT_PARAMS;
+  nstats  = (int)N_CHANGE_STATS;
+
+  if(ninputs>nstats+1){
+    /* match on attributes */
+    EXEC_THROUGH_TOGGLES({
+	double s = NEWWT - OLDWT;
+	double tailattr = INPUT_ATTRIB[TAIL-1+nstats+1]; // +1 for the "guard" value between vertex IDs and attribute vector
+	if(tailattr == INPUT_ATTRIB[HEAD-1+nstats+1]){
+	  unsigned int j=0;
+	  Vertex deg = (Vertex)INPUT_PARAM[j];
+	  while(deg != TAIL && j < nstats){
+	    j++;
+	    deg = (Vertex)INPUT_PARAM[j];
+	  }
+	  if(j < nstats) CHANGE_STAT[j] += s;
+	  j=0;
+	  deg = (Vertex)INPUT_PARAM[j];
+	  while(deg != HEAD && j < nstats){
+	    j++;
+	    deg = (Vertex)INPUT_PARAM[j];
+	  }
+	  if(j < nstats) CHANGE_STAT[j] += s;
+      }
+      });
+  }else{
+    /* *** don't forget TAIL -> HEAD */    
+    EXEC_THROUGH_TOGGLES({
+	double s = NEWWT - OLDWT;
+	unsigned int j=0;
+	Vertex deg = (Vertex)INPUT_PARAM[j];
+	while(deg != TAIL && j < nstats){
+	  j++;
+	  deg = (Vertex)INPUT_PARAM[j];
+	}
+	if(j < nstats) CHANGE_STAT[j] += s;
+	j=0;
+	deg = (Vertex)INPUT_PARAM[j];
+	while(deg != HEAD && j < nstats){
+	  j++;
+	  deg = (Vertex)INPUT_PARAM[j];
+	}
+	if(j < nstats) CHANGE_STAT[j] += s;
+      });
+  }
 }
 
 /*****************
@@ -729,16 +885,10 @@ WtD_CHANGESTAT_FN(d_nodeisqrtcovar){
  stat: nodeifactor (nonzero)
 *****************/
 WtD_CHANGESTAT_FN(d_nodeifactor_nonzero){ 
-  double s, factorval;
-  int j, headattr;
-  
   EXEC_THROUGH_TOGGLES({
-      s = (NEWWT!=0) - (OLDWT!=0);
-      headattr = INPUT_ATTRIB[HEAD-1];
-      for (j=0; j < N_CHANGE_STATS; j++){
-	factorval = INPUT_PARAM[j];
-	if (headattr == factorval) CHANGE_STAT[j] += s;
-      }
+      double s = (NEWWT!=0) - (OLDWT!=0);
+      int headpos = INPUT_ATTRIB[HEAD-1];
+      if (headpos != -1) CHANGE_STAT[headpos] += s;
     });
 }
 
@@ -746,17 +896,11 @@ WtD_CHANGESTAT_FN(d_nodeifactor_nonzero){
  stat: nodeifactor (sum)
 *****************/
 WtD_CHANGESTAT_FN(d_nodeifactor_sum){ 
-  double s, factorval;
-  int j, headattr;
-  
   EXEC_THROUGH_TOGGLES({
-    s = NEWWT - OLDWT;
-    headattr = INPUT_ATTRIB[HEAD-1];
-    for (j=0; j < N_CHANGE_STATS; j++){
-      factorval = INPUT_PARAM[j];
-      if (headattr == factorval) CHANGE_STAT[j] += s;
-    }
-  });
+      double s = NEWWT - OLDWT;
+      int headpos = INPUT_ATTRIB[HEAD-1];
+      if (headpos != -1) CHANGE_STAT[headpos] += s;
+    });
 }
 
 /*****************
@@ -891,17 +1035,10 @@ WtD_CHANGESTAT_FN(d_nodeosqrtcovar){
  stat: nodeofactor (nonzero)
 *****************/
 WtD_CHANGESTAT_FN(d_nodeofactor_nonzero){ 
-  double s, factorval;
-  int j, tailattr;
-  
-  
   EXEC_THROUGH_TOGGLES({
-      s = (NEWWT!=0) - (OLDWT!=0);
-      tailattr = INPUT_ATTRIB[TAIL-1];
-      for (j=0; j < N_CHANGE_STATS; j++){
-	factorval = INPUT_PARAM[j];
-	if (tailattr == factorval) CHANGE_STAT[j] += s;
-      }
+      double s = (NEWWT!=0) - (OLDWT!=0);
+      int tailpos = INPUT_ATTRIB[TAIL-1];
+      if (tailpos != -1) CHANGE_STAT[tailpos] += s;
     });
 }
 
@@ -909,18 +1046,11 @@ WtD_CHANGESTAT_FN(d_nodeofactor_nonzero){
  stat: nodeofactor (sum)
 *****************/
 WtD_CHANGESTAT_FN(d_nodeofactor_sum){ 
-  double s, factorval;
-  int j, tailattr;
-  
-  
   EXEC_THROUGH_TOGGLES({
-    s = NEWWT - OLDWT;
-    tailattr = INPUT_ATTRIB[TAIL-1];
-    for (j=0; j < N_CHANGE_STATS; j++){
-      factorval = INPUT_PARAM[j];
-      if (tailattr == factorval) CHANGE_STAT[j] += s;
-    }
-  });
+      double s = NEWWT - OLDWT;
+      int tailpos = INPUT_ATTRIB[TAIL-1];
+      if (tailpos != -1) CHANGE_STAT[tailpos] += s;
+    });
 }
 
 /*****************
@@ -1227,3 +1357,46 @@ WtS_CHANGESTAT_FN(s_transitiveweights_threshold){
   }
 }
 
+/*****************
+ changestat: d_mixmat
+ General mixing matrix (mm) implementation.
+*****************/
+WtD_CHANGESTAT_FN(d_mixmat_sum){
+  unsigned int symm = ((int)INPUT_PARAM[0]) & 1;
+  unsigned int marg = ((int)INPUT_PARAM[0]) & 2;
+  double *tx = INPUT_PARAM;
+  double *hx = BIPARTITE? INPUT_PARAM : INPUT_PARAM + N_NODES;
+  double *cells = BIPARTITE? INPUT_PARAM + N_NODES + 1: INPUT_PARAM + N_NODES*2 + 1;
+  
+  EXEC_THROUGH_TOGGLES({
+    unsigned int diag = tx[TAIL]==tx[HEAD] && hx[TAIL]==hx[HEAD];
+    for(unsigned int j=0; j<N_CHANGE_STATS; j++){
+      unsigned int thmatch = tx[TAIL]==cells[j*2] && hx[HEAD]==cells[j*2+1];
+      unsigned int htmatch = tx[HEAD]==cells[j*2] && hx[TAIL]==cells[j*2+1];
+      
+      int w = DIRECTED || BIPARTITE? thmatch :
+	(symm ? thmatch||htmatch : thmatch+htmatch)*(symm && marg && diag?2:1);
+      if(w) CHANGE_STAT[j] += w*(NEWWT-OLDWT);
+    }
+    });
+}
+
+WtD_CHANGESTAT_FN(d_mixmat_nonzero){
+  unsigned int symm = ((int)INPUT_PARAM[0]) & 1;
+  unsigned int marg = ((int)INPUT_PARAM[0]) & 2;
+  double *tx = INPUT_PARAM;
+  double *hx = BIPARTITE? INPUT_PARAM : INPUT_PARAM + N_NODES;
+  double *cells = BIPARTITE? INPUT_PARAM + N_NODES + 1: INPUT_PARAM + N_NODES*2 + 1;
+  
+  EXEC_THROUGH_TOGGLES({
+    unsigned int diag = tx[TAIL]==tx[HEAD] && hx[TAIL]==hx[HEAD];
+    for(unsigned int j=0; j<N_CHANGE_STATS; j++){
+      unsigned int thmatch = tx[TAIL]==cells[j*2] && hx[HEAD]==cells[j*2+1];
+      unsigned int htmatch = tx[HEAD]==cells[j*2] && hx[TAIL]==cells[j*2+1];
+      
+      int w = DIRECTED || BIPARTITE? thmatch :
+	(symm ? thmatch||htmatch : thmatch+htmatch)*(symm && marg && diag?2:1);
+      if(w) CHANGE_STAT[j] += w*((NEWWT!=0)-(OLDWT!=0));
+    }
+    });
+}

@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2017 Statnet Commons
+#  Copyright 2003-2018 Statnet Commons
 #######################################################################
 ####################################################################
 # The <ergm.maple> function finds a maximizer to the pseudo-
@@ -14,7 +14,7 @@
 # --PARAMETERS--
 #   pl      : a list of pseudo likelihood components, as returned
 #             <ergm.pl>. 
-#   m       : the model, as returned by <ergm.getmodel>
+#   m       : the model, as returned by <ergm_model>
 #   init  : the vector of initial theta coefficients
 #   MPLEtype: the method for MPL estimation as "penalized", "glm"
 #             or "logitreg"; default="glm"
@@ -130,7 +130,7 @@ ergm.maple<-function(pl, m, init=NULL,
   real.cov <- mplefit.summary$cov.unscaled
   theta[!m$etamap$offsettheta] <- real.coef
 # theta[is.na(theta)] <- 0
-  names(theta) <- m$coef.names
+  names(theta) <- param_names(m,canonical=TRUE)
 
 #
 # Old end

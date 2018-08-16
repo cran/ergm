@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2017 Statnet Commons
+#  Copyright 2003-2018 Statnet Commons
 #######################################################################
 ############################################################################
 # The <ergm.stepping> function provides one of the styles of maximum
@@ -16,15 +16,15 @@
 # --PARAMETERS--
 #   init         : the initial theta values
 #   nw             : the network
-#   model          : the model, as returned by <ergm.getmodel>
+#   model          : the model, as returned by <ergm_model>
 #   Clist          : a list of several network and model parameters,
 #                    as returned by <ergm.Cprepare>
 #   initialfit     : an ergm object, as the initial fit
 #   control     : a list of parameters for controlling the MCMC sampling
-#   MHproposal     : an MHproposal object for 'nw', as returned by
-#                    <MHproposal>
-#   MHproposal.obs: an MHproposal object for the observed network of'nw',
-#                    as returned by <MHproposal>
+#   proposal     : an proposal object for 'nw', as returned by
+#                    <proposal>
+#   proposal.obs: an proposal object for the observed network of'nw',
+#                    as returned by <proposal>
 #   verbose        : whether the MCMC sampling should be verbose AND
 #                    the diagnostic plots should be printed ; default=FALSE
 #   ...            : additional paramters that are passed onto
@@ -37,7 +37,7 @@
 ###########################################################################      
 
 ergm.stepping = function(init, nw, model, initialfit, constraints,
-                         control, MHproposal, MHproposal.obs, 
+                         control, proposal, proposal.obs, 
                          verbose=FALSE, ...){
 
   #   preliminary, to set up structure. 
@@ -49,7 +49,7 @@ ergm.stepping = function(init, nw, model, initialfit, constraints,
   
   ## Prepare the output structure:
   formula <- model$formula  # formula for this model
-  obsstats <- summary(model$formula)  # Observed statistics
+  obsstats <- summary(model, nw)  # Observed statistics
   init <- init  # beginning parameter value
   samples <- list()  # matrices of sampled network statistics
   sampmeans <- list() # vectors of column means of stats matrices
@@ -75,7 +75,7 @@ ergm.stepping = function(init, nw, model, initialfit, constraints,
     message("Iteration #",iter, ". ",appendLF=FALSE)
     if (verbose) {
       message("Current canonical parameter:")
-      .message_print(eta[[iter]])
+      message_print(eta[[iter]])
     }
     while (hi-lo>1 || hi > gamm) {
       gamm<-ceiling((hi+lo)/2)
@@ -117,7 +117,8 @@ ergm.stepping = function(init, nw, model, initialfit, constraints,
     finished = (countdown==0) || (iter >= control$Step.maxit)
     
     # When the stepped xi is in the convex hull (but not on the boundary), find the MLE for gyobs=xi
-    message("  Trying gamma=", gamma[[iter]],"")  
+    message("  Trying gamma=", gamma[[iter]],"")
+    #' @importFrom utils flush.console
     flush.console()
     
     ############# PLOTS print if VERBOSE=TRUE #################
@@ -125,6 +126,7 @@ ergm.stepping = function(init, nw, model, initialfit, constraints,
       # Take a look at obsstats (in red dot) and the "new obsstats" (in green triangle):
       # par(mgp = c(2,.8,0), mar = .1+c(3,3,3,1)) ## How do I put more margin at the top?
       par(ask=TRUE)
+      #' @importFrom graphics pairs
       pairs(rbind(samples[[iter]], obsstats, xi[[iter]], sampmeans[[iter]]), 
             col=c(rep(1, nrow(samples[[iter]])), 2, 7, 3), # all black used for JCGS article 
             pch=c(rep(46, nrow(samples[[iter]])), 3, 16, 4),
@@ -230,7 +232,7 @@ ergm.stepping = function(init, nw, model, initialfit, constraints,
 
 ## This is a variant of Hummel et al. (2010)'s steplength algorithm
 ## also usable for missing data MLE.
-.Hummel.steplength <- function(x1, x2=NULL, margin=0.05, steplength.max=1, steplength.prev=steplength.max, x2.num.max=100, steplength.maxit=25, last=FALSE, verbose=FALSE){
+.Hummel.steplength <- function(x1, x2=NULL, margin=0.05, steplength.max=1, steplength.prev=steplength.max, x2.num.max=100, steplength.maxit=25, verbose=FALSE){
   margin <- 1 + margin
   x1 <- rbind(x1); m1 <- rbind(colMeans(x1)); x1 <- unique(x1)
   if(is.null(x2)){
@@ -266,8 +268,6 @@ ergm.stepping = function(init, nw, model, initialfit, constraints,
   if(!is.null(x2) && nrow(x2crs) > x2.num.max){
     ## If constrained sample size > x2.num.max
     if(verbose>1){message("Using fast and approximate Hummel et al search.")}
-    if(last){x2.num.max <- 1}
-    if(last){steplength.maxit  <- 0}
     d <- rowSums(sweep(x2crs, 2, m1crs)^2)
     x2crs <- x2crs[order(-d)[1:x2.num.max],,drop=FALSE]
   }
@@ -275,7 +275,7 @@ ergm.stepping = function(init, nw, model, initialfit, constraints,
   ## Here, if x2 is defined, check against every point in it, without
   ## the margin and against its centroid m2 with the
   ## margin. Otherwise, just check against m2 with the margin.
-  passed <- function(gamma){is.inCH(rbind(if(!is.null(x2)) t(gamma * t(x2crs)  + (1-margin*gamma)*c(m1crs)),
+  passed <- function(gamma){is.inCH(rbind(if(!is.null(x2)) t(gamma * t(x2crs)  + (1-gamma)*c(m1crs)),
                                           margin*gamma * m2crs  + (1-margin*gamma)*m1crs),
                                     x1crs, verbose=verbose)}
 
@@ -286,6 +286,7 @@ ergm.stepping = function(init, nw, model, initialfit, constraints,
   g <- high <- steplength.max # We start at the maximum, because we need to first check that we've already arrived.
   i <- 0
   while(i < steplength.maxit & abs(high-low)>0.001){
+   if(verbose>1) message(sprintf("iter=%d, est=%f, low=%f, high=%f:",i,g,low,high))
    z=passed(g)
    if(z){
     low <- g
@@ -297,8 +298,7 @@ ergm.stepping = function(init, nw, model, initialfit, constraints,
    i <- i+1
 #  out <- c(i,g,low,high,z)
 #  names(out) <- c("iters","est","low","high","z")
-#  .message_print(out)
-   if(verbose>1) message(sprintf("iter= %d, est=%f, low=%f, high=%f, test=%d.",i,g,low,high,z))
+#  message_print(out)
   }
-  g
+  low
 }

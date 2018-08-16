@@ -5,7 +5,7 @@
  *  open source, and has the attribution requirements (GPL Section 7) at
  *  http://statnet.org/attribution
  *
- *  Copyright 2003-2017 Statnet Commons
+ *  Copyright 2003-2018 Statnet Commons
  */
 #include "edgetree.h"
 
@@ -707,7 +707,7 @@ int GetRandEdge(Vertex *tail, Vertex *head, Network *nwp) {
    be needed. */      
   /* *** but if it is needed, don't forget,  tail -> head */
 
-int FindithNonedge (Vertex *tail, Vertex *head, Edge i, Network *nwp) {
+int FindithNonedge (Vertex *tail, Vertex *head, Dyad i, Network *nwp) {
   Vertex taili=1;
   Edge e;
   Dyad ndyads = DYADCOUNT(nwp->nnodes, nwp->bipartite, nwp->directed_flag);
@@ -755,7 +755,7 @@ int FindithNonedge (Vertex *tail, Vertex *head, Edge i, Network *nwp) {
   // Now, the head we are looking for is (left over) i after lhead.
 
   *tail = taili;
-  *head = lhead + i + (nwp->directed_flag && lhead+i>=taili); // Skip over the (taili,taili) dyad, if the network is directed.
+  *head = lhead + i + (nwp->directed_flag && lhead<taili && lhead+i>=taili); // Skip over the (taili,taili) dyad, if the network is directed.
 
   return 1;
 }
@@ -815,32 +815,13 @@ Edge EdgeTree2EdgeList(Vertex *tails, Vertex *heads, Network *nwp, Edge nmax){
   Edge nextedge=0;
 
   /* *** don't forget,  tail -> head */
-  if (nwp->directed_flag) {
-    for (Vertex v=1; v<=nwp->nnodes; v++){
-      for(Vertex e = EdgetreeMinimum(nwp->outedges, v);
-      nwp->outedges[e].value != 0 && nextedge < nmax;
-      e = EdgetreeSuccessor(nwp->outedges, e)){
-        tails[nextedge] = v;
-        heads[nextedge] = nwp->outedges[e].value;
-        nextedge++;
-      }
-    }
-  }else{
-    for (Vertex v=1; v<=nwp->nnodes; v++){
-      for(Vertex e = EdgetreeMinimum(nwp->outedges, v);
-      nwp->outedges[e].value != 0 && nextedge < nmax;
-      e = EdgetreeSuccessor(nwp->outedges, e)){
-        Vertex k = nwp->outedges[e].value;
-        if(v < k){
-          tails[nextedge] = k;
-          heads[nextedge] = v;
-          nextedge++;
-        }else{
-          tails[nextedge] = v;
-          heads[nextedge] = k;
-          nextedge++;
-        }
-      }
+  for (Vertex v=1; v<=nwp->nnodes; v++){
+    for(Vertex e = EdgetreeMinimum(nwp->outedges, v);
+	nwp->outedges[e].value != 0 && nextedge < nmax;
+	e = EdgetreeSuccessor(nwp->outedges, e)){
+      tails[nextedge] = v;
+      heads[nextedge] = nwp->outedges[e].value;
+      nextedge++;
     }
   }
   return nextedge;

@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2017 Statnet Commons
+#  Copyright 2003-2018 Statnet Commons
 #######################################################################
 #################################################################################
 # The <ergm.getnetwork> function ensures that the network in a given formula
@@ -23,26 +23,29 @@
 #
 ###################################################################################
 
-ergm.getnetwork <- function (form, loopswarning=TRUE) {
-  if ((dc<-data.class(form)) != "formula")
-    stop (paste("Invalid formula of class ",dc))
-  trms<-terms(form)
-  if (trms[[1]]!="~")
-    stop ("Formula must be of the form 'network ~ model'.")
+#' Acquire and verify the network from the LHS of an `ergm` formula
+#' and verify that it is a valid network.
+#' 
+#' The function function ensures that the network in a given formula
+#' is valid; if so, the network is returned; if not, execution is
+#' halted with warnings.
+#'
+#' @param formula a two-sided formula whose LHS is a [`network`], an object that can be coerced to a [`network`], or an expression that evaluates to one.
+#' @param loopswarning whether warnings about loops should be printed
+#'   (`TRUE` or `FALSE`); defaults to `TRUE`.
+#' 
+#' @return A [`network`] object constructed by evaluating the LHS of
+#'   the model formula in the formula's environment.
+#' @export ergm.getnetwork
+ergm.getnetwork <- function (formula, loopswarning=TRUE){
+  nw <- ERRVL(
+    try({
+      tmp <- eval_lhs.formula(formula)
+      if(is.network(tmp)) tmp else as.network(tmp)
+    }, silent = TRUE),
+    stop("Invalid network on the LHS of the formula.")
+  )
 
-  nw.env<-environment(form)
-  if(!exists(x=paste(trms[[2]]),envir=nw.env)){
-    stop(paste("The network in the formula '",capture.output(print(form)),"' cannot be found.",sep=""))
-  }
-  nw <- try(
-          {
-            tmp <- eval(trms[[2]],envir=nw.env)
-            if(is.network(tmp)) tmp else as.network(tmp)
-          },
-          silent = TRUE)
-  if(inherits(nw,"try-error")){
-      stop("Invalid network. Is the left-hand-side of the formula correct?")
-  }
   if (loopswarning) {
     e <- as.edgelist(nw)
     if(any(e[,1]==e[,2])) {

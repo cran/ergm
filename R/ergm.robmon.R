@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  http://statnet.org/attribution
 #
-#  Copyright 2003-2017 Statnet Commons
+#  Copyright 2003-2018 Statnet Commons
 #######################################################################
 ############################################################################
 # The <ergm.robmon> function provides one of the styles of maximum
@@ -20,15 +20,15 @@
 # --PARAMETERS--
 #   init         : the initial theta values
 #   nw             : the network
-#   model          : the model, as returned by <ergm.getmodel>
+#   model          : the model, as returned by <ergm_model>
 #   Clist          : a list of several network and model parameters,
 #                    as returned by <ergm.Cprepare>
 #   burnin         : the number of proposals to disregard before sampling
 #                    begins
 #   interval       : the number of proposals between sampled statistics;
 #   initialfit     : an ergm object, as the initial fit
-#   MHproposal     : an MHproposal object for 'nw', as returned by
-#                    <getMHproposal>
+#   proposal     : an proposal object for 'nw', as returned by
+#                    <getproposal>
 #   verbose        : whether the MCMC sampling should be verbose (T or F);
 #                    default=FALSE
 #   control        : a list of parameters for controlling the fitting
@@ -48,7 +48,7 @@
 ###########################################################################      
 
 ergm.robmon <- function(init, nw, model,
-                        MHproposal,
+                        proposal,
                         verbose=FALSE, 
                         control=control.ergm() ){
   #phase 1:  Estimate diagonal elements of D matrix (covariance matrix for init)
@@ -64,12 +64,12 @@ ergm.robmon <- function(init, nw, model,
   control$MCMC.samplesize=n1
   message(paste("Phase 1: ",n1,"iterations"),appendLF=FALSE)
   message(paste(" (interval=",control$MCMC.interval,")",sep=""))
-  z <- ergm.getMCMCsample(nw, model, MHproposal, eta0, control, verbose)
+  z <- ergm_MCMC_sample(nw, model, proposal, control, eta=eta0, verbose=max(verbose-1,0))
   steplength <- control$MCMLE.steplength
   # post-processing of sample statistics:  Shift each row by the
   # matrix model$nw.stats - model$target.stats, attach column names
-  statsmatrix <- sweep(z$statsmatrix, 2, model$nw.stats - model$target.stats, "+")
-  colnames(statsmatrix) <- model$coef.names
+  statsmatrix <- sweep(as.matrix(z$stats), 2, model$nw.stats - model$target.stats, "+")
+  colnames(statsmatrix) <- param_names(model,canonical=TRUE)
 
   if(steplength<1){
     statsmean <- apply(statsmatrix,2,base::mean)
@@ -100,8 +100,12 @@ ergm.robmon <- function(init, nw, model,
   theta <- init
   oldthetas <- NULL 
   control$MCMC.samplesize <- 10 # With samplesize=1, interval is irrelevant and burnin is crucial.
-  if(control$parallel>0){
-   control$MCMC.samplesize <- control$MCMC.samplesize*control$parallel
+  
+  nthreads <- NVL(control$parallel,0)
+  nthreads <- if(is(nthreads, "cluster")) length(nthreads)
+                
+  if(nthreads>0){
+   control$MCMC.samplesize <- control$MCMC.samplesize*nthreads
   }
   for(subphase in 1:n_sub) {
     thetamatrix <- NULL # Will hold matrix of all theta values for this subphase
@@ -115,11 +119,11 @@ ergm.robmon <- function(init, nw, model,
       # control$MCMC.burnin should perhaps be increased here, since
       # each iteration begins from the observed network, which must be 
       # "forgotten".
-      z <- ergm.getMCMCsample(nw, model, MHproposal, eta, control, verbose=FALSE)
+      z <- ergm_MCMC_sample(nw, model, proposal, control, eta=eta, verbose=max(verbose-1,0))
       # post-processing of sample statistics:  Shift each row by the
       # matrix model$nw.stats - model$target.stats, attach column names
-      statsmatrix <- sweep(z$statsmatrix, 2, model$nw.stats - model$target.stats, "+")
-      colnames(statsmatrix) <- model$coef.names
+      statsmatrix <- sweep(as.matrix(z$stats), 2, model$nw.stats - model$target.stats, "+")
+      colnames(statsmatrix) <- param_names(model,canonical=TRUE)
 
       thetamatrix <- rbind(thetamatrix,theta)
       statsmean <- apply(statsmatrix,2,base::mean)
@@ -147,11 +151,11 @@ message(paste("theta new:",theta,""))
   message(paste(" (interval=",control$MCMC.interval,")",sep=""))
   eta <- ergm.eta(theta, model$etamap)
   control$nmatrixentries = control$MCMC.samplesize * model$etamap$etalength
-  z <- ergm.getMCMCsample(nw, model, MHproposal, eta, control, verbose=FALSE)
+  z <- ergm_MCMC_sample(nw, model, proposal, control, eta=eta, verbose=max(verbose-1,0))
   # post-processing of sample statistics:  Shift each row by the
   # matrix model$nw.stats - model$target.stats, attach column names
-  statsmatrix <- sweep(z$statsmatrix, 2, model$nw.stats - model$target.stats, "+")
-  colnames(statsmatrix) <- model$coef.names
+  statsmatrix <- sweep(as.matrix(z$stats), 2, model$nw.stats - model$target.stats, "+")
+  colnames(statsmatrix) <- param_names(model,canonical=TRUE)
 
 # ubar <- apply(z$statsmatrix, 2, base::mean)
 # hessian <- (t(z$statsmatrix) %*% z$statsmatrix)/n3 - outer(ubar,ubar)
