@@ -1,7 +1,8 @@
 ## ----include=FALSE-------------------------------------------------------
 library(knitr)
 opts_chunk$set(
-concordance=TRUE
+concordance=TRUE,
+error=FALSE
 )
 
 ## ----include=FALSE-------------------------------------------------------
@@ -168,13 +169,8 @@ data('faux.magnolia.high')
 magnolia <- faux.magnolia.high
 plot(magnolia, vertex.cex=.5)
 
-## ----eval=FALSE----------------------------------------------------------
-#  fit <- ergm(magnolia~edges+triangle, control=control.ergm(seed=1))
-#  mcmc.diagnostics(fit, center=F)
-
-## ----echo=FALSE,eval=TRUE,results='markup',fig.width=75------------------
-try_out <- try(ergm(magnolia~edges+triangle, control=control.ergm(seed=1))) 
-cat(try_out) 
+## ----error=TRUE----------------------------------------------------------
+fit <- ergm(magnolia~edges+triangle, control=control.ergm(seed=1))
 
 ## ----eval=FALSE----------------------------------------------------------
 #  fit <- ergm(magnolia~edges+triangle, control=control.ergm(seed=1), verbose=T)
@@ -214,107 +210,4 @@ fit <- ergm(magnolia~edges+gwesp(0.25,fixed=T)+nodematch('Grade')+nodematch('Rac
 
 ## ----fig1----------------------------------------------------------------
 mcmc.diagnostics(fit)
-
-## ------------------------------------------------------------------------
-ego.net <- network.initialize(500, directed=F)
-ego.net %v% 'sex' <- c(rep(0,250),rep(1,250))
-
-## ------------------------------------------------------------------------
-ego.deg <- c(180, 245, 60, 15)  				# node distn
-ego.mixmat <- matrix(c(164,44,26,176)/2, nrow=2, byrow=T)	# adjusted tie distn
-
-## ------------------------------------------------------------------------
-ego.edges <- sum(ego.mixmat)
-ego.sexmatch <- ego.mixmat[1,1]+ego.mixmat[2,2]
-
-## ------------------------------------------------------------------------
-ego.target.stats <- c(ego.edges, ego.sexmatch)
-ego.target.stats
-
-## ------------------------------------------------------------------------
-ego.fit <- ergm(ego.net ~ edges + nodematch('sex'),
- target.stats = ego.target.stats)
-
-## ------------------------------------------------------------------------
-summary(ego.fit) 
-
-## ------------------------------------------------------------------------
-ego.sim1 <- simulate(ego.fit)
-plot(ego.sim1, vertex.cex=.65, vertex.col="sex")
-
-## ------------------------------------------------------------------------
-rbind(summary(ego.sim1 ~ degree(c(0:3))), ego.deg)
-mixingmatrix(ego.sim1, "sex")
-ego.mixmat
-
-## ------------------------------------------------------------------------
-ego.sim100 <- simulate(ego.fit, nsim=100)
-ego.sim100
-
-## ----eval=FALSE----------------------------------------------------------
-#  summary(ego.sim100)
-
-## ------------------------------------------------------------------------
-sim.stats <- attr(ego.sim100,"stats")
-rbind(colMeans(sim.stats), ego.target.stats)
-
-## ------------------------------------------------------------------------
-matplot(1:nrow(sim.stats), sim.stats, 
-  pch=c("e","m","0","+"), cex=.65, 
-  main="100 simulations from ego.fit model", sub="(default settings)",
-  xlab="Replicate", ylab="frequency")
-abline(h=ego.target.stats, col=c(1:4))
-
-## ------------------------------------------------------------------------
-ego.sim100 <- simulate(ego.fit, nsim=100,
-  control=control.simulate.ergm(MCMC.interval=10000))
-sim.stats <- attr(ego.sim100,"stats")
-matplot(1:nrow(sim.stats), sim.stats,
-  pch=c("e","m"), cex=.65,
-  main="100 simulations from ego.fit model", sub="(MCMC.interval=10000)",
-  xlab="Replicate", ylab="frequency")
-abline(h=ego.target.stats, col=c(1:2))
-
-## ------------------------------------------------------------------------
-sim.fulldeg <- summary(ego.sim100 ~ degree(c(0:10)))
-colnames(sim.fulldeg) <- paste("deg",0:10, sep='')
-sim.fulldeg[1:5,]
-
-## ------------------------------------------------------------------------
-sim.deg <- cbind(sim.fulldeg[,1:3], apply(sim.fulldeg[,4:11],1,sum))
-colnames(sim.deg) <- c(colnames(sim.fulldeg)[1:3],"degree3+")
-rbind(colMeans(sim.deg),ego.deg)
-
-## ------------------------------------------------------------------------
-matplot(1:nrow(sim.deg), sim.deg, pch=as.character(0:3), cex=.5,
-   main="Comparing ego.sims to non-targeted degree frequencies",
-   sub = "(only total edges targeted)",
-   xlab = "Replicate", ylab = "Frequencies")
-abline(h=c(180, 245, 60, 15), col=c(1:4))
-
-## ------------------------------------------------------------------------
-ego.isolates <- ego.deg[1]
-ego.target.stats <- c(ego.edges, ego.sexmatch, ego.isolates)
-ego.fit <- ergm(ego.net ~ edges + nodematch('sex') + degree(0),
- target.stats = ego.target.stats) 
-summary(ego.fit)
-
-## ------------------------------------------------------------------------
-ego.sim100 <- simulate(ego.fit, nsim=100,
-   control=control.simulate.ergm(MCMC.interval=10000))
-sim.stats <- attr(ego.sim100,"stats")
-rbind(colMeans(sim.stats), ego.target.stats)
-
-## ------------------------------------------------------------------------
-sim.fulldeg <- summary(ego.sim100 ~ degree(c(0:10)))
-sim.deg <- cbind(sim.fulldeg[,1:3], apply(sim.fulldeg[,4:11],1,sum))
-colnames(sim.deg) <- c(colnames(sim.fulldeg)[1:3],"degree3+")
-rbind(colMeans(sim.deg),ego.deg)
-
-## ------------------------------------------------------------------------
-matplot(1:nrow(sim.deg), sim.deg, pch=as.character(0:3), cex=.5,
-   main="Comparing ego.sims to non-targeted degree frequencies",
-   sub = "(only 0, 2+ and total edges targeted)",
-   xlab = "Replicate", ylab = "Frequencies")
-abline(h=c(180, 245, 60, 15), col=c(1:4))
 

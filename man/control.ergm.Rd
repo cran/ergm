@@ -7,26 +7,27 @@
 control.ergm(drop = TRUE, init = NULL, init.method = NULL,
   main.method = c("MCMLE", "Robbins-Monro", "Stochastic-Approximation",
   "Stepping"), force.main = FALSE, main.hessian = TRUE,
-  MPLE.max.dyad.types = 1e+06, MPLE.samplesize = 50000,
-  MPLE.type = c("glm", "penalized"), MCMC.prop.weights = "default",
-  MCMC.prop.args = list(), MCMC.interval = 1024,
-  MCMC.burnin = MCMC.interval * 16, MCMC.samplesize = 1024,
-  MCMC.effectiveSize = NULL, MCMC.effectiveSize.damp = 10,
-  MCMC.effectiveSize.maxruns = 1000, MCMC.effectiveSize.base = 1/2,
-  MCMC.effectiveSize.points = 5, MCMC.effectiveSize.order = 1,
-  MCMC.return.stats = TRUE, MCMC.runtime.traceplot = FALSE,
-  MCMC.init.maxedges = 20000, MCMC.max.maxedges = Inf,
-  MCMC.addto.se = TRUE, MCMC.compress = FALSE,
-  MCMC.packagenames = c(), SAN.maxit = 10, SAN.burnin.times = 10,
-  SAN.control = control.san(coef = init, term.options = term.options,
-  SAN.prop.weights = MCMC.prop.weights, SAN.prop.args = MCMC.prop.args,
-  SAN.init.maxedges = MCMC.init.maxedges, SAN.burnin = MCMC.burnin *
-  SAN.burnin.times, SAN.interval = MCMC.interval, SAN.packagenames =
-  MCMC.packagenames, MPLE.max.dyad.types = MPLE.max.dyad.types, parallel =
-  parallel, parallel.type = parallel.type, parallel.version.check =
-  parallel.version.check), MCMLE.termination = c("Hummel", "Hotelling",
-  "precision", "none"), MCMLE.maxit = 20, MCMLE.conv.min.pval = 0.5,
-  MCMLE.NR.maxit = 100, MCMLE.NR.reltol = sqrt(.Machine$double.eps),
+  checkpoint = NULL, resume = NULL, MPLE.max.dyad.types = 1e+06,
+  MPLE.samplesize = 50000, MPLE.type = c("glm", "penalized"),
+  MCMC.prop.weights = "default", MCMC.prop.args = list(),
+  MCMC.interval = 1024, MCMC.burnin = MCMC.interval * 16,
+  MCMC.samplesize = 1024, MCMC.effectiveSize = NULL,
+  MCMC.effectiveSize.damp = 10, MCMC.effectiveSize.maxruns = 1000,
+  MCMC.effectiveSize.base = 1/2, MCMC.effectiveSize.points = 5,
+  MCMC.effectiveSize.order = 1, MCMC.return.stats = TRUE,
+  MCMC.runtime.traceplot = FALSE, MCMC.init.maxedges = 20000,
+  MCMC.max.maxedges = Inf, MCMC.addto.se = TRUE,
+  MCMC.compress = FALSE, MCMC.packagenames = c(), SAN.maxit = 4,
+  SAN.nsteps.times = 8, SAN.control = control.san(term.options =
+  term.options, SAN.maxit = SAN.maxit, SAN.prop.weights =
+  MCMC.prop.weights, SAN.prop.args = MCMC.prop.args, SAN.init.maxedges =
+  MCMC.init.maxedges, SAN.max.maxedges = MCMC.max.maxedges, SAN.nsteps =
+  MCMC.burnin * SAN.nsteps.times, SAN.samplesize = MCMC.samplesize,
+  SAN.packagenames = MCMC.packagenames, parallel = parallel, parallel.type
+  = parallel.type, parallel.version.check = parallel.version.check),
+  MCMLE.termination = c("Hummel", "Hotelling", "precision", "none"),
+  MCMLE.maxit = 20, MCMLE.conv.min.pval = 0.5, MCMLE.NR.maxit = 100,
+  MCMLE.NR.reltol = sqrt(.Machine$double.eps),
   obs.MCMC.samplesize = MCMC.samplesize,
   obs.MCMC.interval = MCMC.interval, obs.MCMC.burnin = MCMC.burnin,
   obs.MCMC.burnin.min = obs.MCMC.burnin/10,
@@ -97,11 +98,14 @@ method specified by \code{\link[=control.ergm]{control$init.method}}.
 an uncoverged \code{\link[=ergm]{ergm()}} run, but see
 \code{\link{enformulate.curved}}.}
 
-\item{init.method}{A chatacter vector or \code{NULL}. The default method
-depends on the reference measure used. For the binary (\code{"Bernoulli"})
-ERGMs, it's maximum pseudo-likelihood estimation (MPLE). Other valid values
-include \code{"zeros"} for a \code{0} vector of appropriate length and
-\code{"CD"} for contrastive divergence.
+\item{init.method}{A chatacter vector or \code{NULL}. The default
+method depends on the reference measure used. For the binary
+(\code{"Bernoulli"}) ERGMs, with dyad-independent constraints,
+it's maximum pseudo-likelihood estimation (MPLE). Other valid
+values include \code{"zeros"} for a \code{0} vector of
+appropriate length and \code{"CD"} for contrastive divergence. If
+passed explicitly, this setting overrides the reference's
+limitations.
 
 Valid initial methods for a given reference are set by the \code{InitErgmReference.*} function.}
 
@@ -127,6 +131,20 @@ estimation.}
 
 \item{main.hessian}{Logical: If TRUE, then an approximate Hessian matrix is
 used in the MCMC-based estimation method.}
+
+\item{checkpoint}{At the start of every iteration, save the state
+of the optimizer in a way that will allow it to be resumed. The
+name is passed through \code{\link[=sprintf]{sprintf()}} with iteration number as the
+second argument. (For example, \code{checkpoint="step_\%03d.RData"}
+will save to \code{step_001.RData}, \code{step_002.RData}, etc.)}
+
+\item{resume}{If given a file name of an \code{RData} file produced by
+\code{checkpoint}, the optimizer will attempt to resume after
+restoring the state. Control parameters from the saved state will
+be reused, except for those whose value passed via
+\code{control.ergm()} had change from the saved run. Note that if the
+network, the model, or some critical settings differ between
+runs, the results may be undefined.}
 
 \item{MPLE.max.dyad.types}{Maximum number of unique values of change
 statistic vectors, which are the predictors in a logistic regression used to
@@ -212,7 +230,7 @@ not be needed outside of very strange setups.}
 \code{\link[=ergm]{ergm()}}, the maximum number of attempts to use \code{\link{san}}
 to obtain a network with statistics close to those specified.}
 
-\item{SAN.burnin.times}{Multiplier for \code{SAN.burnin} relative to
+\item{SAN.nsteps.times}{Multiplier for \code{SAN.nsteps} relative to
 \code{MCMC.burnin}. This lets one control the amount of SAN burn-in
 (arguably, the most important of SAN parameters) without overriding the
 other SAN.control defaults.}
@@ -373,8 +391,9 @@ stuck below this minimum value.}
 
 \item{MCMLE.save_intermediates}{Every iteration, after MCMC
 sampling, save the MCMC sample and some miscellaneous information
-to a file with this name. The name is passed through \code{\link[=sprintf]{sprintf()}}
-with iteration number as the second argument. (So, for example,
+to a file with this name. This is mainly useful for diagnostics
+and debugging. The name is passed through \code{\link[=sprintf]{sprintf()}} with
+iteration number as the second argument. (For example,
 \code{MCMLE.save_intermediates="step_\%03d.RData"} will save to
 \code{step_001.RData}, \code{step_002.RData}, etc.)}
 
@@ -502,7 +521,7 @@ See the \code{usage} section in \code{\link[=ergm]{ergm()}} for details.
 \item Snijders, T.A.B. (2002), Markov Chain Monte
 Carlo Estimation of Exponential Random Graph Models.  Journal of Social
 Structure.  Available from
-\url{http://www.cmu.edu/joss/content/articles/volume3/Snijders.pdf}.
+\url{https://www.cmu.edu/joss/content/articles/volume3/Snijders.pdf}.
 \item Firth (1993), Bias Reduction in Maximum Likelihood Estimates.
 Biometrika, 80: 27-38.
 \item Hunter, D. R. and M. S. Handcock (2006), Inference in curved
@@ -513,7 +532,7 @@ Simulation-Based Algorithms for Fitting ERGMs, Journal of Computational and
 Graphical Statistics, 21: 920-939.
 \item Kristoffer Sahlin. Estimating convergence of Markov chain Monte Carlo
 simulations. Master's Thesis. Stockholm University, 2011.
-\url{http://www2.math.su.se/matstat/reports/master/2011/rep2/report.pdf}
+\url{https://www2.math.su.se/matstat/reports/master/2011/rep2/report.pdf}
 }
 
 }

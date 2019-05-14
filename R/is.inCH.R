@@ -1,11 +1,11 @@
 #  File R/is.inCH.R in package ergm, part of the Statnet suite
-#  of packages for network analysis, http://statnet.org .
+#  of packages for network analysis, https://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) at
-#  http://statnet.org/attribution
+#  https://statnet.org/attribution
 #
-#  Copyright 2003-2018 Statnet Commons
+#  Copyright 2003-2019 Statnet Commons
 #######################################################################
 ###############################################################################
 # The <is.inCH> function determines whether a vector p is in the convex hull
@@ -88,7 +88,7 @@
 #' @return Logical, telling whether \code{p} is (or all rows of \code{p} are)
 #' in the closed convex hull of the points in \code{M}.
 #' @references \itemize{ \item
-#' \url{http://www.cs.mcgill.ca/~fukuda/soft/polyfaq/node22.html}
+#' \url{https://www.cs.mcgill.ca/~fukuda/soft/polyfaq/node22.html}
 #' 
 #' \item Hummel, R. M., Hunter, D. R., and Handcock, M. S. (2012), Improving
 #' Simulation-Based Algorithms for Fitting ERGMs, Journal of Computational and
@@ -115,19 +115,49 @@ is.inCH <- function(p, M, verbose=FALSE, ...) { # Pass extra arguments directly 
   ## NOTE: PCA code has been moved to .Hummel.steplength().
   ##
 
-  L = cbind(1, M)
+  if(getRversion()>="3.6.0" && .Platform$OS.type=="unix") message("NOTE: Messages ",sQuote("Error in mcexit(0L)"), " may appear; please disregard them.")
 
+  timeout <- 1
   for(i in seq_len(nrow(p))){
-   q = c(1, p[i,]) 
-############################################
-   # USE lp FUNCTION FROM lpSolve PACKAGE:
-   #' @importFrom lpSolve lp
-   ans <- lp(objective.in = c(-q, q),
-             const.mat = rbind( c(q, -q), cbind(L, -L)),
-             const.dir = "<=",
-             const.rhs = c(1, rep(0, NROW(L))), 
-             ...
-             )
+    ############################################
+    # USE lp FUNCTION FROM lpSolve PACKAGE:
+    #' @importFrom lpSolve lp
+
+    ## This works around what appears to be a bug in lpsolve library
+    ## that causes the process the process to reproducibly hang on
+    ## some inputs. After a time limit, the call is terminated and
+    ## re-attempted after randomly shifting p and M (preserving
+    ## whether one is in the convex hull of the other).
+
+    ## TODO: Parametrize the timeout settings and/or figure out what's
+    ## wrong with lpSolve().
+
+    repeat{
+      ans <- forkTimeout({
+        L <- cbind(1, M)
+        q <- c(1, p[i,])
+        lp(objective.in = c(-q, q),
+           const.mat = rbind( c(q, -q), cbind(L, -L)),
+           const.dir = "<=",
+           const.rhs = c(1, rep(0, NROW(L))),
+           ...
+           )
+      }, timeout=timeout, unsupported="silent", onTimeout=list(objval=NA))
+
+      if(is.na(ans$objval)){
+        # Perturb p and M.
+        shift <- rnorm(1)
+        M <- M + shift
+        p <- p + shift
+        # Increase timeout, in case it's actually a difficult problem.
+        timeout <- timeout*2
+      }else{
+        # Reduce the timeout by a little bit.
+        timeout <- max(timeout/2^(1/5),1)
+        break
+      }
+    }
+
    if(ans$objval!=0){
     if(verbose>1) message(sprintf("is.inCH: iter= %d, outside hull.",i))
     return(FALSE)  #if the min is not zero, the point p[i,] is not in the CH of the points M

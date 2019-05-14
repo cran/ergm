@@ -1,18 +1,18 @@
 #  File R/ergm.robmon.R in package ergm, part of the Statnet suite
-#  of packages for network analysis, http://statnet.org .
+#  of packages for network analysis, https://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) at
-#  http://statnet.org/attribution
+#  https://statnet.org/attribution
 #
-#  Copyright 2003-2018 Statnet Commons
+#  Copyright 2003-2019 Statnet Commons
 #######################################################################
 ############################################################################
 # The <ergm.robmon> function provides one of the styles of maximum
 # likelihood estimation that can be used. This one is based on Snijders
 # (2002), J of Social Structure  and Snijders and van Duijn (2002) from
 # A Festscrift for Ove Frank.  Both papers are available from Tom Snijders'
-# web page:           http://stat.gamma.rug.nl/snijders/publ.htm
+# web page:           https://stat.gamma.rug.nl/snijders/publ.htm
 # (The other MLE styles are found in functions <ergm.stocapprox>,
 # <ergm.stepping> and <ergm.mainfitloop>
 #
@@ -51,6 +51,9 @@ ergm.robmon <- function(init, nw, model,
                         proposal,
                         verbose=FALSE, 
                         control=control.ergm() ){
+  # Start cluster if required (just in case we haven't already).
+  ergm.getCluster(control, max(verbose-1,0))
+
   #phase 1:  Estimate diagonal elements of D matrix (covariance matrix for init)
   n1 <- control$SA.phase1_n
   if(is.null(n1)) {n1 <- 7 + 3 * model$etamap$etalength} #default value
@@ -101,12 +104,9 @@ ergm.robmon <- function(init, nw, model,
   oldthetas <- NULL 
   control$MCMC.samplesize <- 10 # With samplesize=1, interval is irrelevant and burnin is crucial.
   
-  nthreads <- NVL(control$parallel,0)
-  nthreads <- if(is(nthreads, "cluster")) length(nthreads)
-                
-  if(nthreads>0){
-   control$MCMC.samplesize <- control$MCMC.samplesize*nthreads
-  }
+
+  control$MCMC.samplesize <- control$MCMC.samplesize*nthreads(control)
+
   for(subphase in 1:n_sub) {
     thetamatrix <- NULL # Will hold matrix of all theta values for this subphase
     message(paste("Phase 2, subphase",subphase,": a=",a,",",n_iter,"iterations"), appendLF=FALSE)

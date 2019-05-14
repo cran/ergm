@@ -1,29 +1,30 @@
 /*  File src/wtSAN.h in package ergm, part of the Statnet suite
- *  of packages for network analysis, http://statnet.org .
+ *  of packages for network analysis, https://statnet.org .
  *
  *  This software is distributed under the GPL-3 license.  It is free,
  *  open source, and has the attribution requirements (GPL Section 7) at
- *  http://statnet.org/attribution
+ *  https://statnet.org/attribution
  *
- *  Copyright 2003-2018 Statnet Commons
+ *  Copyright 2003-2019 Statnet Commons
  */
 #ifndef WTSAN_H
 #define WTSAN_H
 
-#include "wtedgetree.h"
-#include "wtchangestat.h"
-#include "wtMHproposal.h"
-#include "wtmodel.h"
+#include "ergm_wtedgetree.h"
+#include "ergm_wtchangestat.h"
+#include "ergm_wtMHproposal.h"
+#include "ergm_wtmodel.h"
 #include "wtMCMC.h"
 
-void WtSAN_wrapper (int * dnumnets, int *nedges,
+void WtSAN_wrapper (int *nedges,
 		    int *tails, int *heads, double *weights,
 		    int *dn, int *dflag, int *bipartite, 
 		    int *nterms, char **funnames,
 		    char **sonames, 
-		    char **MHproposaltype, char **MHproposalpackage,
-		    double *inputs, double *theta0, double *tau, int *samplesize, 
-		    double *sample, int *burnin, int *interval,  
+		    char **MHProposaltype, char **MHProposalpackage,
+		    double *inputs, double *tau,
+		    double *sample, double *prop_sample,
+		    int *samplesize, int *nsteps,  
 		    int *newnetworktails, 
 		    int *newnetworkheads, 
 		    double *newnetworkweights,
@@ -32,13 +33,13 @@ void WtSAN_wrapper (int * dnumnets, int *nedges,
 		    int *maxedges,
 		    int *status);
 
-WtMCMCStatus WtSANSample (WtMHproposal *MHp,
-		double *theta, double *invcov, double *tau, double *networkstatistics, 
-		int samplesize, int burnin, 
-	        int interval, int fVerbose, int nmax,
+WtMCMCStatus WtSANSample (WtMHProposal *MHp,
+		double *invcov, double *tau, double *networkstatistics, double *prop_networkstatistics,
+		int samplesize, int nsteps, 
+	        int fVerbose, int nmax,
 		WtNetwork *nwp, WtModel *m);
-WtMCMCStatus WtSANMetropolisHastings (WtMHproposal *MHp,
-			 double *theta, double *invcov, double *tau, double *statistics, 
+WtMCMCStatus WtSANMetropolisHastings (WtMHProposal *MHp,
+			 double *invcov, double *tau, double *statistics, double *prop_statistics,
 			 int nsteps, int *staken,
 			 int fVerbose,
 			 WtNetwork *nwp, WtModel *m);

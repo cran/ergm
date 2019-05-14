@@ -1,16 +1,16 @@
 #  File R/locator.R in package ergm, part of the Statnet suite
-#  of packages for network analysis, http://statnet.org .
+#  of packages for network analysis, https://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) at
-#  http://statnet.org/attribution
+#  https://statnet.org/attribution
 #
-#  Copyright 2003-2018 Statnet Commons
+#  Copyright 2003-2019 Statnet Commons
 #######################################################################
 #' A simple dictionary to cache recent InitFunction lookups.
 #'
 #' @param name function name.
-#' @param env the nevironment name for the function; if `NULL`, look
+#' @param env the environment name for the function; if `NULL`, look
 #'   up in cache, otherwise insert or overwrite.
 #'
 #' @return A character string giving the name of the environment
@@ -45,15 +45,20 @@ locator_cache <- local({
   }
 })
 
-
-
 locate.InitFunction <- function(name, prefix, errname=NULL, env = globalenv()){
   if(is.call(name)) name <- name[[1]]
   name <- as.character(name)
   fname <- paste(prefix,name,sep=".")
-
+  
   # Try the given environment...
-  if(exists(fname, mode='function', envir=env)) return(as.name(fname))
+  if(!is.null(obj<-get0(fname, mode='function', envir=env))){
+    env <- environment(obj)
+    envname <- environmentName(env)
+    # Check that environment name is not blank or globalenv(), and
+    # that the detected environment actually contains the object.
+    if(! NVL(envname,"") %in% c("", "R_GlobalEnv") && exists(fname, mode='function', envir=env, inherits=FALSE)) return(call(":::",as.name(envname),as.name(fname)))
+    else return(as.name(fname))
+  }
 
   # Try the cache...
   envname <- locator_cache(fname)

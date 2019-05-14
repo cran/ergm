@@ -1,11 +1,11 @@
 #  File R/ergm.phase12.R in package ergm, part of the Statnet suite
-#  of packages for network analysis, http://statnet.org .
+#  of packages for network analysis, https://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) at
-#  http://statnet.org/attribution
+#  https://statnet.org/attribution
 #
-#  Copyright 2003-2018 Statnet Commons
+#  Copyright 2003-2019 Statnet Commons
 #######################################################################
 ###############################################################################
 # The <ergm.phase12> function is a wrapper for the <MCMC.phase12.C> method,
@@ -98,7 +98,7 @@ ergm.phase12 <- function(g, model,
    eta <- z$eta
   names(eta) <- names(eta0)
 
-  newnetwork<-newnw.extract(g,z)
+  newnetwork<-as.network(pending_update_network(g,z))
   
   colnames(statsmatrix) <- param_names(model,canonical=TRUE)
   list(statsmatrix=statsmatrix, newnetwork=newnetwork, target.stats=model$target.stats,

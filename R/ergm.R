@@ -1,11 +1,11 @@
 #  File R/ergm.R in package ergm, part of the Statnet suite
-#  of packages for network analysis, http://statnet.org .
+#  of packages for network analysis, https://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) at
-#  http://statnet.org/attribution
+#  https://statnet.org/attribution
 #
-#  Copyright 2003-2018 Statnet Commons
+#  Copyright 2003-2019 Statnet Commons
 #######################################################################
 ###############################################################################
 # The <ergm> function fits ergms from a specified formula returning either
@@ -243,8 +243,9 @@
 #' Hessian of the approximated loglikelihood evaluated at the maximizer.}
 #' \item{failure}{Logical:  Did the MCMC estimation fail?}
 #' \item{network}{Original network}
-#' \item{newnetwork}{The final network at the end of the MCMC
-#' simulation}
+#' \item{newnetworks}{A list of the final networks at the end of the MCMC
+#' simulation, one for each thread.}
+#' \item{newnetwork}{The first (possibly only) element of \code{netwonetworks}.}
 #' \item{coef.init}{The initial value of \eqn{\theta}.}
 #' \item{est.cov}{The covariance matrix of the model statistics in the final MCMC sample.}
 #' \item{coef.hist, steplen.hist, stats.hist, stats.obs.hist}{
@@ -339,7 +340,7 @@
 #' Prototype Packages for Managing and Animating Longitudinal
 #' Network Data: \pkg{dynamicnetwork} and \pkg{rSoNIA}.
 #' \emph{Journal of Statistical Software}, 24(7).
-#' \url{http://www.jstatsoft.org/v24/i07/}.
+#' \url{https://www.jstatsoft.org/v24/i07/}.
 #' 
 #' 
 #' Butts CT (2007).
@@ -349,15 +350,15 @@
 #' Butts CT (2008).
 #' \pkg{network}: A Package for Managing Relational Data in \R.
 #' \emph{Journal of Statistical Software}, 24(2).
-#' \url{http://www.jstatsoft.org/v24/i02/}.
+#' \url{https://www.jstatsoft.org/v24/i02/}.
 #' 
 #' Butts C (2015).
-#' \pkg{network}: The Statnet Project (http://www.statnet.org). R package version 1.12.0, \url{https://cran.r-project.org/package=network}.
+#' \pkg{network}: The Statnet Project (https://statnet.org). R package version 1.12.0, \url{https://cran.r-project.org/package=network}.
 #' 
 #' Goodreau SM, Handcock MS, Hunter DR, Butts CT, Morris M (2008a).
 #' A \pkg{statnet} Tutorial.
 #' \emph{Journal of Statistical Software}, 24(8).
-#' \url{http://www.jstatsoft.org/v24/i08/}.
+#' \url{https://www.jstatsoft.org/v24/i08/}.
 #' 
 #' Goodreau SM, Kitts J, Morris M (2008b).
 #' Birds of a Feather, or Friend of a Friend? Using Exponential
@@ -399,7 +400,7 @@
 #' \pkg{ergm}: A Package to Fit, Simulate and Diagnose
 #' Exponential-Family Models for Networks.
 #' \emph{Journal of Statistical Software}, 24(3).
-#' \url{http://www.jstatsoft.org/v24/i03/}.
+#' \url{https://www.jstatsoft.org/v24/i03/}.
 #' 
 #' Krivitsky PN (2012). Exponential-Family Random Graph Models for Valued
 #' Networks. \emph{Electronic Journal of Statistics}, 2012, 6,
@@ -409,13 +410,13 @@
 #' Specification of Exponential-Family Random Graph Models:
 #' Terms and Computational Aspects.
 #' \emph{Journal of Statistical Software}, 24(4).
-#' \url{http://www.jstatsoft.org/v24/i04/}.
+#' \url{https://www.jstatsoft.org/v24/i04/}.
 #' 
 #' Snijders, T.A.B. (2002),
 #' Markov Chain Monte Carlo Estimation of Exponential Random Graph Models.
 #' Journal of Social Structure.
 #' Available from 
-#' \url{http://www.cmu.edu/joss/content/articles/volume3/Snijders.pdf}.
+#' \url{https://www.cmu.edu/joss/content/articles/volume3/Snijders.pdf}.
 #' 
 #' @seealso network, \%v\%, \%n\%, \code{\link{ergm-terms}}, \code{\link{ergmMPLE}},
 #' \code{\link{summary.ergm}}, \code{\link{print.ergm}}
@@ -541,6 +542,11 @@ ergm <- function(formula, response=NULL,
 
   if (verbose) message("Initializing Metropolis-Hastings proposal(s):",appendLF=FALSE) 
   
+  ## FIXME: a more general framework is needed?
+  if(!is.null(response) && reference==~Bernoulli){
+    warn(paste0("The default Bernoulli reference distribution operates in the binary (",sQuote("response=NULL"),") mode only. Did you specify the ",sQuote("reference")," argument?"))
+  }
+  
   proposal <- ergm_proposal(constraints, weights=control$MCMC.prop.weights, control$MCMC.prop.args, nw, class=proposalclass,reference=reference,response=response)
   if (verbose) message(" ",proposal$pkgname,":MH_",proposal$name)
   
@@ -570,7 +576,10 @@ ergm <- function(formula, response=NULL,
     init.candidates <- init.candidates[init.candidates!="MPLE"]
     if(verbose) message("At this time, MPLE cannot be used for curved families when target.stats are passed.")
   }
-  control$init.method <- match.arg(control$init.method, init.candidates)
+  control$init.method <- ERRVL(try(match.arg(control$init.method, init.candidates), silent=TRUE), {
+    message("Sepcified initial parameter method ", sQuote(control$init.method), " is not in the list of candidates. Use at your own risk.")
+    control$init.method
+  })
   if(verbose) message(paste0("Using initial method '",control$init.method,"'."))
   model.initial <- ergm_model(formula, nw, response=response, initialfit=control$init.method=="MPLE", term.options=control$term.options)
   
@@ -588,38 +597,25 @@ ergm <- function(formula, response=NULL,
     # no need to pass the offset term's init to SAN
     offset.terms <- model.initial$etamap$offsettheta
     san.control <- control$SAN.control
-    san.control$coef <- san.control$coef[!offset.terms]
     
     if(verbose) message("Constructing an approximate response network.")
     ## If target.stats are given, overwrite the given network and formula
     ## with SAN-ed network and formula.
     if(control$SAN.maxit > 0){
-      for(srun in 1:control$SAN.maxit){
-        nw<-san(formula.no, target.stats=target.stats,
+      TARGET_STATS<-san(formula.no, target.stats=target.stats,
                 response=response,
                 reference=reference,
                 constraints=constraints,
                 control=san.control,
+                only.last=TRUE,
+                output="pending_update_network",
                 verbose=verbose)
-        formula.no<-nonsimp_update.formula(formula.no,nw~., from.new="nw")
-        nw.stats <- summary(formula.no,response=response, term.options=control$term.options)
-        srun <- srun + 1
-        if(verbose){
-          message(paste("Finished SAN run",srun,""))
-        }
-        if(verbose){
-          message("SAN summary statistics:")
-          message_print(nw.stats)
-          message("Meanstats Goal:")
-          message_print(target.stats)
-          message("Difference: SAN target.stats - Goal target.stats =")
-          message_print(round(nw.stats-target.stats,0))
-        }
-        if(sum((nw.stats-target.stats)^2) <= 5) break
-      }
+      if(verbose) message("Finished SAN run.")
+    }else{
+      TARGET_STATS <- nw
     }
-    
-    formula<-nonsimp_update.formula(formula,nw~., from.new="nw")
+    nw <- TARGET_STATS <- as.network(TARGET_STATS)
+    formula<-nonsimp_update.formula(formula,TARGET_STATS~., from.new="TARGET_STATS")
     offinfo <- offset.info.formula(formula,response=response,term.options=control$term.options)
     tmp <- rep(NA, length(offinfo$eta))
     tmp[!offinfo$eta] <- target.stats
@@ -682,9 +678,9 @@ ergm <- function(formula, response=NULL,
   if(estimate=="MPLE"){
     if(!is.null(response)) stop("Maximum Pseudo-Likelihood (MPLE) estimation for valued ERGMs is not implemented at this time. You may want to pass fixed=TRUE parameter in curved terms to specify the curved parameters as fixed.")
     if(length(model$etamap$offsetmap)!=length(model.initial$etamap$offsetmap)) stop("Maximum Pseudo-Likelihood (MPLE) estimation for curved ERGMs is not implemented at this time. You may want to pass fixed=TRUE parameter in curved terms to specify the curved parameters as fixed.")
-    if(!is.dyad.independent(proposal$arguments$constraints,
-                            proposal.obs$arguments$constraints))
-      stop("Maximum Pseudo-Likelihood (MPLE) estimation for ERGMs with dyad-dependent constraints is only implemented for certain degree constraints at this time.")
+    ## if(!is.dyad.independent(proposal$arguments$constraints,
+    ##                         proposal.obs$arguments$constraints))
+    ##   stop("Maximum Pseudo-Likelihood (MPLE) estimation for ERGMs with dyad-dependent constraints is only implemented for certain degree constraints at this time.")
   }
   
   if (verbose) { message("Fitting initial model.") }
@@ -697,7 +693,7 @@ ergm <- function(formula, response=NULL,
                                          proposal.obs$arguments$constraints))
   
   # If all other criteria for MPLE=MLE are met, _and_ SAN network matches target.stats directly, we can get away with MPLE.
-  if (!is.null(target.stats) && !isTRUE(all.equal(target.stats,nw.stats))) message("Unable to match target stats. Using MCMLE estimation.")
+  if (!is.null(target.stats) && !isTRUE(all.equal(target.stats[!is.na(target.stats)],nw.stats[!is.na(target.stats)]))) message("Unable to match target stats. Using MCMLE estimation.")
   MCMCflag <- (estimate=="MLE" && (!MPLE.is.MLE
                                    || (!is.null(target.stats) && !isTRUE(all.equal(target.stats,nw.stats)))
   )
@@ -727,6 +723,7 @@ ergm <- function(formula, response=NULL,
                           target.stats=model.initial$target.stats,
                           target.esteq=if(!is.null(model.initial$target.stats)) ergm.estfun(rbind(model.initial$target.stats), initialfit$coef, model.initial),
                           estimate=estimate,
+                          ergm_version=packageVersion("ergm"),
                           control=control
     ),
     class="ergm"))
@@ -752,6 +749,8 @@ ergm <- function(formula, response=NULL,
   
   if (!MCMCflag){ # Just return initial (non-MLE) fit and exit.
     message("Stopping at the initial estimate.")
+    initialfit$MPLE_is_MLE <- MPLE.is.MLE
+    initialfit$ergm_version <- packageVersion("ergm")
     initialfit$offset <- model.initial$etamap$offsettheta
     initialfit$drop <- if(control$drop) extremecheck$extremeval.theta
     initialfit$estimable <- constrcheck$estimable
@@ -781,20 +780,7 @@ ergm <- function(formula, response=NULL,
   
   # Otherwise, set up the main phase of estimation:
   
-  parallel.toplevel <- NULL     # top level reminder to stop cluster
-  if (inherits(control$parallel,"cluster")) {
-    clus <- ergm.getCluster(control, verbose)
-  } else if(is.numeric(control$parallel) && control$parallel!=0){
-    clus <- ergm.getCluster(control, verbose)
-    ergm.cluster.started(FALSE)
-    parallel.toplevel <- control$parallel
-    control$parallel <- clus
-  } else {
-    clus <- NULL
-    ergm.cluster.started(FALSE)
-    if (!is.numeric(control$parallel))
-      warning("Unrecognized value passed to parallel control parameter.")
-  }
+  ergm.getCluster(control, max(verbose-1,0))
   
   # Revise the initial value, if necessary:
   init <- initialfit$coef
@@ -857,6 +843,8 @@ ergm <- function(formula, response=NULL,
   } else {
     degeneracy <- list(degeneracy.value=NULL, degeneracy.type=NULL)
   }
+  mainfit$ergm_version <- packageVersion("ergm")
+  mainfit$MPLE_is_MLE <- MPLE.is.MLE
   mainfit$degeneracy.value <- degeneracy$degeneracy.value
   mainfit$degeneracy.type <- degeneracy$degeneracy.type
   
@@ -889,17 +877,9 @@ ergm <- function(formula, response=NULL,
     message("Evaluating log-likelihood at the estimate. ", appendLF=FALSE)
     mainfit<-logLik(mainfit, add=TRUE, control=control$loglik.control, verbose=verbose)
   }
-  
-  # done with parallel cluster
-  if (!is.null(parallel.toplevel)) {
-    mainfit$control$parallel <- parallel.toplevel
-    ergm.cluster.started(TRUE)
-  }
-  ergm.stopCluster(clus)
-  
+    
   if (MCMCflag) {
-    message("This model was fit using MCMC.  To examine model diagnostics ", 
-        "and check for degeneracy, use the mcmc.diagnostics() function.")
+    message(paste(strwrap("This model was fit using MCMC.  To examine model diagnostics and check for degeneracy, use the mcmc.diagnostics() function."),collapse="\n"))
   }
   
   mainfit

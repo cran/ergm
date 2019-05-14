@@ -1,15 +1,15 @@
 #  File R/parallel.utils.R in package ergm, part of the Statnet suite
-#  of packages for network analysis, http://statnet.org .
+#  of packages for network analysis, https://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) at
-#  http://statnet.org/attribution
+#  https://statnet.org/attribution
 #
-#  Copyright 2003-2018 Statnet Commons
+#  Copyright 2003-2019 Statnet Commons
 #######################################################################
-# Set up a flag for whether we are in charge of a cluster.
+# Save the cluster we are in charge of.
 ergm.cluster.started <- local({
-  started <- FALSE
+  started <- NULL
   function(new){
     if(!missing(new))
       started <<- new
@@ -18,13 +18,38 @@ ergm.cluster.started <- local({
   }
 })
 
+
+#' Keep track of packages that slave nodes need to load.
+#' @noRd
+#'
+#' @param pending if not missing and not [`character`], return the
+#'   current list of pending packages; if [`character`], add to list
+#'   of pending packages if not already loaded; return the result.
+#' @param loaded if not missing and not [`character`], return the
+#'   current list of loaded packages; if [`character`], add to list of
+#'   loaded packages and remove from the list of pending packages;
+#'   return the result.
+#' @param reset if `TRUE`, move all loaded packages to pending; return
+#'   the result.
 ergm.MCMC.packagenames <- local({
-  packagenames <- c("ergm") # It has to include itself.
-  function(new){
-    if(!missing(new))
-      packagenames <<- unique(c(packagenames,new))
-    else
-      packagenames
+  pending.packages <- c("ergm") # It has to include itself.
+  loaded.packages <- c()
+  function(pending, loaded, reset=FALSE){
+    if(!missing(pending)){
+      if(is.character(pending))
+        pending.packages <<- setdiff(unique(c(pending.packages,pending)),loaded.packages)
+      pending.packages
+    }else if(!missing(loaded)){
+      if(is.character(loaded)){
+        loaded.packages <<- unique(c(loaded.packages,loaded))
+        pending.packages <<- setdiff(pending.packages,loaded.packages)
+      }
+      loaded.packages
+    }else if(reset){
+      pending.packages <<- unique(c(pending.packages,loaded.packages))
+      loaded.packages <<- c()
+      pending.packages
+    }
   }
 })
 
@@ -111,19 +136,35 @@ NULL
 #'   \code{\link{control.ergm}} settings. It will also check that the
 #'   same version of `ergm` is installed on each node.
 #' @param control a \code{\link{control.ergm}} (or similar) list of
-#'   parameter values from which the parallel settings should be read.
+#'   parameter values from which the parallel settings should be read;
+#'   can also be [`NULL`], in which case an existing cluster is used
+#'   if started, or no cluster otherwise.
 #' @param verbose logical, should detailed status info be printed to
 #'   console?
+#' @param stop_on_exit An [`environment`] or `NULL`. If an
+#'   `environment`, defaulting to that of the calling function, the
+#'   cluster will be stopped when the calling the frame in question
+#'   exits.
 #' 
 #' @export ergm.getCluster
-ergm.getCluster <- function(control, verbose=FALSE){
+ergm.getCluster <- function(control=NULL, verbose=FALSE, stop_on_exit=parent.frame()){
+  # If we don't want a cluster, just return NULL.
+  if (is.numeric(control$parallel) && control$parallel==0) return(NULL)
   
   if(inherits(control$parallel,"cluster")){
-    ergm.cluster.started(FALSE)
+    # Control argument *is* a cluster. Overrides everything.
     if(verbose) message("Cluster passed by user.")
     cl <- control$parallel
+  }else if(!is.null(ergm.cluster.started())){
+    if(verbose) message("Reusing the running cluster.")
+    cl <- ergm.cluster.started()
+  }else if(is.null(control)){
+    return(NULL)
   }else{
-    
+    if(verbose) message("Starting a new cluster.")
+    if (!is.numeric(control$parallel))
+      warning("Unrecognized value passed to parallel= control parameter.")
+
     #type <- if(is.null(control$parallel.type)) getClusterOption("type") else control$parallel.type
     type <- NVL(control$parallel.type, "PSOCK")
     
@@ -131,46 +172,25 @@ ergm.getCluster <- function(control, verbose=FALSE){
     
     #   Start Cluster
     #' @importFrom parallel makeCluster
-    cl <- switch(type,
-                 # The rpvm package is apparently not being maintained.
-                 PVM={              
-                   #                capture.output(require(rpvm, quietly=TRUE, warn.conflicts = FALSE))
-                   #                PVM.running <- try(.PVM.config(), silent=TRUE)
-                   #                if(inherits(PVM.running,"try-error")){
-                   #                  hostfile <- paste(Sys.getenv("HOME"),"/.xpvm_hosts",sep="")
-                   #                  .PVM.start.pvmd(hostfile)
-                   #                  message("PVM not running. Attempting to start.")
-                   #                }
-                   ergm.cluster.started(TRUE)
-                   makeCluster(control$parallel,type="PVM")
-                   
-                 },
-                 MPI={
-                   
-                   # Remember that we are responsible for it.
-                   ergm.cluster.started(TRUE)
-                   makeCluster(control$parallel,type="MPI")
-                 },
-                 SOCK={
-                   ergm.cluster.started(TRUE)
-                   makeCluster(control$parallel,type="PSOCK")
-                   
-                 },
-                 PSOCK={
-                   ergm.cluster.started(TRUE)
-                   makeCluster(control$parallel,type="PSOCK")
-                   
-                 }
-    )
+    cl <- makeCluster(control$parallel, type=type)
+    ergm.cluster.started(cl)
+
+    # Based on https://yihui.name/en/2017/12/on-exit-parent/ .
+    if(!is.null(stop_on_exit)) do.call(on.exit, list(substitute(ergm.stopCluster(verbose=verbose)), add=TRUE),envir=stop_on_exit)
+
+    # Set RNG up.
+    #' @importFrom parallel clusterSetRNGStream
+    clusterSetRNGStream(cl)
+
+    # Set all packages to reload.
+    ergm.MCMC.packagenames(reset=TRUE)
   }
-  # Set RNG up.
-  #' @importFrom parallel clusterSetRNGStream
-  clusterSetRNGStream(cl)
+
+  ergm.MCMC.packagenames(pending=control$MCMC.packagenames)
   
   # On the off chance that user wants to load extra packages which we don't know about already.
-  ergm.MCMC.packagenames(control$MCMC.packagenames)
+  for(pkg in ergm.MCMC.packagenames(pending=TRUE)){
 
-  for(pkg in ergm.MCMC.packagenames()){
     # Try loading from the same location as the master.
   #' @importFrom parallel clusterCall
     attached <- unlist(clusterCall(cl, require,
@@ -179,11 +199,13 @@ ergm.getCluster <- function(control, verbose=FALSE){
                                    lib.loc=myLibLoc()))
     # If something failed, warn and try loading from anywhere.
     if(!all(attached)){
-      if(verbose) message("Failed to attach ergm on the slave nodes from the same location as the master node. Will try to load from anywhere in the library path.")
+      if(verbose) message("Failed to attach package ", sQuote(pkg), " on the slave nodes from the same location as the master node. Will try to load from anywhere in the library path.")
       attached <- clusterCall(cl, require,
                               package=pkg,
-                              character.only=TRUE)      
-      if(!all(attached)) stop("Failed to attach ergm on one or more slave nodes. Make sure it's installed on or accessible from all of them and is in the library path.")
+                              character.only=TRUE)
+      if(!all(attached)){
+        stop("Failed to attach package ", sQuote(pkg), " on one or more slave nodes. Make sure it's installed on or accessible from all of them and is in the library path.")
+      }
     }
     
     if(control$parallel.version.check){
@@ -192,9 +214,11 @@ ergm.getCluster <- function(control, verbose=FALSE){
       master.version <- packageVersion(pkg)
       
       if(!all(sapply(slave.versions,identical,master.version)))
-        stop("The version of ",pkg, " attached on one or more slave nodes is different from from that on the master node (this node). Make sure that the same version is installed on all nodes. If you are absolutely certain that this message is in error, override with the parallel.version.check=FALSE control parameter.")
+        stop("The version of ", sQuote(pkg), " attached on one or more slave nodes is different from from that on the master node (this node). Make sure that the same version is installed on all nodes. If you are absolutely certain that this message is in error, override with the parallel.version.check=FALSE control parameter.")
     }
+    ergm.MCMC.packagenames(loaded=pkg)
   }
+
   cl
 }
 
@@ -204,22 +228,31 @@ ergm.getCluster <- function(control, verbose=FALSE){
 #'   cluster, but only if `ergm.getCluster` was responsible for
 #'   starting it.
 #'
-#' @param object an object, probably of class `cluster`.
 #' @param \dots not currently used
 #' @export ergm.stopCluster
-ergm.stopCluster <- function(object, ...){
-  UseMethod("ergm.stopCluster")
+ergm.stopCluster <- function(..., verbose=FALSE){
+  if(length(list(...))) warning("Arguments to ergm.stopCluster() have been deprecated.")
+  if(!is.null(ergm.cluster.started())){
+    #' @importFrom parallel stopCluster
+    if(verbose) message("Stopping the running cluster.")
+    stopCluster(ergm.cluster.started())
+    ergm.MCMC.packagenames(reset=TRUE)
+    ergm.cluster.started(NULL)
+  }else if(verbose>1) message("No cluster to stop.")
 }
 
 #' @rdname ergm-parallel
-#' @importFrom parallel stopCluster
-ergm.stopCluster.default <- function(object, ...){
-  if(ergm.cluster.started()){
-    ergm.cluster.started(FALSE)
-    stopCluster(object)
-  }
+#' @description The \code{ergm.restartCluster} restarts and returns a cluster,
+#'   but only if `ergm.getCluster` was responsible for starting it.
+#'
+#' @export ergm.restartCluster
+ergm.restartCluster <- function(control=NULL, verbose=FALSE){
+  if(!is.null(ergm.cluster.started())){
+    if(verbose) message("Restarting the running cluster:")
+    ergm.stopCluster(verbose=verbose)
+  }else if(verbose>1) message("No cluster to restart.")
+  ergm.getCluster(control, verbose=verbose, stop_on_exit=NULL) # stop_on_exit is already set by the initial cluster construction.
 }
-
 
 
 ergm.sample.tomcmc<-function(sample, params){
@@ -244,4 +277,37 @@ ergm.sample.tomcmc<-function(sample, params){
     # Let mcmc() figure out the "end" from dimensions.
     mcmc(sample, start = params$MCMC.burnin, thin = params$MCMC.interval)
   }
+}
+
+#' @rdname ergm-parallel
+#'
+#' @description `nthreads` is a simple generic to obtain the number of
+#'   parallel processes represented by its argument, keeping in mind
+#'   that having no cluster (e.g., `NULL`) represents one thread.
+#'
+#' @param clinfo a [`cluster`] or another object.
+#' @export
+nthreads <- function(clinfo=NULL, ...){
+  UseMethod("nthreads")
+}
+
+#' @rdname ergm-parallel
+#' @export
+nthreads.cluster <- function(clinfo=NULL, ...){
+  length(clinfo)
+}
+
+#' @rdname ergm-parallel
+#' @export
+nthreads.NULL <- function(clinfo=NULL, ...){
+  NVL3(ergm.cluster.started(), nthreads(.), 1)
+}
+
+#' @rdname ergm-parallel
+#' @method nthreads control.list
+#' @export
+nthreads.control.list <- function(clinfo=NULL, ...){
+  if(is.numeric(clinfo$parallel)) return(max(1, clinfo$parallel))
+  clinfo <- clinfo$parallel
+  nthreads(clinfo, ...)
 }

@@ -1,17 +1,17 @@
-/*  File src/wtmodel.h in package ergm, part of the Statnet suite
- *  of packages for network analysis, http://statnet.org .
+/*  File inst/include/ergm_wtmodel.h in package ergm, part of the Statnet suite
+ *  of packages for network analysis, https://statnet.org .
  *
  *  This software is distributed under the GPL-3 license.  It is free,
  *  open source, and has the attribution requirements (GPL Section 7) at
- *  http://statnet.org/attribution
+ *  https://statnet.org/attribution
  *
- *  Copyright 2003-2018 Statnet Commons
+ *  Copyright 2003-2019 Statnet Commons
  */
 #ifndef WTMODEL_H
 #define WTMODEL_H
 
-#include "wtedgetree.h"
-#include "wtchangestat.h"
+#include "ergm_wtedgetree.h"
+#include "ergm_wtchangestat.h"
 #include "R_ext/Rdynload.h"
 
 /* A WtModel object contains information about an entire ERGM, including the

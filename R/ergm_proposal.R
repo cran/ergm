@@ -1,11 +1,11 @@
 #  File R/ergm_proposal.R in package ergm, part of the Statnet suite
-#  of packages for network analysis, http://statnet.org .
+#  of packages for network analysis, https://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) at
-#  http://statnet.org/attribution
+#  https://statnet.org/attribution
 #
-#  Copyright 2003-2018 Statnet Commons
+#  Copyright 2003-2019 Statnet Commons
 #######################################################################
 
 #=======================================================================================
@@ -44,6 +44,7 @@
 #' @note The arguments `Class`, `Reference`, and `Constraints` can
 #'   have length greater than 1. If this is the case, the rows added
 #'   to the table are a *Cartesian product* of their elements.
+#' @keywords internal
 #' @export ergm_proposal_table
 ergm_proposal_table <- local({
   proposals <- data.frame(Class = character(0), Reference = character(0),
@@ -61,13 +62,6 @@ ergm_proposal_table <- local({
     }else proposals
   }
 })
-
-#' @describeIn ergm-deprecated Deprecated name for [ergm_proposal_table()].
-#' @export ergm.MHP.table
-ergm.MHP.table <- function(...){
-  .dep_once("ergm_proposal_table()")
-  ergm_proposal_table(...)
-}
 
 prune.ergm_conlist <- function(conlist){
   ## Remove constraints implied by other constraints.
@@ -138,7 +132,7 @@ prune.ergm_conlist <- function(conlist){
 #' }
 #' }
 #' @seealso \code{\link{InitErgmProposal}}
-#' @keywords models
+#' @keywords models internal
 #' @export
 ergm_proposal<-function(object, ...) UseMethod("ergm_proposal")
 
@@ -188,7 +182,7 @@ ergm_proposal.character <- function(object, arguments, nw, ..., response=NULL, r
     silent=TRUE
   )
   if(!is(f, "try-error")){
-    .dep_once(msg="InitWtMHP and InitMHP convention has been replaced by InitWtErgm and InitErgm, respectively.")
+    .Deprecated(msg="InitWtMHP and InitMHP convention has been replaced by InitWtErgm and InitErgm, respectively.")
   }else f <- locate.InitFunction(name, NVL2(response, "InitWtErgmProposal", "InitErgmProposal"), "Metropolis-Hastings proposal")
 
   proposal <- NVL3(response,
@@ -256,7 +250,7 @@ ergm_conlist <- function(object, nw){
       silent=TRUE
     )
     if(!is(f, "try-error")){
-      .dep_once(msg="InitConstraint convention has been replaced by InitErgmConstraint.")
+      .Deprecated(msg="InitConstraint convention has been replaced by InitErgmConstraint.")
     }else f <- locate.InitFunction(constraint, "InitErgmConstraint", "Sample space constraint")
     
     if(is.call(constraint)){
@@ -304,7 +298,7 @@ ergm_proposal.formula <- function(object, arguments, nw, weights="default", clas
     silent=TRUE
   )
   if(!is(f, "try-error")){
-    .dep_once(msg="InitReference convention has been replaced by InitErgmReference.")
+    .Deprecated(msg="InitReference convention has been replaced by InitErgmReference.")
   }else f <- locate.InitFunction(reference[[2]], "InitErgmReference", "Reference distribution") 
   
   if(is.call(reference[[2]])){
@@ -317,7 +311,7 @@ ergm_proposal.formula <- function(object, arguments, nw, weights="default", clas
 
   # TODO: Remove this around the end of 2018.
   if(is.null(reference$init_methods)){
-    .dep_once(msg="Initial methods are now specified in the InitErgmReference.* function. Defaulting to 'CD' and 'zeros'.")
+    .Deprecated(msg="Initial methods are now specified in the InitErgmReference.* function. Defaulting to 'CD' and 'zeros'.")
     reference$init_methods <- c("CD", "zeros")
   }
 
@@ -404,49 +398,8 @@ ergm_proposal.ergm<-function(object,...,constraints=NULL, arguments=NULL, nw=NUL
   if(is.null(arguments)) arguments<-object$control$MCMC.prop.args
   if(is.null(weights)) weights<-object$control$MCMC.prop.weights
   if(is.null(nw)) nw<-object$network
-  if(is.null(reference)) response<-object$reference
+  if(is.null(reference)) reference<-object$reference
   if(is.null(response)) response<-object$response
   
   ergm_proposal(constraints,arguments=arguments,nw=nw,weights=weights,class=class,reference=reference,response=response)
-}
-
-#' @describeIn ergm-deprecated Deprecated name of [ergm_proposal()].
-#' @export MHproposal
-MHproposal <- function(...){
-  .dep_once("ergm_proposal()")
-  ergm_proposal(...)
-}
-
-#' @describeIn ergm-deprecated Deprecated name of [ergm_proposal()].
-#' @export MHproposal.character
-MHproposal.character <- function(...){
-  .dep_once("ergm_proposal()")
-  ergm_proposal.character(...)
-}
-
-#' @describeIn ergm-deprecated Deprecated name of [ergm_proposal()].
-#' @export MHproposal.ergm
-MHproposal.ergm <- function(...){
-  .dep_once("ergm_proposal()")
-  ergm_proposal.ergm(...)
-}
-
-#' @describeIn ergm-deprecated Deprecated name of [ergm_proposal()].
-#' @export MHproposal.formula
-MHproposal.formula <- function(...){
-  .dep_once("ergm_proposal()")
-  ergm_proposal.formula(...)
-}
-
-#' @describeIn ergm-deprecated Deprecated: specify in the `InitErgmReference.*` implementation.
-#' @export ergm.init.methods
-ergm.init.methods <- function(...){
-  .dep_once(msg="Function ergm.init.methods() has been deprecated in favor of specifying init_methods in InitErgmReference.*() functions, and has no effect.")
-}
-
-#' @describeIn ergm-deprecated Deprecated: specify in the `InitErgmConstraint.*` implementation.
-#' @export ergm.ConstraintImplications
-ergm.ConstraintImplications <- function(...){
-  .dep_once(msg="Function ergm.ConstraintImplications() has been deprecated in favor of specifying the implications in the InitErgmConstraint.*() functions, and has no effect.")
-
 }

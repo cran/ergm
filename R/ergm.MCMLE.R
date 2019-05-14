@@ -1,11 +1,11 @@
 #  File R/ergm.MCMLE.R in package ergm, part of the Statnet suite
-#  of packages for network analysis, http://statnet.org .
+#  of packages for network analysis, https://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) at
-#  http://statnet.org/attribution
+#  https://statnet.org/attribution
 #
-#  Copyright 2003-2018 Statnet Commons
+#  Copyright 2003-2019 Statnet Commons
 #######################################################################
 ############################################################################
 # The <ergm.MCMLE> function provides one of the styles of maximum
@@ -78,16 +78,25 @@ ergm.MCMLE <- function(init, nw, model,
   control$MCMC.base.samplesize <- control$MCMC.samplesize
   control$obs.MCMC.base.samplesize <- control$obs.MCMC.samplesize
 
-  nthreads <- max(
-    if(inherits(control$parallel,"cluster")) nrow(summary(control$parallel))
-    else control$parallel,
-    1)
+  control0 <- control
+
+  # Start cluster if required (just in case we haven't already).
+  ergm.getCluster(control, max(verbose-1,0))
   
   # Store information about original network, which will be returned at end
   nw.orig <- nw
 
   # Impute missing dyads.
+  #
+  # Note: We do not need to update nw.stats, because if we are in a
+  # situation where we are imputing dyads, the optimization is in the
+  # observational mode, and since both the constrained and the
+  # unconstrained samplers start from the same place, the initial
+  # statshifts will be 0. target.stats and missing dyads are mutually
+  # exclusive, so model$target.stats will be set equal to
+  # model$nw.stats, causing this to happen.
   nw <- single.impute.dyads(nw, response=response, constraints=proposal$arguments$constraints, constraints.obs=proposal.obs$arguments$constraints, min_informative = control$obs.MCMC.impute.min_informative, default_density = control$obs.MCMC.impute.default_density, output="pending", verbose=verbose)
+
   ec <- if(is(nw, "network")) network.edgecount(nw, FALSE)
         else nrow(as.edgelist(nw))
 
@@ -100,7 +109,7 @@ ergm.MCMLE <- function(init, nw, model,
     if(verbose) message("Density guard set to ",control$MCMC.max.maxedges," from an initial count of ",ec," edges.")
   }  
 
-  nws <- rep(list(nw),nthreads) # nws is now a list of networks.
+  nws <- rep(list(nw),nthreads(control)) # nws is now a list of networks.
 
   # statshift is the difference between the target.stats (if
   # specified) and the statistics of the networks in the LHS of the
@@ -110,7 +119,7 @@ ergm.MCMLE <- function(init, nw, model,
   # set statshifts to 0 where target.stats is NA (due to offset).
   statshift <- model$nw.stats - model$target.stats
   statshift[is.na(statshift)] <- 0
-  statshifts <- rep(list(statshift), nthreads) # Each network needs its own statshift.
+  statshifts <- rep(list(statshift), nthreads(control)) # Each network needs its own statshift.
 
   # Is there observational structure?
   obs <- ! is.null(proposal.obs)
@@ -124,6 +133,7 @@ ergm.MCMLE <- function(init, nw, model,
     control.obs$MCMC.interval <- control$obs.MCMC.interval
     control.obs$MCMC.burnin <- control$obs.MCMC.burnin
     control.obs$MCMC.burnin.min <- control$obs.MCMC.burnin.min
+    control0.obs <- control.obs
 
     nws.obs <- lapply(nws, identity)
     statshifts.obs <- statshifts
@@ -133,6 +143,45 @@ ergm.MCMLE <- function(init, nw, model,
   mcmc.init <- init
   calc.MCSE <- FALSE
   last.adequate <- FALSE
+
+  # STATE_VARIABLES = variables collectively containing the state of the optimizer that would allow it to resume, excluding control lists.
+  # CONTROL_VARIABLES = control lists
+  # INTERMEDIATE_VARIABLES = variables of interest in debugging and diagnostics.
+  #
+  # Both lists need to be kept up to date with the implementation.
+  STATE_VARIABLES <- c("nws", "nws.obs", "mcmc.init", "statshifts", "statshifts.obs", "calc.MCSE", "last.adequate", "coef.hist", "stats.hist", "stats.obs.hist", "steplen.hist", "steplen")
+  CONTROL_VARIABLES <- c("control", "control.obs", "control0", "control0.obs")
+  INTERMEDIATE_VARIABLES <- c("nws", "nws.obs", "statsmatrices", "statsmatrices.obs", "statshifts", "statshifts.obs", "coef.hist", "stats.hist", "stats.obs.hist", "steplen.hist")
+
+  if(!is.null(control$resume)){
+    message("Resuming from state saved in ", sQuote(control$resume),".")
+    state <- new.env()
+    load(control$resume,envir=state)
+
+    # Merge control lists intelligently:
+    .merge_controls <- function(saved.ctrl, saved.ctrl0, ctrl0){
+      ctrl <- saved.ctrl
+      for(name in union(names(ctrl), names(ctrl0))){
+        if(!identical(ctrl[[name]],ctrl0[[name]])){ # Settings differ.
+          if(!identical(ctrl0[[name]], saved.ctrl0[[name]])){
+            if(verbose) message("Passed-in control setting ", sQuote(name), " changed from original run: overriding saved state.")
+            ctrl[[name]] <- ctrl0[[name]]
+          }else if(verbose) message("Passed-in control setting ", sQuote(name), " unchanged from original run: using saved state.")
+        }
+      }
+      ctrl
+    }
+
+    control <- .merge_controls(state$control, state$control0, control0)
+    if(obs) control.obs <- .merge_controls(state$control.obs, state$control0.obs, control0.obs)
+
+    # Copy the rest
+    for(name in intersect(ls(state), STATE_VARIABLES)) assign(name, state[[name]])
+
+    # Clean up
+    rm(state)
+  }
+
   
   for(iteration in 1:control$MCMLE.maxit){
     if(verbose){
@@ -141,6 +190,10 @@ ergm.MCMLE <- function(init, nw, model,
       message_print(mcmc.init)
     }else{
       message("Iteration ",iteration," of at most ", control$MCMLE.maxit,":")
+    }
+
+    if(!is.null(control$checkpoint)){
+      save(list=intersect(ls(), c(STATE_VARIABLES, CONTROL_VARIABLES)), file=sprintf(control$checkpoint, iteration))
     }
 
     # Obtain MCMC sample
@@ -203,8 +256,7 @@ ergm.MCMLE <- function(init, nw, model,
     }
 
     if(!is.null(control$MCMLE.save_intermediates)){
-      if(obs) save(nws, nws.obs, statsmatrices, statsmatrices.obs, statshifts, statshifts.obs, coef.hist, stats.hist, stats.obs.hist, steplen.hist, file=sprintf(control$MCMLE.save_intermediates, iteration))
-      else save(nws, statsmatrices, statshifts, coef.hist, stats.hist, steplen.hist, file=sprintf(control$MCMLE.save_intermediates, iteration))
+      save(list=intersect(ls(), INTERMEDIATE_VARIABLES), file=sprintf(control$MCMLE.save_intermediates, iteration))
     }
 
     # Compute the sample estimating functions and the convergence p-value. 
@@ -235,7 +287,7 @@ ergm.MCMLE <- function(init, nw, model,
 
     if(!estimate){
       if(verbose){message("Skipping optimization routines...")}
-      nws.returned <- lapply(nws.returned, newnw.extract, response=response)
+      nws.returned <- lapply(nws.returned, as.network, response=response)
       l <- list(coef=mcmc.init, mc.se=rep(NA,length=length(mcmc.init)),
                 sample=statsmatrix, sample.obs=statsmatrix.obs,
                 iterations=1, MCMCtheta=mcmc.init,
@@ -302,7 +354,7 @@ ergm.MCMLE <- function(init, nw, model,
             if(control$MCMLE.Hummel.esteq) esteq else statsmatrix.0[,!model$etamap$offsetmap,drop=FALSE], 
             if(control$MCMLE.Hummel.esteq) esteq.obs else statsmatrix.0.obs[,!model$etamap$offsetmap,drop=FALSE],
             control$MCMLE.steplength.margin, control$MCMLE.steplength,steplength.prev=steplen,verbose=verbose,
-            x2.num.max=control$MCMLE.Hummel.miss.sample, steplength.maxit=control$MCMLE.Hummel.maxit
+            x2.num.max=control$MCMLE.Hummel.miss.sample, steplength.maxit=control$MCMLE.Hummel.maxit, control=control
           )
         else control$MCMLE.steplength
       
@@ -446,7 +498,7 @@ ergm.MCMLE <- function(init, nw, model,
   v$sample <- ergm.sample.tomcmc(statsmatrix.0, control) 
   if(obs) v$sample.obs <- ergm.sample.tomcmc(statsmatrix.0.obs, control)
 
-  nws.returned <- lapply(nws.returned, newnw.extract, response=response)
+  nws.returned <- lapply(nws.returned, as.network, response=response)
   v$network <- nw.orig
   v$newnetworks <- nws.returned
   v$newnetwork <- nws.returned[[1]]

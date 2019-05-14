@@ -1,25 +1,21 @@
 /*  File src/MHproposals_block.c in package ergm, part of the Statnet suite
- *  of packages for network analysis, http://statnet.org .
+ *  of packages for network analysis, https://statnet.org .
  *
  *  This software is distributed under the GPL-3 license.  It is free,
  *  open source, and has the attribution requirements (GPL Section 7) at
- *  http://statnet.org/attribution
+ *  https://statnet.org/attribution
  *
- *  Copyright 2003-2018 Statnet Commons
+ *  Copyright 2003-2019 Statnet Commons
  */
 #include "MHproposals.h"
-#include "edgelist.h"
-
-/* Shorthand. */
-#define Mtail (MHp->toggletail)
-#define Mhead (MHp->togglehead)
+#include "ergm_edgelist.h"
 
 /*********************
  void MH_blockdiag
 
  Block-diagonal sampling
 *********************/
-void MH_blockdiag (MHproposal *MHp, Network *nwp)  {  
+MH_P_FN(MH_blockdiag){  
 
   /* *** don't forget tail-> head now */
 
@@ -58,7 +54,7 @@ void MH_blockdiag (MHproposal *MHp, Network *nwp)  {
 
  Block-diagonal sampling for bipartite graphs
 *********************/
-void MH_blockdiagB (MHproposal *MHp, Network *nwp)  {  
+MH_P_FN(MH_blockdiagB){  
 
   /* *** don't forget tail-> head now */
 
@@ -90,13 +86,13 @@ void MH_blockdiagB (MHproposal *MHp, Network *nwp)  {
 
    Block-diagonal TNT sampling
 ***********************/
-void MH_blockdiagTNT (MHproposal *MHp, Network *nwp) 
+MH_P_FN(MH_blockdiagTNT)
 {
   /* *** don't forget tail-> head now */
   
   Vertex tail, head, blks=MHp->inputs[1];
   double *blkpos = MHp->inputs+2, *blkcwt = MHp->inputs+2+blks+1, logratio=0; 
-  Edge nedges=nwp->nedges;
+  Edge nedges=EDGECOUNT(nwp);
   static double comp=0.5;
   static double odds;
   static Dyad ndyads;
@@ -151,14 +147,14 @@ void MH_blockdiagTNT (MHproposal *MHp, Network *nwp)
 
    Block-diagonal TNT sampling for bipartite graphs
 ***********************/
-void MH_blockdiagTNTB (MHproposal *MHp, Network *nwp) 
+MH_P_FN(MH_blockdiagTNTB)
 {
   /* *** don't forget tail-> head now */
 
   static double *eblkpos, *ablkpos, *blkcwt; 
   static Vertex blks;
   double logratio=0; 
-  Edge nedges=nwp->nedges;
+  Edge nedges=EDGECOUNT(nwp);
   static double comp=0.5;
   static double odds;
   static Dyad ndyads;

@@ -1,11 +1,11 @@
 /*  File src/changestats_indices.c in package ergm, part of the Statnet suite
- *  of packages for network analysis, http://statnet.org .
+ *  of packages for network analysis, https://statnet.org .
  *
  *  This software is distributed under the GPL-3 license.  It is free,
  *  open source, and has the attribution requirements (GPL Section 7) at
- *  http://statnet.org/attribution
+ *  https://statnet.org/attribution
  *
- *  Copyright 2003-2018 Statnet Commons
+ *  Copyright 2003-2019 Statnet Commons
  */
 #include "changestats_indices.h"
 
@@ -17,8 +17,8 @@ D_CHANGESTAT_FN(d_indices) {
 
   ZERO_ALL_CHANGESTATS(i);
   FOR_EACH_TOGGLE(i) {
-    Vertex t = tails[i];
-    Vertex h = heads[i]; 
+    int t = tails[i];
+    int h = heads[i];
     int edgeflag = IS_OUTEDGE(t,h);
     CHANGE_STAT[0] += edgeflag ? -t : t;
     CHANGE_STAT[1] += edgeflag ? -h : h;

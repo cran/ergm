@@ -1,11 +1,11 @@
 /*  File src/MPLE.c in package ergm, part of the Statnet suite
- *  of packages for network analysis, http://statnet.org .
+ *  of packages for network analysis, https://statnet.org .
  *
  *  This software is distributed under the GPL-3 license.  It is free,
  *  open source, and has the attribution requirements (GPL Section 7) at
- *  http://statnet.org/attribution
+ *  https://statnet.org/attribution
  *
- *  Copyright 2003-2018 Statnet Commons
+ *  Copyright 2003-2019 Statnet Commons
  */
 #include "MPLE.h"
 /* *****************
@@ -38,7 +38,7 @@ void MPLE_wrapper(int *tails, int *heads, int *dnedges,
 		  int *responsevec, double *covmat,
 		  int *weightsvector,
 		  int *maxDyads, int *maxDyadTypes){
-  Network nw[2];
+  Network *nwp;
   Vertex n_nodes = (Vertex) *dn; 
   Edge n_edges = (Edge) *dnedges;
   int directed_flag = *dflag;
@@ -48,14 +48,14 @@ void MPLE_wrapper(int *tails, int *heads, int *dnedges,
   RLEBDM1D wlm = unpack_RLEBDM1D(&tmp, n_nodes);
 
   GetRNGstate(); /* Necessary for R random number generator */
-  nw[0]=NetworkInitialize(tails, heads, n_edges,
+  nwp=NetworkInitialize((Vertex*)tails, (Vertex*)heads, n_edges,
                           n_nodes, directed_flag, bip, 0, 0, NULL);
   m=ModelInitialize(*funnames, *sonames, &inputs, *nterms);
   
-  MpleInit_hash_wl_RLE(responsevec, covmat, weightsvector, &wlm, *maxDyads, *maxDyadTypes, nw, m); 
+  MpleInit_hash_wl_RLE(responsevec, covmat, weightsvector, &wlm, *maxDyads, *maxDyadTypes, nwp, m); 
 
   ModelDestroy(m);
-  NetworkDestroy(nw);
+  NetworkDestroy(nwp);
   PutRNGstate(); /* Must be called after GetRNGstate before returning to R */
 }
 

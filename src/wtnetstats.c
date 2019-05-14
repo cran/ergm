@@ -1,11 +1,11 @@
 /*  File src/wtnetstats.c in package ergm, part of the Statnet suite
- *  of packages for network analysis, http://statnet.org .
+ *  of packages for network analysis, https://statnet.org .
  *
  *  This software is distributed under the GPL-3 license.  It is free,
  *  open source, and has the attribution requirements (GPL Section 7) at
- *  http://statnet.org/attribution
+ *  https://statnet.org/attribution
  *
- *  Copyright 2003-2018 Statnet Commons
+ *  Copyright 2003-2019 Statnet Commons
  */
 #include "wtnetstats.h"
 /*****************
@@ -24,7 +24,7 @@ void wt_network_stats_wrapper(int *tails, int *heads, double *weights, int *timi
   int directed_flag;
   Vertex n_nodes;
   Edge n_edges;
-  WtNetwork nw[2];
+  WtNetwork *nwp;
   WtModel *m;
   Vertex bip;
 
@@ -36,19 +36,21 @@ void wt_network_stats_wrapper(int *tails, int *heads, double *weights, int *timi
   
   if(*lasttoggle == 0) lasttoggle = NULL;
 
+  GetRNGstate();  /* R function enabling uniform RNG */
 
   m=WtModelInitialize(*funnames, *sonames, &inputs, *nterms);
-  nw[0]=WtNetworkInitialize(NULL, NULL, NULL, 0,
+  nwp=WtNetworkInitialize(NULL, NULL, NULL, 0,
 			    n_nodes, directed_flag, bip, *timings?1:0, *timings?*time:0, *timings?lasttoggle:NULL);
 
   /* Compute the change statistics and copy them to stats for return
      to R.  Note that stats already has the statistics of an empty
      network, so d_??? statistics will add on to them, while s_???
      statistics will simply overwrite them.*/
-  WtSummStats(n_edges, tails, heads, weights, nw, m,stats);
+  WtSummStats(n_edges, (Vertex*)tails, (Vertex*)heads, weights, nwp, m,stats);
   
   WtModelDestroy(m);
-  WtNetworkDestroy(nw);
+  WtNetworkDestroy(nwp);
+  PutRNGstate();
 }
 
 
@@ -60,9 +62,7 @@ void wt_network_stats_wrapper(int *tails, int *heads, double *weights, int *timi
 void WtSummStats(Edge n_edges, Vertex *tails, Vertex *heads, double *weights,
 WtNetwork *nwp, WtModel *m, double *stats){
 
-  GetRNGstate();  /* R function enabling uniform RNG */
-  
-  WtShuffleEdges(tails,heads,weights,n_edges); /* Shuffle edgelist. */
+  WtDetShuffleEdges(tails,heads,weights,n_edges); /* Shuffle edgelist. */
   
   for (unsigned int termi=0; termi < m->n_terms; termi++)
     m->termarray[termi].dstats = m->workspace;
@@ -93,6 +93,5 @@ WtNetwork *nwp, WtModel *m, double *stats){
         *statspos = mtp->dstats[i];
     }else statspos += mtp->nstats;
   }
-  PutRNGstate();
 }
 

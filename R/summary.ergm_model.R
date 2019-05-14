@@ -1,17 +1,17 @@
 #  File R/summary.ergm_model.R in package ergm, part of the Statnet suite
-#  of packages for network analysis, http://statnet.org .
+#  of packages for network analysis, https://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) at
-#  http://statnet.org/attribution
+#  https://statnet.org/attribution
 #
-#  Copyright 2003-2018 Statnet Commons
+#  Copyright 2003-2019 Statnet Commons
 #######################################################################
 
 #' @describeIn ergm-deprecated Use [summary.ergm_model()] instead.
 #' @export ergm.getglobalstats
 ergm.getglobalstats <- function(nw, m, response=NULL) {
-  .dep_once("summary.ergm_model")
+  .Deprecated("summary.ergm_model")
   summary(m, nw, response=response)
 }
 #' Evaluate network summary statistics from an initialized ergm model
@@ -27,6 +27,7 @@ ergm.getglobalstats <- function(nw, m, response=NULL) {
 #' @template dotdotdot
 #' 
 #' @seealso [summary_formula()]
+#' @keywords internal
 #' @export
 summary.ergm_model <- function(object, nw=NULL, response=NULL,...){
   m <- object
@@ -38,6 +39,8 @@ summary.ergm_model <- function(object, nw=NULL, response=NULL,...){
   # Read the comments at the top of InitErgm.R or InitErgmTerm.R for 
   # an explanation of the $emptynwstats mechanism
   gs <- numeric(nparam(m,canonical=TRUE))
+  if(length(gs)==0) return(gs) # Escape if the model has 0 statistics.
+  
   i <- 1
   for (j in 1:length(m$terms)) {
     tmp <- m$terms[[j]]

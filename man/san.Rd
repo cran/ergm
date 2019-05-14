@@ -4,6 +4,7 @@
 \alias{san}
 \alias{san.default}
 \alias{san.formula}
+\alias{san.ergm_model}
 \alias{san.ergm}
 \title{Use Simulated Annealing to attempt to match a network to a vector of mean
 statistics}
@@ -11,12 +12,20 @@ statistics}
 san(object, ...)
 
 \method{san}{formula}(object, response = NULL, reference = ~Bernoulli,
-  constraints = ~., target.stats = NULL, nsim = 1, basis = NULL,
-  sequential = TRUE, control = control.san(), verbose = FALSE, ...)
+  constraints = ~., target.stats = NULL, nsim = NULL, basis = NULL,
+  output = c("network", "edgelist", "pending_update_network"),
+  only.last = TRUE, control = control.san(), verbose = FALSE, ...)
+
+\method{san}{ergm_model}(object, response = NULL,
+  reference = ~Bernoulli, constraints = ~., target.stats = NULL,
+  nsim = NULL, basis = NULL, output = c("network", "edgelist",
+  "pending_update_network"), only.last = TRUE, control = control.san(),
+  verbose = FALSE, ...)
 
 \method{san}{ergm}(object, formula = object$formula,
   constraints = object$constraints, target.stats = object$target.stats,
-  nsim = 1, basis = NULL, sequential = TRUE,
+  nsim = NULL, basis = NULL, output = c("network", "edgelist",
+  "pending_update_network"), only.last = TRUE,
   control = object$control$SAN.control, verbose = FALSE, ...)
 }
 \arguments{
@@ -49,20 +58,22 @@ which \code{object} was fitted.}
 implied by the formula, which is either \code{object} itself in the case of
 \code{san.formula} or \code{object$formula} in the case of \code{san.ergm}.}
 
-\item{nsim}{Number of desired networks.}
+\item{nsim}{Number of networks to generate. Deprecated: just use \code{\link[=replicate]{replicate()}}.}
 
 \item{basis}{If not NULL, a \code{network} object used to start the Markov
 chain.  If NULL, this is taken to be the network named in the formula.}
 
-\item{sequential}{Logical: If TRUE, the returned draws always use the prior
-draw as the starting network; if FALSE, they always use the original
-network.}
+\item{output}{Character, one of \code{"network"} (default),
+\code{"edgelist"}, or \code{"pending_update_network"}: determines the
+output format. Partial matching is performed.}
+
+\item{only.last}{if \code{TRUE}, only return the last network generated;
+otherwise, return a \code{\link{network.list}} with \code{nsim} networks.}
 
 \item{control}{A list of control parameters for algorithm tuning; see
 \code{\link{control.san}}.}
 
-\item{verbose}{Logical: If TRUE, print out more detailed information as the
-simulation runs.}
+\item{verbose}{Logical or numeric giving the level of verbosity. Higher values produce more verbose output.}
 
 \item{formula}{(By default, the \code{formula} is taken from the \code{ergm}
 object.  If a different \code{formula} object is wanted, specify it here.}
@@ -79,8 +90,57 @@ those passed in via the \code{target.stats} vector.
 \itemize{
 \item \code{formula}: Sufficient statistics are specified by a \code{\link{formula}}.
 
+\item \code{ergm_model}: A lower-level function that expects a pre-initialized \code{\link{ergm_model}}.
+
 \item \code{ergm}: Sufficient statistics and other settings are
 inherited from the \code{\link{ergm}} fit unless overridden.
 }}
 
+\examples{
+# initialize x to a random undirected network with 100 nodes and a density of 0.1
+x <- network(100, density = 0.1, directed = FALSE)
+ 
+# try to find a network on 100 nodes with 600 edges, 300 triangles,
+# and 2500 4-cycles, starting from the network x
+y <- san(x ~ edges + triangles + cycle(4), target.stats = c(600, 300, 2500))
+
+# check results
+summary(y ~ edges + triangles + cycle(4))
+
+# initialize x to a random directed network with 100 nodes
+x <- network(100)
+
+# add vertex attributes
+x \%v\% 'give' <- runif(100, 0, 1)
+x \%v\% 'take' <- runif(100, 0, 1)
+
+# try to find a set of 200 directed edges making the outward sum of
+# 'give' and the inward sum of 'take' both equal to 125, so in
+# edges (i,j) the node i tends to have above average 'give' and j
+# tends to have above average 'take'
+y <- san(x ~ edges + nodeocov('give') + nodeicov('take'), target.stats = c(200, 125, 125))
+
+# check results
+summary(y ~ edges + nodeocov('give') + nodeicov('take'))
+
+
+# initialize x to a random undirected network with 100 nodes
+x <- network(100, directed = FALSE)
+
+# add a vertex attribute
+x \%v\% 'popularity' <- runif(100, 0, 1)
+
+# try to find a set of 200 edges making the total sum of
+# popularity(i) and popularity(j) over all edges (i,j) equal to
+# 250, so nodes with higher popularity are more likely to be
+# connected to other nodes
+y <- san(x ~ edges + nodecov('popularity'), target.stats = c(200, 250))
+ 
+# check results
+summary(y ~ edges + nodecov('popularity'))
+
+# creates a network with denser "core" spreading out to sparser
+# "periphery"
+plot(y)
+}
 \keyword{models}

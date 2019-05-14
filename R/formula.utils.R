@@ -1,11 +1,11 @@
 #  File R/formula.utils.R in package ergm, part of the Statnet suite
-#  of packages for network analysis, http://statnet.org .
+#  of packages for network analysis, https://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) at
-#  http://statnet.org/attribution
+#  https://statnet.org/attribution
 #
-#  Copyright 2003-2018 Statnet Commons
+#  Copyright 2003-2019 Statnet Commons
 #######################################################################
 ###################################################################
 ## This file has utilities whose primary purpose is examining or ##
@@ -176,12 +176,12 @@ model.transform.formula <- function(object, theta, response=NULL, recipes, ...){
 #'            control=control.ergm(MCMLE.maxit=3, MCMC.burnin=1024, MCMC.interval=128))
 #' summary(gest)
 #' # A statistic for esp(1),...,esp(16)
-#' simulate(gest,statsonly=TRUE)
+#' simulate(gest,output="stats")
 #' 
 #' tmp<-fix.curved(gest)
 #' tmp
 #' # A gwesp() statistic only
-#' simulate(tmp$formula, coef=tmp$theta, statsonly=TRUE) 
+#' simulate(tmp$formula, coef=tmp$theta, output="stats") 
 #' }
 #' 
 #' @export fix.curved
@@ -200,7 +200,7 @@ fix.curved.ergm <- function(object,...){
 fix.curved.formula <- function(object, theta, response=NULL, ...){
   recipes<-list()
   is.fixed.1<-function(a) is.null(a$fixed) || a$fixed==FALSE
-  recipes$gwdsp<-recipes$gwesp<-recipes$gwnsp<-
+  recipes$dgwdsp<-recipes$dgwesp<-recipes$dgwnsp<-recipes$gwdsp<-recipes$gwesp<-recipes$gwnsp<-
     list(filter=is.fixed.1, tocoef=1, toarg=list(decay=2), constant=list(fixed=TRUE))
   recipes$altkstar<-
     list(filter=is.fixed.1, tocoef=1, toarg=list(lambda=2), constant=list(fixed=TRUE))
@@ -278,7 +278,7 @@ enformulate.curved.ergm <- function(object,...){
 enformulate.curved.formula <- function(object, theta, response=NULL, ...){
   recipes<-list()
   is.fixed.1<-function(a) is.null(a$fixed) || a$fixed==FALSE
-  recipes$gwdsp<-recipes$gwesp<-recipes$gwnsp<-
+  recipes$dgwdsp<-recipes$dgwesp<-recipes$dgwnsp<-recipes$gwdsp<-recipes$gwesp<-recipes$gwnsp<-
     list(filter=is.fixed.1, tocoef=1, toarg=list(decay=2))
   recipes$altkstar<-
     list(filter=is.fixed.1, tocoef=1, toarg=list(lambda=2))
@@ -316,7 +316,7 @@ unset.offset.formula <- function(object, which=TRUE, response=NULL, ...){
 #' @describeIn ergm-deprecated Use \code{\link[statnet.common]{nonsimp_update.formula}} instead.
 #' @export ergm.update.formula
 ergm.update.formula <- function(object, new, ..., from.new=FALSE){
-  .dep_once("statnet.common::nonsimp_update.formula")
+  .Deprecated("statnet.common::nonsimp_update.formula")
   nonsimp_update.formula(object, new, ..., from.new=from.new)
 }
 
@@ -324,7 +324,7 @@ ergm.update.formula <- function(object, new, ..., from.new=FALSE){
 #' @describeIn ergm-deprecated Use [statnet.common::filter_rhs.formula()] such as `statnet.common::filter_rhs.formula(object, function(x) (if(is.call(x)) x[[1]] else x)!="offset")` instead.
 #' @export remove.offset.formula
 remove.offset.formula <- function(object, response=NULL){
-  .dep_once("statnet.common::filter_rhs.formula")
+  .Deprecated("statnet.common::filter_rhs.formula")
   terms <- list_rhs.formula(object)
   for(i in rev(seq_along(terms)))
     if(inherits(terms[[i]],"call") && terms[[i]][[1]]=="offset") # Is the term an offset?

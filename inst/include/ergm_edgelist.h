@@ -1,16 +1,16 @@
-/*  File src/edgelist.h in package ergm, part of the Statnet suite
- *  of packages for network analysis, http://statnet.org .
+/*  File inst/include/ergm_edgelist.h in package ergm, part of the Statnet suite
+ *  of packages for network analysis, https://statnet.org .
  *
  *  This software is distributed under the GPL-3 license.  It is free,
  *  open source, and has the attribution requirements (GPL Section 7) at
- *  http://statnet.org/attribution
+ *  https://statnet.org/attribution
  *
- *  Copyright 2003-2018 Statnet Commons
+ *  Copyright 2003-2019 Statnet Commons
  */
-#ifndef EDGELIST_H
-#define EDGELIST_H
+#ifndef _ERGM_EDGELIST_H_
+#define _ERGM_EDGELIST_H_
 
-#include "edgetree.h"
+#include "ergm_edgetree.h"
 
 /*
 Edgelists are so simple, there is no point in definding a struct for

@@ -1,11 +1,11 @@
 #  File R/ergm.utility.R in package ergm, part of the Statnet suite
-#  of packages for network analysis, http://statnet.org .
+#  of packages for network analysis, https://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) at
-#  http://statnet.org/attribution
+#  https://statnet.org/attribution
 #
-#  Copyright 2003-2018 Statnet Commons
+#  Copyright 2003-2019 Statnet Commons
 #######################################################################
 #==============================================================
 # This file contains the following 21 utility functions:
@@ -52,9 +52,12 @@ is.ergm <- function(object)
 
 #' Computes and Returns the Degree Distribution Information for a Given Network
 #' 
-#' The \code{degreedist} generic computes and returns the degree distribution
-#' (number of vertices in the network with each degree value) for a given
-#' network.
+#' The \code{degreedist} generic computes and returns the degree
+#' distribution (number of vertices in the network with each degree
+#' value) for a given network. This help page documents the
+#' function. For help about [the ERGM sample space constraint with
+#' that name][degreedist-constraint], try
+#' `help("degreedist-constraint")`.
 #' 
 #' @param object a \code{network} object or some other object for
 #'   which degree distribution is meaningful.
@@ -199,63 +202,10 @@ function(x, alternative = c("two.sided", "less", "greater"),
     return(rval)
 }
 
-.extract_z_edgelist <- function(z, response=NULL){
-  # if z has a newedgelist attached, use it
-  if("newedgelist" %in% names(z)){
-    newedgelist<-z$newedgelist[,1:2,drop=FALSE]
-    newnwweights<- if(!is.null(response)) z$newedgelist[,3]
-  }else{
-    # expect that z will have seperate lists of heads and tails
-    nedges<-z$newnwtails[1]
-    # *** don't forget - edgelists are cbind(tails, heads) now
-    newedgelist <- cbind(z$newnwtails[seq_len(nedges)+1],z$newnwheads[seq_len(nedges)+1])
-    newnwweights <- z$newnwweights[seq_len(nedges)+1]
-  }
-  cbind(newedgelist, newnwweights)
-}
-
-#' @method as.edgelist pending_update_network
-as.edgelist.pending_update_network <- function(x,attrname=NULL,...){
-  class(x) <- "network"
-  e <- .extract_z_edgelist(x%n%".update", response=attrname)
-  if(length(e)!=0) e <- e[order(e[,1],e[,2]),,drop=FALSE]
-  attr(e, "n") <- network.size(x)
-  attr(e, "vnames") <- x%v%"vertex.names"
-  attr(e, "directed") <- is.directed(x)
-  attr(e, "bipartite") <- x%n%"bipartite"
-  attr(e, "loops") <- has.loops(x)
-  e
-}
-
-#' Internal function to create a new network from the ergm MCMC sample output
-#' 
-#' An internal function to generate a new \code{\link{network}} object using
-#' the output (lists of toggled heads and tail vertices) from an ERGM MCMC or
-#' SAN process.
-#' 
-#' 
-#' @param oldnw a network object (presumably input to the ergm process) from
-#' which the network- and vertex-level attributes will be copied
-#' @param z a list having either a component named \code{newedgelist}
-#'   or two components \code{newtails} and \code{newheads} containing
-#'   the ids of the head and tails vertices of the edges. Optionally,
-#'   it may also contain \code{newweights}, containing edgewights. If
-#'   not passed, `newnw.extract` searches for an `.update` network
-#'   attribute on `oldnw` and attempts to use that instead, deleting
-#'   it from the returned network.
-#' @param output passed to \code{\link{network.update}}, which claims not to
-#' use it
-#' @param response optional character string giving the name of the edge
-#' attribute where the edge values (weight/count) should be stored.
-#' @return a \code{\link{network}} object with properties copied from
-#' \code{oldnw} and edges corresponding to the lists of tails and head vertex
-#' ids in \code{z}
-#' @note This is an internal ergm function, it most cases with edgelists to be
-#' converted to networks it will probably be simpler to use
-#' \code{\link{network.edgelist}}
-#' @seealso \code{\link{network.edgelist}}, \code{\link{network.update}}
+#' @describeIn ergm-deprecated Use the [`pending_update_network`] "API".
 #' @export newnw.extract
 newnw.extract<-function(oldnw,z=NULL,output="network",response=NULL){
+  .Deprecate_once('pending_network_update "API"')
   if(is(oldnw,"pending_update_network") && is.null(z)){
     class(oldnw) <- "network"
     z <- oldnw%n%".update"
@@ -292,6 +242,7 @@ newnw.extract<-function(oldnw,z=NULL,output="network",response=NULL){
 #' @note does not check that networks are of the same size, etc
 #' @seealso \code{\link{set.vertex.attribute}},
 #' \code{\link{set.network.attribute}}
+#' @keywords internal
 #' @export nvattr.copy.network
 nvattr.copy.network <- function(to, from, ignore=c("bipartite","directed","hyper","loops","mnext","multiple","n")){
   for(a in list.vertex.attributes(from)){
@@ -305,42 +256,10 @@ nvattr.copy.network <- function(to, from, ignore=c("bipartite","directed","hyper
   to
 }
 
-
-
-#' Copy a network object enforcing ergm-appropriate guarantees about its
-#' internal representation
-#' 
-#' Create a copy of a \code{\link{network}} of interest with certain guarantees
-#' about its internal representation: \itemize{ \item for every edge, the id of
-#' the 'tails' vertex is < id of the 'heads' vertex if the network is
-#' undirected \item no (tail,head) id pair has more than one edge ID associated
-#' with it (no multiplex edges) }
-#' 
-#' This function is needed because the \code{\link{network}} object can support
-#' added non-directed edges in arbitrary order, as well as multiplex edges and
-#' hypergraphs (even if the network is not marked as such), which are not
-#' supported in the underlying ergm processes. Uses \code{\link{as.edgelist}}
-#' internally to make the conversion.
-#' 
-#' @param nw a \code{\link{network}} object to be copied
-#' @param preserve.eattr logical; should the edge attributes be preserved
-#' during the copying process (presumably slower)
-#' @return returns an ergm-appropriate network object.
-#' @note This function may be time expensive.  Also, the transformation is
-#' performed by deleting edges in initial network and re-adding them.
-#' @keywords internal
-#' @examples
-#' 
-#' test<-network.initialize(5,directed=FALSE)
-#' test[2,1]<-1  #ergm wont like this
-#' test$mel[[1]] # peek at internal representation
-#' 
-#' test2<-standardize.network(test) # enforce!
-#' test2$mel[[2]]  # 1 and 2 have traded places
-#' 
-#' 
+#' @rdname ergm-deprecated
 #' @export standardize.network
 standardize.network <- function(nw, preserve.eattr=TRUE){
+  .Deprecate_once(msg=paste0(sQuote("standardize.network"), " has been obviated by improvements to ", sQuote("network"), "."))
   if(preserve.eattr){
     el <- rbind(as.edgelist(nw),as.edgelist(is.na(nw)))
     eids <- lapply(seq_len(nrow(el)), function(i) get.edgeIDs(nw, el[i,1], el[i,2], na.omit=FALSE))
@@ -446,9 +365,7 @@ single.impute.dyads <- function(nw, response=NULL, constraints=NULL, constraints
       nw[na.el[c(todel,toadd),,drop=FALSE]] <- rep(0:1, c(length(todel),length(toadd)))
     }else{ # pending_update_network
       el <- s2el(union(setdiff(el2s(as.edgelist(nw)), el2s(na.el)), el2s(na.el[i.new,,drop=FALSE])))
-      nw <- empty_network(nw)
-      nw%n%".update" <- list(newedgelist = el[order(el[,1],el[,2]),,drop=FALSE])
-      class(nw) <- "pending_update_network"
+      nw <- pending_update_network(nw, list(newedgelist = el))
     }
   }else{
     if(output=="network"){
@@ -458,9 +375,7 @@ single.impute.dyads <- function(nw, response=NULL, constraints=NULL, constraints
       el <- el[!el2s(el[,-3,drop=FALSE])%in%el2s(na.el),,drop=FALSE]
       el <- rbind(el, cbind(na.el, sample(c(0,x),nae,replace=TRUE,prob=c(zeros,rep(1,length(x))))))
       el <- el[el[,3]!=0,,drop=FALSE]
-      nw <- empty_network(nw)
-      nw%n%".update" <- list(newedgelist = el[order(el[,1],el[,2]),,drop=FALSE])
-      class(nw) <- "pending_update_network"
+      nw <- pending_update_network(nw, list(newedgelist = el), response=response)
     }
   }
 
@@ -491,3 +406,66 @@ single.impute.dyads <- function(nw, response=NULL, constraints=NULL, constraints
   list(value = val, warnings = myWarnings, error=myError)
 } 
 
+
+# TODO: Move to statnet.common and export after next release.
+#' Evaluate an expression, restarting on error
+#'
+#' A pair of functions paralleling [eval()] and [evalq()] that make
+#' multiple attempts at evaluating an expression, retrying on error up
+#' to a specified number of attempts, and optionally evaluating
+#' another expression before restarting.
+#'
+#' @param expr an expression to be retried; note the difference
+#'   between [eval()] and [evalq()].
+#' @param retries number of retries to make; defaults to
+#'   `"eval.retries"` option, or 5.
+#' @param before_retry if given, an expression that will be evaluated
+#'   before each retry if the initial attempt fails; it is evaluated
+#'   in the same environment and with the same quoting semantics as
+#'   `expr`, but its errors are not handled.
+#' @param envir,enclos see [eval()].
+#' @param verbose Whether to output retries.
+#'
+#' @details Note if `expr` returns a `"try-error"` object (returned by
+#'   [try()]), it will be treated as an error. This behavior may
+#'   change in the future.
+#'
+#' @return Results of evaluating `expr`, including side-effects such
+#'   as variable assignments, if successful in `retries` retries.
+#'
+#' @examples
+#' x <- 0
+#' persistEvalQ({if((x<-x+1)<3) stop("x < 3") else x}, before_retry = {cat("Will try incrementing...\n")})
+#'
+#' x <- 0
+#' e <- quote(if((x<-x+1)<3) stop("x < 3") else x)
+#' persistEval(e, before_retry = quote(cat("Will try incrementing...\n")))
+#' @noRd
+.persistEval <- function(expr, retries=NVL(getOption("eval.retries"), 5), before_retry,
+                        envir = parent.frame(),
+                        enclos = if (is.list(envir) ||
+                                     is.pairlist(envir)) parent.frame() else baseenv(), verbose=FALSE){
+  for(attempt in seq_len(retries)){
+    out <- try(eval(expr, envir=envir, enclos=enclos), silent=TRUE)
+    if(!is(out, "try-error")) return(out)
+    else{
+      if(!missing(before_retry)) eval(before_retry, envir=envir, enclos=enclos)
+      if(verbose) inform(paste0("Retrying: retry ", attempt,"."))
+    }
+  }
+  out <- eval(expr, envir=envir, enclos=enclos)
+}
+
+## #' @rdname persistEval
+#' @noRd
+.persistEvalQ <- function(expr, retries=NVL(getOption("eval.retries"), 5), before_retry,
+                         envir = parent.frame(),
+                         enclos = if (is.list(envir) ||
+                                      is.pairlist(envir)) parent.frame() else baseenv(), verbose=FALSE){
+  expr <- substitute(expr)
+  before_retry <- substitute(before_retry)
+  envir <- force(envir)
+  enclos <- force(enclos)
+
+  .persistEval(expr=expr, retries=retries, before_retry=before_retry, envir=envir, enclos=enclos, verbose=verbose)
+}

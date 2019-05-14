@@ -1,16 +1,16 @@
 /*  File inst/include/ergm_rlebdm.h in package ergm, part of the Statnet suite
- *  of packages for network analysis, http://statnet.org .
+ *  of packages for network analysis, https://statnet.org .
  *
  *  This software is distributed under the GPL-3 license.  It is free,
  *  open source, and has the attribution requirements (GPL Section 7) at
- *  http://statnet.org/attribution
+ *  https://statnet.org/attribution
  *
- *  Copyright 2003-2018 Statnet Commons
+ *  Copyright 2003-2019 Statnet Commons
  */
 #ifndef _ERGM_RLEBDM_H_
 #define _ERGM_RLEBDM_H_
 
-#include "edgetree.h"
+#include "ergm_edgetree.h"
 
 /* Serialization format for RLE-encoded Binary Dyad Matrix with only
    TRUE (1) values stored, with indices and lengths stored as Double
@@ -25,15 +25,13 @@
    networks, this simply means that only block- or triangle-subset of
    dyads are TRUE.
 
-   x[0] = number of runs (r)
+   x[0] = number of TRUE dyads (i.e., sum of all run lengths)
 
-   x[1] = number of TRUE dyads (i.e., sum of all run lengths)
-
-   x[2 : 2+r] = an r-vector whose i'th
+   x[1 : 1+r] = an r-vector whose i'th
      element is the index of the first cell (listed in column-major
      order, indexed from 1) of the i+1st run.
 
-   x[2+r+1 : 2+r+1+r+1] = an r+1-vector of cumulative run lengths, which also serve as scaled cumulative probabilities for
+   x[1+r+1 : 1+r+1+r+1] = an r+1-vector of cumulative run lengths, which also serve as scaled cumulative probabilities for
      selecting each run in the R code. (The 0th element
      is always 0, the last element is always
      sum of all run lengths, etc.)

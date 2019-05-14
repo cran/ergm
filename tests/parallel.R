@@ -1,11 +1,11 @@
 #  File tests/parallel.R in package ergm, part of the Statnet suite
-#  of packages for network analysis, http://statnet.org .
+#  of packages for network analysis, https://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) at
-#  http://statnet.org/attribution
+#  https://statnet.org/attribution
 #
-#  Copyright 2003-2018 Statnet Commons
+#  Copyright 2003-2019 Statnet Commons
 #######################################################################
 library(statnet.common)
 opttest({
@@ -16,7 +16,7 @@ for(type in c("SOCK")){
   cat("\n\n======= Testing",type,"=======\n\n")
   
   gest <- ergm(flomarriage ~ edges + absdiff("wealth"),
-               eval.loglik=FALSE,
+               eval.loglik=TRUE,
                control=control.ergm(MCMC.burnin=1000, MCMC.interval=10, MCMLE.maxit=2, MCMC.samplesize=1000, force.main=TRUE,
                  parallel=2, parallel.type=type))
 
@@ -24,19 +24,19 @@ for(type in c("SOCK")){
   mcmc.diagnostics(gest)
 
   # FIXME: Set seeds and replace with actual values?
-  sim.STAT.SEQ <- simulate(gest, nsim=5, control=control.simulate.ergm(parallel=2, parallel.type=type), statsonly=TRUE, sequential=TRUE)
+  sim.STAT.SEQ <- simulate(gest, nsim=5, control=control.simulate.ergm(parallel=2, parallel.type=type), output="stats", sequential=TRUE)
   stopifnot(nrow(sim.STAT.SEQ)==5)
   print(sim.STAT.SEQ)
 
-  sim.STAT.seq <- simulate(gest, nsim=5, control=control.simulate.ergm(parallel=2, parallel.type=type), statsonly=TRUE, sequential=FALSE)
+  sim.STAT.seq <- simulate(gest, nsim=5, control=control.simulate.ergm(parallel=2, parallel.type=type), output="stats", sequential=FALSE)
   stopifnot(nrow(sim.STAT.seq)==5)
   print(sim.STAT.seq)
 
-  sim.stat.SEQ <- simulate(gest, nsim=5, control=control.simulate.ergm(parallel=2, parallel.type=type), statsonly=FALSE, sequential=TRUE)
+  sim.stat.SEQ <- simulate(gest, nsim=5, control=control.simulate.ergm(parallel=2, parallel.type=type), output="network", sequential=TRUE)
   stopifnot(length(sim.stat.SEQ)==5)
   print(sim.stat.SEQ)
 
-  sim.stat.seq <- simulate(gest, nsim=5, control=control.simulate.ergm(parallel=2, parallel.type=type), statsonly=FALSE, sequential=FALSE)
+  sim.stat.seq <- simulate(gest, nsim=5, control=control.simulate.ergm(parallel=2, parallel.type=type), output="network", sequential=FALSE)
   stopifnot(length(sim.stat.seq)==5)
   print(sim.stat.seq)
   
@@ -75,7 +75,7 @@ opttest({
     cat("\n\n======= Testing",type,"=======\n\n")
     
     gest <- ergm(flomarriage ~ edges + absdiff("wealth"),
-                 eval.loglik=FALSE,
+                 eval.loglik=TRUE,
                  control=control.ergm(MCMC.burnin=1000, MCMC.interval=10, MCMLE.maxit=2, MCMC.samplesize=1000, force.main=TRUE,
                                       parallel=2, parallel.type=type))
     
@@ -83,26 +83,21 @@ opttest({
     mcmc.diagnostics(gest)
     
     # FIXME: Set seeds and replace with actual values?
-    sim.STAT.SEQ <- simulate(gest, nsim=5, control=control.simulate.ergm(parallel=2, parallel.type=type), statsonly=TRUE, sequential=TRUE)
+    sim.STAT.SEQ <- simulate(gest, nsim=5, control=control.simulate.ergm(parallel=2, parallel.type=type), output="stats", sequential=TRUE)
     stopifnot(nrow(sim.STAT.SEQ)==5)
     print(sim.STAT.SEQ)
     
-    sim.STAT.seq <- simulate(gest, nsim=5, control=control.simulate.ergm(parallel=2, parallel.type=type), statsonly=TRUE, sequential=FALSE)
+    sim.STAT.seq <- simulate(gest, nsim=5, control=control.simulate.ergm(parallel=2, parallel.type=type), output="stats", sequential=FALSE)
     stopifnot(nrow(sim.STAT.seq)==5)
     print(sim.STAT.seq)
     
-    sim.stat.SEQ <- simulate(gest, nsim=5, control=control.simulate.ergm(parallel=2, parallel.type=type), statsonly=FALSE, sequential=TRUE)
+    sim.stat.SEQ <- simulate(gest, nsim=5, control=control.simulate.ergm(parallel=2, parallel.type=type), output="network", sequential=TRUE)
     stopifnot(length(sim.stat.SEQ)==5)
     print(sim.stat.SEQ)
     
-    sim.stat.seq <- simulate(gest, nsim=5, control=control.simulate.ergm(parallel=2, parallel.type=type), statsonly=FALSE, sequential=FALSE)
+    sim.stat.seq <- simulate(gest, nsim=5, control=control.simulate.ergm(parallel=2, parallel.type=type), output="network", sequential=FALSE)
     stopifnot(length(sim.stat.seq)==5)
     print(sim.stat.seq)
-    
-    if(exists("cl")){
-      stopCluster(cl)
-      rm(cl)
-    }
   }
   
 }, "parallel_MPI", testvar="ENABLE_MPI_TESTS")

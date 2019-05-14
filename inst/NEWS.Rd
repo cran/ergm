@@ -1,11 +1,11 @@
 %  File inst/NEWS.Rd in package ergm, part of the Statnet suite
-%  of packages for network analysis, http://statnet.org .
+%  of packages for network analysis, https://statnet.org .
 %
 %  This software is distributed under the GPL-3 license.  It is free,
 %  open source, and has the attribution requirements (GPL Section 7) at
-%  http://statnet.org/attribution
+%  https://statnet.org/attribution
 %
-%  Copyright 2003-2018 Statnet Commons
+%  Copyright 2003-2019 Statnet Commons
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{NEWS}
 \title{NEWS file for the \code{\link[=ergm-package]{ergm}} package}
@@ -63,6 +63,235 @@
   % }
 
 %% }
+
+
+\section{Changes in version 3.10.1}{
+
+  \subsection{NEW FEATURES}{
+    \itemize{
+      \item{
+	In all \code{gw*} terms, the \code{cutoff=} argument can now be controlled by a \code{gw.cutoff} term option.
+      }
+
+      \item{
+	\code{\link[=nobs.ergm]{nobs}} method has now been implemented for \code{\link{ergm}} objects.
+      }
+
+      \item{
+	\code{\link{simulate.ergm}} now takes a \code{basis=} argument (defaulting to NULL) that it passes to simulate.formula().
+      }
+
+      \item{
+	\code{\link{ergm.godfather}} now takes an additional \code{changes.only=} argument, to return statistics relative to initial network.
+      }
+
+      \item{
+	\code{\link{san}}'s internals have been singificantly updated. In particular,
+	\itemize{
+
+	  \item{SAN now performs true simulated annealing, and arguments are interpreted somewhat differently.}
+
+	  \item{SAN's weighting of the statistics is now determined adaptively, in approximate proportion to the standard deviation of proposal distribution of these statistics.}
+
+	}
+      }
+
+      \item{
+	\code{\link{fix.curved}} and \code{\link{enformulate.curved}} now handle the \code{\link[=dgwesp]{dgw*sp}} terms.
+      }
+
+      \item{
+	\code{\link{simulate.ergm}} and others now have an \code{output=} argument to provide finer control over the return format. It is to be preferred over the \code{statsonly=} argument.
+      }
+
+      \item{
+	A number of terms (see terms help) now use the new \link[node-attr]{nodal attributes UI}.
+      }
+
+      \item{
+	Hummel steplength search can now be run in parallel.
+      }
+
+      \item{
+	Terms \code{node*cov} and \code{b*cov} can now take multiple quantitative attributes or a function that returns a quantitative attribute matrix and produce a statistic for each.
+      }
+
+      \item{
+	Terms \code{\link{b1sociality}} and \code{\link{b2sociality}} have been added.
+      }
+
+      \item{
+	MCMLE estimation method can now checkpoint and resume optimization. See \code{\link{control.ergm}}'s \code{MCMLE.checkpoint=} and \code{MCMLE.resume=} arguments.
+      }
+
+      \item{
+	A variety of documentation expansions, cleanup, and other improvements.
+      }
+    }
+  }
+
+
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item{
+	The default method of \code{\link{ergm.stopCluster}} had not
+	been exported.
+      }
+      \item{
+	\code{\link{summary.ergm}} fixed for CD estimation.
+      }
+      \item{
+	\code{\link{diff}} term with \code{sign.action="abs"} no longer produces a warning on bipartite undirected networks. Thanks to Damien Georges for pointing out that this warning is unnecessary.
+      }
+      \item{
+	More robust searching for initialization functions.
+      }
+      \item{
+	Some spurious warnings fixed.
+      }
+
+      \item{
+	\code{ergm} version is now stored in the fitted object; this should produce sensible warnings when, say, trying to compute a \code{\link{summary.ergm}} on a object produced by an earlier version.
+      }
+
+      \item{
+	Disambiguation help pages have been added for concepts (such as \code{edges} and \code{hamming}) that have multiple roles (such as as an ERGM term and as an ERGM sample space constraint), removing duplication of aliases.
+      }
+      
+      \item{
+	Miscellaneous term and example documentation fixes. (Thanks to Christian Loehle and others.)
+      }
+
+    }
+  }
+
+
+  \subsection{OTHER USER-VISIBLE CHANGES}{
+    \itemize{
+      \item{
+	Low-level function \code{\link{ergm_SAN_slave}} has now been split out of \code{\link{san}} like \code{\link{ergm_MCMC_slave}}.
+      }
+
+      \item{
+	Lower-level \code{\link{simulate.ergm_model}} and \code{\link{san.ergm_model}} have been split out of \code{\link{simulate.formula}} and \code{\link{san.formula}}.
+      }
+
+      \item{
+	\code{\link{gof.ergm}} now uses a longer \code{MCMC.interval} by default.
+      }
+
+      \item{
+	Parallel processing \dQuote{API} now handles cluster starting and stopping more intelligently. In particular, \code{ergm.getCluster} now automatically sets up the calling function to stop the cluster when the calling function terminantes, as well as keeping track of which packages have already been loaded on the slave nodes.
+      }
+
+      \item{
+	The vignette no longer tests egocentric code.
+      }
+
+      \item{
+	Failure to allocate memory in the C routines now produces sensible errors.
+      }
+
+      \item{
+	A semi-internal \code{\link{pending_udpate_network}} API can be used to carry around network information between \code{.C} calls without having to reconstruct the network.
+      }
+
+      \item{
+	\code{\link{control.ergm}}'s \code{init.method=} argument now overrides the candidate list when selecting initialization methods.
+      }
+
+      \item{
+	\code{\link{network.update}} is deprecated in favor of an \code{\link{update.network}} method.
+      }
+
+      \item{
+	\code{\link{standardize.network}} has been deprecated, rendered obsolite by improvements to the \code{network} package method.
+      }
+
+      \item{
+	\code{\link{simulate.ergm}} now defaults to starting the simulation from the \code{$newnetwork} element of the fit object. Thanks to Saeid Ghafouri for raising the issue and Sam Jenness, Steven Goodreau, and Martina Morris for suggesting a solution.
+      }
+
+      \item{
+	\code{simulate} methods now attach an \code{attr(,"monitored")} to the returned statistics, indicating which statistics were generated from the \code{monitor=} argument.
+      }
+
+      \item{
+	\code{\link{pending_update_network}} \dQuote{API} is more formalized now, including methods overriding those of \code{\link{network}}.
+      }
+
+      \item{
+	\code{control$init.method} now overrides the candidate list when selecting initialization methods.
+      }
+
+      \item{
+	The main vignette no longer contains egocentric inference code. Refer to the \code{ergm.ego} package.
+      }
+      \item{
+	Improvements to \code{\link{plot.gof}} for large networks.
+      }
+
+      \item{
+	\code{logLik.ergm(warn.dyads=)} control parameter has been replaced by \code{options(ergm.loglik.warn_dyads=)} option.
+      }
+
+      \item{
+	A number of previously deprecated functions are now defunct; a
+	number of previously defunct functions have been removed.
+      }
+
+      \item{SAN's documentation has been augmented with examples.}
+
+      \item{
+	\code{\link{sociality}} term's arguments \code{attrname} and \code{levels} have been deprecated.
+      }
+
+      \item{
+	Most parallel calls are now a little bit more fault-tolerant, retrying on error.
+      }
+
+      \item{
+	Chad Klumb has been added as a contributor to the package.
+      }
+
+    }
+  }
+
+  \subsection{C-LEVEL FACILITIES}{
+    \itemize{
+      \item{Some changes to the Metropolis-Hastings proposal API.}
+
+      \item{Network initialization functions now return a pointer, and destroying functions free it.}
+
+      \item{
+	Miscellaneous improvements to low-level C code. In particular, more of the code now runs deterministically.
+      }
+
+      \item{
+	Improvements to encapsulation of \code{Network} structures.
+      }
+    }
+  }
+
+  %% \subsection{UTILITIES}{
+  %%   \itemize{
+  %%     \item Likewise, "UTILITIES" is probably unnecessary.
+  %%   }
+  %% }
+
+  %% \subsection{INSTALLATION}{
+  %%   \itemize{
+  %%     \item ... as is "INSTALLATION".
+  %%   }
+  %% }
+
+  %% \subsection{PACKAGE INSTALLATION}{
+  %%   \itemize{
+  %%     \item ditto.
+  %%   }
+  %% }
+
+}
 
 
 \section{Changes in version 3.9.4}{
@@ -265,14 +494,14 @@
       }
     }
   }
-   
-  
+
+
   \subsection{BUG FIXES}{
     \itemize{
       \item{
 	Bug fixes to contrastive divergence code.
       }
-      
+
       \item{
 	\code{\link{ddsp}} and \code{\link{dnsp}} terms now work
 	correctly for 0 shared partners. (Thanks to Wouter Spekkink for
@@ -284,8 +513,8 @@
       }
     }
   }
-  
-  
+
+
   \subsection{OTHER USER-VISIBLE CHANGES}{
     \itemize{
       \item{
@@ -302,14 +531,14 @@
 	A number of functions deprecated in 2015 have been removed. See
 	\code{help('ergm-defunct')} for the list.
       }
-    }    
+    }
   }
 }
 
 
 \section{Changes in version 3.7.1}{
 
-  
+
   \subsection{BUG FIXES}{
     \itemize{
       \item{
@@ -319,8 +548,8 @@
       }
     }
   }
-  
-  
+
+
 }
 
 
@@ -334,21 +563,21 @@
 	\code{\link{absdiff}} has been added, allowing for different
 	ways to handle differences in nodal attributes.
       }
-      
+
       \item{
 	By default, \code{\link{gof}} now checks goodness-of-fit
 	with respect to the estimated model in addition to the specified
 	terms. This can be used to diagnose convergence.
       }
 
-      
+
     }
   }
-   
-  
+
+
    \subsection{BUG FIXES}{
      \itemize{
-       
+
        \item{Terms \code{\link{concurrent}}, \code{\link{degree}},
 	 \code{\link{degrange}}, and \code{concurrentties}
 	 \dQuote{\code{byarg}} argument has been corrected to
@@ -359,14 +588,14 @@
 
        \item{Documentation for the curved ERGM terms has been clarified
 	 in a number of places.}
-       
+
        \item{Miscellaneous fixes and robustifications in the step-length
 	 code.}
-       
+
      }
    }
 
-  
+
    \subsection{OTHER USER-VISIBLE CHANGES}{
      \itemize{
        \item{
@@ -380,28 +609,28 @@
 	 parameter to the function directly. (Previously, such
 	 parameters were silently ignored.)
        }
-     }    
+     }
    }
 }
 
 
-\section{Changes in version 3.6.1}{   
-  
+\section{Changes in version 3.6.1}{
+
    \subsection{BUG FIXES}{
      \itemize{
-       
+
        \item{The implementation of the bounded degree
 	 (\code{\link[ergm-constraints]{bd}}) constraint had a bug that
 	 distorted somewhat the distribution of networks simulated (and
 	 therefore estimated) away from the boundary of the constraint.}
-       
+
        \item{Vertex labels in the \code{\link{sampson}} and
 	 \code{\link{samplike}} datasets have been corrected. (Thanks to
 	 Dr. Linda Tan Siew Li for pointing this error out.)}
 
        \item{Use of the deprecated \code{\link{unix.time}} has been
        changed to \code{\link{system.time}}.}
-       
+
        \item{Miscellaneous fixes to the documentation and robustifications.}
 
      }
@@ -427,12 +656,12 @@
 	(\code{\link{ddsp}}, \code{\link{desp}}, and \code{\link{dnsp}})
 	have been implemented. See \code{\link{ergm-terms}} for help.
       }
-      
+
       \item{New terms (binary and valued) \code{\link{b1cov}} and \code{\link{b2cov}} have
 	been implemented, analogous to \code{\link{nodecov}},
 	\code{\link{nodeicov}}, and \code{\link{nodeocov}} but for
 	bipatite networks.}
-      
+
       \item{New valued terms \code{\link{atleast}},
 	\code{\link{equalto}}, and \code{\link{smallerthan}} have
 	been implemented. A number of terms that were binary-only before
@@ -445,8 +674,8 @@
       }
     }
   }
-   
-  
+
+
    \subsection{BUG FIXES}{
      \itemize{
        \item{A number of implementation bugs in the valued ERGM terms
@@ -458,11 +687,11 @@
        \item{Miscellaneous bugfixes and robustifications.}
        \item{\code{\link{gof.formula}} and others now work with missing
 	 data.}
-       \item{Miscelaneous cleanups and bug fixes.}       
+       \item{Miscelaneous cleanups and bug fixes.}
      }
    }
 
-  
+
    \subsection{OTHER USER-VISIBLE CHANGES}{
      \itemize{
        \item{\code{\link{robust.inverse}} has been deprecated in favor
@@ -490,8 +719,8 @@
       now prints out a brief progress report by default.
    }
   }
-   
-  
+
+
    \subsection{BUG FIXES}{
      \itemize{
        \item MPLE is no longer used if the model is curved and target
@@ -511,7 +740,7 @@
 
        \item The null log-likelihood calculation prints messages instead
        of throwing warnings.
-       
+
        \item The closed-form solution (see Hummel et al., 2010) for the "lognormal" metric had
        been inadvertantly disabled. It has been reenabled.
 
@@ -519,32 +748,32 @@
     }
    }
 
-  
+
    \subsection{OTHER USER-VISIBLE CHANGES}{
      \itemize{
        \item Skye Bender-deMoll has been added as a contributor to the
        package.
-       
+
        \item Hummel et al.'s convex hull calculation and MCMC SE
        calculation have been robustified against highly correlated
        sample statistics by using PCA to rotate them into an orthogonal
        configuration.
-       
+
        \item Some functions, particularly \code{ERRVL},
        \code{append.rhs.formula}, \code{vectors.namesmatch},
        \code{term.list.formula}, and \code{ergm.update.formula} have been
        moved to the \code{\link{statnet.common}} package.
-       
+
        \item The \code{as.edgelist} family of functions have been moved
        to the \code{\link[network-package]{network}} package.
-       
+
        \item \code{\link{mcmc.diagnostics.ergm}} now takes the
        \code{esteq=} argument. If \code{TRUE}, the diagnostics are
        performed on the simulated values of the estimating functions. If
        \code{FALSE}, they are performed on simulated values of canonical
        statistics. This obviates and replaces the the \code{curved=}
        argument.
-       
+
        \item \code{\link{san}} when used with curved models now requires
        canonical statistics as targets.
 
@@ -572,15 +801,15 @@
    \code{\link{ergm}} with \code{estimate="CD"}.
    }
   }
-   
-  
+
+
    \subsection{BUG FIXES}{
      \itemize{
       \item{Fixed issue where constraints was not appropriately compared to older version}
       \item{Fixed bug where the deviance of dyad-independence models was incorrectly computed/reported for all models}
       \item{Removed \code{Rglpk} package dependency; replaced it with \code{lpSolve} package dependency. See man page for \code{is.inCH} for details}
       \item{Fixed integer overflow bug in sample size reporting}
-  
+
       \item{Fixed bug in saving target.stats vector. Offset terms in target.stats output are now NA instead of the SAN network stats. (issue #1049)}
       \item{Fixed ergm segfault when unknown node attributes are used in
       ergm formulas. Modified get.node.attr function so that it will
@@ -594,7 +823,7 @@
     }
    }
 
-  
+
    \subsection{OTHER USER-VISIBLE CHANGES}{
      \itemize{
       \item{\code{\link{ergm}} with \code{estimate="MPLE"} will now
@@ -603,15 +832,15 @@
 	for these is not yet implemented.}
        \item{ CRAN-requested code structure changes (generally not visable to user):
         \itemize{
-        \item \code{require} and \code{library} calls changed to \code{requireNamespace} and namespace prefixes added to calls from other packages, 
+        \item \code{require} and \code{library} calls changed to \code{requireNamespace} and namespace prefixes added to calls from other packages,
         \item S3 methods explicitly registered in \code{NAMESPACE}.
         \item \code{packageDescription} is no longer used in package citation methods.
 	\item Many formerly 'internal' functions have been documented in a
 	semi-stable API for use by developers of other ergm-related packages.
   \item{ Many formerly undocumented 'internal' functions have been made internal by the \code{NAMESPACE}. As far as we know, this avoids functions in use by reverse-Depending packages.  These currently appear as commented items in the \code{NAMESPACE} file.
   }
-  \item{ Many undocumented 'internal' functions that do not appear to be used have been deprecated and will likely be removed in the next release.  See \code{?ergm_deprecated} for a list.  If called, these functions will give a Deprecation warning and suggest an alternate function where appropriate. 
-  
+  \item{ Many undocumented 'internal' functions that do not appear to be used have been deprecated and will likely be removed in the next release.  See \code{?ergm_deprecated} for a list.  If called, these functions will give a Deprecation warning and suggest an alternate function where appropriate.
+
   }
         }
        }
@@ -651,19 +880,19 @@
     \item { Additional arguments added to the \code{network.update} function to control which attributes and properties are updated.}
     \item {  new \code{esteq} argument for \code{simulate.formula} and \code{simulate.ergm}:  Default is FALSE. If TRUE, compute the sample estimating equations of an ERGM. If the model is linear, all non-offset statistics are passed. If the model is curved, the score estimating equations (3.1) by Hunter and Handcock (2006) are given instead.}
     \item{ New and expanded tests of the ergm functions for use with R CMD CHECK tools. }
-    \item{ Addition of \code{is.durational} methods for models and formulas. These functions test whether the terms in an ERGM model or formula is duration dependent or not. If the formula or model does not include any terms that need information about the duration of existing ties, the ergm process can use more efficient internal data structures. This is mostly in support of \code{tergm} functionality.} 
+    \item{ Addition of \code{is.durational} methods for models and formulas. These functions test whether the terms in an ERGM model or formula is duration dependent or not. If the formula or model does not include any terms that need information about the duration of existing ties, the ergm process can use more efficient internal data structures. This is mostly in support of \code{tergm} functionality.}
     \item{New ergm constraint terms: \code{fixallbut(free.dyads)}, \code{fixedas(present,absent)}. The former one can specify the set of dyads (as an edgelist or a network object) to be fixed, the latter one can specify two sets of dyads (as edgelists or networks objects), to be fixed present and fixed absent respectively. See \code{?ergm.constraints}}
     \item{Potential speed/memory usage improvement: sampling algorithms in both R can C levels are optimized.}
     \item{ergm now imports the \code{network} package via NAMESPACE to avoid internal namespace collisions when used with \code{iGraph}}
   }
   }
-     
-   
-   
+
+
+
    \subsection{CHANGES}{
     \itemize{
       \item {MCMC control parameters changes in control.ergm
-        \itemize{ 
+        \itemize{
           \item default for \code{MCMC.interval} increased from 100 to 1000
           \item default for \code{MCMC.burnin} changed from 10000 to mcmc.interval*16
           \item default for \code{MCMC.samplesize} decreased from 10000 to 1024
@@ -676,7 +905,7 @@
           \item control parameter \code{MCMCLE.steplength.margin} has been added
           \item default value for \code{MCMLE.MCMC.precision} has been increased from 0.05 to 0.005
           \item default value for \code{MCMLE.steplength} has been changed from 0.5 to 1
-          
+
         }
       }
       \item { ergm.control parameter \code{SA.nsubphases} default changed from MCMLE.maxit to 4}
@@ -684,7 +913,7 @@
       \item { similarly, the default for the \code{MCMC.burnin} control parameter for \code{control.simulate}, \code{control.simulate.formula} and \code{control.simulate.formula.ergm} increased from 1000 to 10000}
       }
   }
-  
+
    \subsection{BUG FIXES}{
     \itemize{
     \item{Networks where some statistics are at the lowest value, leading to some terms being -Inf, was not giving the correct estimated coefficients. Now fixed.}
@@ -705,13 +934,13 @@ fixes issue reported by Sebastian Daza}
     \itemize{
       \item{ The ergm control parameter \code{MCMLE.method} has been deprecated.  By default, ergm uses \code{trust}, and falls back to \code{optim} with Nelder-Mead method when \code{trust} fails.}
       \item The ergm control parameter \code{MCMLE.adaptive.epsilon} has been removed.
-      \item The ergm control parameters \code{MCMC.burnin.retries}, \code{MCMC.burnin.check.last} and \code{MCMC.burnin.check.alpha} have been removed. 
+      \item The ergm control parameters \code{MCMC.burnin.retries}, \code{MCMC.burnin.check.last} and \code{MCMC.burnin.check.alpha} have been removed.
       \item \code{MCMLE.adaptive.epsilon} parameter has been removed
       \item The \code{faux.high} dataset was removed as it was identical to \code{faux.mesa.high}
     }
    }
 
-  
+
    \subsection{OTHER USER-VISIBLE CHANGES}{
      \itemize{
       \item{The "iterations" output in an ergm object now returns the number of MCMLE iterations taken by the estimation.}
@@ -748,9 +977,9 @@ fixes issue reported by Sebastian Daza}
 
   % \subsection{NEW FEATURES}{
   %   \itemize{
-  %   } 
+  %   }
   % }
-  
+
   \subsection{BUG FIXES}{
     \itemize{
       \item An array bounds issue was fixed in the \code{C}
@@ -778,10 +1007,10 @@ fixes issue reported by Sebastian Daza}
     }
   }
 
-  
+
   % \subsection{OTHER USER-VISIBLE CHANGES}{
   %   \itemize{
-      
+
   %   }
   % }
 
@@ -817,9 +1046,9 @@ fixes issue reported by Sebastian Daza}
       \item \code{\link{ergmMPLE}} can now output an array of change
       scores associated with each dyad. See the help page for more
       details.
-    } 
+    }
   }
-  
+
   \subsection{BUG FIXES}{
     \itemize{
       \item Some Metropolis-Hastings proposal functions would sometimes
@@ -839,7 +1068,7 @@ fixes issue reported by Sebastian Daza}
       by Matthew Hoover, has been fixed.
 
       \item MPLE for some degree-based constraints has been reenabled.
-      
+
     }
   }
 
@@ -850,39 +1079,39 @@ fixes issue reported by Sebastian Daza}
     }
   }
 
-  
+
   \subsection{OTHER USER-VISIBLE CHANGES}{
     \itemize{
-      
+
       \item Default \code{SAN.burnin} control parameter has been
       increased to 100,000.
-      
+
     }
   }
 }
 
 \section{Changes in version 3.1.1}{
- 
+
   \subsection{BUG FIXES}{
     \itemize{
       \item Long-standing bugs in MCMC standard error calculation have
       been fixed. In particular, MCMC standard errors are now calculated
       for offset models, and they are no longer overestimated (by too
       much).
-      
+
       \item \code{\link{san}} now behaves sensibly when the network exceeds the
       number of edges allocated.
 
       \item \code{\link{degrange}} terms now initialize correctly for their
       respective network types.
-      
+
       \item Some spurious warnings are no longer printed.
-      
+
       \item A variety of minor errors has been fixed.
-    
+
     }
   }
-  
+
   \subsection{OTHER USER-VISIBLE CHANGES}{
     \itemize{
       \item \code{\link[=ergm-package]{ergm}}'s implementation and tests now work with
@@ -894,7 +1123,7 @@ fixes issue reported by Sebastian Daza}
 }
 
 \section{Changes in version 3.1}{
- 
+
   \subsection{NEW FEATURES}{
     \itemize{ \item Infrastructure
       has been added for fitting valued ERGMs of Krivitsky (2012). The
@@ -930,21 +1159,21 @@ fixes issue reported by Sebastian Daza}
       null model (a model with no terms), and takes into account whether
       a model is constrained, has missing dyads, etc.. This can also
       improve the MPLE.
-      
+
       A new generic, \code{\link{logLikNull}} has been added that
       returns the null model likelihood.
 
       For models where this is not possible, the
       null likelihood (and deviance, etc.) is defined to be 0.
-      
+
       \item A new constraint, \code{blockdiag} has been added, for
       modeling networks with only within-block ties allowed. This is
       useful for, e.g., fitting an ERGM to several networks jointly. See
       \code{? 'ergm-constraints'} for available constraints.
-      
-    } 
+
+    }
   }
-  
+
   \subsection{OTHER USER-VISIBLE CHANGES}{
     \itemize{
       \item The implementation of dynamic network models has been moved to a
@@ -968,12 +1197,12 @@ fixes issue reported by Sebastian Daza}
 
   \subsection{C-LEVEL FACILITIES}{
     \itemize{
-      
+
       \item \code{\link[=ergm-package]{ergm}} now exports header and
       stub files for the \code{LinkingTo:} API, and package
       \code{ergm.userterms} now uses it. Please see
       \code{inst/include/README} before using it, however.
-      
+
     }
   }
 
@@ -990,26 +1219,26 @@ fixes issue reported by Sebastian Daza}
     \itemize{
       \item Some bugs introduced by the developers relying on a certain
       behavior of the \code{\link{.C}} API which had changed have been
-      fixed. 
+      fixed.
 
       \item Some undocumented terms have been fixed and documented,
       including \code{\link{odegreepopularity}},
       \code{\link{idegreepopularity}}, \code{\link{degreepopularity}},
       and \code{\link{smalldiff}}.
-    
+
     }
   }
 }
 
 \section{Changes in version 3.0}{
- 
+
   \subsection{NEW FEATURES}{
     \itemize{
       \item Facilities for fitting and simulating Separable Temporal
       ERGMs (STERGMs) of Krivitsky (2009) and, Krivitsky and Handcock
       (2010) have been added. See \code{\link{stergm}} and
       \code{\link[=simulate.network]{simulate}}.
-      
+
       \item \code{\link{ergm}} MCMLE will now test if the optimization
       has converged to the MLE and stop if it detects convergence.
 
@@ -1041,10 +1270,10 @@ fixes issue reported by Sebastian Daza}
       of zeros as starting parameters.
 
       \item A number of new ERGM terms have been added.
-      
+
     }
   }
-  
+
   \subsection{OTHER USER-VISIBLE CHANGES}{
     \itemize{
       \item \code{\link{ergm}}, \code{\link[=simulate.ergm]{simulate}},
@@ -1055,7 +1284,7 @@ fixes issue reported by Sebastian Daza}
       \code{\link{control.simulate}}, respectively. (Old arguments for
       \code{ergm} and \code{simulate} still work with a warning, and
       they may be removed later.)
-      
+
       \item The data structure returned by
       \code{\link[=simulate.ergm]{simulate}} is now a list of networks
       with \code{\link{attr}}-style attributes describing how it was
@@ -1066,13 +1295,13 @@ fixes issue reported by Sebastian Daza}
       \item Matrices of sample statistics returned by \code{\link{ergm}}
       are \code{\link[coda]{mcmc}} objects (or
       \code{\link[coda]{mcmc.list}} objects, for parallel computing).
-      
+
       \item Arguments \code{theta} have been renamed to
       \code{coef}. Arguments \code{meanstats} have been renamed to
       \code{target.stats}. Many control parameters have also been
       renamed and reorganized. (Old parameters still work with a
       warning, and they may be removed later.)
-      
+
       \item A number of arguments to \code{\link{control.ergm}},
       \code{\link{control.simulate}}, and others, have been renamed.
 
@@ -1119,7 +1348,7 @@ fixes issue reported by Sebastian Daza}
       \code{steppingmaxit}, \code{gridsize}, \code{sequential},
       \code{returnMCMCstats}, \code{calc.mcmc.se}, \code{hessian},
       \code{prop.weights}, \code{prop.args}, and \code{packagenames}.
-    
+
       \item The following arguments to functions have been moved to the
       corresponding control functions, removed or renamed:
       \code{burnin}, \code{MCMCsamplesize}, \code{interval},
@@ -1155,7 +1384,7 @@ fixes issue reported by Sebastian Daza}
     \itemize{
       \item The \dQuote{news} feature has been implemented. Type
   \code{news(package="ergm")} to see the version's updates.
-      
+
       \item A function \code{\link{ergm.allstats}} was added to
       calculate all possible network statistics for a given ERGM and
       network. The number of possible networks grows on the order of \eqn{2^{n^2}}, so this should only be used for small networks.  Related function \code{\link{ergm.exact}} calculates exact log-likelihood for a particular canonical parameter and a particular ergm.
@@ -1178,7 +1407,7 @@ fixes issue reported by Sebastian Daza}
 
       \item A generic function \code{\link{is.dyad.independent}} to test
       whether an ERGM fit or formula is dyad-independent has been added.
-      
+
       \item A generic function \code{\link{fix.curved}} to convert
       curved exponential family models to variants in which the curved
       parameters are fixed has been added. See the function
@@ -1194,8 +1423,8 @@ fixes issue reported by Sebastian Daza}
       \item The following new models terms have been added:
       \code{\link{degcrossprod}} and \code{\link{degcor}}.
 
-      \item Tests for change statistics have been added. 
-  
+      \item Tests for change statistics have been added.
+
       \item A new dataset has been added:  \code{\link{kapferer}}, the well-known
       tailor shop network dataset of Kapferer (1972).
     }
@@ -1204,10 +1433,10 @@ fixes issue reported by Sebastian Daza}
   \subsection{OTHER USER-VISIBLE CHANGES}{
     \itemize{
       \item The package has been \dQuote{standardized} to represent
-      directed ties as \code{(tail,head)}.   
+      directed ties as \code{(tail,head)}.
     }
   }
-  
+
   \subsection{BUG FIXES}{
     \itemize{
       \item Log-likelihood calculation for dyad-dependent models has
@@ -1219,7 +1448,7 @@ fixes issue reported by Sebastian Daza}
       \item \code{\link[=gof.ergm]{gof}} now automatically selects the
       right goodness-of-fit statistics for the network type (directed
       vs. undirected) given.
-      
+
       \item Bug in is.inCH in 2.4-2 fixed in 2.4-3.
     }
   }
@@ -1231,5 +1460,5 @@ fixes issue reported by Sebastian Daza}
       \item All model terms included in the package have been
       reimplemented using the new \code{InitErgmTerm} framework.
     }
-  } 
+  }
 }

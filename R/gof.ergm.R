@@ -1,11 +1,11 @@
 #  File R/gof.ergm.R in package ergm, part of the Statnet suite
-#  of packages for network analysis, http://statnet.org .
+#  of packages for network analysis, https://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) at
-#  http://statnet.org/attribution
+#  https://statnet.org/attribution
 #
-#  Copyright 2003-2018 Statnet Commons
+#  Copyright 2003-2019 Statnet Commons
 #######################################################################
 
 #' Conduct Goodness-of-Fit Diagnostics on a Exponential Family Random Graph
@@ -62,7 +62,7 @@
 #' @param verbose Provide verbose information on the progress of the
 #' simulation.
 #' @return \code{\link{gof}}, \code{\link{gof.ergm}}, and
-#' \code{\link{gof.formula}} return an object of class \code{gof}.  This
+#' \code{\link{gof.formula}} return an object of class \code{gof.ergm}, which inherits from class `gof`.  This
 #' is a list of the tables of statistics and \eqn{p}-values.  This is typically
 #' plotted using \code{\link{plot.gof}}.
 #' @seealso [ergm()], [network()], [simulate.ergm()], [summary.ergm()]
@@ -117,16 +117,13 @@ gof.default <- function(object,...) {
 #' question is directed, \dQuote{degree} in the above is replaced by idegree
 #' and odegree.
 #'
-#' @S3method gof ergm
-#' @export gof.ergm
+#' @export
 gof.ergm <- function (object, ..., 
                       coef=NULL,
                       GOF=NULL, 
                       constraints=NULL,
                       control=control.gof.ergm(),
                       verbose=FALSE) {
-  .dep_method("gof","ergm")
-
   check.control.class(c("gof.ergm","gof.formula"), "gof.ergm")
   control.toplevel(...)
   .gof.nw <- as.network(object$network)
@@ -141,23 +138,23 @@ gof.ergm <- function (object, ...,
 
   if(is.null(coef)) coef <- coef(object)
 
-  ## If a different constraint was specified, use it; otherwise, copy
-  ## from the ERGM.
-
-  control.transfer <- c("MCMC.burnin", "MCMC.interval", "MCMC.prop.weights", "MCMC.prop.args", "MCMC.packagenames", "MCMC.init.maxedges","term.options")
+  control.transfer <- c("MCMC.burnin", "MCMC.prop.weights", "MCMC.prop.args", "MCMC.packagenames", "MCMC.init.maxedges","term.options")
   for(arg in control.transfer)
     if(is.null(control[[arg]]))
       control[arg] <- list(object$control[[arg]])
+
+  # Rescale the interval by the ratio between the estimation sample size and the GOF sample size so that the total number of MCMC iterations would be about the same.
+  NVL(control$MCMC.interval) <- max(ceiling(object$control$MCMC.interval*object$control$MCMC.samplesize/control$nsim),1)
 
   control <- set.control.class("control.gof.formula")
   
   if(is.null(constraints)) constraints <- object$constraints
   
-  gof(object=formula, coef=coef,
-      GOF=GOF,
-      constraints=constraints,
-      control=control,
-      verbose=verbose, ...)
+  gof.formula(object=formula, coef=coef,
+              GOF=GOF,
+              constraints=constraints,
+              control=control,
+              verbose=verbose, ...)
 }
 
 
@@ -165,9 +162,8 @@ gof.ergm <- function (object, ...,
 #' @describeIn gof Perform simulation to evaluate goodness-of-fit for
 #'   a model configuration specified by a [`formula`], coefficient,
 #'   constraints, and other settings.
-#'
-#' @S3method gof formula
-#' @export gof.formula
+#' 
+#' @export
 gof.formula <- function(object, ..., 
                         coef=NULL,
                         GOF=NULL,
@@ -175,8 +171,6 @@ gof.formula <- function(object, ...,
                         control=NULL,
 			unconditional=TRUE,
                         verbose=FALSE) {
-  .dep_method("gof","formula")
-
   if("response" %in% names(list(...))) stop("GoF for valued ERGMs is not implemented at this time.")
 
   if(!is.null(control$seed)) {set.seed(as.integer(control$seed))}
@@ -196,9 +190,7 @@ gof.formula <- function(object, ...,
   }
   
   nw <- as.network(lhs)
-  if(!is.network(nw)){
-    stop("A network object on the RHS of the formula argument must be given")
-  }
+
   if(is.null(control)) control <- control.gof.formula()
 
   check.control.class(c("gof.formula","gof.ergm"), "ERGM gof.formula")
@@ -231,12 +223,6 @@ gof.formula <- function(object, ...,
   }
   GOF <- as.formula(paste("~",paste(all.gof.vars,collapse="+")))
   
-  nw <- as.network(nw)
-  
-  if(!is.network(nw)){
-    stop("A network object on the RHS of the formula argument must be given")
-  }
-
   m <- ergm_model(object, nw, term.options=control$term.options)
   Clist <- ergm.Cprepare(nw, m)
 
@@ -635,7 +621,7 @@ gof.formula <- function(object, ...,
     returnlist$obs.triadcensus <- obs.triadcensus
     returnlist$sim.triadcensus <- sim.triadcensus
   }
-  class(returnlist) <- "gof"
+  class(returnlist) <- c("gof.ergm", "gof")
   returnlist
 }
 
@@ -689,31 +675,6 @@ print.gof <- function(x, ...){
   }
   invisible()
 }
-
-#' @rdname ergm-deprecated
-#' @description [print.gofobject()] is a deprecated alias for [print.gof()].
-#' @export
-print.gofobject <- function(x, ...) {
-  .dep_once("print.gof")
-  print.gof(x, ...) # Nothing better for now
-}
-
-#' @rdname ergm-deprecated
-#' @description [summary.gof()] is a deprecated alias for [print.gof()].
-#' @export
-summary.gof <- function(object, ...) {
-  .dep_once("print.gof")
-  print.gof(x=object, ...) # Nothing better for now
-}
-
-#' @rdname ergm-deprecated
-#' @description [summary.gofobject()] is a deprecated alias for [print.gof()].
-#' @export
-summary.gofobject <- function(object, ...) {
-  .dep_once("print.gof")
-  print.gof(object, ...) # Nothing better for now
-}
-
 
 ###################################################################
 # The <plot.gof> function plots the GOF diagnostics for each
@@ -847,7 +808,7 @@ plot.gof <- function(x, ...,
     ymax <- max(max(out,na.rm=TRUE),max(out.obs,na.rm=TRUE))
 
     boxplot(data.frame(out[, model]), xlab = "model statistics", 
-            ylab = ylab, names = pnames, cex.axis = cex.axis, outline=FALSE,
+            ylab = ylab, names = pnames[model], cex.axis = cex.axis, outline=FALSE,
             ylim=c(ymin,ymax), ...)
 
     points(seq(along = model), out.bds[1,model], pch = 1,cex=0.75)
@@ -862,18 +823,20 @@ plot.gof <- function(x, ...,
 
   if ('degree' == statname) {
 
+    ngs <- min(n-1, nrow(x$pval.deg))
+    
    if( min(x$pval.deg[,"MC p-value"]) <0) {
-    pval.max <- max((1:(n - 1))[x$pval.deg[1:(n - 1), "MC p-value"] < 1]) + 3
+    pval.max <- max((1:ngs)[x$pval.deg[1:ngs, "MC p-value"] < 1]) + 3
    }
    else {
-    pval.max <- max((1:(n - 1))[x$obs.deg[1:(n - 1)] > 0]) + 3
+    pval.max <- max((1:ngs)[x$obs.deg[1:ngs] > 0]) + 3
    }
 
    if (is.finite(pval.max) & pval.max < n) {
         deg <- c(1:pval.max)
     }
     else {
-        deg <- c(1:n)
+        deg <- c(1:(ngs+1))
     }
     if (plotlogodds) {
         odds <- x$psim.deg
@@ -926,19 +889,21 @@ plot.gof <- function(x, ...,
   ###odegree####
 
   if ('odegree' == statname) {
+    
+    ngs <- min(n-1, nrow(x$pval.odeg))
 
    if( min(x$pval.odeg[,"MC p-value"]) <0) {
-    pval.max <- max((1:(n - 1))[x$pval.odeg[1:(n - 1), "MC p-value"] < 1]) + 3
+    pval.max <- max((1:ngs)[x$pval.odeg[1:ngs, "MC p-value"] < 1]) + 3
    }
    else {
-    pval.max <- max((1:(n - 1))[x$obs.odeg[1:(n - 1)] > 0]) + 3
+    pval.max <- max((1:ngs)[x$obs.odeg[1:ngs] > 0]) + 3
    }
 
    if (is.finite(pval.max) & pval.max < n) {
         odeg <- c(1:pval.max)
     }
     else {
-        odeg <- c(1:n)
+        odeg <- c(1:(ngs+1))
     }
     if (plotlogodds) {
         odds <- x$psim.odeg
@@ -992,18 +957,20 @@ plot.gof <- function(x, ...,
 
   if ('idegree' == statname) {
 
+    ngs <- min(n-1, nrow(x$pval.ideg))
+
    if( min(x$pval.ideg[,"MC p-value"]) <0) {
-    pval.max <- max((1:(n - 1))[x$pval.ideg[1:(n - 1), "MC p-value"] < 1]) + 3
+    pval.max <- max((1:ngs)[x$pval.ideg[1:ngs, "MC p-value"] < 1]) + 3
    }
    else {
-    pval.max <- max((1:(n - 1))[x$obs.ideg[1:(n - 1)] > 0]) + 3
+    pval.max <- max((1:ngs)[x$obs.ideg[1:ngs] > 0]) + 3
    }
 
    if (is.finite(pval.max) & pval.max < n) {
         ideg <- c(1:pval.max)
     }
     else {
-        ideg <- c(1:n)
+        ideg <- c(1:(ngs+1))
     }
     if (plotlogodds) {
         odds <- x$psim.ideg
@@ -1057,7 +1024,9 @@ plot.gof <- function(x, ...,
 
   if ('espartners' == statname) {
 
-   pval.max <- max((1:(n - 1))[x$pval.espart[1:(n - 1), "MC p-value"] < 
+    ngs <- min(n-1, nrow(x$pval.espart))
+    
+   pval.max <- max((1:ngs)[x$pval.espart[1:ngs, "MC p-value"] < 
         1]) + 3
     if (is.finite(pval.max) & pval.max < n) {
         espart <- c(1:pval.max)
@@ -1117,13 +1086,15 @@ plot.gof <- function(x, ...,
   ###dspart####
 
   if ('dspartners' == statname) {
-   pval.max <- max((1:(n - 1))[x$pval.dspart[1:(n - 1), "MC p-value"] < 
+    ngs <- min(n-1, nrow(x$pval.dspart))
+
+    pval.max <- max((1:ngs)[x$pval.dspart[1:ngs, "MC p-value"] < 
         1]) + 3
     if (is.finite(pval.max) & pval.max < n) {
         dspart <- c(1:pval.max)
     }
     else {
-        dspart <- c(1:n)
+        dspart <- c(1:(ngs+1))
     }
     if (plotlogodds) {
         odds <- x$psim.dspart
@@ -1231,13 +1202,15 @@ plot.gof <- function(x, ...,
 
   if ('distance' == statname) {
 
-    pval.max <- max((1:(n - 1))[x$pval.dist[1:(n - 1), "MC p-value"] < 
+    ngs <- min(n-1, nrow(x$pval.dist))
+
+    pval.max <- max((1:ngs)[x$pval.dist[1:ngs, "MC p-value"] < 
         1]) + 3
     if (is.finite(pval.max) & pval.max < n) {
         dist <- c(1:pval.max, n)
     }
     else {
-        dist <- c(1:n)
+        dist <- c(1:(ngs+1))
     }
     pnames <- paste(dist)
     pnames[length(dist)] <- "NR"
@@ -1315,10 +1288,7 @@ plot.gof <- function(x, ...,
    invisible()
 }
 
-#' @rdname ergm-deprecated
-#' @description [plot.gofobject()] is a deprecated alias for [plot.gof()].
-#' @export
-plot.gofobject <- function(x, ...) {
-  .dep_once("plot.gof")
-  plot.gof(x, ...) # Nothing better for now
-}
+
+
+
+

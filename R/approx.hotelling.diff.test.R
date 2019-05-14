@@ -1,11 +1,11 @@
 #  File R/approx.hotelling.diff.test.R in package ergm, part of the Statnet suite
-#  of packages for network analysis, http://statnet.org .
+#  of packages for network analysis, https://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) at
-#  http://statnet.org/attribution
+#  https://statnet.org/attribution
 #
-#  Copyright 2003-2018 Statnet Commons
+#  Copyright 2003-2019 Statnet Commons
 #######################################################################
 .dtsq <- function(x, param, df, log = FALSE){
   fx <- x*(df - param + 1)/(param*df)
@@ -73,6 +73,7 @@ approx.hotelling.diff.test<-function(x,y=NULL, mu0=0, assume.indep=FALSE, var.eq
   if(!is.null(y) && !is.mcmc.list(y))
     y <- mcmc.list(mcmc(as.matrix(y)))
 
+  if(is.null(mu0)) mu0 <- rep(0,nvar(x))
   mu0 <- rep(mu0, length.out = nvar(x))
 
   tr <- function(x) sum(diag(as.matrix(x)))
@@ -87,7 +88,7 @@ approx.hotelling.diff.test<-function(x,y=NULL, mu0=0, assume.indep=FALSE, var.eq
     if(assume.indep){
       vcovs <- vcovs.indep
     }else{
-      vcovs <- lapply(lapply(v, spectrum0.mvar), function(m) matrix(ifelse(is.na(c(m)), 0, c(m)),nrow(m),ncol(m)))
+      vcovs <- lapply(v, spectrum0.mvar)
     }
     ms <- lapply(v, base::colMeans)
     m <- colMeans(as.matrix(v))
@@ -254,7 +255,7 @@ spectrum0.mvar <- function(x, order.max=NULL, aic=is.null(order.max), tol=.Machi
   n <- nrow(x)
   p <- ncol(x)
   
-  v <- matrix(NA,p,p)
+  v <- matrix(0,p,p)
   novar <- abs(apply(x,2,stats::sd))<tol
   x <- x[,!novar,drop=FALSE]
 

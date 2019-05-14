@@ -1,19 +1,19 @@
 /*  File inst/include/MCMC.h in package ergm, part of the Statnet suite
- *  of packages for network analysis, http://statnet.org .
+ *  of packages for network analysis, https://statnet.org .
  *
  *  This software is distributed under the GPL-3 license.  It is free,
  *  open source, and has the attribution requirements (GPL Section 7) at
- *  http://statnet.org/attribution
+ *  https://statnet.org/attribution
  *
- *  Copyright 2003-2018 Statnet Commons
+ *  Copyright 2003-2019 Statnet Commons
  */
-#ifndef MCMC_H
-#define MCMC_H
+#ifndef _MCMC_H_
+#define _MCMC_H_
 
-#include "edgetree.h"
-#include "changestat.h"
-#include "MHproposal.h"
-#include "model.h"
+#include "ergm_edgetree.h"
+#include "ergm_changestat.h"
+#include "ergm_MHproposal.h"
+#include "ergm_model.h"
 
 // TODO: This might be worth moving into a common "constants.h".
 typedef enum MCMCStatus_enum {
@@ -24,12 +24,12 @@ typedef enum MCMCStatus_enum {
 
 /* *** don't forget tail-> head, so this function accepts tails first, not heads  */
 
-void MCMC_wrapper(int *dnumnets, int *dnedges,
+void MCMC_wrapper(int *dnedges,
 		  int *tails, int *heads,
 		  int *dn, int *dflag, int *bipartite, 
 		  int *nterms, char **funnames,
 		  char **sonames, 
-		  char **MHproposaltype, char **MHproposalpackage,
+		  char **MHProposaltype, char **MHProposalpackage,
 		  double *inputs, double *theta0, int *samplesize, 
 		  double *sample, int *burnin, int *interval,  
 		  int *newnetworktails, 
@@ -39,12 +39,12 @@ void MCMC_wrapper(int *dnumnets, int *dnedges,
 		  int *minin, int *condAllDegExact, int *attriblength, 
 		  int *maxedges,
 		  int *status);
-MCMCStatus MCMCSample(MHproposal *MHp,
+MCMCStatus MCMCSample(MHProposal *MHp,
 		      double *theta, double *networkstatistics, 
 		      int samplesize, int burnin, 
 		      int interval, int fVerbose, int nmax,
 		      Network *nwp, Model *m);
-MCMCStatus MetropolisHastings(MHproposal *MHp,
+MCMCStatus MetropolisHastings(MHProposal *MHp,
 			      double *theta, double *statistics, 
 			      int nsteps, int *staken,
 			      int fVerbose,
@@ -53,7 +53,7 @@ void MCMCPhase12 (int *tails, int *heads, int *dnedges,
 		  int *dn, int *dflag, int *bipartite, 
 		  int *nterms, char **funnames,
 		  char **sonames, 
-		  char **MHproposaltype, char **MHproposalpackage,
+		  char **MHProposaltype, char **MHProposalpackage,
 		  double *inputs, 
 		  double *theta0, int *samplesize,
 		  double *gain, double *meanstats, int *phase1, int *nsub,
@@ -66,7 +66,7 @@ void MCMCPhase12 (int *tails, int *heads, int *dnedges,
 		  int *maxedges,
 		  int *mtails, int *mheads, int *mdnedges);
 
-void MCMCSamplePhase12 (MHproposal *MH,
+void MCMCSamplePhase12 (MHProposal *MH,
   double *theta, double gain, double *meanstats,
   int nphase1, int nsubphases, double *networkstatistics, 
   int samplesize, int burnin, 

@@ -2,76 +2,90 @@
 % Please edit documentation in R/ergm-defunct.R
 \name{ergm-defunct}
 \alias{ergm-defunct}
-\alias{delete.isolates}
-\alias{largest.components}
-\alias{central.network}
-\alias{ergm.mahalanobis}
-\alias{sociality.default}
-\alias{sociality.network}
-\alias{sociality.formula}
-\alias{sociality.ergm}
-\alias{ostar2deg}
-\alias{is.invertible}
-\alias{espartnerdist}
-\alias{dspartnerdist}
-\alias{twopathdist}
-\alias{rspartnerdist}
-\alias{invert.network}
-\alias{drawpie}
-\alias{mvmodel}
-\alias{mvmodel.ergm}
-\alias{degreedistfactor}
 \alias{robust.inverse}
+\alias{plot.network.ergm}
+\alias{ergm.getterms}
+\alias{plot.mcmc.list.ergm}
+\alias{plot.ergm}
+\alias{summary.statistics}
+\alias{ergm.checkargs}
+\alias{ergm.checkbipartite}
+\alias{ergm.checkdirected}
+\alias{summary.gof}
+\alias{ergm.getMCMCsample}
+\alias{ergm.MHP.table}
+\alias{MHproposal}
+\alias{MHproposal.character}
+\alias{MHproposal.ergm}
+\alias{MHproposal.formula}
+\alias{ergm.init.methods}
+\alias{ergm.ConstraintImplications}
+\alias{ergm.mcmcslave}
 \title{Functions that have been removed from this package}
 \usage{
 sociality(object, ...)
 
-delete.isolates(x)
-
-largest.components(x, minsize = 4)
-
-central.network(x)
-
-ergm.mahalanobis(x, center, cov, inverted = FALSE, ...)
-
-\method{sociality}{default}(object, ...)
-
-\method{sociality}{network}(object, ..., statistics = NULL)
-
-\method{sociality}{formula}(formula, ..., init, nsim = 100,
-  burnin = 100, interval = 100, constraints = ~.,
-  prop.weights = "default", prop.args = list(), seed = NULL,
-  drop = FALSE, statistics = NULL)
-
-\method{sociality}{ergm}(object, ..., nsim = 100, burnin = 100,
-  interval = 100, constraints = NULL, prop.weights = "default",
-  prop.args = list(), seed = NULL, drop = FALSE, statistics = NULL)
-
-ostar2deg(object, ninflast = TRUE)
-
-is.invertible(V, tol = 1e-12)
-
-espartnerdist(g, print = TRUE)
-
-dspartnerdist(g, print = TRUE)
-
-twopathdist(g, print = TRUE)
-
-rspartnerdist(g, print = TRUE)
-
-invert.network(nw)
-
-drawpie(center, radius, probs, n = 50, cols = 1:length(probs), ...)
-
-mvmodel(object, ...)
-
-\method{mvmodel}{ergm}(object, ..., nsim = 100, burnin = 10000,
-  interval = 1000, constraints = NULL, seed = NULL,
-  control = control.simulate.ergm(), statistic = NULL)
-
-degreedistfactor(g, x)
-
 robust.inverse(H, tol = sqrt(.Machine$double.eps))
+
+\method{plot}{network.ergm}(x, attrname = NULL,
+  label = network.vertex.names(x), coord = NULL, jitter = TRUE,
+  thresh = 0, usearrows = TRUE, mode = "fruchtermanreingold",
+  displayisolates = TRUE, interactive = FALSE, xlab = NULL,
+  ylab = NULL, xlim = NULL, ylim = NULL, pad = 0.2,
+  label.pad = 0.5, displaylabels = FALSE, boxed.labels = TRUE,
+  label.pos = 0, label.bg = "white", vertex.sides = 8,
+  vertex.rot = 0, arrowhead.cex = 1, label.cex = 1, loop.cex = 1,
+  vertex.cex = 1, edge.col = 1, label.col = 1, vertex.col = 2,
+  label.border = 1, vertex.border = 1, edge.lty = 1,
+  label.lty = NULL, vertex.lty = 1, edge.lwd = 0,
+  label.lwd = par("lwd"), edge.len = 0.5, edge.curve = 0.1,
+  edge.steps = 50, loop.steps = 20, object.scale = 0.01,
+  uselen = FALSE, usecurve = FALSE, suppress.axes = TRUE,
+  vertices.last = TRUE, new = TRUE, layout.par = NULL,
+  cex.main = par("cex.main"), cex.sub = par("cex.sub"), seed = NULL,
+  latent.control = list(maxit = 500, trace = 0, dyadsample = 10000,
+  penalty.sigma = c(5, 0.5), nsubsample = 200), colornames = "rainbow",
+  verbose = FALSE, latent = FALSE, ...)
+
+ergm.getterms(formula)
+
+\method{plot}{mcmc.list.ergm}(...)
+
+\method{plot}{ergm}(x, ...)
+
+\method{summary}{statistics}(...)
+
+ergm.checkargs(fname, arglist, varnames = NULL, vartypes = NULL,
+  defaultvalues = list(), required = NULL)
+
+ergm.checkbipartite(fname, nw.bipartiteflag, requirement,
+  extramessage = "")
+
+ergm.checkdirected(fname, nw.directedflag, requirement,
+  extramessage = "")
+
+\method{summary}{gof}(object, ...)
+
+ergm.getMCMCsample(nw, model, MHproposal, eta0, control, verbose = FALSE,
+  response = NULL, update.nws = TRUE, ...)
+
+ergm.MHP.table(...)
+
+MHproposal(...)
+
+MHproposal.character(...)
+
+MHproposal.ergm(...)
+
+MHproposal.formula(...)
+
+ergm.init.methods(...)
+
+ergm.ConstraintImplications(...)
+
+ergm.mcmcslave(Clist, MHproposal, eta0, control, verbose, ...,
+  prev.run = NULL, burnin = NULL, samplesize = NULL,
+  interval = NULL, maxedges = NULL)
 }
 \arguments{
 \item{x, minsize, center, cov, inverted, ..., object, statistics, formula, init, nsim, burnin, interval, constraints, prop.weights, prop.args, seed, drop, ninflast, V, tol, g, print, nw, radius, probs, n, cols, control, statistic, H}{Arguments to defunct functions.}

@@ -1,11 +1,11 @@
 #  File R/ergm.MCMCse.lognormal.R in package ergm, part of the Statnet suite
-#  of packages for network analysis, http://statnet.org .
+#  of packages for network analysis, https://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) at
-#  http://statnet.org/attribution
+#  https://statnet.org/attribution
 #
-#  Copyright 2003-2018 Statnet Commons
+#  Copyright 2003-2019 Statnet Commons
 #######################################################################
 #############################################################################
 # The <ergm.MCMCse.lognormal> function computes and returns the MCMC lognormal
@@ -68,7 +68,8 @@ ergm.MCMCse.lognormal<-function(theta, init, statsmatrix, statsmatrix.obs,
   if(!is.null(statsmatrix.obs)){
     cov.zbar.obs <- spectrum0.mvar(gsim.obs) / nrow(gsim.obs)
 
-    novar <- novar & (diag(H.obs)<sqrt(.Machine$double.eps))
+    novar.obs <- diag(H.obs)<sqrt(.Machine$double.eps)
+    if(any(novar&!novar.obs)) warning("Non-varying statistics in the unconstrained sample vary in the constrained sample. This should not be happening.")
   }else{
     cov.zbar.obs <- cov.zbar
     cov.zbar.obs[,] <- 0

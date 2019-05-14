@@ -1,11 +1,11 @@
 /*  File src/wtMCMC.c in package ergm, part of the Statnet suite
- *  of packages for network analysis, http://statnet.org .
+ *  of packages for network analysis, https://statnet.org .
  *
  *  This software is distributed under the GPL-3 license.  It is free,
  *  open source, and has the attribution requirements (GPL Section 7) at
- *  http://statnet.org/attribution
+ *  https://statnet.org/attribution
  *
- *  Copyright 2003-2018 Statnet Commons
+ *  Copyright 2003-2019 Statnet Commons
  */
 #include "wtMCMC.h"
 
@@ -22,12 +22,12 @@
 
  and don't forget that tail -> head
 *****************/
-void WtMCMC_wrapper(int *dnumnets, int *nedges,
+void WtMCMC_wrapper(int *nedges,
 		    int *tails, int *heads, double *weights, 
 		    int *dn, int *dflag, int *bipartite, 
 		    int *nterms, char **funnames,
 		    char **sonames, 
-		    char **MHproposaltype, char **MHproposalpackage,
+		    char **MHProposaltype, char **MHProposalpackage,
 		    double *inputs, double *theta0, int *samplesize, 
 		    double *sample, int *burnin, int *interval,  
 		    int *newnetworktails, 
@@ -39,12 +39,11 @@ void WtMCMC_wrapper(int *dnumnets, int *nedges,
   int directed_flag;
   Vertex n_nodes, nmax, bip;
   /* Edge n_networks; */
-  WtNetwork nw[1];
+  WtNetwork *nwp;
   WtModel *m;
-  WtMHproposal MH;
+  WtMHProposal *MHp;
   
   n_nodes = (Vertex)*dn; 
-  /* n_networks = (Edge)*dnumnets;  */
   nmax = (Edge)abs(*maxedges); 
   bip = (Vertex)*bipartite; 
   
@@ -55,30 +54,30 @@ void WtMCMC_wrapper(int *dnumnets, int *nedges,
   m=WtModelInitialize(*funnames, *sonames, &inputs, *nterms);
 
   /* Form the network */
-  nw[0]=WtNetworkInitialize(tails, heads, weights, nedges[0], 
+  nwp=WtNetworkInitialize((Vertex*)tails, (Vertex*)heads, weights, nedges[0], 
 			    n_nodes, directed_flag, bip, 0, 0, NULL);
 
-  WtMH_init(&MH,
-	    *MHproposaltype, *MHproposalpackage,
+  MHp=WtMHProposalInitialize(
+	    *MHProposaltype, *MHProposalpackage,
 	    inputs,
 	    *fVerbose,
-	    nw);
+	    nwp);
 
-  *status = WtMCMCSample(&MH,
+  *status = WtMCMCSample(MHp,
 			 theta0, sample, *samplesize,
 			 *burnin, *interval,
-			 *fVerbose, nmax, nw, m);
+			 *fVerbose, nmax, nwp, m);
 
-  WtMH_free(&MH);
+  WtMHProposalDestroy(MHp);
         
-/* Rprintf("Back! %d %d\n",nw[0].nedges, nmax); */
+/* Rprintf("Back! %d %d\n",nwp[0].nedges, nmax); */
 
   /* record new generated network to pass back to R */
   if(*status == WtMCMC_OK && *maxedges>0 && newnetworktails && newnetworkheads)
-    newnetworktails[0]=newnetworkheads[0]=WtEdgeTree2EdgeList(newnetworktails+1,newnetworkheads+1,newnetworkweights+1,nw,nmax-1);
+    newnetworktails[0]=newnetworkheads[0]=WtEdgeTree2EdgeList((Vertex*)newnetworktails+1,(Vertex*)newnetworkheads+1,newnetworkweights+1,nwp,nmax-1);
   
   WtModelDestroy(m);
-  WtNetworkDestroy(nw);
+  WtNetworkDestroy(nwp);
   PutRNGstate();  /* Disable RNG before returning */
 }
 
@@ -93,7 +92,7 @@ void WtMCMC_wrapper(int *dnumnets, int *nedges,
  networks in the sample.  Put all the sampled statistics into
  the networkstatistics array. 
 *********************/
-WtMCMCStatus WtMCMCSample(WtMHproposal *MHp,
+WtMCMCStatus WtMCMCSample(WtMHProposal *MHp,
 			  double *theta, double *networkstatistics, 
 			  int samplesize, int burnin, 
 			  int interval, int fVerbose, int nmax,
@@ -123,7 +122,7 @@ WtMCMCStatus WtMCMCSample(WtMHproposal *MHp,
   if(WtMetropolisHastings(MHp, theta, networkstatistics, burnin, &staken,
 			fVerbose, nwp, m)!=WtMCMC_OK)
     return WtMCMC_MH_FAILED;
-  if(nmax!=0 && nwp->nedges >= nmax-1){
+  if(nmax!=0 && EDGECOUNT(nwp) >= nmax-1){
     return WtMCMC_TOO_MANY_EDGES;
   }
   
@@ -148,7 +147,7 @@ WtMCMCStatus WtMCMCSample(WtMHproposal *MHp,
       if(WtMetropolisHastings(MHp, theta, networkstatistics, interval, &staken,
 			    fVerbose, nwp, m)!=WtMCMC_OK)
 	return WtMCMC_MH_FAILED;
-      if(nmax!=0 && nwp->nedges >= nmax-1){
+      if(nmax!=0 && EDGECOUNT(nwp) >= nmax-1){
 	return WtMCMC_TOO_MANY_EDGES;
       }
       tottaken += staken;
@@ -194,7 +193,7 @@ WtMCMCStatus WtMCMCSample(WtMHproposal *MHp,
  the networkstatistics vector.  In other words, this function 
  essentially generates a sample of size one
 *********************/
-WtMCMCStatus WtMetropolisHastings (WtMHproposal *MHp,
+WtMCMCStatus WtMetropolisHastings (WtMHProposal *MHp,
 				 double *theta, double *networkstatistics,
 				 int nsteps, int *staken,
 				 int fVerbose,
@@ -214,14 +213,14 @@ WtMCMCStatus WtMetropolisHastings (WtMHproposal *MHp,
 	error("Something very bad happened during proposal. Memory has not been deallocated, so restart R soon.");
 	
       case MH_IMPOSSIBLE:
-	Rprintf("MH Proposal function encountered a configuration from which no toggle(s) can be proposed.\n");
+	Rprintf("MH MHProposal function encountered a configuration from which no toggle(s) can be proposed.\n");
 	return WtMCMC_MH_FAILED;
 	
       case MH_UNSUCCESSFUL:
-	warning("MH Proposal function failed to find a valid proposal.");
+	warning("MH MHProposal function failed to find a valid proposal.");
 	unsuccessful++;
 	if(unsuccessful>taken*MH_QUIT_UNSUCCESSFUL){
-	  Rprintf("Too many MH Proposal function failures.\n");
+	  Rprintf("Too many MH MHProposal function failures.\n");
 	  return WtMCMC_MH_FAILED;
 	}
       case MH_CONSTRAINT:
@@ -230,7 +229,7 @@ WtMCMCStatus WtMetropolisHastings (WtMHproposal *MHp,
     }
     
     if(fVerbose>=5){
-      Rprintf("Proposal: ");
+      Rprintf("MHproposal: ");
       for(unsigned int i=0; i<MHp->ntoggles; i++)
 	Rprintf("  (%d, %d) -> %f  ", MHp->toggletail[i], MHp->togglehead[i], MHp->toggleweight[i]);
       Rprintf("\n");

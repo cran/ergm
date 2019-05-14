@@ -4,20 +4,31 @@
 \alias{simulate.ergm}
 \alias{simulate.formula}
 \alias{simulate.formula.ergm}
+\alias{simulate.ergm_model}
 \title{Draw from the distribution of an Exponential Family Random Graph Model}
 \usage{
 \method{simulate}{formula}(object, nsim = 1, seed = NULL, coef,
   response = NULL, reference = ~Bernoulli, constraints = ~.,
   monitor = NULL, basis = NULL, statsonly = FALSE, esteq = FALSE,
-  sequential = TRUE, control = control.simulate.formula(),
-  verbose = FALSE, ...)
+  output = c("network", "stats", "edgelist", "pending_update_network"),
+  simplify = TRUE, sequential = TRUE,
+  control = control.simulate.formula(), verbose = FALSE, ...,
+  do.sim = TRUE)
+
+\method{simulate}{ergm_model}(object, nsim = 1, seed = NULL, coef,
+  response = NULL, reference = ~Bernoulli, constraints = ~.,
+  monitor = NULL, basis = NULL, esteq = FALSE,
+  output = c("network", "stats", "edgelist", "pending_update_network"),
+  simplify = TRUE, sequential = TRUE,
+  control = control.simulate.formula(), verbose = FALSE, ...)
 
 \method{simulate}{ergm}(object, nsim = 1, seed = NULL,
   coef = object$coef, response = object$response,
   reference = object$reference, constraints = object$constraints,
-  monitor = NULL, statsonly = FALSE, esteq = FALSE,
-  sequential = TRUE, control = control.simulate.ergm(),
-  verbose = FALSE, ...)
+  monitor = NULL, basis = object$newnetwork, statsonly = FALSE,
+  esteq = FALSE, output = c("network", "stats", "edgelist",
+  "pending_update_network"), simplify = TRUE, sequential = TRUE,
+  control = control.simulate.ergm(), verbose = FALSE, ...)
 }
 \arguments{
 \item{object}{Either a \code{\link{formula}} or an
@@ -49,13 +60,13 @@ reference measure (\eqn{h(y)}) to be used. (Defaults to \code{~Bernoulli}.)
 See help for \link[=ergm-references]{ERGM reference measures} implemented in
 the \code{\link[=ergm-package]{ergm}} package.}
 
-\item{constraints}{A one-sided formula specifying one or more constraints on
-the support of the distribution of the networks being simulated. See the
-documentation for a similar argument for \code{\link{ergm}} and see
-\link[=ergm-constraints]{list of implemented constraints} for more information. For
+\item{constraints}{A one-sided formula specifying one or more
+constraints on the support of the distribution of the networks
+being simulated. See the documentation for a similar argument for
+\code{\link{ergm}} and see \link[=ergm-constraints]{list of implemented constraints} for more information. For
 \code{simulate.formula}, defaults to no constraints. For
-\code{simulate.ergm}, defaults to using the same constraints as those with
-which \code{object} was fitted.}
+\code{simulate.ergm}, defaults to using the same constraints as
+those with which \code{object} was fitted.}
 
 \item{monitor}{A one-sided formula specifying one or more terms
 whose value is to be monitored. These terms are appeneded to the
@@ -69,12 +80,21 @@ an error results because the characteristics of the network (e.g., size and
 directedness) must be specified.}
 
 \item{statsonly}{Logical: If TRUE, return only the network statistics, not
-the network(s) themselves.}
+the network(s) themselves. Deprecated in favor of \code{output=}.}
 
 \item{esteq}{Logical: If TRUE, compute the sample estimating equations of an
 ERGM: if the model is non-curved, all non-offset statistics are returned
 either way, but if the model is curved, the score estimating function values
 (3.1) by Hunter and Handcock (2006) are returned instead.}
+
+\item{output}{Character, one of \code{"network"} (default), \code{"stats"},
+\code{"edgelist"}, or \code{"pending_update_network"}: determines the
+output format. Partial matching is performed.}
+
+\item{simplify}{Logical: If \code{TRUE} the output is "simplified":
+sampled networks are returned in a single list, statistics from
+multiple parallel chains are stacked, etc.. This makes it
+consistent with behavior prior to \code{ergm} 3.10.}
 
 \item{sequential}{Logical: If FALSE, each of the \code{nsim} simulated
 Markov chains begins at the initial network.  If TRUE, the end of one
@@ -88,31 +108,68 @@ Constructed using \code{\link{control.simulate.ergm}} or
 chain progresses.}
 
 \item{\dots}{Further arguments passed to or used by methods.}
+
+\item{do.sim}{Logical: If \code{FALSE}, do not proceed to the simulation
+but rather return a list of arguments that would have been passed
+to \code{\link[=simulate.ergm_model]{simulate.ergm_model()}}. This can be useful if, for example,
+one wants to run several simulations with varying coefficients
+and did not want to reinitialize the model and the proposal ever
+time.}
 }
 \value{
-If \code{statsonly==TRUE} a matrix containing the simulated network
-statistics. If \code{control$parallel>0}, the statistics from each Markov
-chain are stacked.
+If \code{output=="stats"} an \code{\link{mcmc}} object containing the
+simulated network statistics. If \code{control$parallel>0}, an
+\code{\link{mcmc.list}} object. If \code{simplify=TRUE} (the default), these
+would then be "stacked" and converted to a standard \code{\link{matrix}}. A
+logical vector indicating whether or not the term had come from
+the \code{monitor=} formula is stored in \code{\link[=attr]{attr()}}-style attribute
+\code{"monitored"}.
 
-Otherwise, if \code{nsim==1}, an object of class \code{network}.  If
-\code{nsim>1}, it returns an object of class \code{\link{network.list}}: a
-list of networks with the following \code{\link{attr}}-style attributes on
-the list: \item{formula}{The \code{\link{formula}} used to generate the
-sample.} \item{stats}{The \eqn{\code{nsim}\times p} matrix of network
-statistics, where \eqn{p} is the number of network statistics specified in
-the model.} \item{control}{Control parameters used to generate the sample.}
-\item{constraints}{Constraints used to generate the sample.}
-\item{reference}{The reference measure for the sample.} \item{monitor}{The
-monitoring formula.} \item{response}{The edge attribute used as a response.}
+Otherwise, a representation of the simulated network is returned,
+in the form specified by \code{output}. In addition to a network
+representation or a list thereof, they have the following
+\code{\link{attr}}-style attributes: \describe{
 
-If \code{statsonly==FALSE && control$parallel>0} the returned networks are
-"interleaved", in the sense that for \code{y[i,j]} is the \code{j}th network
-from MCMC chain \code{i}, the sequence returned if
-\code{control$parallel==2} is \code{list(y[1,1], y[2,1], y[1,2], y[2,2],
-y[1,3], y[2,3], ...)}. This is different from the behavior when
-\code{statsonly==TRUE}. This detail may change in the future.
+\item{\code{formula}}{The \code{\link{formula}} used to generate the
+sample.}
 
-This object has summary and print methods.
+\item{\code{stats}}{An \code{\link{mcmc}} or \code{\link{mcmc.list}} object as above.}
+
+\item{\code{control}}{Control parameters used to generate the sample.}
+
+\item{\code{constraints}}{Constraints used to generate the sample.}
+
+\item{\code{reference}}{The reference measure for the sample.}
+
+\item{\code{monitor}}{The monitoring formula.}
+
+\item{\code{response}}{The edge attribute used as a response.}
+
+}
+
+The following are the permitted network formats: \describe{
+
+\item{\code{"network"}}{If \code{nsim==1}, an object of class
+\code{network}.  If \code{nsim>1}, it returns an object of class
+\code{\link{network.list}} (a list of networks) with the
+above-listed additional attributes.}
+
+\item{\code{"edgelist"}}{An \code{\link{edgelist}} representation of the network,
+or a list thereof, depending on \code{nsim}.}
+
+\item{\code{"pending_update_network"}}{A semi-internal representation of
+a network consisting of a \code{\link{network}} object emptied of edges, with
+an attached edgelist matrix, or a list thereof, depending on
+\code{nsim}.}
+
+}
+
+If \code{simplify==FALSE}, the networks are returned as a nested list,
+with outer list being the parallel chain (including 1 for no
+parallelism) and inner list being the samples within that chains
+(including 1, if one network per chain). If \code{TRUE}, they are
+concatenated, and if a total of one network had been simulated, the
+network itself will be returned.
 }
 \description{
 \code{\link[stats]{simulate}} is used to draw from exponential
@@ -122,7 +179,9 @@ information on these models.
 The method for \code{\link{ergm}} objects inherits the model,
 the coefficients, the response attribute, the reference, the
 constraints, and most simulation parameters from the model fit,
-unless overridden by passing them explicitly.
+unless overridden by passing them explicitly. Unless overridden,
+the simulation is initialized with a random draw from the fitted
+model, saved by \code{\link[=ergm]{ergm()}}.
 }
 \details{
 A sample of networks is randomly drawn from the specified model.  The model
@@ -142,7 +201,11 @@ More information can be found by looking at the documentation of
 \code{\link{ergm}}.
 }
 \note{
-\code{simulate.ergm()} and \code{simulate.formula() are currently exported as functions. This behaviour has been deprecated in}ergm\code{3.9 and will be removed in a future version. Simply use}simulate()` instead, or \code{\link[=getS3method]{getS3method()}} if absolutely necessary.
+\code{\link[=simulate.ergm_model]{simulate.ergm_model()}} is a lower-level interface, providing
+a \code{\link[=simulate]{simulate()}} method for \code{\link{ergm_model}} class. The \code{basis}
+argument is required; \code{monitor}, if passed, must be an
+\code{\link{ergm_model}} as well; and \code{constraints} can be an
+\code{\link{ergm_proposal}} object instead.
 }
 \examples{
 \dontshow{
@@ -190,11 +253,11 @@ data(florentine)
 gest <- ergm(flomarriage ~ edges + kstar(2))
 summary(gest)
 #
-# Draw from the fitted model (satatistics only), and observe the number
+# Draw from the fitted model (statistics only), and observe the number
 # of triangles as well.
 #
 g.sim <- simulate(gest, nsim=10, 
-            monitor=~triangles, statsonly=TRUE,
+            monitor=~triangles, output="stats",
             control=control.simulate.ergm(MCMC.burnin=1000, MCMC.interval=100))
 g.sim
 }

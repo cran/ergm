@@ -1,11 +1,11 @@
 #  File R/print.summary.ergm.R in package ergm, part of the Statnet suite
-#  of packages for network analysis, http://statnet.org .
+#  of packages for network analysis, https://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) at
-#  http://statnet.org/attribution
+#  https://statnet.org/attribution
 #
-#  Copyright 2003-2018 Statnet Commons
+#  Copyright 2003-2019 Statnet Commons
 #######################################################################
 ###############################################################################
 # The <print.summary.ergm> function prints a subset of the information given
@@ -71,6 +71,7 @@ print.summary.ergm <- function (x,
            } else {
              cat("\nMaximum Pseudolikelihood Results:\n")
            },
+           CD = cat("\nContrastive Divergence results:\n"),
            MLE = NVL3(control$main.method, switch(.,
              MCMLE = cat("\nMonte Carlo MLE Results:\n"),
              `Stochastic-Approximation`=cat("\nMonte Carlo MLE Results:\n"),
@@ -104,7 +105,7 @@ print.summary.ergm <- function (x,
                                      format(x$devtable[,2], digits = digits)," degrees of freedom\n"), 
                                1, paste, collapse = " "),"\n"))
 
-      if(x$null.lik.0) cat("Note that the null model likelihood and deviance are defined to be 0.", NO_NULL_IMPLICATION, "\n\n")
+      if(x$null.lik.0) writeLines(c(strwrap(paste("Note that the null model likelihood and deviance are defined to be 0.", NO_NULL_IMPLICATION)),''))
       
       cat(paste("AIC:", format(x$aic, digits = digits), "  ", 
                 "BIC:", format(x$bic, digits = digits), "  ",

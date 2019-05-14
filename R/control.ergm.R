@@ -1,11 +1,11 @@
 #  File R/control.ergm.R in package ergm, part of the Statnet suite
-#  of packages for network analysis, http://statnet.org .
+#  of packages for network analysis, https://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) at
-#  http://statnet.org/attribution
+#  https://statnet.org/attribution
 #
-#  Copyright 2003-2018 Statnet Commons
+#  Copyright 2003-2019 Statnet Commons
 #######################################################################
 #' Auxiliary for Controlling ERGM Fitting
 #' 
@@ -41,11 +41,15 @@
 #' } Passing \code{control.ergm(init=coef(prev.fit))} can be used to ``resume''
 #' an uncoverged [ergm()] run, but see
 #' \code{\link{enformulate.curved}}.
-#' @param init.method A chatacter vector or \code{NULL}. The default method
-#' depends on the reference measure used. For the binary (\code{"Bernoulli"})
-#' ERGMs, it's maximum pseudo-likelihood estimation (MPLE). Other valid values
-#' include \code{"zeros"} for a \code{0} vector of appropriate length and
-#' \code{"CD"} for contrastive divergence.
+#' 
+#' @param init.method A chatacter vector or \code{NULL}. The default
+#'   method depends on the reference measure used. For the binary
+#'   (\code{"Bernoulli"}) ERGMs, with dyad-independent constraints,
+#'   it's maximum pseudo-likelihood estimation (MPLE). Other valid
+#'   values include \code{"zeros"} for a \code{0} vector of
+#'   appropriate length and \code{"CD"} for contrastive divergence. If
+#'   passed explicitly, this setting overrides the reference's
+#'   limitations.
 #' 
 #' Valid initial methods for a given reference are set by the `InitErgmReference.*` function.
 #' @param main.method One of "MCMLE" (default),"Robbins-Monro",
@@ -141,7 +145,7 @@
 #' @param SAN.maxit When \code{target.stats} argument is passed to
 #' [ergm()], the maximum number of attempts to use \code{\link{san}}
 #' to obtain a network with statistics close to those specified.
-#' @param SAN.burnin.times Multiplier for \code{SAN.burnin} relative to
+#' @param SAN.nsteps.times Multiplier for \code{SAN.nsteps} relative to
 #' \code{MCMC.burnin}. This lets one control the amount of SAN burn-in
 #' (arguably, the most important of SAN parameters) without overriding the
 #' other SAN.control defaults.
@@ -273,10 +277,25 @@
 #' @param MCMLE.Hummel.maxit Maximum number of iterations in searching for the
 #' best step length.
 #' 
+#' @param checkpoint At the start of every iteration, save the state
+#'   of the optimizer in a way that will allow it to be resumed. The
+#'   name is passed through [sprintf()] with iteration number as the
+#'   second argument. (For example, `checkpoint="step_%03d.RData"`
+#'   will save to `step_001.RData`, `step_002.RData`, etc.)
+#'
+#' @param resume If given a file name of an `RData` file produced by
+#'   `checkpoint`, the optimizer will attempt to resume after
+#'   restoring the state. Control parameters from the saved state will
+#'   be reused, except for those whose value passed via
+#'   `control.ergm()` had change from the saved run. Note that if the
+#'   network, the model, or some critical settings differ between
+#'   runs, the results may be undefined.
+#'
 #' @param MCMLE.save_intermediates Every iteration, after MCMC
 #'   sampling, save the MCMC sample and some miscellaneous information
-#'   to a file with this name. The name is passed through [sprintf()]
-#'   with iteration number as the second argument. (So, for example,
+#'   to a file with this name. This is mainly useful for diagnostics
+#'   and debugging. The name is passed through [sprintf()] with
+#'   iteration number as the second argument. (For example,
 #'   `MCMLE.save_intermediates="step_%03d.RData"` will save to
 #'   `step_001.RData`, `step_002.RData`, etc.)
 #'
@@ -374,7 +393,7 @@
 #' * Snijders, T.A.B. (2002), Markov Chain Monte
 #' Carlo Estimation of Exponential Random Graph Models.  Journal of Social
 #' Structure.  Available from
-#' \url{http://www.cmu.edu/joss/content/articles/volume3/Snijders.pdf}.
+#' \url{https://www.cmu.edu/joss/content/articles/volume3/Snijders.pdf}.
 #' 
 #' 
 #' * Firth (1993), Bias Reduction in Maximum Likelihood Estimates.
@@ -393,7 +412,7 @@
 #' 
 #' * Kristoffer Sahlin. Estimating convergence of Markov chain Monte Carlo
 #' simulations. Master's Thesis. Stockholm University, 2011.
-#' \url{http://www2.math.su.se/matstat/reports/master/2011/rep2/report.pdf}
+#' \url{https://www2.math.su.se/matstat/reports/master/2011/rep2/report.pdf}
 #' 
 #' }
 #' @keywords models
@@ -407,6 +426,9 @@ control.ergm<-function(drop=TRUE,
                                "Stochastic-Approximation","Stepping"),
                        force.main=FALSE,
                        main.hessian=TRUE,
+
+                       checkpoint=NULL,
+                       resume=NULL,
 
                        MPLE.max.dyad.types=1e+6, 
                        MPLE.samplesize=50000,                       
@@ -430,18 +452,19 @@ control.ergm<-function(drop=TRUE,
                        MCMC.compress=FALSE,
                        MCMC.packagenames=c(),
 
-                       SAN.maxit=10,
-                       SAN.burnin.times=10,
-                       SAN.control=control.san(coef=init,
+                       SAN.maxit=4,
+                       SAN.nsteps.times=8,
+                       SAN.control=control.san(
                          term.options=term.options,
+                         SAN.maxit=SAN.maxit,
                          SAN.prop.weights=MCMC.prop.weights,
                          SAN.prop.args=MCMC.prop.args,
                          SAN.init.maxedges=MCMC.init.maxedges,
+                         SAN.max.maxedges=MCMC.max.maxedges,
                          
-                         SAN.burnin=MCMC.burnin*SAN.burnin.times,
-                         SAN.interval=MCMC.interval,
+                         SAN.nsteps=MCMC.burnin*SAN.nsteps.times,
+                         SAN.samplesize=MCMC.samplesize,
                          SAN.packagenames=MCMC.packagenames,
-                         MPLE.max.dyad.types=MPLE.max.dyad.types,
 
                          parallel=parallel,
                          parallel.type=parallel.type,
@@ -575,7 +598,8 @@ control.ergm<-function(drop=TRUE,
                        hessian="main.hessian",
                        prop.weights="MCMC.prop.weights",
                        prop.args="MCMC.prop.args",
-                       packagenames="MCMC.packagenames"
+                       packagenames="MCMC.packagenames",
+                       SAN.burnin.times="SAN.nsteps.times"
                        )
 
   match.arg.pars <- c("MPLE.type","MCMLE.metric","MCMLE.method","main.method",'MCMLE.termination',"CD.metric","CD.method")
@@ -600,11 +624,13 @@ control.ergm<-function(drop=TRUE,
 
   if((MCMLE.steplength!=1 || is.null(MCMLE.steplength.margin)) && MCMLE.termination %in% c("Hummel", "precision"))
     stop("Hummel and precision-based termination require non-null MCMLE.steplength.margin and MCMLE.steplength = 1.")
-  
+
+  if(!is.null(control$checkpoint) && control$main.method!="MCMLE") stop("Only MCMLE supports checkpointing and resuming at this time.")
+
   set.control.class("control.ergm")
 }
 
-control.toplevel<-function(..., myname={sc <- sys.calls(); myname <- as.character(sc[[length(sc)-1]][[1]])}){
+control.toplevel<-function(..., myname= as.character(ult(sys.calls(), 2)[[1]])){
   myctrlname <- paste0("control.",myname) 
   control.names <- names(list(...))[names(list(...)) %in% names(formals(get(myctrlname, mode="function")))]
   if(length(control.names)) stop("Argument(s) ", paste.and(sQuote(control.names)), " should be passed via control.",myname,"().")

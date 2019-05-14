@@ -1,11 +1,11 @@
 #  File R/ergm_model.R in package ergm, part of the Statnet suite
-#  of packages for network analysis, http://statnet.org .
+#  of packages for network analysis, https://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) at
-#  http://statnet.org/attribution
+#  https://statnet.org/attribution
 #
-#  Copyright 2003-2018 Statnet Commons
+#  Copyright 2003-2019 Statnet Commons
 #######################################################################
 #===================================================================================
 # This file contains the following 2 functions for creating the 'ergm_model' object
@@ -46,6 +46,7 @@
 #' \item{etamap}{the theta -> eta mapping as a list returned from
 #' <ergm.etamap>}
 #' @seealso [summary.ergm_model()]
+#' @keywords internal
 #' @export
 ergm_model <- function(formula, nw=NULL, response=NULL, silent=FALSE, role="static",...,term.options=list()){
   if (!is(formula, "formula"))
@@ -53,6 +54,9 @@ ergm_model <- function(formula, nw=NULL, response=NULL, silent=FALSE, role="stat
   
   #' @importFrom statnet.common eval_lhs.formula
   if(is.null(nw)) nw <- eval_lhs.formula(formula)
+
+  nw <- ensure_network(nw)
+  nw <- as.network(nw, populate=FALSE) # In case it's a pending_update_network.
 
   #' @importFrom utils modifyList
   term.options <- modifyList(as.list(getOption("ergm.term")), as.list(term.options))
@@ -108,7 +112,7 @@ ergm_model <- function(formula, nw=NULL, response=NULL, silent=FALSE, role="stat
     # If SO package name not specified explicitly, autodetect.
     if(is.null(outlist$pkgname)) outlist$pkgname <- environmentName(environment(eval(termFun)))
     # If the term is an offset, rename the coefficient names and parameter names
-    if(model$offset[length(model$offset)]){
+    if(ult(model$offset)){
       outlist$coef.names <- paste0("offset(",outlist$coef.names,")")
       if(!is.null(outlist$params))
         names(outlist$params) <- paste0("offset(",outlist$params,")")
@@ -129,7 +133,7 @@ ergm_model <- function(formula, nw=NULL, response=NULL, silent=FALSE, role="stat
 #' @describeIn ergm-deprecated Use `ergm_model` instead.
 #' @export ergm.getmodel
 ergm.getmodel <- function(object, ...){
-  .dep_once("ergm_model")
+  .Deprecated("ergm_model")
   ergm_model(object, ...)
 }
 

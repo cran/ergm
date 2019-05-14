@@ -1,11 +1,11 @@
 #  File R/summary.ergm.R in package ergm, part of the Statnet suite
-#  of packages for network analysis, http://statnet.org .
+#  of packages for network analysis, https://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) at
-#  http://statnet.org/attribution
+#  https://statnet.org/attribution
 #
-#  Copyright 2003-2018 Statnet Commons
+#  Copyright 2003-2019 Statnet Commons
 #######################################################################
 ###############################################################################
 # The <summary.ergm> function prints a 'summary of model fit' table and returns
@@ -75,7 +75,11 @@
 #' @param \dots Arguments to \code{\link{logLik.ergm}}
 #' @return The function \code{\link{summary.ergm}} computes and
 #'   returns a list of summary statistics of the fitted
-#'   \code{\link{ergm}} model given in \code{object}.
+#'   \code{\link{ergm}} model given in \code{object}. Note that for
+#'   backwards compatibility, it returns two coefficient tables:
+#'   `$coefs` which does not contain the z-statistics and
+#'   `$coefficeints` which does (and is therefore more similar to
+#'   those returned by [summary.lm()]).
 #' @seealso network, ergm, print.ergm.  The model fitting function
 #'   \code{\link{ergm}}, \code{\link{summary}}.
 #' 
@@ -88,19 +92,24 @@
 #' 
 #'  x <- ergm(flomarriage ~ density)
 #'  summary(x)
-#'
-#' @S3method summary ergm
-#' @export summary.ergm
+#' 
+#' @export
 summary.ergm <- function (object, ..., 
                           correlation=FALSE, covariance=FALSE,
                           total.variation=TRUE)
 {
-  .dep_method("summary","ergm")
-  
+  # Warn if the object was produced by an earlier version of ergm.
+  myver <- packageVersion("ergm")
+  objver <- NVL(object$ergm_version, as.package_version("3.9.4")) # 3.9.4 was the last version that didn't store the version information.
+  nextver <- as.package_version(paste(objver$major, objver$minor+1, sep="."))
+  if(objver < paste(myver$major, myver$minor, sep=".")){
+    warn(paste0("This object was fit with ", sQuote("ergm"), " version ", objver, " or earlier. Summarizing it with version ", nextver, " or later may return incorrect results or fail."))
+  }
+
   if("digits" %in% names(list(...))) warn("summary.ergm() no lnger takes a digits= argument.")
   control <- object$control
   pseudolikelihood <- object$estimate=="MPLE"
-  independence <- is.dyad.independent(object)
+  independence <- NVL(object$MPLE_is_MLE, is.dyad.independent(object))
   
   if(any(is.na(object$coef)) & !is.null(object$mplefit)){
      object$coef[is.na(object$coef)] <-
@@ -217,7 +226,7 @@ summary.ergm <- function (object, ...,
     ans$null.lik <- ERRVL(null.lik, NA)
   }else ans$objname<-deparse(substitute(object))
 
-  ans$coefs <- as.data.frame(coefmat[,-4])
+  ans$coefs <- as.data.frame(coefmat)[,-3] # For backwards compatibility.
   ans$coefficients <- as.data.frame(coefmat)
   ans$asycov <- asycov
   ans$asyse <- asyse

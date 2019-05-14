@@ -1,11 +1,11 @@
 #  File R/nparam.R in package ergm, part of the Statnet suite
-#  of packages for network analysis, http://statnet.org .
+#  of packages for network analysis, https://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) at
-#  http://statnet.org/attribution
+#  https://statnet.org/attribution
 #
-#  Copyright 2003-2018 Statnet Commons
+#  Copyright 2003-2019 Statnet Commons
 #######################################################################
 #' Length of the parameter vector associated with an object or with its terms.
 #'
@@ -52,6 +52,7 @@ nparam.ergm_model <- function(object, canonical=FALSE, offset=NA, byterm=FALSE, 
         else length(term$coef.names)
       })
     }
+  out <- unlist(out)
   if(byterm) out else sum(out)
 }
 
@@ -65,12 +66,4 @@ nparam.ergm <- function(object, offset=NA, ...){
   if(is.na(offset)) length(object$etamap$offsettheta)
   else if(offset) sum(object$etamap$offsettheta)
   else if(!offset) sum(!object$etamap$offsettheta)
-}
-
-#' @rdname ergm-deprecated
-#' @description [coef.length.model()] has been replaced by the generic [nparam()].
-#' @export coef.length.model
-coef.length.model <- function(...){
-  .dep_once("nparam")
-  nparam(...)
 }

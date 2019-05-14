@@ -5,6 +5,7 @@
 \alias{summary_formula.ergm}
 \alias{summary_formula.network.list}
 \alias{summary_formula.network}
+\alias{summary_formula.pending_update_network}
 \alias{summary_formula.matrix}
 \alias{summary_formula.default}
 \title{Dispatching a summary function based on the class of the LHS of a
@@ -19,6 +20,9 @@ summary_formula(object, ..., basis = NULL)
 
 \method{summary_formula}{network}(object, response = NULL, ...,
   basis = NULL)
+
+\method{summary_formula}{pending_update_network}(object, response = NULL,
+  ..., basis = NULL)
 
 \method{summary_formula}{matrix}(object, response = NULL, ...,
   basis = NULL)
@@ -54,6 +58,8 @@ method.
 
 \item \code{network}: a method for a \code{\link{network}} on the LHS of the formula.
 
+\item \code{pending_update_network}: a method for the semi-internal \code{\link{pending_update_network}} on the LHS of the formula.
+
 \item \code{matrix}: a method for a \code{\link{matrix}} on the LHS of the formula.
 
 \item \code{default}: a fallback method.
@@ -79,4 +85,5 @@ summary(m ~ edges, directed=FALSE) # Now it's correct
 
 \code{\link[=summary.ergm_model]{summary.ergm_model()}}
 }
+\keyword{internal}
 \keyword{models}

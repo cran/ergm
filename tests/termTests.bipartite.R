@@ -1,11 +1,11 @@
 #  File tests/termTests.bipartite.R in package ergm, part of the Statnet suite
-#  of packages for network analysis, http://statnet.org .
+#  of packages for network analysis, https://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) at
-#  http://statnet.org/attribution
+#  https://statnet.org/attribution
 #
-#  Copyright 2003-2018 Statnet Commons
+#  Copyright 2003-2019 Statnet Commons
 #######################################################################
 
 library(ergm)
@@ -42,7 +42,7 @@ num.tests=num.tests+1
 s.0 <- summary(bipnw~b1concurrent)
 e.0 <- ergm(bipnw~b1concurrent, estimate="MPLE")
 s.b <- summary(bipnw~b1concurrent("Letter"))
-e.b <- ergm(bipnw~b1concurrent("Letter"), estimate="MPLE")
+e.b <- ergm(bipnw~b1concurrent(function(x) x %v% "Letter"), estimate="MPLE")
 if (s.0 != 12 || round(e.0$coef + 3.961, 3) != 0 ||
     !all(s.b==c(4,5,3)) ||
     !all(round(e.b$coef+c(4.143, 3.62, 4.105),3)==0)) {
@@ -57,10 +57,12 @@ if (s.0 != 12 || round(e.0$coef + 3.961, 3) != 0 ||
 #b1cov, bipartite, undirected
 num.tests=num.tests+1
 s.a <- summary(bipnw~b1cov("Cost"))
-e.a <- ergm(bipnw~b1cov("Cost"), estimate="MPLE")
+e.a <- ergm(bipnw~b1cov(~Cost), estimate="MPLE")
+s.at <- summary(bipnw~b1cov(~poly(Cost,2,raw=TRUE)))
 if (!all(s.a==c(121)) ||
-    !all(round(e.a$coef+c(2.212),3)==0)) {
- print(list(s.a=s.a, e.a=e.a))
+    !all(round(e.a$coef+c(2.212),3)==0) ||
+    !all(s.at==c(121,283))) {
+ print(list(s.a=s.a, e.a=e.a, s.at=s.at))
  stop("Failed b1cov term test")
 } else {
   num.passed.tests=num.passed.tests+1
@@ -73,7 +75,7 @@ num.tests=num.tests+1
 s.d <- summary(bipnw~b1degrange(from=c(1,2),to=c(Inf,Inf)))
 e.d <- ergm(bipnw~b1degrange(from=c(1,2),to=c(Inf,Inf)), estimate="MPLE")
 s.dh <- summary(bipnw~b1degrange(from=c(1,2),to=c(Inf,Inf),by="Letter",homophily=TRUE))
-e.dh <- ergm(bipnw~b1degrange(from=c(1,2),to=c(Inf,Inf),by="Letter",homophily=TRUE), estimate="MPLE")
+e.dh <- ergm(bipnw~b1degrange(from=c(1,2),to=c(Inf,Inf),by=function(x) x %v% "Letter",homophily=TRUE), estimate="MPLE")
 if (!all(s.d==c(42,12)) ||
 		!all(round(e.d$coef+c(4.027, 3.961),3)==0) ||
 		!all(s.dh==c(19,3)) ||
@@ -91,7 +93,7 @@ num.tests=num.tests+1
 s.d <- summary(bipnw~b1degree(1:3))
 e.d <- ergm(bipnw~b1degree(1:3), estimate="MPLE")
 s.db <- summary(bipnw~b1degree(2:4, by="Letter"))
-e.db <- ergm(bipnw~b1degree(2, by="Letter"), estimate="MPLE")
+e.db <- ergm(bipnw~b1degree(2, by=~Letter), estimate="MPLE")
 if (!all(s.d==c(30,8,2)) ||
     !all(round(e.d$coef+c(2.991, 5.442, 6.484),3)==0) ||
     !all(s.db==c(2,1,1,3,1,1,3,0,0)) ||
@@ -110,8 +112,8 @@ if (!all(s.d==c(30,8,2)) ||
 #b1factor, bipartite, undirected
 num.tests=num.tests+1
 s.a <- summary(bipnw~b1factor("Letter"))
-e.a <- ergm(bipnw~b1factor("Letter"), estimate="MPLE")
-s.ab <- summary(bipnw~b1factor("Letter", base=3))
+e.a <- ergm(bipnw~b1factor(function(x) x %v% "Letter"), estimate="MPLE")
+s.ab <- summary(bipnw~b1factor(~Letter, levels=-3))
 e.ab <- ergm(bipnw~b1factor("Letter", base=2), estimate="MPLE")
 if (!all(s.a==c(21,19)) ||
     !all(round(e.a$coef+c(3.797, 3.899),3)==0) ||
@@ -140,14 +142,26 @@ if (!all(s.d==c(42,12,4)) ||
 	print("Passed b1mindegree term test")
 }
 
+#b1sociality, bipartite, undirected
+num.tests=num.tests+1
+s.d <- summary(bipnw~b1sociality(nodes=94:96))
+e.d <- ergm(bipnw~b1sociality(nodes=94:96), estimate="MPLE")
+if (!all(s.d == c(4,4,2)) ||
+    !all(round(e.d$coef + c(1.833, 1.833, 2.603),3) == 0)) {
+ print(list(s.d=s.d, e.d=e.d))
+ stop("Failed b1sociality term test")
+} else {
+  num.passed.tests=num.passed.tests+1
+  print("Passed b1sociality term test")
+}
 
 
 #b1star, bipartite, undirected
 num.tests=num.tests+1
 s.k <- summary(bipnw~b1star(1:2))
 e.k <- ergm(bipnw~b1star(1:2), estimate="MPLE")
-s.ka <- summary(bipnw~b1star(2:3, "Letter"))
-e.ka <- ergm(bipnw~b1star(2:2, "Letter"), estimate="MPLE")
+s.ka <- summary(bipnw~b1star(2:3, function(x) x %v% "Letter"))
+e.ka <- ergm(bipnw~b1star(2:2, ~Letter), estimate="MPLE")
 if (!all(s.k==c(60,26)) ||
     !all(round(e.k$coef+c(4.0823, -.3179),3)==0) ||
     !all(s.ka==c(3,0)) ||
@@ -192,12 +206,12 @@ if (!all(s.ka==c(9,4,7,4)) ||
 #b1twostar, bipartite, undirected
 num.tests=num.tests+1
 s.a <- summary(bipnw2~b1twostar("Letter"))
-e.a <- ergm(bipnw2~b1twostar("Letter"), estimate="MPLE")
+e.a <- ergm(bipnw2~b1twostar(function(x) x %v% "Letter"), estimate="MPLE")
 s.aa <- summary(bipnw2~b1twostar("Letter", "Color"))
-e.aa <- ergm(bipnw2~b1twostar("Letter", "Color"), estimate="MPLE")
-s.ab <- summary(bipnw2~b1twostar("Letter", base=2:4))
-e.ab <- ergm(bipnw2~b1twostar("Letter", base=c(1,3,5)), estimate="MPLE")
-s.aab <- summary(bipnw2~b1twostar("Letter", "Color", base=2:4))
+e.aa <- ergm(bipnw2~b1twostar(~Letter, "Color"), estimate="MPLE")
+s.ab <- summary(bipnw2~b1twostar(function(x) x %v% "Letter", levels2=-(2:4)))
+e.ab <- ergm(bipnw2~b1twostar("Letter", levels2=-c(1,3,5)), estimate="MPLE")
+s.aab <- summary(bipnw2~b1twostar(~Letter, "Color", base=(2:4)))
 e.aab <- ergm(bipnw2~b1twostar("Letter", "Color", base=c(1,3,5)), estimate="MPLE")
 if (!all(s.a==c(9,4,15,17,7,4)) ||
     !all(round(e.a$coef+c(4.523, 5.22, 4.773, 4.593, 4.881, 5.446),3)==0) ||
@@ -221,7 +235,7 @@ if (!all(s.a==c(9,4,15,17,7,4)) ||
 num.tests=num.tests+1
 s.0 <- summary(bipnw~b2concurrent)
 e.0 <- ergm(bipnw~b2concurrent, estimate="MPLE")
-s.b <- summary(bipnw~b2concurrent("Letter"))
+s.b <- summary(bipnw~b2concurrent(function(x) x %v% "Letter"))
 e.b <- ergm(bipnw~b2concurrent("Letter"), estimate="MPLE")
 if (s.0 != 20 || round(e.0$coef + 3.497, 3) != 0 ||
     !all(s.b==c(8,6,6)) ||
@@ -237,10 +251,12 @@ if (s.0 != 20 || round(e.0$coef + 3.497, 3) != 0 ||
 #b2cov, bipartite, undirected
 num.tests=num.tests+1
 s.a <- summary(bipnw~b2cov("Cost"))
-e.a <- ergm(bipnw~b2cov("Cost"), estimate="MPLE")
+e.a <- ergm(bipnw~b2cov(~Cost), estimate="MPLE")
+s.at <- summary(bipnw~b2cov(~poly(Cost,2,raw=TRUE)))
 if (!all(s.a==c(129)) ||
-    !all(round(e.a$coef+c(2.191),3)==0)) {
- print(list(s.a=s.a, e.a=e.a))
+    !all(round(e.a$coef+c(2.191),3)==0) ||
+    !all(s.at==c(129,317))) {
+ print(list(s.a=s.a, e.a=e.a, s.at=s.at))
  stop("Failed b2cov term test")
 } else {
   num.passed.tests=num.passed.tests+1
@@ -252,8 +268,8 @@ if (!all(s.a==c(129)) ||
 num.tests=num.tests+1
 s.d <- summary(bipnw~b2degrange(from=c(1,2),to=c(Inf,Inf)))
 e.d <- ergm(bipnw~b2degrange(from=c(1,2),to=c(Inf,Inf)), estimate="MPLE")
-s.dh <- summary(bipnw~b2degrange(from=c(1,2),to=c(Inf,Inf),by="Letter",homophily=TRUE))
-e.dh <- ergm(bipnw~b2degrange(from=c(1,2),to=c(Inf,Inf),by="Letter",homophily=TRUE), estimate="MPLE")
+s.dh <- summary(bipnw~b2degrange(from=c(1,2),to=c(Inf,Inf),by=function(x) x %v% "Letter",homophily=TRUE))
+e.dh <- ergm(bipnw~b2degrange(from=c(1,2),to=c(Inf,Inf),by=~Letter,homophily=TRUE), estimate="MPLE")
 if (!all(s.d==c(26,20)) ||
 		!all(round(e.d$coef+c(3.912,3.497),3)==0) ||
 		!all(s.dh==c(19,3)) ||
@@ -270,7 +286,7 @@ num.tests=num.tests+1
 s.d <- summary(bipnw~b2degree(1:3))
 e.d <- ergm(bipnw~b2degree(1:3), estimate="MPLE")
 s.db <- summary(bipnw~b2degree(2:4, by="Letter"))
-e.db <- ergm(bipnw~b2degree(2, by="Letter"), estimate="MPLE")
+e.db <- ergm(bipnw~b2degree(2, by=~Letter), estimate="MPLE")
 if (!all(s.d==c(6,9,8)) ||
     !all(round(e.d$coef-c(1.7203, 1.4941, .6768),3)==0) ||
     !all(s.db==c(3,2,3,3,3,0,3,3,0)) ||
@@ -300,8 +316,8 @@ if (!all(s.d==c(26,20,11)) ||
 #b2factor, bipartite, undirected
 num.tests=num.tests+1
 s.a <- summary(bipnw~b2factor("Letter"))
-e.a <- ergm(bipnw~b2factor("Letter"), estimate="MPLE")
-s.ab <- summary(bipnw~b2factor("Letter", base=3))
+e.a <- ergm(bipnw~b2factor(function(x) x %v% "Letter"), estimate="MPLE")
+s.ab <- summary(bipnw~b2factor(~Letter, levels=-3))
 e.ab <- ergm(bipnw~b2factor("Letter", base=2), estimate="MPLE")
 if (!all(s.a==c(19,16)) ||
     !all(round(e.a$coef+c(3.944, 4.119),3)==0) ||
@@ -315,13 +331,25 @@ if (!all(s.a==c(19,16)) ||
 }
 
 
+#b2sociality, bipartite, undirected
+num.tests=num.tests+1
+s.d <- summary(bipnw~b2sociality(nodes=2:6))
+e.d <- ergm(bipnw~b2sociality(nodes=2:6), estimate="MPLE")
+if (!all(s.d == c(2, 3, 2, 3, 1)) ||
+    !all(round(e.d$coef + c(3.892, 3.476, 3.892, 3.476, 4.595),3) == 0)) {
+ print(list(s.d=s.d, e.d=e.d))
+ stop("Failed b2sociality term test")
+} else {
+  num.passed.tests=num.passed.tests+1
+  print("Passed b2sociality term test")
+}
 
 #b2star, bipartite, undirected
 num.tests=num.tests+1
 s.k <- summary(bipnw~b2star(1:2))
 e.k <- ergm(bipnw~b2star(1:2), estimate="MPLE")
-s.ka <- summary(bipnw~b2star(2:3, "Letter"))
-e.ka <- ergm(bipnw~b2star(2:2, "Letter"), estimate="MPLE")
+s.ka <- summary(bipnw~b2star(2:3, function(x) x %v% "Letter"))
+e.ka <- ergm(bipnw~b2star(2:2, ~Letter), estimate="MPLE")
 if (!all(s.k==c(60,51)) ||
     !all(round(e.k$coef+c(3.3457, .2724),3)==0) ||
     !all(s.ka==c(3,0)) ||
@@ -366,13 +394,13 @@ if (!all(s.ka==c(6, 8, 3, 6)) ||
 #b2twostar, bipartite, undirected
 num.tests=num.tests+1
 s.a <- summary(bipnw2~b2twostar("Letter"))
-e.a <- ergm(bipnw2~b2twostar("Letter"), estimate="MPLE")
-s.aa <- summary(bipnw2~b2twostar("Letter", "Color"))
+e.a <- ergm(bipnw2~b2twostar(~Letter), estimate="MPLE")
+s.aa <- summary(bipnw2~b2twostar(function(x) x %v% "Letter", "Color"))
 e.aa <- ergm(bipnw2~b2twostar("Letter", "Color"), estimate="MPLE")
-s.ab <- summary(bipnw2~b2twostar("Letter", base=2:4))
-e.ab <- ergm(bipnw2~b2twostar("Letter", base=c(1,3,5)), estimate="MPLE")
-s.aab <- summary(bipnw2~b2twostar("Letter", "Color", base=2:4))
-e.aab <- ergm(bipnw2~b2twostar("Letter", "Color", base=c(1,3,5)), estimate="MPLE")
+s.ab <- summary(bipnw2~b2twostar(~Letter, levels2=-(2:4)))
+e.ab <- ergm(bipnw2~b2twostar(function(x) x %v% "Letter", base=c(1,3,5)), estimate="MPLE")
+s.aab <- summary(bipnw2~b2twostar(~Letter, "Color", base=(2:4)))
+e.aab <- ergm(bipnw2~b2twostar("Letter", "Color", levels2=-c(1,3,5)), estimate="MPLE")
 if (!all(s.a==c(6,3,16,16,8,6)) ||
     !all(round(e.a$coef+c(5, 5.754, 4.603, 4.780, 4.462, 5.055),3)==0) ||
     !all(s.aa==c(8, 1, 17, 15, 4, 10)) ||
@@ -411,9 +439,9 @@ s.d <- summary(bipnw~gwb1degree(.3))
 e.d <- ergm(bipnw~gwb1degree(.4, fixed=TRUE), estimate="MPLE")
 s.df <- summary(bipnw~gwb1degree(.3, fixed=TRUE))
 e.df <- ergm(bipnw~gwb1degree(.2, fixed=TRUE), estimate="MPLE")
-s.da <- summary(bipnw~gwb1degree(.1, attrname="Letter"))
-e.da <- ergm(bipnw~gwb1degree(.1, attrname="Letter", fixed=TRUE), estimate="MPLE")
-s.dfa <- summary(bipnw~gwb1degree(.1, TRUE, "Letter"))
+s.da <- summary(bipnw~gwb1degree(.1, attr="Letter"))
+e.da <- ergm(bipnw~gwb1degree(.1, attr=function(x) x %v% "Letter", fixed=TRUE), estimate="MPLE")
+s.dfa <- summary(bipnw~gwb1degree(.1, TRUE, ~Letter))
 e.dfa <- ergm(bipnw~gwb1degree(.1, TRUE, "Letter"), estimate="MPLE")
 if (round(e.d$coef + 6.979, 3) != 0 ||
     round(s.df -45.4137, 3) != 0 ||
@@ -435,9 +463,9 @@ s.d <- summary(bipnw~gwb2degree(.3))
 e.d <- ergm(bipnw~gwb2degree(.4, fixed=TRUE), estimate="MPLE")
 s.df <- summary(bipnw~gwb2degree(.3, fixed=TRUE))
 e.df <- ergm(bipnw~gwb2degree(.2, fixed=TRUE), estimate="MPLE")
-s.da <- summary(bipnw~gwb2degree(.1, attrname="Letter"))
-e.da <- ergm(bipnw~gwb2degree(.1, attrname="Letter", fixed=TRUE), estimate="MPLE")
-s.dfa <- summary(bipnw~gwb2degree(.1, TRUE, "Letter"))
+s.da <- summary(bipnw~gwb2degree(.1, attr="Letter"))
+e.da <- ergm(bipnw~gwb2degree(.1, attr=function(x) x %v% "Letter", fixed=TRUE), estimate="MPLE")
+s.dfa <- summary(bipnw~gwb2degree(.1, TRUE, ~Letter))
 e.dfa <- ergm(bipnw~gwb2degree(.1, TRUE, "Letter"), estimate="MPLE")
 if (round(e.d$coef + 25.99385, 3) != 0 ||
     round(s.df -31.97479, 3) != 0 ||

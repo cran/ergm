@@ -1,14 +1,14 @@
-/*  File src/godfather.c in package tergm, part of the Statnet suite
- *  of packages for network analysis, http://statnet.org .
+/*  File src/godfather.c in package ergm, part of the Statnet suite
+ *  of packages for network analysis, https://statnet.org .
  *
  *  This software is distributed under the GPL-3 license.  It is free,
  *  open source, and has the attribution requirements (GPL Section 7) at
- *  http://statnet.org/attribution
+ *  https://statnet.org/attribution
  *
- *  Copyright 2008-2017 Statnet Commons
+ *  Copyright 2003-2019 Statnet Commons
  */
 #include "MCMC.h"
-#include "changestat.h"
+#include "ergm_changestat.h"
 
 MCMCStatus Godfather(Edge n_changes, Vertex *tails, Vertex *heads, int *weights,
 	       Network *nwp, Model *m, double *stats){
@@ -22,7 +22,7 @@ MCMCStatus Godfather(Edge n_changes, Vertex *tails, Vertex *heads, int *weights,
   for(Edge e=0; e<n_changes; e++){
     ModelTerm *mtp = m->termarray;
     double *statspos=stats;
-    int tail = tails[e], head = heads[e];
+    Vertex tail = tails[e], head = heads[e];
 
     if(tail==0){
       stats+=m->n_stats;
@@ -71,25 +71,27 @@ void Godfather_wrapper(int *n_edges, int *tails, int *heads,
 		       int *status){
   Vertex nmax;
   /* Edge n_networks; */
-  Network nw[1];
+  Network *nwp;
   Model *m;
   
-  /* n_networks = (Edge)*dnumnets;  */
   nmax = (Edge)abs(*maxedges);
+
+  GetRNGstate();  /* R function enabling uniform RNG */
 
   m=ModelInitialize(*funnames, *sonames, &inputs, *nterms);
 
   /* Form the network */
-  nw[0]=NetworkInitialize(tails, heads, n_edges[0], 
+  nwp=NetworkInitialize((Vertex*)tails, (Vertex*)heads, n_edges[0], 
                           *n_nodes, *dflag, *bipartite, 0, 0, NULL);
   
-  *status = Godfather(abs(*total_changes), changetails, changeheads, *total_changes<0? NULL : changeweights,
-		      nw, m, changestats);
+  *status = Godfather(abs(*total_changes), (Vertex*)changetails, (Vertex*)changeheads, *total_changes<0? NULL : changeweights,
+		      nwp, m, changestats);
   
   /* record new generated network to pass back to R */
   if(*status == MCMC_OK && *maxedges>0 && newnetworktails && newnetworkheads)
-    newnetworktails[0]=newnetworkheads[0]=EdgeTree2EdgeList(newnetworktails+1,newnetworkheads+1,nw,nmax-1);
+    newnetworktails[0]=newnetworkheads[0]=EdgeTree2EdgeList((Vertex*)newnetworktails+1,(Vertex*)newnetworkheads+1,nwp,nmax-1);
   
   ModelDestroy(m);
-  NetworkDestroy(nw);
+  NetworkDestroy(nwp);
+  PutRNGstate();
 }

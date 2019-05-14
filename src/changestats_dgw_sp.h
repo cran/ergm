@@ -1,17 +1,17 @@
-/*  File src/changestats.dgw_sp.h in package ergm, part of the Statnet suite
- *  of packages for network analysis, http://statnet.org .
+/*  File src/changestats_dgw_sp.h in package ergm, part of the Statnet suite
+ *  of packages for network analysis, https://statnet.org .
  *
  *  This software is distributed under the GPL-3 license.  It is free,
  *  open source, and has the attribution requirements (GPL Section 7) at
- *  http://statnet.org/attribution
+ *  https://statnet.org/attribution
  *
- *  Copyright 2003-2018 Statnet Commons
+ *  Copyright 2003-2019 Statnet Commons
  */
 #ifndef CHANGESTATS_H
 #define CHANGESTATS_H
 
-#include "edgetree.h"
-#include "changestat.h"
+#include "ergm_edgetree.h"
+#include "ergm_changestat.h"
 
 #define ESPUTP 0
 #define ESPOTP 1

@@ -1,11 +1,11 @@
 #  File R/mcmc.diagnostics.ergm.R in package ergm, part of the Statnet suite
-#  of packages for network analysis, http://statnet.org .
+#  of packages for network analysis, https://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) at
-#  http://statnet.org/attribution
+#  https://statnet.org/attribution
 #
-#  Copyright 2003-2018 Statnet Commons
+#  Copyright 2003-2019 Statnet Commons
 #######################################################################
 #=================================================================================
 # This file contains the following 10 diagnostic tools and their helper functions
@@ -143,7 +143,7 @@ mcmc.diagnostics.default <- function(object, ...) {
 #'   directly in the \code{coda} package to assess MCMC
 #'   convergence. \emph{Hence all MCMC diagnostic methods available in
 #'   \code{coda} are available directly.} See the examples and
-#'   \url{http://www.mrc-bsu.cam.ac.uk/software/bugs/the-bugs-project-winbugs/coda-readme/}.
+#'   \url{https://www.mrc-bsu.cam.ac.uk/software/bugs/the-bugs-project-winbugs/coda-readme/}.
 #' 
 #'   More information can be found by looking at the documentation of
 #'   \code{\link{ergm}}.
@@ -290,12 +290,12 @@ mcmc.diagnostics.ergm <- function(object,
   sm.gw<-geweke.diag(sm)
   sm.gws<-try(geweke.diag.mv(sm, split.mcmc.list=TRUE))
   if(!("try-error" %in% class(sm.gws))){
-  for(i in seq_along(sm.gw)){
+  for(chain in seq_along(sm.gw)){
     cat("Chain", chain, "\n")
-    print(sm.gw[[i]])
+    print(sm.gw[[chain]])
     cat("Individual P-values (lower = worse):\n")
-    print(2*pnorm(abs(sm.gw[[i]]$z),lower.tail=FALSE))
-    cat("Joint P-value (lower = worse): ", sm.gws[[i]]$p.value,".\n")
+    print(2*pnorm(abs(sm.gw[[chain]]$z),lower.tail=FALSE))
+    cat("Joint P-value (lower = worse): ", sm.gws[[chain]]$p.value,".\n")
   }
   }
   if(!is.null(sm.obs)){
@@ -303,12 +303,12 @@ mcmc.diagnostics.ergm <- function(object,
     sm.obs.gw<-geweke.diag(sm.obs)
     sm.obs.gws<-try(geweke.diag.mv(sm.obs, split.mcmc.list=TRUE))
     if(!("try-error" %in% class(sm.obs.gws))){
-    for(i in seq_along(sm.obs.gw)){
+    for(chain in seq_along(sm.obs.gw)){
       cat("Chain", chain, "\n")
-      print(sm.obs.gw[[i]])
+      print(sm.obs.gw[[chain]])
       cat("P-values (lower = worse):\n")
-      print(2*pnorm(abs(sm.obs.gw[[i]]$z),lower.tail=FALSE))
-      cat("Joint P-value (lower = worse): ", sm.gws[[i]]$p.value,".\n")
+      print(2*pnorm(abs(sm.obs.gw[[chain]]$z),lower.tail=FALSE))
+      cat("Joint P-value (lower = worse): ", sm.gws[[chain]]$p.value,".\n")
     }
    }
   }
@@ -355,13 +355,6 @@ ergm_plot.mcmc.list <- function(x, main=NULL, vars.per.page=3,...){
   
   reordering <- c(rbind(seq_len(nvar(x)),nvar(x)+seq_len(nvar(x))))
   
-  update(c(tp,dp)[reordering],layout=c(2,vars.per.page),as.table=TRUE,main=main)
-}
-
-#' @rdname ergm-deprecated
-#' @description `plot.mcmc.list.ergm` is the obsolete name for [ergm_plot.mcmc.list()].
-#' @export plot.mcmc.list.ergm
-plot.mcmc.list.ergm <- function(...){
-  .dep_once("ergm_plot.mcmc.list()")
-  ergm_plot.mcmc.list(...)
+  tpdp <- suppressWarnings(c(tp,dp))
+  update(tpdp[reordering],layout=c(2,vars.per.page),as.table=TRUE,main=main)
 }

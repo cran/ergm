@@ -1,11 +1,11 @@
 #  File R/summary.statistics.network.R in package ergm, part of the Statnet suite
-#  of packages for network analysis, http://statnet.org .
+#  of packages for network analysis, https://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) at
-#  http://statnet.org/attribution
+#  https://statnet.org/attribution
 #
-#  Copyright 2003-2018 Statnet Commons
+#  Copyright 2003-2019 Statnet Commons
 #######################################################################
 #==========================================================================
 # This file contains the following 5 functions for computing summary stats
@@ -57,10 +57,8 @@
 #' summary(m ~ edges)  # twice as large as it should be
 #' summary(m ~ edges, directed=FALSE) # Now it's correct
 #'
-#' @S3method summary formula
-#' @export summary.formula
+#' @export
 summary.formula <- function(object, ...){
-  .dep_method("summary","formula")
   summary_formula(object, ...)
 }
 
@@ -91,12 +89,13 @@ summary.formula <- function(object, ...){
 #' m <- as.matrix(flomarriage)
 #' summary(m ~ edges)  # twice as large as it should be
 #' summary(m ~ edges, directed=FALSE) # Now it's correct
-#' 
+#'
+#' @keywords internal
 #' @export
 summary_formula <- function(object, ..., basis=NULL) {
   if(length(object)!=3 || object[[1]]!="~")
     stop ("Formula must be of form 'y ~ model'.")
-  lhs <- eval(object[[2]], envir = environment(object))
+  lhs <- eval_lhs.formula(object)
   UseMethod("summary_formula",object=lhs)
 }
 
@@ -127,7 +126,7 @@ summary_formula.network.list <- function(object, response=NULL, ..., basis=NULL)
       object[[2]] <- basis
     else stop('basis, if specified, should be the same type as the LHS of the formula (network.list, in this case).')
   }
-  nwl <- eval(object[[2]], envir=environment(object))
+  nwl <- eval_lhs.formula(object)
   out<-lapply(nwl, function(nw) summary_formula.network(object, response=response, ..., basis=nw))
   do.call(rbind,out)
 }
@@ -136,18 +135,29 @@ summary_formula.network.list <- function(object, response=NULL, ..., basis=NULL)
 #' @seealso [summary.ergm_model()]
 #' @export
 summary_formula.network <- function(object, response=NULL,...,basis=NULL) {
+  formula <- object
   if(is.network(basis)){
     nw <- basis
-    formula <- as.formula(object)
-    formula[[2]] <- as.name("basis") # This seems irrelevant; network name
-                                     # not needed by ergm_model
   }else{
-    formula <- object
     nw <- ergm.getnetwork(formula)
   }
   m <- ergm_model(formula, nw, response=response, role="target",...)
   summary(m, nw, response=response)
 }
+
+#' @describeIn summary_formula a method for the semi-internal [`pending_update_network`] on the LHS of the formula.
+#' @export
+summary_formula.pending_update_network <- function(object, response=NULL,...,basis=NULL) {
+  formula <- object
+  if(is(basis,"pending_update_network")){
+    nw <- basis
+  }else{
+    nw <- eval_lhs.formula(formula)
+  }
+  m <- ergm_model(formula, ensure_network(nw), response=response, role="target",...)
+  summary(m, nw, response=response)
+}
+
 
 #' @describeIn summary_formula a method for a [`matrix`] on the LHS of the formula.
 #' @export
@@ -155,23 +165,3 @@ summary_formula.matrix <- summary_formula.network
 #' @describeIn summary_formula a fallback method.
 #' @export
 summary_formula.default <- summary_formula.network
-
-
-#' @rdname ergm-deprecated
-#' @description [summary.statistics()] is a deprecated name of [summary_formula()].
-#' @usage summary.statistics(object, ...)
-#' @export summary.statistics
-summary.statistics <- function(object, ...){
-  .dep_once("summary_formula()")
-  summary_formula(object, ...)
-}
-
-#' @rdname ergm-deprecated
-#' @S3method summary.statistics formula
-#' @export summary.statistics.formula
-summary.statistics.formula <- summary.statistics
-
-#' @rdname ergm-deprecated
-#' @S3method summary.statistics network
-#' @export summary.statistics.network
-summary.statistics.network <- summary.statistics

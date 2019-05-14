@@ -1,11 +1,11 @@
 #  File R/build_term_index.R in package ergm, part of the Statnet suite
-#  of packages for network analysis, http://statnet.org .
+#  of packages for network analysis, https://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) at
-#  http://statnet.org/attribution
+#  https://statnet.org/attribution
 #
-#  Copyright 2003-2018 Statnet Commons
+#  Copyright 2003-2019 Statnet Commons
 #######################################################################
 
 # parse the ergm-terms doc file to create structured data about each set of terms
@@ -150,12 +150,12 @@
   cats<-unique(unlist(sapply(terms,'[[','categories')))
   if(is.null(categories)){
     categories<-cats
-  } else { 
-    # check that not requesting something that doesn't exist
-    if (any(!categories%in%cats)){
-      stop("requested column name does not appear in documentation category tags")
-    }
-  }
+  }##  else { 
+  ##   # check that not requesting something that doesn't exist
+  ##   if (any(!categories%in%cats)){
+  ##     stop("requested column name does not appear in documentation category tags")
+  ##   }
+  ## }
   
   # figure out which terms are members of each cat
   membership<-lapply(categories,function(cat){

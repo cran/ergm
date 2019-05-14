@@ -1,56 +1,51 @@
 /*  File src/MHproposal.c in package ergm, part of the Statnet suite
- *  of packages for network analysis, http://statnet.org .
+ *  of packages for network analysis, https://statnet.org .
  *
  *  This software is distributed under the GPL-3 license.  It is free,
  *  open source, and has the attribution requirements (GPL Section 7) at
- *  http://statnet.org/attribution
+ *  https://statnet.org/attribution
  *
- *  Copyright 2003-2018 Statnet Commons
+ *  Copyright 2003-2019 Statnet Commons
  */
-#include "MHproposal.h"
+#include "ergm_MHproposal.h"
 
 
 /*********************
- void MH_init
+ void MHProposalInitialize
 
  A helper function to process the MH_* related initialization.
 *********************/
-void MH_init(MHproposal *MHp, 
-	     char *MHproposaltype, char *MHproposalpackage,
+MHProposal *MHProposalInitialize(
+	     char *MHProposaltype, char *MHProposalpackage,
 	     double *inputs,
 	     int fVerbose,
 	     Network *nwp,
 	     int *attribs, int *maxout, int *maxin, 
 	     int *minout, int *minin, int condAllDegExact, 
 	     int attriblength){
-
+  MHProposal *MHp = Calloc(1, MHProposal);
+  
   char *fn, *sn;
   int i;
-  for (i = 0; MHproposaltype[i] != ' ' && MHproposaltype[i] != 0; i++);
-  MHproposaltype[i] = 0;
+  for (i = 0; MHProposaltype[i] != ' ' && MHProposaltype[i] != 0; i++);
+  MHProposaltype[i] = 0;
   /* Extract the required string information from the relevant sources */
-  if((fn=(char *)malloc(sizeof(char)*(i+4)))==NULL){
-    error("Error in MCMCSample: Can't allocate %d bytes for fn. Memory has not been deallocated, so restart R sometime soon.\n",
-	  sizeof(char)*(i+4));
-  }
+  fn = Calloc(i+4, char);
   fn[0]='M';
   fn[1]='H';
   fn[2]='_';
   for(int j=0;j<i;j++)
-    fn[j+3]=MHproposaltype[j];
+    fn[j+3]=MHProposaltype[j];
   fn[i+3]='\0';
-  /* fn is now the string 'MH_[name]', where [name] is MHproposaltype */
-  for (i = 0; MHproposalpackage[i] != ' ' && MHproposalpackage[i] != 0; i++);
-  MHproposalpackage[i] = 0;
-  if((sn=(char *)malloc(sizeof(char)*(i+1)))==NULL){
-    error("Error in ModelInitialize: Can't allocate %d bytes for sn. Memory has not been deallocated, so restart R sometime soon.\n",
-	  sizeof(char)*(i+1));
-  }
-  sn=strncpy(sn,MHproposalpackage,i);
+  /* fn is now the string 'MH_[name]', where [name] is MHProposaltype */
+  for (i = 0; MHProposalpackage[i] != ' ' && MHProposalpackage[i] != 0; i++);
+  MHProposalpackage[i] = 0;
+  sn = Calloc(i+1, char);
+  sn=strncpy(sn,MHProposalpackage,i);
   sn[i]='\0';
   
   /* Search for the MH proposal function pointer */
-  MHp->func=(void (*)(MHproposal*, Network*)) R_FindSymbol(fn,sn,NULL);
+  MHp->func=(void (*)(MHProposal*, Network*)) R_FindSymbol(fn,sn,NULL);
   if(MHp->func==NULL){
     error("Error in MH_* initialization: could not find function %s in "
 	  "namespace for package %s."
@@ -64,30 +59,34 @@ void MH_init(MHproposal *MHp,
   MHp->discord=NULL;
 
   /*Clean up by freeing sn and fn*/
-  free((void *)fn);
-  free((void *)sn);
+  Free(fn);
+  Free(sn);
 
   MHp->ntoggles=0;
   (*(MHp->func))(MHp, nwp); /* Call MH proposal function to initialize */
-  MHp->toggletail = (Vertex *)malloc(MHp->ntoggles * sizeof(Vertex));
-  MHp->togglehead = (Vertex *)malloc(MHp->ntoggles * sizeof(Vertex));
+  MHp->toggletail = (Vertex *)Calloc(MHp->ntoggles, Vertex);
+  MHp->togglehead = (Vertex *)Calloc(MHp->ntoggles, Vertex);
+
+  return MHp;
 }
 
 /*********************
- void MH_free
+ void MHProposalDestroy
 
- A helper function to free memory allocated by MH_init.
+ A helper function to free memory allocated by MHProposalInitialize.
 *********************/
-void MH_free(MHproposal *MHp){
+void MHProposalDestroy(MHProposal *MHp){
   if(MHp->bd)DegreeBoundDestroy(MHp->bd);
   if(MHp->discord){
     for(Network **nwp=MHp->discord; *nwp!=NULL; nwp++){
       NetworkDestroy(*nwp);
     }
-    free(MHp->discord);
+    Free(MHp->discord);
   }
-  free(MHp->toggletail);
-  free(MHp->togglehead);
+  Free(MHp->toggletail);
+  Free(MHp->togglehead);
+
+  Free(MHp);
 }
 
 /***********************
@@ -107,15 +106,15 @@ DegreeBound* DegreeBoundInitialize(int *attribs, int *maxout, int *maxin,
   if(!condAllDegExact && !attriblength) return NULL;
   
 
-  bd = (DegreeBound *) malloc(sizeof(DegreeBound));
+  bd = (DegreeBound *) Calloc(1, DegreeBound);
 
   bd->fBoundDegByAttr = 0;
   bd->attrcount = condAllDegExact ? 1 : attriblength / nwp->nnodes;
-  bd->attribs = (int *) malloc(sizeof(int) * attriblength);
-  bd->maxout  = (int *) malloc(sizeof(int) * attriblength);
-  bd->maxin   = (int *) malloc(sizeof(int) * attriblength);
-  bd->minout  = (int *) malloc(sizeof(int) * attriblength);
-  bd->minin   = (int *) malloc(sizeof(int) * attriblength);
+  bd->attribs = (int *) Calloc(attriblength, int);
+  bd->maxout  = (int *) Calloc(attriblength, int);
+  bd->maxin   = (int *) Calloc(attriblength, int);
+  bd->minout  = (int *) Calloc(attriblength, int);
+  bd->minin   = (int *) Calloc(attriblength, int);
   
   /* bound by degree by attribute per node */
   if (bd->attrcount)
@@ -164,19 +163,19 @@ DegreeBound* DegreeBoundInitialize(int *attribs, int *maxout, int *maxin,
 ******************/
 void DegreeBoundDestroy(DegreeBound *bd)
 {  
-  free(bd->attribs); 
-  free(bd->maxout); 
-  free(bd->minout); 
-  free(bd->maxin); 
-  free(bd->minin); 
-  free(bd);
+  Free(bd->attribs); 
+  Free(bd->maxout); 
+  Free(bd->minout); 
+  Free(bd->maxin); 
+  Free(bd->minin); 
+  Free(bd);
 }
 
 
 /********************
  int CheckTogglesValid
 ********************/
-int CheckTogglesValid(MHproposal *MHp, Network *nwp) {
+int CheckTogglesValid(MHProposal *MHp, Network *nwp) {
   int fvalid;
   int i;
   DegreeBound *bd=MHp->bd;
@@ -184,8 +183,8 @@ int CheckTogglesValid(MHproposal *MHp, Network *nwp) {
   if(!bd) return 1;
 
   /* *** don't forget when getting attributes that tail-> head */
-  int *tailattr = (int *) malloc(sizeof(int) * bd->attrcount);
-  int *headattr = (int *) malloc(sizeof(int) * bd->attrcount);
+  int *tailattr = (int *) Calloc(bd->attrcount, int);
+  int *headattr = (int *) Calloc(bd->attrcount, int);
   
   fvalid = 1;
   
@@ -292,8 +291,8 @@ int CheckTogglesValid(MHproposal *MHp, Network *nwp) {
     }
   }
   
-  free(tailattr);
-  free(headattr);
+  Free(tailattr);
+  Free(headattr);
   
   /* Undo proposed toggles (of edges(tail, head)) */
   for (i=0; i<MHp->ntoggles; i++)
@@ -302,7 +301,7 @@ int CheckTogglesValid(MHproposal *MHp, Network *nwp) {
   return fvalid;
 }
 
-int CheckConstrainedTogglesValid(MHproposal *MHp, Network *nwp)
+int CheckConstrainedTogglesValid(MHProposal *MHp, Network *nwp)
 {
   int fvalid = 1;
   int i;
@@ -320,8 +319,8 @@ int CheckConstrainedTogglesValid(MHproposal *MHp, Network *nwp)
     Edge e;
     Vertex v;
     int k;
-    int *tailattr = (int *) malloc(sizeof(int) * bd->attrcount);
-    int *headattr = (int *) malloc(sizeof(int) * bd->attrcount);
+    int *tailattr = (int *) Calloc(bd->attrcount, int);
+    int *headattr = (int *) Calloc(bd->attrcount, int);
     
     if (nwp->directed_flag)
     {
@@ -420,8 +419,8 @@ int CheckConstrainedTogglesValid(MHproposal *MHp, Network *nwp)
         (headattr[k] < bd->minout[MHp->togglehead[i]-1+k*nwp->nnodes]) ;
 	    }
     }
-    free(tailattr);
-    free(headattr);
+    Free(tailattr);
+    Free(headattr);
   }
   /* Make proposed toggles (of edges (tail, head), not (head, tail) */
   for (i=0; i<MHp->ntoggles; i++)

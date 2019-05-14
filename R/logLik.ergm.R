@@ -1,11 +1,11 @@
 #  File R/logLik.ergm.R in package ergm, part of the Statnet suite
-#  of packages for network analysis, http://statnet.org .
+#  of packages for network analysis, https://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) at
-#  http://statnet.org/attribution
+#  https://statnet.org/attribution
 #
-#  Copyright 2003-2018 Statnet Commons
+#  Copyright 2003-2019 Statnet Commons
 #######################################################################
 ## A function to compute and return the log-likelihood of an ERGM MLE.
 
@@ -72,11 +72,9 @@
 #' # Null model likelihood can also be evaluated, but not for all constraints:
 #' logLikNull(gest) # == network.dyadcount(flomarriage)*log(1/2)
 #' }
-#'
-#' @S3method logLik ergm
-#' @export logLik.ergm
+#' 
+#' @export
 logLik.ergm<-function(object, add=FALSE, force.reeval=FALSE, eval.loglik=add || force.reeval, control=control.logLik.ergm(), ...){
-  .dep_method("logLik","ergm")
 
   if(!force.reeval && !is.null(object$mle.lik)) return(object$mle.lik)
 
@@ -87,7 +85,7 @@ logLik.ergm<-function(object, add=FALSE, force.reeval=FALSE, eval.loglik=add || 
  
   control.transfer <- c("MCMC.burnin", "MCMC.interval", "MCMC.prop.weights",
 "MCMC.prop.args", "MCMC.packagenames", "MCMC.init.maxedges", "MCMC.samplesize",
-"obs.MCMC.burnin", "obs.MCMC.interval", "obs.MCMC.samplesize","warn.dyads","MPLE.type","MPLE.max.dyad.types","parallel","parallel.type","parallel.version.check","term.options"
+"obs.MCMC.burnin", "obs.MCMC.interval", "obs.MCMC.samplesize","MPLE.type","MPLE.max.dyad.types","parallel","parallel.type","parallel.version.check","term.options"
 )
   for(arg in control.transfer)
     if(is.null(control[[arg]]))
@@ -130,21 +128,8 @@ logLik.ergm<-function(object, add=FALSE, force.reeval=FALSE, eval.loglik=add || 
   if(!inherits(llk,"logLik")){
     class(llk)<-"logLik"
     attr(llk,"df")<-length(coef(object))
-    attr(llk,"nobs")<- if(is.null(object$null.lik)){ # If we can steal the number of observations from the null model...
-      # FIXME: We need a more general framework for handling
-      # constrained and partially observed network "degrees of
-      # freedom". PROGRESS: We can handle dyad-independent ones fine,
-      # now.
-      
-      if(!is.dyad.independent(object$constrained, object$constrained.obs)
-         && loglik.control$warn.dyads){
-        warning("The number of observed dyads in this network is ill-defined due to complex constraints on the sample space.")
-      }
-      
-      sum(as.rlebdm(object$constrained, object$constrained.obs, which="informative"))
-    }else attr(object$null.lik,"nobs")
+    attr(llk,"nobs")<- nobs(object, ...)
   }
-
 
   if(!is.null(object$null.lik) && !is.na(object$null.lik)){ # If Null likelihood is defined, shift the MLE likelihood.
     llk[] <- c(llk + object$null.lik) # The brackets are important to preserve attr()s on llk, and the c() is important to strip the ones from the sum.
@@ -186,16 +171,14 @@ logLikNull.ergm <- function(object, control=control.logLik.ergm(), ...){
   control.toplevel(..., myname="logLik.ergm")
   if(!is.null(object$null.lik)) return(object$null.lik)
   
-  nobs <- NVL3(object$mle.lik,
-               attr(.,"nobs"),
-               sum(as.rlebdm(object$constrained, object$constrained.obs, which="informative")))
+  nobs <- nobs(object,...)
 
   llk <-
     if(!is.null(object$response)){
-      message("Note: Null model likelihood calculation is not implemented for valued ERGMs at this time. ", NO_NULL_IMPLICATION)
+      message(paste(strwrap(paste("Note: Null model likelihood calculation is not implemented for valued ERGMs at this time. ", NO_NULL_IMPLICATION)), collapse="\n"))
       NA
     }else if(!is.dyad.independent(object$constrained, object$constrained.obs)){
-      message("Note: The constraint on the sample space is not dyad-independent. Null model likelihood is only implemented for dyad-independent constraints at this time. Number of observations is similarly poorly defined. ", NO_NULL_IMPLICATION)
+      message(paste(strwrap(paste("Note: The constraint on the sample space is not dyad-independent. Null model likelihood is only implemented for dyad-independent constraints at this time. Number of observations is similarly poorly defined. ", NO_NULL_IMPLICATION)), collapse="\n"))
       NA
     }else nobs * log(1/2)
   
@@ -207,5 +190,21 @@ logLikNull.ergm <- function(object, control=control.logLik.ergm(), ...){
   llk
 }
 
-NO_NULL_IMPLICATION <- "This means that all likelihood-based inference (LRT, Analysis of Deviance, AIC, BIC, etc.) is only valid between models with the same reference distribution and constraints."
+#' @describeIn ergm Return the number of informative dyads of a model fit.
+#' @export 
+nobs.ergm <- function(object, ...){
+  # FIXME: We need a more general framework for handling constrained
+  # and partially observed network "degrees of freedom". PROGRESS: We
+  # can handle dyad-independent ones fine, now.
   
+  if(!is.dyad.independent(object$constrained, object$constrained.obs)
+     && getOption("ergm.loglik.warn_dyads")){
+    warning("The number of observed dyads in this network is ill-defined due to complex constraints on the sample space. Disable this warning with ",sQuote("options(ergm.loglik.warn_dyads=FALSE)"),".")
+  }
+  
+  NVL3(NVL(object$null.lik, object$mle.lik),
+       attr(.,"nobs"),
+       sum(as.rlebdm(object, which="informative")))
+}
+
+NO_NULL_IMPLICATION <- "This means that all likelihood-based inference (LRT, Analysis of Deviance, AIC, BIC, etc.) is only valid between models with the same reference distribution and constraints."

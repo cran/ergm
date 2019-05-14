@@ -1,18 +1,18 @@
 /*  File src/wtnetstats.h in package ergm, part of the Statnet suite
- *  of packages for network analysis, http://statnet.org .
+ *  of packages for network analysis, https://statnet.org .
  *
  *  This software is distributed under the GPL-3 license.  It is free,
  *  open source, and has the attribution requirements (GPL Section 7) at
- *  http://statnet.org/attribution
+ *  https://statnet.org/attribution
  *
- *  Copyright 2003-2018 Statnet Commons
+ *  Copyright 2003-2019 Statnet Commons
  */
 #ifndef WTNETSTATS_H
 #define WTNETSTATS_H
 
-#include "wtedgetree.h"
-#include "wtmodel.h"
-#include "wtMHproposal.h"
+#include "ergm_wtedgetree.h"
+#include "ergm_wtmodel.h"
+#include "ergm_wtMHproposal.h"
 
 void wt_network_stats_wrapper(int *tails, int *heads, double *weights, int *timings, int *time, int *lasttoggle, int *dnedges,
 			   int *dn, int *dflag,  int *bipartite,

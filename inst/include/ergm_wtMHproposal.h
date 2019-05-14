@@ -1,16 +1,16 @@
-/*  File src/wtMHproposal.h in package ergm, part of the Statnet suite
- *  of packages for network analysis, http://statnet.org .
+/*  File inst/include/ergm_wtMHproposal.h in package ergm, part of the Statnet suite
+ *  of packages for network analysis, https://statnet.org .
  *
  *  This software is distributed under the GPL-3 license.  It is free,
  *  open source, and has the attribution requirements (GPL Section 7) at
- *  http://statnet.org/attribution
+ *  https://statnet.org/attribution
  *
- *  Copyright 2003-2018 Statnet Commons
+ *  Copyright 2003-2019 Statnet Commons
  */
-#ifndef WTMHPROPOSAL_H
-#define WTMHPROPOSAL_H
+#ifndef _ERGM_WTMHPROPOSAL_H_
+#define _ERGM_WTMHPROPOSAL_H_
 
-#include "wtedgetree.h"
+#include "ergm_wtedgetree.h"
 #include "R_ext/Rdynload.h"
 
 #define NO_EDGE       0x00 /*these four used in realocateWithReplacement */
@@ -38,9 +38,9 @@
 #define XOR(a,b) (((a)==0) != ((b)==0))
 #define XNOR(a,b) (((a)==0) == ((b)==0))
 
-/*  Notes on WtMHproposal type:
+/*  Notes on WtMHProposal type:
    An Weighted MH proposal function must take two arguments:  a pointer to an 
-   Weighted MHproposal structure, which holds all the information regarding the
+   Weighted MHProposal structure, which holds all the information regarding the
    MH proposal; and a pointer to an array of WtNetwork structures, which 
    contain the network(s).  
    
@@ -53,8 +53,8 @@
 
 /* *** don't forget tail-> head */
 
-typedef struct WtMHproposalstruct {
-  void (*func)(struct WtMHproposalstruct*, WtNetwork*);
+typedef struct WtMHProposalstruct {
+  void (*func)(struct WtMHProposalstruct*, WtNetwork*);
   Edge ntoggles;
   Vertex *toggletail;
   Vertex *togglehead;
@@ -63,16 +63,25 @@ typedef struct WtMHproposalstruct {
   int status;
   WtNetwork **discord;
   double *inputs; /* may be used if needed, ignored if not. */
-} WtMHproposal;
+} WtMHProposal;
 
 
-void WtMH_init(WtMHproposal *MH, 
-	     char *MHproposaltype, char *MHproposalpackage, 
+WtMHProposal * WtMHProposalInitialize(
+	     char *MHProposaltype, char *MHProposalpackage, 
 	       double *inputs,
 	     int fVerbose,
 	     WtNetwork *nwp);
 
-void WtMH_free(WtMHproposal *MH);
+void WtMHProposalDestroy(WtMHProposal *MH);
+
+/* Helper macros */
+#define MH_INPUTS MHp->inputs
+
+#define Mtail (MHp->toggletail)
+#define Mhead (MHp->togglehead)
+#define Mweight (MHp->toggleweight)
+
+#define WtMH_P_FN(a) void (a) (WtMHProposal *MHp, WtNetwork *nwp)
 
 #endif 
 

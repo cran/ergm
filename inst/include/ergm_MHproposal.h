@@ -1,16 +1,16 @@
-/*  File src/MHproposal.h in package ergm, part of the Statnet suite
- *  of packages for network analysis, http://statnet.org .
+/*  File inst/include/ergm_MHproposal.h in package ergm, part of the Statnet suite
+ *  of packages for network analysis, https://statnet.org .
  *
  *  This software is distributed under the GPL-3 license.  It is free,
  *  open source, and has the attribution requirements (GPL Section 7) at
- *  http://statnet.org/attribution
+ *  https://statnet.org/attribution
  *
- *  Copyright 2003-2018 Statnet Commons
+ *  Copyright 2003-2019 Statnet Commons
  */
-#ifndef MHproposal_H
-#define MHproposal_H
+#ifndef _ERGM_MHPROPOSAL_H_
+#define _ERGM_MHPROPOSAL_H_
 
-#include "edgetree.h"
+#include "ergm_edgetree.h"
 #include "R_ext/Rdynload.h"
 
 typedef struct DegreeBoundstruct {
@@ -55,9 +55,9 @@ void DegreeBoundDestroy(DegreeBound *bd);
 #define XOR(a,b) (((a)==0) != ((b)==0))
 #define XNOR(a,b) (((a)==0) == ((b)==0))
 
-/*  Notes on MHproposal type:
+/*  Notes on MHProposal type:
    An MH proposal function must take two arguments:  a pointer to an 
-   MHproposal structure, which holds all the information regarding the
+   MHProposal structure, which holds all the information regarding the
    MH proposal; and a pointer to an array of Network structures, which 
    contain the network(s).  
    
@@ -70,8 +70,8 @@ void DegreeBoundDestroy(DegreeBound *bd);
 
 /* *** don't forget tail-> head */
 
-typedef struct MHproposalstruct {
-  void (*func)(struct MHproposalstruct*, Network*);
+typedef struct MHProposalstruct {
+  void (*func)(struct MHProposalstruct*, Network*);
   Edge ntoggles;
   Vertex *toggletail;
   Vertex *togglehead;
@@ -80,11 +80,11 @@ typedef struct MHproposalstruct {
   DegreeBound *bd;
   Network **discord;
   double *inputs; /* may be used if needed, ignored if not. */
-} MHproposal;
+} MHProposal;
 
 
-void MH_init(MHproposal *MHp, 
-	     char *MHproposaltype, char *MHproposalpackage, 
+MHProposal *MHProposalInitialize(
+	     char *MHProposaltype, char *MHProposalpackage, 
 	     double *inputs,
 	     int fVerbose,
 	     Network *nwp, 
@@ -92,10 +92,10 @@ void MH_init(MHproposal *MHp,
 	     int *minout, int *minin, int condAllDegExact, 
 	     int attriblength);
 
-void MH_free(MHproposal *MHp);
+void MHProposalDestroy(MHProposal *MHp);
 
-int CheckTogglesValid(MHproposal *MHp, Network *nwp);
-int CheckConstrainedTogglesValid(MHproposal *MHp, Network *nwp);
+int CheckTogglesValid(MHProposal *MHp, Network *nwp);
+int CheckConstrainedTogglesValid(MHProposal *MHp, Network *nwp);
 
 #define BD_LOOP(proc) BD_COND_LOOP({proc}, TRUE, 1)
 
@@ -112,6 +112,14 @@ int CheckConstrainedTogglesValid(MHproposal *MHp, Network *nwp);
     MHp->toggletail[0]=MH_FAILED;					\
     MHp->togglehead[0]=MH_CONSTRAINT;                                   \
   }									
+
+/* Helper macros */
+#define MH_INPUTS MHp->inputs
+
+#define Mtail (MHp->toggletail)
+#define Mhead (MHp->togglehead)
+
+#define MH_P_FN(a) void (a) (MHProposal *MHp, Network *nwp)
 
 #endif 
 

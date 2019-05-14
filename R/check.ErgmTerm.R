@@ -1,11 +1,11 @@
 #  File R/check.ErgmTerm.R in package ergm, part of the Statnet suite
-#  of packages for network analysis, http://statnet.org .
+#  of packages for network analysis, https://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) at
-#  http://statnet.org/attribution
+#  https://statnet.org/attribution
 #
-#  Copyright 2003-2018 Statnet Commons
+#  Copyright 2003-2019 Statnet Commons
 #######################################################################
 #====================================================================================
 # This file contains the following 6 files that help check the validity of ergm terms
@@ -42,6 +42,17 @@
 #                 default=list()
 #  required     : the logical vector of whether each possible argument is required;
 #                 default=NULL
+#  dep.inform   : list of length equal to the number of arguments the
+#                 term can take; dep.inform[[i]] should be FALSE is argument i is
+#                 not deprecated with a message, and dep.inform[[i]] should name an alternative
+#                 argument if argument i is deprecated and an informational message
+#                 is desired; default=as.list(rep(FALSE, length(required)))
+#  dep.warn     : list of length equal to the number of arguments the
+#                 term can take; dep.warn[[i]] should be FALSE is argument i is
+#                 not deprecated with a warning, and dep.warn[[i]] should name an alternative
+#                 argument if argument i is deprecated and a warning is desired;
+#                 default=as.list(rep(FALSE, length(required)))
+#
 #
 # --RETURNED--
 #   out: a list of the values for each possible argument of term X; user provided 
@@ -83,17 +94,25 @@
 #'   arguments of term X; default=list()
 #' @param required the logical vector of whether each possible
 #'   argument is required; default=NULL
+#' @param dep.inform,dep.warn a list of length equal to the number of
+#'   arguments the term can take; if the corresponding element of the
+#'   list is not `FALSE`, a [message()] or a [warning()] respectively
+#'   will be issued if the user tries to pass it; if the element is a
+#'   character string, it will be used as a suggestion for
+#'   replacement.
 #' @template response
 #' @return A list of the values for each possible argument of term X;
 #'   user provided values are used when given, default values
-#'   otherwise.
+#'   otherwise. The list also has an `attr(,"missing")` attribute
+#'   containing a named logical vector indicating whether a particular
+#'   argument had been set to its default.
 #'
 #' @import network
 #' @export check.ErgmTerm
 check.ErgmTerm <- function(nw, arglist, directed=NULL, bipartite=NULL, nonnegative=FALSE,
                            varnames=NULL, vartypes=NULL,
-                           defaultvalues=list(), required=NULL, response=NULL) {
-  stopifnot(all_identical(c(length(varnames), length(vartypes), length(defaultvalues), length(required))))
+                           defaultvalues=list(), required=NULL, response=NULL, dep.inform=as.list(rep(FALSE, length(required))), dep.warn=as.list(rep(FALSE, length(required)))) {
+  stopifnot(all_identical(c(length(varnames), length(vartypes), length(defaultvalues), length(required), length(dep.inform), length(dep.warn))))
   message <- NULL
   if (!is.null(directed) && directed != (dnw<-is.directed(nw))) {
     #directed != (dnw<-eval(expression(nw$gal$dir),parent.frame()))) {
@@ -140,8 +159,12 @@ check.ErgmTerm <- function(nw, arglist, directed=NULL, bipartite=NULL, nonnegati
 # that each InitErgmTerm function faithfully passes in what the user typed;
 # thus, the correctness of input from the InitErgmTerm function isn't checked.
   out = defaultvalues
-  names(out)=varnames
+  missing <- !logical(length(out))
+  names(out) <- names(missing) <- varnames
+
   m=NULL
+  still.required <- required
+  argument.counts <- rep(0, length(required))
   if (la>0) {
     for(i in 1:la) { # check each arglist entry
       if (!is.null(names(arglist)) && (name <- names(arglist)[i]) != "") {
@@ -156,6 +179,23 @@ check.ErgmTerm <- function(nw, arglist, directed=NULL, bipartite=NULL, nonnegati
         }
         # correct type if we got to here
         out[m] <- list(arglist[[i]])
+        missing[m] <- FALSE
+		
+        still.required[m] <- FALSE
+        argument.counts[m] <- argument.counts[m] + 1
+
+        if(dep.inform[[m]] != FALSE) {
+          if(is.character(dep.inform[[m]]))
+            ergm_Init_inform("Argument \"", varnames[m], "\" has been superseded by \"", dep.inform[[m]], "\", and it is recommended to use the latter.  Note that its interpretation may be different.")
+          else
+            ergm_Init_inform("Argument \"", varnames[m], "\" has been deprecated and may be removed in a future version.")
+        }
+        if(dep.warn[[m]] != FALSE) {
+          if(is.character(dep.inform[[m]]))
+            ergm_Init_warn("Argument \"", varnames[m], "\" has been deprecated and may be removed in a future version.  Use \"", dep.warn[[m]], "\" instead.  Note that its interpretation may be different.")
+          else
+            ergm_Init_warn("Argument \"", varnames[m], "\" has been deprecated and may be removed in a future version.")
+        }
       } else { # no user-typed name for this argument
         if (!is.null(m)) {
           ergm_Init_abort("Unnamed argument follows named argument.")
@@ -166,9 +206,30 @@ check.ErgmTerm <- function(nw, arglist, directed=NULL, bipartite=NULL, nonnegati
         }
         # correct type if we got to here
         out[i] <- list(arglist[[i]])
+        missing[i] <- FALSE
+		
+		still.required[i] <- FALSE
+		argument.counts[i] <- argument.counts[i] + 1
+		
+		if(dep.inform[[i]] != FALSE)
+		{
+		  ergm_Init_inform("Argument \"", varnames[i], "\" has been superseded by \"", dep.inform[[i]], "\", and it is recommended to use the latter.  Note that its interpretation may be different.")		  
+		}
+		if(dep.warn[[i]] != FALSE)
+		{
+		  ergm_Init_warn("Argument \"", varnames[i], "\" has been deprecated and may be removed in a future version.  Use \"", dep.warn[[i]], "\" instead.  Note that its interpretation may be different.")
+		}
       }
     }
   }
+  attr(out, "missing") <- missing
   #  c(.conflicts.OK=TRUE,out)
+  
+  if(any(still.required))
+    ergm_Init_abort("argument \"", varnames[which(still.required)[1]], "\" is missing, with no default.")
+
+  if(any(argument.counts > 1))
+    ergm_Init_abort("formal argument \"", varnames[which(argument.counts > 1)[1]], "\" matched by multiple actual arguments.")
+	
   out
 }

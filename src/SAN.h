@@ -1,32 +1,33 @@
 /*  File src/SAN.h in package ergm, part of the Statnet suite
- *  of packages for network analysis, http://statnet.org .
+ *  of packages for network analysis, https://statnet.org .
  *
  *  This software is distributed under the GPL-3 license.  It is free,
  *  open source, and has the attribution requirements (GPL Section 7) at
- *  http://statnet.org/attribution
+ *  https://statnet.org/attribution
  *
- *  Copyright 2003-2018 Statnet Commons
+ *  Copyright 2003-2019 Statnet Commons
  */
 #ifndef SAN_H
 #define SAN_H
 
-#include "edgetree.h"
-#include "changestat.h"
-#include "MHproposal.h"
-#include "model.h"
+#include "ergm_edgetree.h"
+#include "ergm_changestat.h"
+#include "ergm_MHproposal.h"
+#include "ergm_model.h"
 #include "MCMC.h"
 
 /* *** don't forget tail -> head, so this function accepts tails first, not heads  */
 
 
-void SAN_wrapper (int *dnumnets, int *nedges,
+void SAN_wrapper (int *nedges,
 		  int *tails, int *heads,
 		  int *dn, int *dflag, int *bipartite, 
 		  int *nterms, char **funnames,
 		  char **sonames, 
-		  char **MHproposaltype, char **MHproposalpackage,
-		  double *inputs, double *theta0, double *tau, int *samplesize, 
-		  double *sample, int *burnin, int *interval,  
+		  char **MHProposaltype, char **MHProposalpackage,
+		  double *inputs, double *tau, 
+		  double *sample, double *prop_sample,
+		  int *samplesize, int *nsteps,  
 		  int *newnetworktails, 
 		  int *newnetworkheads, 
 		  double *invcov,
@@ -36,13 +37,13 @@ void SAN_wrapper (int *dnumnets, int *nedges,
 		  int *maxedges,
 		  int *status);
 
-MCMCStatus SANSample (MHproposal *MHp,
-		double *theta, double *invcov, double *tau, double *networkstatistics, 
-		int samplesize, int burnin, 
-		int interval, int fVerbose, int nmax,
+MCMCStatus SANSample (MHProposal *MHp,
+		double *invcov, double *tau, double *networkstatistics, double *prop_networkstatistics,
+		int samplesize, int nsteps, 
+		int fVerbose, int nmax,
 		Network *nwp, Model *m);
-MCMCStatus SANMetropolisHastings (MHproposal *MHp,
-			 double *theta, double *invcov, double *tau, double *statistics, 
+MCMCStatus SANMetropolisHastings (MHProposal *MHp,
+			 double *invcov, double *tau, double *statistics, double *prop_statistics,
 			 int nsteps, int *staken,
 			 int fVerbose,
 			 Network *nwp, Model *m);

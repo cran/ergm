@@ -1,11 +1,11 @@
 #  File R/InitWtErgmTerm.R in package ergm, part of the Statnet suite
-#  of packages for network analysis, http://statnet.org .
+#  of packages for network analysis, https://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) at
-#  http://statnet.org/attribution
+#  https://statnet.org/attribution
 #
-#  Copyright 2003-2018 Statnet Commons
+#  Copyright 2003-2019 Statnet Commons
 #######################################################################
 
 binary_wrap <- function(InitFun, nw, a, valued_args, ddd, namemap = identity, cnmap = identity){
@@ -21,28 +21,48 @@ binary_wrap <- function(InitFun, nw, a, valued_args, ddd, namemap = identity, cn
 }
 
 binary_dind_wrap <- function(name, nw, a, ..., cn=name){
+  a <- a[!attr(a,"missing")] # Remove missing arguments before propagating.
   form<-match.arg(a$form,c("sum","nonzero"))
   binary_wrap(get(paste0("InitErgmTerm.",name), mode="function"), nw, a, "form", list(...), namemap=~paste(.,form,sep="_"), cnmap=~sub(cn,paste(cn,form,sep="."), .))
 }
 
-InitWtErgmTerm.absdiff <- function(nw, arglist, ...) {
-  ### Check the network and arguments to make sure they are appropriate.
-  a <- check.ErgmTerm(nw, arglist, directed=NULL, bipartite=NULL,
-                      varnames = c("attrname","pow","form"),
-                      vartypes = c("character","numeric","character"),
-                      defaultvalues = list(NULL,1,"sum"),
-                      required = c(TRUE,FALSE,FALSE))
-  binary_dind_wrap("absdiff", nw, a, ...)
+InitWtErgmTerm.absdiff <- function(nw, arglist, ..., version=packageVersion("ergm")) {
+  if(version <= as.package_version("3.9.4")){
+    ### Check the network and arguments to make sure they are appropriate.
+    a <- check.ErgmTerm(nw, arglist, directed=NULL, bipartite=NULL,
+                        varnames = c("attrname","pow","form"),
+                        vartypes = c("character","numeric","character"),
+                        defaultvalues = list(NULL,1, "sum"),
+                        required = c(TRUE,FALSE,FALSE))
+  }else{
+    ### Check the network and arguments to make sure they are appropriate.
+    a <- check.ErgmTerm(nw, arglist, directed=NULL, bipartite=NULL,
+                        varnames = c("attr","pow","form"),
+                        vartypes = c(ERGM_VATTR_SPEC,"numeric","character"),
+                        defaultvalues = list(NULL,1, "sum"),
+                        required = c(TRUE,FALSE,FALSE))
+  }
+
+  binary_dind_wrap("absdiff", nw, a, ..., version=version)
 }
 
-InitWtErgmTerm.absdiffcat <- function(nw, arglist, response, ...) {
-  ### Check the network and arguments to make sure they are appropriate.
-  a <- check.ErgmTerm(nw, arglist, directed=NULL, bipartite=NULL,
-                      varnames = c("attrname","base","form"),
-                      vartypes = c("character","numeric","character"),
-                      defaultvalues = list(NULL,NULL,"sum"),
-                      required = c(TRUE,FALSE,FALSE))
-  binary_dind_wrap("absdiffcat", nw, a, ..., cn="absdiff")
+InitWtErgmTerm.absdiffcat <- function(nw, arglist, response, ..., version=packageVersion("ergm")) {
+  if(version <= as.package_version("3.9.4")){
+    ### Check the network and arguments to make sure they are appropriate.
+    a <- check.ErgmTerm(nw, arglist, directed=NULL, bipartite=NULL,
+                        varnames = c("attrname","base","form"),
+                        vartypes = c("character","numeric","character"),
+                        defaultvalues = list(NULL,NULL, "sum"),
+                        required = c(TRUE,FALSE,FALSE))
+  }else{
+    a <- check.ErgmTerm(nw, arglist, directed=NULL, bipartite=NULL,
+                        varnames = c("attr","base","levels","form"),
+                        vartypes = c(ERGM_VATTR_SPEC,"numeric",ERGM_LEVELS_SPEC,"character"),
+                        defaultvalues = list(NULL,NULL,NULL, "sum"),
+                        required = c(TRUE,FALSE,FALSE,FALSE))
+  }
+
+  binary_dind_wrap("absdiffcat", nw, a, ..., cn="absdiff", version=version)
 }
 
 
@@ -74,50 +94,116 @@ InitWtErgmTerm.atmost<-function(nw, arglist, response, ...) {
        emptynwstats=if(0<=a$threshold) network.dyadcount(nw,FALSE) else 0)
 }
 
-InitWtErgmTerm.b1cov<-function (nw, arglist, ...) {
-  a <- check.ErgmTerm(nw, arglist, directed=FALSE, bipartite=TRUE, 
-                      varnames = c("attrname","transform","transformname","form"),
-                      vartypes = c("character","function","character","character"),
-                      defaultvalues = list(NULL,function(x)x,"","sum"),
-                      required = c(TRUE,FALSE,FALSE,FALSE))
-  binary_dind_wrap("b1cov", nw, a, ...)
+InitWtErgmTerm.b1cov<-function (nw, arglist, ..., version=packageVersion("ergm")) {
+  if(version <= as.package_version("3.9.4")){
+    a <- check.ErgmTerm(nw, arglist, directed=FALSE, bipartite=TRUE, 
+                        varnames = c("attrname","transform","transformname","form"),
+                        vartypes = c("character","function","character","character"),
+                        defaultvalues = list(NULL,function(x)x,"", "sum"),
+                        required = c(TRUE,FALSE,FALSE,FALSE))
+  }else{
+    a <- check.ErgmTerm(nw, arglist, directed=FALSE, bipartite=TRUE, 
+                        varnames = c("attr","form"),
+                        vartypes = c(ERGM_VATTR_SPEC,"character"),
+                        defaultvalues = list(NULL, "sum"),
+                        required = c(TRUE,FALSE))
+  }    
+  binary_dind_wrap("b1cov", nw, a, ..., version=version)
 }
 
-InitWtErgmTerm.b1factor<-function (nw, arglist, ...) {
+InitWtErgmTerm.b1factor<-function (nw, arglist, ..., version=packageVersion("ergm")) {
+  if(version <= as.package_version("3.9.4")){
+    a <- check.ErgmTerm(nw, arglist, directed=FALSE, bipartite=TRUE,
+                        varnames = c("attrname", "base", "levels","form"),
+                        vartypes = c("character", "numeric", "character,numeric,logical","character"),
+                        defaultvalues = list(NULL, 1, NULL, "sum"),
+                        required = c(TRUE, FALSE, FALSE,FALSE))
+  }else{
+    a <- check.ErgmTerm(nw, arglist, directed=FALSE, bipartite=TRUE,
+                        varnames = c("attr", "base","levels","form"),
+                        vartypes = c(ERGM_VATTR_SPEC, "numeric",ERGM_LEVELS_SPEC,"character"),
+                        defaultvalues = list(NULL, 1, LEVELS_BASE1, "sum"),
+                        required = c(TRUE, FALSE,FALSE,FALSE))
+  }
+                              
+  binary_dind_wrap("b1factor", nw, a, ..., version=version)
+}
+
+InitWtErgmTerm.b1sociality<-function(nw, arglist, ...) {
   a <- check.ErgmTerm(nw, arglist, directed=FALSE, bipartite=TRUE,
-                      varnames = c("attrname", "base", "levels", "form"),
-                      vartypes = c("character", "numeric", "character,numeric,logical", "character"),
-                      defaultvalues = list(NULL, 1, NULL, "sum"),
-                      required = c(TRUE, FALSE, FALSE, FALSE))                                    
-  binary_dind_wrap("b1factor", nw, a, ...)
+                      varnames = c("nodes", "form"),
+                      vartypes = c(ERGM_LEVELS_SPEC, "character"),
+                      defaultvalues = list(LEVELS_BASE1, "sum"),
+                      required = c(FALSE, FALSE))
+  binary_dind_wrap("b1sociality", nw, a, ...)
+                      
 }
 
-InitWtErgmTerm.b2cov<-function (nw, arglist, ...) {
-  a <- check.ErgmTerm(nw, arglist, directed=FALSE, bipartite=TRUE, 
-                      varnames = c("attrname","transform","transformname","form"),
-                      vartypes = c("character","function","character","character"),
-                      defaultvalues = list(NULL,function(x)x,"","sum"),
-                      required = c(TRUE,FALSE,FALSE,FALSE))
-  binary_dind_wrap("b2cov", nw, a, ...)
+InitWtErgmTerm.b2cov<-function (nw, arglist, ..., version=packageVersion("ergm")) {
+  if(version <= as.package_version("3.9.4")){
+    a <- check.ErgmTerm(nw, arglist, directed=FALSE, bipartite=TRUE,
+                        varnames = c("attrname","transform","transformname","form"),
+                        vartypes = c("character","function","character","character"),
+                        defaultvalues = list(NULL,function(x)x,"", "sum"),
+                        required = c(TRUE,FALSE,FALSE,FALSE))
+  }else{
+    a <- check.ErgmTerm(nw, arglist, directed=FALSE, bipartite=TRUE,
+                        varnames = c("attr","form"),
+                        vartypes = c(ERGM_VATTR_SPEC,"character"),
+                        defaultvalues = list(NULL, "sum"),
+                        required = c(TRUE,FALSE))
+  }
+
+  binary_dind_wrap("b2cov", nw, a, ..., version=version)
 }
 
-InitWtErgmTerm.b2factor<-function (nw, arglist, ...) {
+InitWtErgmTerm.b2factor<-function (nw, arglist, ..., version=packageVersion("ergm")) {
+  if(version <= as.package_version("3.9.4")){
+    a <- check.ErgmTerm(nw, arglist, directed=FALSE, bipartite=TRUE,
+                        varnames = c("attrname", "base", "levels","form"),
+                        vartypes = c("character", "numeric", "character,numeric,logical","character"),
+                        defaultvalues = list(NULL, 1, NULL, "sum"),
+                        required = c(TRUE, FALSE, FALSE,FALSE))
+  }else{
+    a <- check.ErgmTerm(nw, arglist, directed=FALSE, bipartite=TRUE,
+                        varnames = c("attr", "base", "levels","form"),
+                        vartypes = c(ERGM_VATTR_SPEC, "numeric", ERGM_LEVELS_SPEC,"character"),
+                        defaultvalues = list(NULL, 1, LEVELS_BASE1, "sum"),
+                        required = c(TRUE, FALSE,FALSE,FALSE))
+  }
+
+  binary_dind_wrap("b2factor", nw, a, ..., version=version)
+}
+
+
+InitWtErgmTerm.b2sociality<-function(nw, arglist, ...) {
   a <- check.ErgmTerm(nw, arglist, directed=FALSE, bipartite=TRUE,
-                      varnames = c("attrname", "base", "levels", "form"),
-                      vartypes = c("character", "numeric", "character,numeric,logical", "character"),
-                      defaultvalues = list(NULL, 1, NULL, "sum"),
-                      required = c(TRUE, FALSE, FALSE, FALSE))
-  binary_dind_wrap("b2factor", nw, a, ...)
+                      varnames = c("nodes", "form"),
+                      vartypes = c(ERGM_LEVELS_SPEC, "character"),
+                      defaultvalues = list(LEVELS_BASE1, "sum"),
+                      required = c(FALSE, FALSE))
+  binary_dind_wrap("b2sociality", nw, a, ...)
 }
 
-InitWtErgmTerm.diff <- function(nw, arglist, ...) {
-  ### Check the network and arguments to make sure they are appropriate.
-  a <- check.ErgmTerm(nw, arglist, directed=NULL, bipartite=NULL,
-                      varnames = c("attrname","pow", "dir", "sign.action", "form"),
-                      vartypes = c("character","numeric", "character", "character", "character"),
-                      defaultvalues = list(NULL,1, "t-h", "identity", "sum"),
-                      required = c(TRUE, FALSE, FALSE, FALSE, FALSE))
-  binary_dind_wrap("diff", nw, a, ...)
+
+
+InitWtErgmTerm.diff <- function(nw, arglist, ..., version=packageVersion("ergm")) {
+  if(version <= as.package_version("3.9.4")){
+    ### Check the network and arguments to make sure they are appropriate.
+    a <- check.ErgmTerm(nw, arglist, directed=NULL, bipartite=NULL,
+                        varnames = c("attrname","pow", "dir", "sign.action","form"),
+                        vartypes = c("character","numeric", "character", "character","character"),
+                        defaultvalues = list(NULL,1, "t-h", "identity", "sum"),
+                        required = c(TRUE, FALSE, FALSE, FALSE,FALSE))
+  }else{
+    a <- check.ErgmTerm(nw, arglist, directed=NULL, bipartite=NULL,
+                        varnames = c("attr","pow", "dir", "sign.action","form"),
+                        vartypes = c(ERGM_VATTR_SPEC,"numeric", "character", "character","character"),
+                        defaultvalues = list(NULL,1, "t-h", "identity", "sum"),
+                        required = c(TRUE, FALSE, FALSE, FALSE,FALSE))
+  }  
+
+  binary_dind_wrap("diff", nw, a, ..., version=version)
 }
 
 InitWtErgmTerm.edgecov <- function(nw, arglist, response, ...) {
@@ -294,25 +380,43 @@ InitWtErgmTerm.nodeisqrtcovar<-function (nw, arglist, response, ...) {
        )
 }
 
-InitWtErgmTerm.nodefactor<-function (nw, arglist, response, ...) {
+InitWtErgmTerm.nodefactor<-function (nw, arglist, response, ..., version=packageVersion("ergm")) {
   ### Check the network and arguments to make sure they are appropriate.
-  a <- check.ErgmTerm(nw, arglist, 
-                      varnames = c("attrname", "base","form","levels"),
-                      vartypes = c("character", "numeric","character", "character,numeric,logical"),
-                      defaultvalues = list(NULL, 1, "sum", NULL),
-                      required = c(TRUE, FALSE, FALSE, FALSE))
-  binary_dind_wrap("nodefactor", nw, a, ...)
+  if(version <= as.package_version("3.9.4")){
+    a <- check.ErgmTerm(nw, arglist,
+                        varnames = c("attrname", "base", "levels","form"),
+                        vartypes = c("character", "numeric", "character,numeric,logical","character"),
+                        defaultvalues = list(NULL, 1, NULL, "sum"),
+                        required = c(TRUE, FALSE, FALSE,FALSE))
+  }else{
+    a <- check.ErgmTerm(nw, arglist,
+                        varnames = c("attr","base", "levels","form"),
+                        vartypes = c(ERGM_VATTR_SPEC,"numeric", ERGM_LEVELS_SPEC,"character"),
+                        defaultvalues = list(NULL,1, LEVELS_BASE1, "sum"),
+                        required = c(TRUE, FALSE,FALSE,FALSE))
+  }
+
+  binary_dind_wrap("nodefactor", nw, a, ..., version=version)
 }
 
 
-InitWtErgmTerm.sociality<-function (nw, arglist, response, ...) {
+InitWtErgmTerm.sociality<-function (nw, arglist, response, ..., version=packageVersion("ergm")) {
   ### Check the network and arguments to make sure they are appropriate.
-  a <- check.ErgmTerm(nw, arglist, directed = FALSE,
-                      varnames = c("attrname", "base", "levels", "form"),
-                      vartypes = c("character", "numeric", "character,numeric,logical", "character"),
-                      defaultvalues = list(NULL, 1, NULL, "sum"),
-                      required = c(FALSE, FALSE, FALSE, FALSE))
-  binary_dind_wrap("sociality", nw, a, ...)
+  if(version <= as.package_version("3.9.4")){
+    a <- check.ErgmTerm(nw, arglist, directed=FALSE,
+                        varnames = c("attrname", "base", "levels","form"),
+                        vartypes = c("character", "numeric", "character,numeric,logical","character"),
+                        defaultvalues = list(NULL, 1, NULL, "sum"),
+                        required = c(FALSE, FALSE, FALSE,FALSE))
+  }else{
+    a <- check.ErgmTerm(nw, arglist, directed=FALSE,
+                        varnames = c("attr", "base", "levels", "nodes","form"),
+                        vartypes = c(ERGM_VATTR_SPEC, "numeric", ERGM_LEVELS_SPEC, ERGM_LEVELS_SPEC,"character"),
+                        defaultvalues = list(NULL, 1, NULL, LEVELS_BASE1, "sum"),
+                        required = c(FALSE, FALSE, FALSE, FALSE, FALSE))  
+  }
+
+  binary_dind_wrap("sociality", nw, a, ..., version=version)
 }
 
 
@@ -331,24 +435,42 @@ InitWtErgmTerm.nodeocovar<-function (nw, arglist, response, ...) {
        )
 }
 
-InitWtErgmTerm.nodeofactor<-function (nw, arglist, response, ...) {
+InitWtErgmTerm.nodeofactor<-function (nw, arglist, response, ..., version=packageVersion("ergm")) {
   ### Check the network and arguments to make sure they are appropriate.
-  a <- check.ErgmTerm(nw, arglist, directed = TRUE,
-                      varnames = c("attrname", "base", "levels", "form"),
-                      vartypes = c("character", "numeric", "character,numeric,logical", "character"),
-                      defaultvalues = list(NULL, 1, NULL, "sum"),
-                      required = c(TRUE, FALSE, FALSE, FALSE))
-  binary_dind_wrap("nodeofactor", nw, a, ...)
+  if(version <= as.package_version("3.9.4")){
+    a <- check.ErgmTerm(nw, arglist, directed=TRUE, 
+                        varnames = c("attrname", "base", "levels","form"),
+                        vartypes = c("character", "numeric", "character,numeric,logical","character"),
+                        defaultvalues = list(NULL, 1, NULL, "sum"),
+                        required = c(TRUE, FALSE, FALSE,FALSE))
+  }else{
+    a <- check.ErgmTerm(nw, arglist, directed=TRUE, 
+                        varnames = c("attr", "base", "levels","form"),
+                        vartypes = c(ERGM_VATTR_SPEC, "numeric", ERGM_LEVELS_SPEC,"character"),
+                        defaultvalues = list(NULL, 1, LEVELS_BASE1, "sum"),
+                        required = c(TRUE, FALSE, FALSE,FALSE))
+  }
+
+  binary_dind_wrap("nodeofactor", nw, a, ..., version=version)
 }
 
-InitWtErgmTerm.sender<-function (nw, arglist, response, ...) {
+InitWtErgmTerm.sender<-function (nw, arglist, response, ..., version=packageVersion("ergm")) {
   ### Check the network and arguments to make sure they are appropriate.
-  a <- check.ErgmTerm(nw, arglist, directed = TRUE,
-                      varnames = c("base", "form"),
-                      vartypes = c("numeric", "character"),
-                      defaultvalues = list(1, "sum"),
-                      required = c(FALSE, FALSE))
-  binary_dind_wrap("sender", nw, a, ...)
+  if(version <= as.package_version("3.9.4")){
+    a <- check.ErgmTerm(nw, arglist, directed=TRUE,
+                        varnames = c("base","form"),
+                        vartypes = c("numeric","character"),
+                        defaultvalues = list(1, "sum"),
+                        required = c(FALSE,FALSE))
+  }else{
+    a <- check.ErgmTerm(nw, arglist, directed=TRUE,
+                        varnames = c("base","nodes","form"),
+                        vartypes = c("numeric",ERGM_LEVELS_SPEC,"character"),
+                        defaultvalues = list(1,LEVELS_BASE1, "sum"),
+                        required = c(FALSE,FALSE,FALSE))
+  }  
+
+  binary_dind_wrap("sender", nw, a, ..., version=version)
 }
 
 InitWtErgmTerm.nodeicovar<-function (nw, arglist, response, ...) {
@@ -366,74 +488,138 @@ InitWtErgmTerm.nodeicovar<-function (nw, arglist, response, ...) {
        )
 }
 
-InitWtErgmTerm.nodeifactor<-function (nw, arglist, response, ...) {
+InitWtErgmTerm.nodeifactor<-function (nw, arglist, response, ..., version=packageVersion("ergm")) {
   ### Check the network and arguments to make sure they are appropriate.
-  a <- check.ErgmTerm(nw, arglist, directed = TRUE,
-                      varnames = c("attrname", "base","levels","form"),
-                      vartypes = c("character", "numeric","character,numeric,logical","character"),
-                      defaultvalues = list(NULL, 1, NULL, "sum"),
-                      required = c(TRUE, FALSE, FALSE, FALSE))
-  binary_dind_wrap("nodeifactor", nw, a, ...)
+  if(version <= as.package_version("3.9.4")){
+    a <- check.ErgmTerm(nw, arglist, directed=TRUE, 
+                        varnames = c("attrname", "base", "levels","form"),
+                        vartypes = c("character", "numeric", "character,numeric,logical","character"),
+                        defaultvalues = list(NULL, 1, NULL, "sum"),
+                        required = c(TRUE, FALSE, FALSE,FALSE))
+  }else{
+    a <- check.ErgmTerm(nw, arglist, directed=TRUE, 
+                        varnames = c("attr", "base","levels","form"),
+                        vartypes = c(ERGM_VATTR_SPEC, "numeric",ERGM_LEVELS_SPEC,"character"),
+                        defaultvalues = list(NULL, 1, LEVELS_BASE1, "sum"),
+                        required = c(TRUE, FALSE,FALSE,FALSE))
+  }  
+
+  binary_dind_wrap("nodeifactor", nw, a, ..., version=version)
 }
 
-InitWtErgmTerm.receiver<-function (nw, arglist, response, ...) {
+InitWtErgmTerm.receiver<-function (nw, arglist, response, ..., version=packageVersion("ergm")) {
   ### Check the network and arguments to make sure they are appropriate.
-  a <- check.ErgmTerm(nw, arglist, directed = TRUE,
-                      varnames = c("base", "form"),
-                      vartypes = c("numeric", "character"),
-                      defaultvalues = list(1, "sum"),
-                      required = c(FALSE, FALSE))
-  binary_dind_wrap("receiver", nw, a, ...)
+  if(version <= as.package_version("3.9.4")){
+    a <- check.ErgmTerm(nw, arglist, directed=TRUE,
+                        varnames = c("base","form"),
+                        vartypes = c("numeric","character"),
+                        defaultvalues = list(1, "sum"),
+                        required = c(FALSE,FALSE))
+  }else{
+    a <- check.ErgmTerm(nw, arglist, directed=TRUE,
+                        varnames = c("base","nodes","form"),
+                        vartypes = c("numeric",ERGM_LEVELS_SPEC,"character"),
+                        defaultvalues = list(1,LEVELS_BASE1, "sum"),
+                        required = c(FALSE,FALSE,FALSE))
+  }
+
+  binary_dind_wrap("receiver", nw, a, ..., version=version)
 }
 
 
-InitWtErgmTerm.nodematch<-InitWtErgmTerm.match<-function (nw, arglist, ...) {
+InitWtErgmTerm.nodematch<-InitWtErgmTerm.match<-function (nw, arglist, ..., version=packageVersion("ergm")) {
   ### Check the network and arguments to make sure they are appropriate.
-  a <- check.ErgmTerm(nw, arglist, 
-                      varnames = c("attrname", "diff", "keep", "levels", "form"),
-                      vartypes = c("character", "logical", "numeric", "character,numeric,logical", "character"),
-                      defaultvalues = list(NULL, FALSE, NULL, NULL, "sum"),
-                      required = c(TRUE, FALSE, FALSE, FALSE, FALSE))
-  binary_dind_wrap("nodematch", nw, a, ...)
+  if(version <= as.package_version("3.9.4")){
+    ### Check the network and arguments to make sure they are appropriate.
+    a <- check.ErgmTerm(nw, arglist, 
+                        varnames = c("attrname", "diff", "keep", "levels","form"),
+                        vartypes = c("character", "logical", "numeric", "character,numeric,logical","character"),
+                        defaultvalues = list(NULL, FALSE, NULL, NULL, "sum"),
+                        required = c(TRUE, FALSE, FALSE, FALSE,FALSE))
+  }else{
+    a <- check.ErgmTerm(nw, arglist, 
+                        varnames = c("attr", "diff", "keep", "levels","form"),
+                        vartypes = c(ERGM_VATTR_SPEC, "logical", "numeric", ERGM_LEVELS_SPEC,"character"),
+                        defaultvalues = list(NULL, FALSE, NULL, NULL, "sum"),
+                        required = c(TRUE, FALSE, FALSE, FALSE,FALSE))
+  }
+
+  binary_dind_wrap("nodematch", nw, a, ..., version=version)
 }
 
-InitWtErgmTerm.nodemix<-function (nw, arglist, ...) {
-  ### Check the network and arguments to make sure they are appropriate.
-  a <- check.ErgmTerm(nw, arglist,
-                      varnames = c("attrname", "base", "b1levels", "b2levels", "form"),
-                      vartypes = c("character", "numeric", "character,numeric,logical", "character,numeric,logical", "character"),
-                      defaultvalues = list(NULL, NULL, NULL, NULL, "sum"),
-                      required = c(TRUE, FALSE, FALSE, FALSE, FALSE))
-  binary_dind_wrap("nodemix", nw, a, ...)
+InitWtErgmTerm.nodemix<-function (nw, arglist, ..., version=packageVersion("ergm")) {
+  if(version <= as.package_version("3.9.4")){
+    ### Check the network and arguments to make sure they are appropriate.
+    a <- check.ErgmTerm(nw, arglist,
+                        varnames = c("attrname", "base", "b1levels", "b2levels", "form"),
+                        vartypes = c("character", "numeric", "character,numeric,logical", "character,numeric,logical", "character"),
+                        defaultvalues = list(NULL, NULL, NULL, NULL, "sum"),
+                        required = c(TRUE, FALSE, FALSE, FALSE, FALSE))
+  }else{
+    ### Check the network and arguments to make sure they are appropriate.
+    a <- check.ErgmTerm(nw, arglist,
+                        varnames = c("attr", "base", "b1levels", "b2levels", "levels", "levels2", "form"),
+                        vartypes = c(ERGM_VATTR_SPEC, "numeric", ERGM_LEVELS_SPEC, ERGM_LEVELS_SPEC, ERGM_LEVELS_SPEC, ERGM_LEVELS_SPEC, "character"),
+                        defaultvalues = list(NULL, NULL, NULL, NULL, NULL, NULL, "sum"),
+                        required = c(TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE))  
+  }
+  binary_dind_wrap("nodemix", nw, a, ..., version=version)
 }
 
-InitWtErgmTerm.nodecov<-InitWtErgmTerm.nodemain<-function (nw, arglist, response, ...) {
-  a <- check.ErgmTerm(nw, arglist,
-                     varnames = c("attrname","transform","transformname","form"),
-                     vartypes = c("character","function","character","character"),
-                     defaultvalues = list(NULL,identity,"","sum"),
-                     required = c(TRUE,FALSE,FALSE,FALSE))
-  binary_dind_wrap("nodecov", nw, a, ...)
+InitWtErgmTerm.nodecov<-InitWtErgmTerm.nodemain<-function (nw, arglist, response, ..., version=packageVersion("ergm")) {
+  if(version <= as.package_version("3.9.4")){
+    a <- check.ErgmTerm(nw, arglist,
+                        varnames = c("attrname","transform","transformname","form"),
+                        vartypes = c("character","function","character","character"),
+                        defaultvalues = list(NULL,function(x)x,"", "sum"),
+                        required = c(TRUE,FALSE,FALSE,FALSE))
+  }else{
+    a <- check.ErgmTerm(nw, arglist,
+                        varnames = c("attr","form"),
+                        vartypes = c(ERGM_VATTR_SPEC,"character"),
+                        defaultvalues = list(NULL, "sum"),
+                        required = c(TRUE,FALSE))
+  }
+  binary_dind_wrap("nodecov", nw, a, ..., version=version)
 }
 
-InitWtErgmTerm.nodeicov<-function (nw, arglist, response, ...) {
-  a <- check.ErgmTerm(nw, arglist, directed=TRUE,
-                     varnames = c("attrname","transform","transformname","form"),
-                     vartypes = c("character","function","character","character"),
-                     defaultvalues = list(NULL,identity,"","sum"),
-                     required = c(TRUE,FALSE,FALSE,FALSE))
-  binary_dind_wrap("nodeicov", nw, a, ...)
+InitWtErgmTerm.nodeicov<-function (nw, arglist, response, ..., version=packageVersion("ergm")) {
+  if(version <= as.package_version("3.9.4")){
+    a <- check.ErgmTerm(nw, arglist, directed=TRUE,
+                        varnames = c("attrname","transform","transformname","form"),
+                        vartypes = c("character","function","character","character"),
+                        defaultvalues = list(NULL,identity,"", "sum"),
+                        required = c(TRUE,FALSE,FALSE,FALSE))
+  }else{
+    a <- check.ErgmTerm(nw, arglist, directed=TRUE,
+                        varnames = c("attr","form"),
+                        vartypes = c(ERGM_VATTR_SPEC,"character"),
+                        defaultvalues = list(NULL, "sum"),
+                        required = c(TRUE,FALSE))
+  }
+
+  binary_dind_wrap("nodeicov", nw, a, ..., version=version)
 }
 
 
-InitWtErgmTerm.nodeocov<-function (nw, arglist, response, ...) {
-  a <- check.ErgmTerm(nw, arglist, directed=TRUE,
-                     varnames = c("attrname","transform","transformname","form"),
-                     vartypes = c("character","function","character","character"),
-                     defaultvalues = list(NULL,identity,"","sum"),
-                     required = c(TRUE,FALSE,FALSE,FALSE))
-  binary_dind_wrap("nodeocov", nw, a, ...)
+InitWtErgmTerm.nodeocov<-function (nw, arglist, response, ..., version=packageVersion("ergm")) {
+  if(version <= as.package_version("3.9.4")){
+    a <- check.ErgmTerm(nw, arglist, directed=TRUE, 
+                        varnames = c("attrname","transform","transformname","form"),
+                        vartypes = c("character","function","character","character"),
+                        defaultvalues = list(NULL,identity,"", "sum"),
+                        required = c(TRUE,FALSE,FALSE,FALSE))
+  }else{
+    a <- check.ErgmTerm(nw, arglist, directed=TRUE, 
+                        varnames = c("attr","form"),
+                        vartypes = c(ERGM_VATTR_SPEC,"character"),
+                        defaultvalues = list(NULL, "sum"),
+                        required = c(TRUE,FALSE))
+  }
+
+  binary_dind_wrap("nodeocov", nw, a, ..., version=version)
 }
+
 
 InitWtErgmTerm.edges<-InitWtErgmTerm.nonzero<-function(nw, arglist, response, ...) {
   a <- check.ErgmTerm(nw, arglist,
@@ -492,7 +678,7 @@ InitWtErgmTerm.transitiveweights<-function (nw, arglist, response, ...) {
                       required = c(FALSE,FALSE,FALSE), response=response)
   twopaths<-c("min","geomean")
   twopath<-match.arg(a$twopath,twopaths)
-  combines<-c("max","sum")
+  combines<-c("max", "sum")
   combine<-match.arg(a$combine,combines)
   affects<-c("min","geomean")
   affect<-match.arg(a$affect,affects)
@@ -532,7 +718,7 @@ InitWtErgmTerm.cyclicalweights<-function (nw, arglist, response, ...) {
                       required = c(FALSE,FALSE,FALSE), response=response)
   twopaths<-c("min","geomean")
   twopath<-match.arg(a$twopath,twopaths)
-  combines<-c("max","sum")
+  combines<-c("max", "sum")
   combine<-match.arg(a$combine,combines)
   affects<-c("min","geomean")
   affect<-match.arg(a$affect,affects)
@@ -556,3 +742,8 @@ InitWtErgmTerm.mm<-function (nw, arglist, response, ...) {
                       required = c(TRUE, FALSE, FALSE, FALSE))
   binary_dind_wrap("mm", nw, a, ...)
 }
+
+
+################################################################################
+
+
