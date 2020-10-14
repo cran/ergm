@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution
 #
-#  Copyright 2003-2019 Statnet Commons
+#  Copyright 2003-2020 Statnet Commons
 #######################################################################
 
 library(ergm)
@@ -74,10 +74,14 @@ if (!all(s.a==c(121)) ||
 num.tests=num.tests+1
 s.d <- summary(bipnw~b1degrange(from=c(1,2),to=c(Inf,Inf)))
 e.d <- ergm(bipnw~b1degrange(from=c(1,2),to=c(Inf,Inf)), estimate="MPLE")
+s.anh <- summary(bipnw~b1degrange(from=c(1,2),to=c(Inf,Inf),by="Letter",homophily=FALSE))
+e.anh <- ergm(bipnw~b1degrange(from=c(1,2),to=c(Inf,Inf),by=function(x) x %v% "Letter",homophily=FALSE), estimate="MPLE")
 s.dh <- summary(bipnw~b1degrange(from=c(1,2),to=c(Inf,Inf),by="Letter",homophily=TRUE))
 e.dh <- ergm(bipnw~b1degrange(from=c(1,2),to=c(Inf,Inf),by=function(x) x %v% "Letter",homophily=TRUE), estimate="MPLE")
 if (!all(s.d==c(42,12)) ||
 		!all(round(e.d$coef+c(4.027, 3.961),3)==0) ||
+        !all(s.anh==c(13,4,13,5,16,3)) ||
+        !all(round(e.anh$coef+c(4.215, 4.143, 4.284, 3.620, 3.636, 4.105),3)==0) ||
 		!all(s.dh==c(19,3)) ||
 		!all(round(e.dh$coef+c(3.891, 3.143 ),3)==0)) {
 	print(list(s.d=s.d, e.d=e.d, s.dh=s.dh, e.db=e.db))
@@ -87,13 +91,13 @@ if (!all(s.d==c(42,12)) ||
 	print("Passed b1degree term test")
 }
 
-
 #b1degree, bipartite, undirected
 num.tests=num.tests+1
 s.d <- summary(bipnw~b1degree(1:3))
 e.d <- ergm(bipnw~b1degree(1:3), estimate="MPLE")
 s.db <- summary(bipnw~b1degree(2:4, by="Letter"))
 e.db <- ergm(bipnw~b1degree(2, by=~Letter), estimate="MPLE")
+
 if (!all(s.d==c(30,8,2)) ||
     !all(round(e.d$coef+c(2.991, 5.442, 6.484),3)==0) ||
     !all(s.db==c(2,1,1,3,1,1,3,0,0)) ||
@@ -103,6 +107,25 @@ if (!all(s.d==c(30,8,2)) ||
 } else {
   num.passed.tests=num.passed.tests+1
   print("Passed b1degree term test")
+}
+
+#b1dsp, bipartite
+num.tests=num.tests+1
+s.d0 <- summary(bipnw~b1dsp(0))
+e.d0 <- ergm(bipnw~b1dsp(0), estimate="MPLE")
+s.d1 <- summary(bipnw~b1dsp(1:3))
+e.d1 <- ergm(bipnw~b1dsp(1:3), estimate="MPLE")
+
+if (s.d0 != 4900 ||
+    !all(s.d1 == c(49,1,0)) ||
+    round(e.d0$coef - 2.11343,3) !=0 ||    
+    !all(round(e.d1$coef[1:2] + c(2.096629, 3.0399271),3)==0) ||
+    !is.infinite(e.d1$coef[3])) {
+ print(list(s.d0=s.d0, e.d0=e.d0, s.d1=s.d1, e.d1=e.d1))
+ stop("Failed b1dsp term test")
+} else {
+  num.passed.tests=num.passed.tests+1
+  print("Passed b1dsp term test")
 }
 
 
@@ -268,10 +291,14 @@ if (!all(s.a==c(129)) ||
 num.tests=num.tests+1
 s.d <- summary(bipnw~b2degrange(from=c(1,2),to=c(Inf,Inf)))
 e.d <- ergm(bipnw~b2degrange(from=c(1,2),to=c(Inf,Inf)), estimate="MPLE")
+s.anh <- summary(bipnw~b2degrange(from=c(1,2),to=c(Inf,Inf),by=function(x) x %v% "Letter",homophily=FALSE))
+e.anh <- ergm(bipnw~b2degrange(from=c(1,2),to=c(Inf,Inf),by=~Letter,homophily=FALSE), estimate="MPLE")
 s.dh <- summary(bipnw~b2degrange(from=c(1,2),to=c(Inf,Inf),by=function(x) x %v% "Letter",homophily=TRUE))
 e.dh <- ergm(bipnw~b2degrange(from=c(1,2),to=c(Inf,Inf),by=~Letter,homophily=TRUE), estimate="MPLE")
 if (!all(s.d==c(26,20)) ||
 		!all(round(e.d$coef+c(3.912,3.497),3)==0) ||
+        !all(s.anh==c(9,8,10,6,7,6)) ||
+        !all(round(e.anh$coef+c(-13.566, 2.803, -14.365, 4.190, 5.704, 2.803),3)==0) ||
 		!all(s.dh==c(19,3)) ||
 		!all(round(e.dh$coef+c(3.03, 4.46 ),3)==0)) {
 	print(list(s.d=s.d, e.d=e.d, s.dh=s.dh, e.db=e.db))
@@ -296,6 +323,26 @@ if (!all(s.d==c(6,9,8)) ||
 } else {
   num.passed.tests=num.passed.tests+1
   print("Passed b2degree term test")
+}
+
+
+#b2dsp, bipartite
+num.tests=num.tests+1
+s.d0 <- summary(bipnw~b2dsp(0))
+e.d0 <- ergm(bipnw~b2dsp(0), estimate="MPLE")
+s.d1 <- summary(bipnw~b2dsp(1:3))
+e.d1 <- ergm(bipnw~b2dsp(1:3), estimate="MPLE")
+
+if (s.d0 != 381 ||
+    !all(s.d1 == c(24,1,0)) ||
+    round(e.d0$coef - 2.829767 ,3) !=0 ||    
+    !all(round(e.d1$coef[1:2] + c(2.804156, 5.140782),3)==0) ||
+    !is.infinite(e.d1$coef[3])) {
+ print(list(s.d0=s.d0, e.d0=e.d0, s.d1=s.d1, e.d1=e.d1))
+ stop("Failed b2dsp term test")
+} else {
+  num.passed.tests=num.passed.tests+1
+  print("Passed b2dsp term test")
 }
 
 
@@ -456,6 +503,28 @@ if (round(e.d$coef + 6.979, 3) != 0 ||
   print("Passed gwb1degree term test")
 }
 
+# gwb1dsp, bipartite
+num.tests=num.tests+1
+s.d0 <- summary(bipnw~gwb1dsp)
+s.d1 <- summary(bipnw~gwb1dsp(.3))
+s.d2 <- summary(bipnw~gwb1dsp(.3, TRUE))
+e.d2 <- ergm(bipnw~gwb1dsp(.3, TRUE), estimate="MPLE")
+s.d3 <- summary(bipnw~gwb1dsp(.3, TRUE, 1))
+e.d3 <- ergm(bipnw~gwb1dsp(.3, TRUE, 1), estimate="MPLE")
+
+if (!all(s.d0 == c(49,1,rep(0,27))) ||
+    !all(s.d1 == c(49,1,rep(0,27))) ||
+    round(s.d2 - 50.25918, 3) != 0 || 
+    round(s.d3 - 49, 3) != 0 || 
+    round(e.d2$coef + 2.105815, 3) != 0 ||
+    round(e.d3$coef + 2.072566, 3) != 0) {
+ print(list(s.d0=s.d0, s.d1=s.d1, s.d2=s.d2, e.d2=e.d2, s.d3=s.d3, e.d3=e.d3))
+ stop("Failed gwb1dsp term test")
+} else {
+  num.passed.tests=num.passed.tests+1
+  print("Passed gwb1dsp term test")
+}
+
 
 # gwb2degree, bipartite
 num.tests=num.tests+1
@@ -480,6 +549,27 @@ if (round(e.d$coef + 25.99385, 3) != 0 ||
   print("Passed gwb2degree term test")
 }
 
+# gwb2dsp, bipartite
+num.tests=num.tests+1
+s.d0 <- summary(bipnw~gwb2dsp)
+s.d1 <- summary(bipnw~gwb2dsp(.3))
+s.d2 <- summary(bipnw~gwb2dsp(.3, TRUE))
+e.d2 <- ergm(bipnw~gwb2dsp(.3, TRUE), estimate="MPLE")
+s.d3 <- summary(bipnw~gwb2dsp(.3, TRUE, 1))
+e.d3 <- ergm(bipnw~gwb2dsp(.3, TRUE, 1), estimate="MPLE")
+
+if (!all(s.d0 == c(24,1,rep(0,28))) ||
+    !all(s.d1 == c(24,1,rep(0,28))) ||
+    round(s.d2 - 25.25918, 3) != 0 || 
+    round(s.d3 - 24, 3) != 0 || 
+    round(e.d2$coef + 2.875923, 3) != 0 ||
+    round(e.d3$coef + 2.220758, 3) != 0) {
+ print(list(s.d0=s.d0, s.d1=s.d1, s.d2=s.d2, e.d2=e.d2, s.d3=s.d3, e.d3=e.d3))
+ stop("Failed gwb2dsp term test")
+} else {
+  num.passed.tests=num.passed.tests+1
+  print("Passed gwb2dsp term test")
+}
 
 
 if(num.passed.tests==num.tests)

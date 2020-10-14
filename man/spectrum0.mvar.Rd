@@ -4,8 +4,13 @@
 \alias{spectrum0.mvar}
 \title{Multivariate version of \code{coda}'s \code{\link[=spectrum0.ar]{spectrum0.ar()}}.}
 \usage{
-spectrum0.mvar(x, order.max = NULL, aic = is.null(order.max),
-  tol = .Machine$double.eps^0.5, ...)
+spectrum0.mvar(
+  x,
+  order.max = NULL,
+  aic = is.null(order.max),
+  tol = .Machine$double.eps^0.5,
+  ...
+)
 }
 \arguments{
 \item{x}{a matrix with observations in rows and variables in
@@ -19,6 +24,13 @@ columns.}
 the transformed variance-covariance matrix is greater than this.}
 
 \item{...}{additional arguments to \code{\link[=ar]{ar()}}.}
+}
+\value{
+A square matrix with dimension equalling to the number of
+columns of \code{x}, with an additional attribute \code{"infl"} giving the
+factor by which the effective sample size is reduced due to
+autocorrelation, according to the Vats, Flegal, and Jones (2015)
+estimate for ESS.
 }
 \description{
 Its return value, divided by \code{nrow(cbind(x))}, is the estimated

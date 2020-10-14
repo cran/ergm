@@ -5,7 +5,7 @@
  *  open source, and has the attribution requirements (GPL Section 7) at
  *  https://statnet.org/attribution
  *
- *  Copyright 2003-2019 Statnet Commons
+ *  Copyright 2003-2020 Statnet Commons
  */
 #include "changestats.h"
 
@@ -39,12 +39,10 @@ D_CHANGESTAT_FN(d_absdiff) {
  changestat: d_absdiffcat
 *****************/
 D_CHANGESTAT_FN(d_absdiffcat) { 
-  double change, absdiff, NAsubstitute, tailval, headval;
-  Vertex tail, head, ninputs;
+  double change, absdiff, tailval, headval;
+  Vertex tail, head;
   int i, j;
   
-  ninputs = N_INPUT_PARAMS - N_NODES;
-  NAsubstitute = INPUT_PARAM[ninputs-1];
   ZERO_ALL_CHANGESTATS(i);
 
   /* *** don't forget tail -> head */
@@ -52,9 +50,8 @@ D_CHANGESTAT_FN(d_absdiffcat) {
     change = IS_OUTEDGE(tail=TAIL(i), head=HEAD(i)) ? -1.0 : 1.0;
     tailval = INPUT_ATTRIB[tail-1];
     headval = INPUT_ATTRIB[head-1];
-    if (tailval == NAsubstitute ||  headval == NAsubstitute) absdiff = NAsubstitute;
-    else absdiff = fabs(tailval - headval);
-	  if (absdiff>0) {
+    absdiff = fabs(tailval - headval);
+    if (absdiff>0) {
       for (j=0; j<N_CHANGE_STATS; j++) {
         CHANGE_STAT[j] += (absdiff==INPUT_PARAM[j]) ? change : 0.0;
       }
@@ -378,10 +375,10 @@ D_CHANGESTAT_FN(d_b1nodematch) {
   b2attrsize = INPUT_PARAM[0];          
 
   if(b2attrsize > 0){                   
-    ninputs = N_INPUT_PARAMS - 2*N_NODES - b2attrsize;/*have 2 sets of node attributes and b2attrvals */  
+    ninputs = N_INPUT_PARAMS - N_NODES - b2attrsize;/*have 2 sets of node attributes and b2attrvals */  
   }                                      
   else{                                  
-    ninputs = N_INPUT_PARAMS - N_NODES; 
+    ninputs = N_INPUT_PARAMS - BIPARTITE; 
   }                                      
 
   diffstatus = !(ninputs == 3); /* 1 if Diff = T and 0 if Diff = F */
@@ -459,7 +456,7 @@ D_CHANGESTAT_FN(d_b1nodematch) {
 
     } else {  
       
-      attrval1 = INPUT_PARAM[h + ninputs + N_NODES + b2attrsize - 1];  
+      attrval1 = INPUT_PARAM[h + ninputs + b2attrsize - 1];  
  
       STEP_THROUGH_INEDGES(h, e, node3) {
 	
@@ -477,7 +474,7 @@ D_CHANGESTAT_FN(d_b1nodematch) {
 	    STEP_THROUGH_OUTEDGES(t, e2, node4) {
 	      // Rprintf("node3=%d, node4=%d, alpha=%f\n", node3,node4,alpha);
 	      if (node4 != h) { 
-		    attrval2 = INPUT_PARAM[node4 + ninputs + N_NODES + b2attrsize - 1];  
+		    attrval2 = INPUT_PARAM[node4 + ninputs + b2attrsize - 1];  
 		    if(attrval2 == attrval1) count += IS_OUTEDGE(node3, node4); 
 	      }
 	    }
@@ -872,10 +869,10 @@ D_CHANGESTAT_FN(d_b2nodematch) {
   b1attrsize = INPUT_PARAM[0];             
 
   if(b1attrsize > 0){                   
-    ninputs = N_INPUT_PARAMS - 2*N_NODES - b1attrsize;/*have 2 sets of node attributes and b2attrvals */  
+    ninputs = N_INPUT_PARAMS - N_NODES - b1attrsize;/*have 2 sets of node attributes and b2attrvals */  
   }                                      
   else{                                  
-    ninputs = N_INPUT_PARAMS - N_NODES;  
+    ninputs = N_INPUT_PARAMS - N_NODES + BIPARTITE;  
   }
 
   diffstatus = !(ninputs == 3); /* 1 if Diff = T and o if Diff = F - RPB */
@@ -897,7 +894,7 @@ D_CHANGESTAT_FN(d_b2nodematch) {
     t = TAIL(i);
     h = HEAD(i);
     edgeflag = IS_OUTEDGE(t, h);
-    matchval = INPUT_PARAM[h + ninputs - 1];
+    matchval = INPUT_PARAM[h + ninputs - BIPARTITE - 1];
     /* Now count the neighbors of t whose attribute value equals matchval */
     /* All neighbors of t are outedges because this is a bipartite network */
     count=0;
@@ -910,7 +907,7 @@ D_CHANGESTAT_FN(d_b2nodematch) {
   if(b1attrsize == 0){
 
     STEP_THROUGH_OUTEDGES(t, e, node3) {
-      if (INPUT_PARAM[node3 + ninputs - 1] == matchval && h != node3) { /* match! */
+      if (INPUT_PARAM[node3 + ninputs - BIPARTITE - 1] == matchval && h != node3) { /* match! */
         ++count;
         
 	// Rprintf("Matching twostar found! %d and %d connect to %d\n==================\n", t, node3, h);
@@ -952,11 +949,11 @@ D_CHANGESTAT_FN(d_b2nodematch) {
     }
   } else {
 
- attrval1 = INPUT_PARAM[t + ninputs + N_NODES + b1attrsize - 1];  
+ attrval1 = INPUT_PARAM[t + ninputs + N_NODES + b1attrsize - BIPARTITE - 1];  
  
       STEP_THROUGH_OUTEDGES(t, e, node3) {
 	
-	if (INPUT_PARAM[node3 + ninputs - 1] == matchval && h != node3) { /* match! */ 
+	if (INPUT_PARAM[node3 + ninputs - BIPARTITE - 1] == matchval && h != node3) { /* match! */ 
 	 
 	  ++count;   
 
@@ -970,7 +967,7 @@ D_CHANGESTAT_FN(d_b2nodematch) {
 	    STEP_THROUGH_INEDGES(h, e2, node4) {
 	      // Rprintf("node3=%d, node4=%d, alpha=%f\n", node3,node4,alpha);
 	      if (node4 != t) { 
-		    attrval2 = INPUT_PARAM[node4 + ninputs + N_NODES + b1attrsize - 1];  
+		    attrval2 = INPUT_PARAM[node4 + ninputs + N_NODES + b1attrsize - BIPARTITE - 1];  
 		    if(attrval2 == attrval1) count += IS_OUTEDGE(node4, node3); 
 	      }
 	    }
@@ -1699,14 +1696,15 @@ D_CHANGESTAT_FN(d_ctriple) {
  changestat: d_cycle
 *****************/
 D_CHANGESTAT_FN(d_cycle) { 
-  int i,j,k;
+  int i,j,k,semi;
   Vertex tail, head;
   long int maxlen;
   double *countv,emult;
   
   /*Perform initial setup*/
-  maxlen=(long int)(INPUT_PARAM[0]);
-  countv=(double *)R_alloc(sizeof(double),maxlen-1);
+  semi=(int)(INPUT_PARAM[0]);             /*Are we using semicycles?*/
+  maxlen=(long int)(INPUT_PARAM[1]);      /*Get max cycle length*/
+  countv=Calloc(maxlen-1, double); /*Cycle count vector*/
 
   /* *** don't forget tail -> head */    
   ZERO_ALL_CHANGESTATS(i);
@@ -1715,115 +1713,110 @@ D_CHANGESTAT_FN(d_cycle) {
       countv[j]=0.0;
     tail = TAIL(i);
     head = HEAD(i);
-    /*Count the cycles associated with this edge*/
-    /* OLD COMMENTS */
-    /*     Note: the ergm toggle system gets heads and tails reversed!*/
-    /* NEW COMMENTS */ 
-    /*     *** with the h/t swap, the <edgewise_cycle_census> function
-           seems correct as written */
-    /*edgewise_cycle_census(g,TAIL(i),HEAD(i),countv,maxlen,directed);*/
-    edgewise_cycle_census(nwp,tail,head,countv,maxlen);
+    /*In semi-cycle case, this toggle can't matter if there is a*/
+    /*head->tail edge in the graph; not counting saves much time.*/
+    if(!(semi&&(IS_OUTEDGE(head,tail)))){
+      /*Count the cycles associated with this edge*/
+      edgewise_cycle_census(nwp,tail,head,countv,maxlen,semi);
 
-    /*Make the change, as needed*/
-    /* I did not swap h/t in the comment below */
-    /*edgeflag = (EdgetreeSearch(tail=TAIL(i), head=HEAD(i), g.outedges) != 0);*/
-    if((!DIRECTED)&&(tail>head))
-      emult = IS_OUTEDGE(head, tail) ? -1.0 : 1.0;
-    else
-      emult = IS_OUTEDGE(tail, head) ? -1.0 : 1.0;
-    k=0;
-    for(j=0;j<maxlen-1;j++)
-      if(INPUT_PARAM[1+j]>0.0)
-        CHANGE_STAT[k++]+=emult*countv[j];
+      /*Make the change, as needed*/
+      if((!DIRECTED)&&(tail>head))
+        emult = IS_OUTEDGE(head, tail) ? -1.0 : 1.0;
+      else
+        emult = IS_OUTEDGE(tail, head) ? -1.0 : 1.0;
+      k=0;
+      for(j=0;j<maxlen-1;j++)
+        if(INPUT_PARAM[2+j]>0.0)
+          CHANGE_STAT[k++]+=emult*countv[j];
+    }
     TOGGLE_IF_MORE_TO_COME(i);
   }
   UNDO_PREVIOUS_TOGGLES(i);
+  Free(countv);
 }
 
 /*****************
  edgewise_path_recurse:  Called by d_cycle
 *****************/
 void edgewise_path_recurse(Network *nwp, Vertex dest, Vertex curnode, 
-                   Vertex *availnodes, long int availcount, long int curlen, 
-                   double *countv, long int maxlen) {
-  Vertex *newavail,i,j;
-  long int newavailcount;
+     Vertex *visited, long int curlen, double *countv, long int maxlen, int semi) {
+  Vertex i,v;
+  Edge e;
   int rflag;
   
   /*If we've found a path to the destination, increment the census vector*/ 
-  if(DIRECTED||(curnode<dest)) countv[curlen] += IS_OUTEDGE(curnode, dest);
-  else countv[curlen] += IS_OUTEDGE(dest, curnode);
+  if(DIRECTED){  /*Use outedges, or both if counting semi-paths*/
+    if(!semi)
+      countv[curlen] += IS_OUTEDGE(curnode, dest);
+    else
+      countv[curlen] += (IS_OUTEDGE(curnode, dest) || IS_INEDGE(curnode, dest));
+  }else{   /*For undirected graphs, edges go from low to high*/
+    if(curnode<dest)
+      countv[curlen] += IS_OUTEDGE(curnode, dest);
+    else
+      countv[curlen] += IS_INEDGE(curnode, dest);
+  }
   
   /*If possible, keep searching for novel paths*/
-  if((availcount>0)&&(curlen<maxlen-2)){
-    if(availcount>1){    /*Remove the current node from the available list*/
-      if((newavail=(Vertex *)malloc(sizeof(Vertex)*(availcount-1)))==NULL){
-        Rprintf("Unable to allocate %d bytes for available node list in edgewise_path_recurse.  Trying to terminate recursion gracefully, but your path count is probably wrong.\n",sizeof(Vertex)*(availcount-1));
-        return;
-      }
-      j=0;
-      for(i=0;i<availcount;i++)      /*Create the reduced list, fur passin'*/
-        if(availnodes[i]!=curnode)
-          newavail[j++]=availnodes[i];
-    }else
-      newavail=NULL;                 /*Set to NULL if we're out of nodes*/
-    newavailcount=availcount-1;      /*Decrement the available count*/
+  if(curlen<maxlen-2){
+    visited[curlen+1]=curnode; /*Add current node to visited list*/
 
-    /*Recurse on all available nodes*/
-    for(i=0;i<newavailcount;i++) {
-      rflag = DIRECTED || (curnode<newavail[i]) ? 
-              IS_OUTEDGE(curnode,newavail[i]) : IS_OUTEDGE(newavail[i],curnode);
+    /*Recurse on all unvisited neighbors of curnode*/
+    STEP_THROUGH_OUTEDGES(curnode,e,v){
+      rflag=1;
+      for(i=0;(i<=curlen)&&(rflag);i++)  /*Check earlier nodes in path*/
+        rflag=(v!=visited[i]);
       if(rflag)
-        edgewise_path_recurse(nwp,dest,newavail[i],newavail,newavailcount,
-                              curlen+1,countv,maxlen);
+        edgewise_path_recurse(nwp,dest,v,visited,curlen+1,countv,maxlen, semi);
     }
-    /*Free the available node list*/
-    if(newavail!=NULL)
-      free(newavail);
+    if(semi||(!DIRECTED)){ /*If semi or !directed, need in-neighbors too*/
+      STEP_THROUGH_INEDGES(curnode,e,v){
+        rflag=((!DIRECTED)||(!(IS_OUTEDGE(curnode,v))));
+        for(i=0;(i<=curlen)&&(rflag);i++)  /*Check earlier nodes in path*/
+          rflag=(v!=visited[i]);
+        if(rflag)
+          edgewise_path_recurse(nwp,dest,v,visited,curlen+1,countv,maxlen, semi);
+      }
+    }
   }
-
-  /*Check for interrupts (if recursion is taking way too long...)*/
-  R_CheckUserInterrupt();
 }
 
 /*****************
  edgewise_cycle_census:  Called by d_cycle
 *****************/
-/* *** I did NOT swap heads and tails in this function, since it
-   appears to have been written with tail -> head in mind */ 
-
 void edgewise_cycle_census(Network *nwp, Vertex tail, Vertex head, 
-                           double *countv, long int maxlen) {
+                           double *countv, long int maxlen, int semi) {
   /* *** don't forget tail -> head */    
-  long int n,i,j;
-  Vertex *availnodes;
-  int rflag;
+  long int n;
+  Vertex *visited,v;
+  Edge e;
 
   /*Set things up*/
   n=N_NODES;
 
-  /*First, check for a 2-cycle (but only if directed)*/
-  if(DIRECTED && IS_OUTEDGE(head,tail))
+  /*First, check for a 2-cycle (but only if directed and !semi)*/
+  if(DIRECTED && (!semi) && IS_OUTEDGE(head,tail))
     countv[0]++;
   if(n==2)
     return;                 /*Failsafe for graphs of order 2*/
   
   /*Perform the recursive path count*/
-  if((availnodes=(Vertex *)malloc(sizeof(Vertex)*(n-2)))==NULL){
-    Rprintf("Unable to allocate %d bytes for available node list in edgewise_cycle_census.  Exiting.\n",sizeof(Vertex)*(n-2));
-    return;
+  visited=Calloc(maxlen,Vertex); /*Initialize the list of visited nodes*/
+  visited[0]=tail;
+  visited[1]=head;
+  
+  /*Recurse on each neighbor of head*/
+  STEP_THROUGH_OUTEDGES(head,e,v){
+    if(v!=tail)
+      edgewise_path_recurse(nwp,tail,v,visited,1,countv,maxlen,semi);
   }
-  j=0;                             /*Initialize the list of available nodes*/
-  for(i=1;i<=n;i++)
-    if((i!=head)&&(i!=tail))
-      availnodes[j++]=i;
-  for(i=0;i<n-2;i++) {             /*Recurse on each available vertex*/
-    rflag = DIRECTED || (head < availnodes[i]) ? 
-            IS_OUTEDGE(head, availnodes[i]) : IS_OUTEDGE(availnodes[i], head);
-    if(rflag)
-      edgewise_path_recurse(nwp,tail,availnodes[i],availnodes,n-2,1,countv,maxlen);
+  if(semi||(!DIRECTED)){ /*If semi or !directed, need in-neighbors too*/
+    STEP_THROUGH_INEDGES(head,e,v){
+      if((v!=tail)&&((!DIRECTED)||(!(IS_OUTEDGE(head,v)))))
+        edgewise_path_recurse(nwp,tail,v,visited,1,countv,maxlen, semi);
+    }
   }
-  free(availnodes);  /*Free the available node list*/
+  Free(visited);  /*Free the visited node list*/
 }
 
 /********************  changestats:  D    ***********/
@@ -2481,9 +2474,6 @@ D_CHANGESTAT_FN(d_edgecov) {
     /*Get the initial edge state*/
     edgeflag=IS_OUTEDGE(tail=TAIL(i), head=HEAD(i));
     /*Get the covariate value*/
-    /*    val = INPUT_ATTRIB[(head-1-nrow)+(tail-1)*ncols]; */
-    /*OLD COMMENT:  Note: h/t are backwards!*/
-    /* *** despite the comment above, I swapped heads/tails in the line below. is this right? */
     val = INPUT_ATTRIB[(head-1-noffset)*nrow+(tail-1)];  
     /*  Rprintf("tail %d head %d nrow %d val %f\n", tail, head, nrow, val); */
     /*Update the change statistic, based on the toggle type*/
@@ -2867,7 +2857,7 @@ D_CHANGESTAT_FN(d_gwb2degree_by_attr) {
   FOR_EACH_TOGGLE(i) {      
     echange=IS_OUTEDGE(TAIL(i), b2=HEAD(i)) ? -1 : +1;
     b2deg = id[b2]+(echange-1)/2;
-    b2attr = INPUT_PARAM[b2]; 
+    b2attr = INPUT_PARAM[b2 - BIPARTITE]; 
 /*  Rprintf("tail %d b2 %d b2deg %d b2attr %d echange %d\n",TAIL(i), b2, b2deg, b2attr, echange); */
     CHANGE_STAT[b2attr-1] += echange * pow(oneexpd,(double)b2deg);
     TOGGLE_IF_MORE_TO_COME(i);
@@ -3746,6 +3736,100 @@ D_CHANGESTAT_FN(d_intransitive) {
 /*  Rprintf("tail %d head %d edgeflag %d change %f\n",tail,head, edgeflag, change); */
     TOGGLE_IF_MORE_TO_COME(i);
   }  
+  UNDO_PREVIOUS_TOGGLES(i);
+}
+
+/*****************
+changestat: d_isolatededges
+*****************/
+D_CHANGESTAT_FN(d_isolatededges) { 
+  int i, edgeflag;
+  Vertex tail, head, neighbor, taild, headd, *id, *od;
+  Edge e;
+  
+  id=IN_DEG;
+  od=OUT_DEG;
+
+  /* *** don't forget tail -> head */    
+  ZERO_ALL_CHANGESTATS(i);
+  FOR_EACH_TOGGLE(i) {
+    // is there an edge tail -> head?
+    edgeflag = IS_OUTEDGE(tail=TAIL(i), head=HEAD(i));
+    
+    taild = od[tail] + id[tail];
+    headd = od[head] + id[head];
+    
+    if(edgeflag) { // we are removing an edge
+        
+      // if head and tail both have degree one, then
+      // we are removing an isolated edge        
+      if(taild == 1 && headd == 1)
+        CHANGE_STAT[0] -= 1;
+          
+      // if tail has degree 2 and has a degree one node other than head as a neighbor,
+      // then we are making a non-isolated edge into an isolated edge by removing
+      // the edge tail -> head
+      if(taild == 2) { 
+        STEP_THROUGH_OUTEDGES(tail, e, neighbor) {
+          if(od[neighbor] + id[neighbor] == 1 && neighbor != head)
+            CHANGE_STAT[0] += 1;
+        }
+        STEP_THROUGH_INEDGES(tail, e, neighbor) {
+          if(od[neighbor] + id[neighbor] == 1 && neighbor != head)
+            CHANGE_STAT[0] += 1;
+        }          
+      }
+        
+      // ditto head
+      if(headd == 2) { 
+        STEP_THROUGH_OUTEDGES(head, e, neighbor) {
+          if(od[neighbor] + id[neighbor] == 1 && neighbor != tail)
+            CHANGE_STAT[0] += 1;
+        }
+        STEP_THROUGH_INEDGES(head, e, neighbor) {
+          if(od[neighbor] + id[neighbor] == 1 && neighbor != tail)
+            CHANGE_STAT[0] += 1;
+        }        
+      }
+    } else { // we are adding an edge
+    
+      // if head and tail both have degree zero, then
+      // we are adding an isolated edge
+      if(taild == 0 && headd == 0)
+        CHANGE_STAT[0] += 1;
+      
+      // if tail has degree 1 and so does its neighbor, then we 
+      // are making an isolated edge into a non-isolated edge;
+      // note that for undirected graphs, this neighbor cannot
+      // be head, as the current toggle is to turn on the edge
+      // tail -> head
+      if(taild == 1) { 
+        STEP_THROUGH_OUTEDGES(tail, e, neighbor) {
+          if(od[neighbor] + id[neighbor] == 1)
+            CHANGE_STAT[0] -= 1;
+        }
+        STEP_THROUGH_INEDGES(tail, e, neighbor) {
+          if(od[neighbor] + id[neighbor] == 1)
+            CHANGE_STAT[0] -= 1;
+        }
+      }
+      
+      // ditto head
+      if(headd == 1) { 
+        STEP_THROUGH_OUTEDGES(head, e, neighbor) {
+          if(od[neighbor] + id[neighbor] == 1)
+            CHANGE_STAT[0] -= 1;
+        }
+        STEP_THROUGH_INEDGES(head, e, neighbor) {
+          if(od[neighbor] + id[neighbor] == 1)
+            CHANGE_STAT[0] -= 1;
+        }
+      }
+    }
+    
+    TOGGLE_IF_MORE_TO_COME(i);
+  }
+
   UNDO_PREVIOUS_TOGGLES(i);
 }
 

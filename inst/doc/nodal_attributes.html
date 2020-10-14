@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<meta name="author" content="The Statnet Team" />
+
+<meta name="date" content="2020-10-14" />
+
+<title>Nodal Attribute Specification in ERGM Terms</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+<script>// Hide empty <a> tag within highlighted CodeBlock for screen reader accessibility (see https://github.com/jgm/pandoc/issues/6352#issuecomment-626106786) -->
+// v0.0.1
+// Written by JooYoung Seo (jooyoung@psu.edu) and Atsushi Yasumoto on June 1st, 2020.
+
+document.addEventListener('DOMContentLoaded', function() {
+  const codeList = document.getElementsByClassName("sourceCode");
+  for (var i = 0; i < codeList.length; i++) {
+    var linkList = codeList[i].getElementsByTagName('a');
+    for (var j = 0; j < linkList.length; j++) {
+      if (linkList[j].innerHTML === "") {
+        linkList[j].setAttribute('aria-hidden', 'true');
+      }
+    }
+  }
+});
+</script>
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+      pre > code.sourceCode { white-space: pre; position: relative; }
+      pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+      pre > code.sourceCode > span:empty { height: 1.2em; }
+      code.sourceCode > span { color: inherit; text-decoration: inherit; }
+      div.sourceCode { margin: 1em 0; }
+      pre.sourceCode { margin: 0; }
+      @media screen {
+      div.sourceCode { overflow: auto; }
+      }
+      @media print {
+      pre > code.sourceCode { white-space: pre-wrap; }
+      pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+      }
+      pre.numberSource code
+        { counter-reset: source-line 0; }
+      pre.numberSource code > span
+        { position: relative; left: -4em; counter-increment: source-line; }
+      pre.numberSource code > span > a:first-child::before
+        { content: counter(source-line);
+          position: relative; left: -1em; text-align: right; vertical-align: baseline;
+          border: none; display: inline-block;
+          -webkit-touch-callout: none; -webkit-user-select: none;
+          -khtml-user-select: none; -moz-user-select: none;
+          -ms-user-select: none; user-select: none;
+          padding: 0 4px; width: 4em;
+          color: #aaaaaa;
+        }
+      pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+      div.sourceCode
+        {   }
+      @media screen {
+      pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+      }
+      code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+      code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+      code span.at { color: #7d9029; } /* Attribute */
+      code span.bn { color: #40a070; } /* BaseN */
+      code span.bu { } /* BuiltIn */
+      code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+      code span.ch { color: #4070a0; } /* Char */
+      code span.cn { color: #880000; } /* Constant */
+      code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+      code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+      code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+      code span.dt { color: #902000; } /* DataType */
+      code span.dv { color: #40a070; } /* DecVal */
+      code span.er { color: #ff0000; font-weight: bold; } /* Error */
+      code span.ex { } /* Extension */
+      code span.fl { color: #40a070; } /* Float */
+      code span.fu { color: #06287e; } /* Function */
+      code span.im { } /* Import */
+      code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+      code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+      code span.op { color: #666666; } /* Operator */
+      code span.ot { color: #007020; } /* Other */
+      code span.pp { color: #bc7a00; } /* Preprocessor */
+      code span.sc { color: #4070a0; } /* SpecialChar */
+      code span.ss { color: #bb6688; } /* SpecialString */
+      code span.st { color: #4070a0; } /* String */
+      code span.va { color: #19177c; } /* Variable */
+      code span.vs { color: #4070a0; } /* VerbatimString */
+      code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+    </style>
+
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    for (var j = 0; j < rules.length; j++) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Nodal Attribute Specification in ERGM Terms</h1>
+<h4 class="author">The Statnet Team</h4>
+<h4 class="date">2020-10-14</h4>
+
+
+
+<p>This document provides some examples of how to specify nodal attributes and their transformations in <code>ergm</code> terms. For the R help on the topic, see <code>?nodal_attributes</code> and for help on implementing terms that use this interface, see <code>API?nodal_attributes</code>.</p>
+<div id="extraction-and-transformation" class="section level2">
+<h2>Extraction and transformation</h2>
+<p>It is sometimes desirable to specify a transformation of a nodal attribute as a covariate in a model term. Most <code>ergm</code> terms now support a new Tidyverse-inspired user interface to do so. Arguments using this interface are typically called <code>attr</code>, <code>attrs</code>, <code>by</code>, or <code>on</code> and are interpreted depending on their type:</p>
+<dl>
+<dt>character string</dt>
+<dd><p>Extract the vertex attribute with this name.</p>
+</dd>
+<dt>character vector of length greater than 1</dt>
+<dd><p>Extract the vertex attributes and paste them together, separated by dots if the term expects categorical attributes and (typically) combine into a covariate matrix if it expects quantitative attributes.</p>
+</dd>
+<dt>function</dt>
+<dd><p>The function is called on the LHS network, expected to return a vector or matrix of appropriate dimension. (Shorter vectors and matrix columns will be recycled as needed.)</p>
+</dd>
+<dt>formula</dt>
+<dd><p>Borrowing the interface from , the expression on the right hand side of the formula is evaluated in an environment of the vertex attributes of the network, expected to return a vector or matrix of appropriate dimension. (Shorter vectors and matrix columns will be recycled as needed.) Within this expression, the network itself accessible as either  or . For example, in the example below,  would return the absolute difference of each actor’s “Grade” attribute from its network-wide mean, divided by the network size.</p>
+</dd>
+<dt> object created by </dt>
+<dd><p>Use as is, checking only for correct length and type, with optional attribute  indicating the predictor’s name.</p>
+</dd>
+</dl>
+<p>Any of these arguments may also be wrapped in <code>COLLAPSE_SMALLEST(attr, n, into)</code>, a convenience function that will transform the attribute by collapsing the smallest <code>n</code> categories into one, naming it according to the <code>into</code> argument. Note that <code>into</code> must be of the same type (numeric, character, etc.) as the vertex attribute in question. This is compatible with using <code>magrittr</code>’s pipes for improved readability, i.e., <code>attr %&gt;% COLLAPSE_SMALLEST(n, into)</code>. This is illustrated in the next section.</p>
+<p>Then, taking <code>faux.mesa.high</code> dataset’s actor attribute <code>Grade</code>, representing the grade of the student, we can evaluate, equivalently, the linear effect of grade on overall activity of an actor:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="kw">library</span>(ergm)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a><span class="kw">data</span>(faux.mesa.high)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a><span class="kw">summary</span>(faux.mesa.high<span class="op">~</span><span class="kw">nodecov</span>(<span class="st">&quot;Grade&quot;</span>)) <span class="co"># String</span></span></code></pre></div>
+<pre><code>## nodecov.Grade 
+##          3491</code></pre>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="kw">summary</span>(faux.mesa.high<span class="op">~</span><span class="kw">nodecov</span>(<span class="op">~</span>Grade)) <span class="co"># Formula</span></span></code></pre></div>
+<pre><code>## nodecov.Grade 
+##          3491</code></pre>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a><span class="kw">summary</span>(faux.mesa.high<span class="op">~</span><span class="kw">nodecov</span>(<span class="cf">function</span>(nw) nw<span class="op">%v%</span><span class="st">&quot;Grade&quot;</span>)) <span class="co"># Function</span></span></code></pre></div>
+<pre><code>## nodecov.nw%v%&quot;Grade&quot; 
+##                 3491</code></pre>
+<p>Taking advantage of <code>nodecov</code>’s new ability to take matrix-valued arguments, we might also evaluate a polynomial effect of <code>Grade</code>:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a><span class="co"># Directly:</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a><span class="kw">summary</span>(faux.mesa.high<span class="op">~</span><span class="kw">nodecov</span>(<span class="op">~</span><span class="kw">cbind</span>(Grade,Grade<span class="op">^</span><span class="dv">2</span>)))</span></code></pre></div>
+<pre><code>## nodecov.cbind(Grade,Grade^2).Grade      nodecov.cbind(Grade,Grade^2). 
+##                               3491                              31123</code></pre>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true"></a><span class="co"># Using stats::poly() function:</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true"></a><span class="kw">summary</span>(faux.mesa.high<span class="op">~</span><span class="kw">nodecov</span>(<span class="op">~</span><span class="kw">poly</span>(Grade,<span class="dv">2</span>)))</span></code></pre></div>
+<pre><code>## nodecov.poly(Grade,2).1 nodecov.poly(Grade,2).2 
+##               -2.412818                4.974174</code></pre>
+<p>We can even pass a random nodal covariate. Notice that setting an attribute “name” gives it a label:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true"></a>randomcov &lt;-<span class="st"> </span><span class="kw">structure</span>(<span class="kw">I</span>(<span class="kw">rbinom</span>(<span class="kw">network.size</span>(faux.mesa.high),<span class="dv">1</span>,<span class="fl">0.5</span>)), <span class="dt">name=</span><span class="st">&quot;random&quot;</span>)</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true"></a><span class="kw">summary</span>(faux.mesa.high<span class="op">~</span><span class="kw">nodefactor</span>(<span class="kw">I</span>(randomcov)))</span></code></pre></div>
+<pre><code>## nodefactor.random.1 
+##                 175</code></pre>
+</div>
+<div id="level-selection" class="section level2">
+<h2>Level selection</h2>
+<p>For categorical attributes, to select which levels are of interest and their ordering, use the argument . Selection of nodes (from the appropriate vector of nodal indices) is likewise handled as the selection of levels, using the argument . These arguments are interpreted as follows:</p>
+<dl>
+<dt> object created by </dt>
+<dd><p>Use the given list of levels as is.</p>
+</dd>
+<dt>numeric or logical vector</dt>
+<dd><p>Used for indexing of a list of all possible levels (typically,  unique values of the attribute) in default order (typically lexicographic). In particular, <code>levels=TRUE</code> will retain all levels.   Negative values exclude. Another special value is <code>LARGEST</code>, which will refer to the most frequent category, so, say, to set such a category as the baseline, pass <code>levels=-LARGEST</code>. In addition, <code>LARGEST(n)</code> will refer to the <code>n</code> largest categories. <code>SMALLEST</code> works analogously. Note that if there are ties in frequencies, they will be broken arbitrarily. To specify numeric or logical levels literally, wrap in <code>I()</code>.</p>
+</dd>
+<dt></dt>
+<dd><p>Retain all possible levels; usually equivalent to passing .</p>
+</dd>
+<dt>character vector</dt>
+<dd><p>Use as is.</p>
+</dd>
+<dt>function</dt>
+<dd><p>The function is called on the list of unique values of the attribute, the values of the attribute themselves, and the network itself, depending on its arity. Its return value is interpreted as above.</p>
+</dd>
+<dt>formula</dt>
+<dd><p>The expression on the right hand side of the formula is evaluated in an environment in which the network itself is accessible as , the list of unique values of the attribute as  or as , and the attribute vector itself as . Its return value is interpreted as above.</p>
+</dd>
+</dl>
+<p>Note that  or  often has a default that is sensible for the term in question.</p>
+<p>Returning to the <code>faux.mesa.high</code> example, and treating <code>Grade</code> as a categorical variable, we can use a number of combinations:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true"></a><span class="co"># Activity by grade with a baseline grade excluded:</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true"></a><span class="kw">summary</span>(faux.mesa.high<span class="op">~</span><span class="kw">nodefactor</span>(<span class="op">~</span>Grade))</span></code></pre></div>
+<pre><code>##  nodefactor.Grade.8  nodefactor.Grade.9 nodefactor.Grade.10 nodefactor.Grade.11 
+##                  75                  65                  36                  49 
+## nodefactor.Grade.12 
+##                  28</code></pre>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true"></a><span class="co"># Retain all levels:</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true"></a><span class="kw">summary</span>(faux.mesa.high<span class="op">~</span><span class="kw">nodefactor</span>(<span class="op">~</span>Grade, <span class="dt">levels=</span><span class="ot">TRUE</span>)) <span class="co"># or levels=NULL</span></span></code></pre></div>
+<pre><code>##  nodefactor.Grade.7  nodefactor.Grade.8  nodefactor.Grade.9 nodefactor.Grade.10 
+##                 153                  75                  65                  36 
+## nodefactor.Grade.11 nodefactor.Grade.12 
+##                  49                  28</code></pre>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true"></a><span class="co"># Use the largest grade as baseline (also Grade 7):</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true"></a><span class="kw">table</span>(faux.mesa.high <span class="op">%v%</span><span class="st"> &quot;Grade&quot;</span>)</span></code></pre></div>
+<pre><code>## 
+##  7  8  9 10 11 12 
+## 62 40 42 25 24 12</code></pre>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true"></a><span class="kw">summary</span>(faux.mesa.high<span class="op">~</span><span class="kw">nodefactor</span>(<span class="op">~</span>Grade, <span class="dt">levels=</span><span class="op">-</span>LARGEST))</span></code></pre></div>
+<pre><code>##  nodefactor.Grade.8  nodefactor.Grade.9 nodefactor.Grade.10 nodefactor.Grade.11 
+##                  75                  65                  36                  49 
+## nodefactor.Grade.12 
+##                  28</code></pre>
+<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true"></a><span class="co"># Collapse the smallest two grades (11 and 12) into a new category, 99.</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true"></a><span class="kw">library</span>(magrittr) <span class="co"># For the %&gt;% operator.</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true"></a><span class="kw">summary</span>(faux.mesa.high<span class="op">~</span><span class="kw">nodefactor</span>((<span class="op">~</span>Grade) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">COLLAPSE_SMALLEST</span>(<span class="dv">2</span>, <span class="dv">99</span>)))</span></code></pre></div>
+<pre><code>##  nodefactor.Grade.8  nodefactor.Grade.9 nodefactor.Grade.10 nodefactor.Grade.99 
+##                  75                  65                  36                  77</code></pre>
+<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true"></a><span class="co"># Mixing between lower and upper grades:</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true"></a><span class="kw">summary</span>(faux.mesa.high<span class="op">~</span><span class="kw">mm</span>(<span class="op">~</span>Grade<span class="op">&gt;=</span><span class="dv">10</span>))</span></code></pre></div>
+<pre><code>## mm[Grade&gt;=10=FALSE,Grade&gt;=10=FALSE]  mm[Grade&gt;=10=FALSE,Grade&gt;=10=TRUE] 
+##                                 133                                  27 
+##   mm[Grade&gt;=10=TRUE,Grade&gt;=10=TRUE] 
+##                                  43</code></pre>
+<div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true"></a><span class="co"># Mixing between grades 7 and 8 only:</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true"></a><span class="kw">summary</span>(faux.mesa.high<span class="op">~</span><span class="kw">mm</span>(<span class="st">&quot;Grade&quot;</span>, <span class="dt">levels=</span><span class="kw">I</span>(<span class="kw">c</span>(<span class="dv">7</span>,<span class="dv">8</span>))))</span></code></pre></div>
+<pre><code>## mm[Grade=7,Grade=7] mm[Grade=7,Grade=8] mm[Grade=8,Grade=8] 
+##                  75                   0                  33</code></pre>
+<div class="sourceCode" id="cb27"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true"></a><span class="co"># or</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true"></a><span class="kw">summary</span>(faux.mesa.high<span class="op">~</span><span class="kw">mm</span>(<span class="st">&quot;Grade&quot;</span>, <span class="dt">levels=</span><span class="dv">1</span><span class="op">:</span><span class="dv">2</span>))</span></code></pre></div>
+<pre><code>## mm[Grade=7,Grade=7] mm[Grade=7,Grade=8] mm[Grade=8,Grade=8] 
+##                  75                   0                  33</code></pre>
+<div class="sourceCode" id="cb29"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true"></a><span class="co"># or using levels2 (see ? mm) to filter the combinations of levels,</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true"></a><span class="kw">summary</span>(faux.mesa.high<span class="op">~</span><span class="kw">mm</span>(<span class="st">&quot;Grade&quot;</span>,</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true"></a>        <span class="dt">levels2=</span><span class="op">~</span><span class="kw">sapply</span>(.levels,</span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true"></a>                        <span class="cf">function</span>(l)</span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true"></a>                          l[[<span class="dv">1</span>]]<span class="op">%in%</span><span class="kw">c</span>(<span class="dv">7</span>,<span class="dv">8</span>) <span class="op">&amp;&amp;</span><span class="st"> </span>l[[<span class="dv">2</span>]]<span class="op">%in%</span><span class="kw">c</span>(<span class="dv">7</span>,<span class="dv">8</span>))))</span></code></pre></div>
+<pre><code>## mm[Grade=7,Grade=7] mm[Grade=7,Grade=8] mm[Grade=8,Grade=8] 
+##                  75                   0                  33</code></pre>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

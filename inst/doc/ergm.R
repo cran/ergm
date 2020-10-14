@@ -1,17 +1,17 @@
-## ----include=FALSE-------------------------------------------------------
+## ----include=FALSE------------------------------------------------------------
 library(knitr)
 opts_chunk$set(
 concordance=TRUE,
 error=FALSE
 )
 
-## ----include=FALSE-------------------------------------------------------
+## ----include=FALSE------------------------------------------------------------
 library(knitr)
 opts_chunk$set(
 width=6,fig.height=6
 )
 
-## ----foo,include=FALSE,echo=FALSE----------------------------------------
+## ----foo,include=FALSE,echo=FALSE---------------------------------------------
 
 foo <- packageDescription("ergm")
 

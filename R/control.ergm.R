@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution
 #
-#  Copyright 2003-2019 Statnet Commons
+#  Copyright 2003-2020 Statnet Commons
 #######################################################################
 #' Auxiliary for Controlling ERGM Fitting
 #' 
@@ -14,6 +14,8 @@
 #' This function is only used within a call to the [ergm()] function.
 #' See the \code{usage} section in [ergm()] for details.
 #' 
+#' @templateVar MCMCType MCMC
+#'
 #' @param drop Logical: If TRUE, terms whose observed statistic values are at
 #' the extremes of their possible ranges are dropped from the fit and their
 #' corresponding parameter estimates are set to plus or minus infinity, as
@@ -72,40 +74,48 @@
 #' estimation.
 #' @param main.hessian Logical: If TRUE, then an approximate Hessian matrix is
 #' used in the MCMC-based estimation method.
-#' @param MPLE.max.dyad.types Maximum number of unique values of change
-#' statistic vectors, which are the predictors in a logistic regression used to
-#' calculate the MPLE.  This calculation uses a compression algorithm that
-#' allocates space based on \code{MPLE.max.dyad.types}.
-#' @param MPLE.samplesize Not currently documented; used in
-#' conditional-on-degree version of MPLE.
+#'
+#' @param MPLE.samplesize,init.MPLE.samplesize,MPLE.max.dyad.types
+#'   These parameters control the maximum number of dyads (potential
+#'   ties) that will be used by the MPLE to construct the predictor
+#'   matrix for its logistic regression. In general, the algorithm
+#'   visits dyads in a systematic sample that, if it does not hit one
+#'   of these limits, will visit every informative dyad. If a limit is
+#'   exceeded, case-control approximation to the likelihood,
+#'   comprising all edges and those non-edges that have been visited
+#'   by the algorithm before the limit was exceeded will be used.
+#'
+#'   `MPLE.samplesize` limits the number of dyads visited, unless the
+#'   MPLE is being computed for the purpose of being the initial value
+#'   for MCMC-based estimation, in which case `init.MPLE.samplesize`
+#'   is used instead, `MPLE.max.dyad.types` limits the number of
+#'   unique values of change statistic vectors that will be
+#'   stored. All of these can be specified either as numbers or as
+#'   `function(d,e)` taking the number of informative dyads and
+#'   informative edges. Specifying or returning a larger number than
+#'   the number of informative dyads is safe.
+#'
 #' @param MPLE.type One of `"glm"` or `"penalized"`.  Chooses method of calculating
 #' MPLE.  `"glm"` is the usual formal logistic regression, whereas "penalized"
 #' uses the bias-reduced method of Firth (1993) as originally implemented by
 #' Meinhard Ploner, Daniela Dunkler, Harry Southworth, and Georg Heinze in the
 #' "logistf" package.
-#' @param MCMC.prop.weights,obs.MCMC.prop.weights Specifies the proposal
-#' distribution used in the MCMC Metropolis-Hastings algorithm.  Possible
-#' choices depending on selected \code{reference} and \code{constraints}
-#' arguments of the [ergm()] function, but often include \code{"TNT"}
-#' and \code{"random"}, and the \code{"default"} is to use the one with the
-#' highest priority available.
-#' 
-#' The \code{TNT} (tie / no tie) option puts roughly equal weight on selecting
-#' a dyad with or without a tie as a candidate for toggling, whereas the
-#' \code{random} option puts equal weight on all possible dyads, though the
-#' interpretation of \code{random} may change according to the constraints in
-#' place.  When no constraints are in place, the default is TNT, which appears
-#' to improve Markov chain mixing particularly for networks with a low edge
-#' density, as is typical of many realistic social networks.
-#' 
-#' \code{obs.MCMC.prop.weights}, if given separately, specifies the weights to
-#' be used for the constrained MCMC when missing dyads are present, defaulting
-#' to the same as \code{MCMC.prop.weights}.
-#' @param MCMC.prop.args,obs.MCMC.prop.args An alternative, direct way of
-#' specifying additional arguments to proposal. \code{obs.MCMC.prop.args}, if
-#' given separately, specifies the weights to be used for the constrained MCMC
-#' when missing dyads are present, defaulting to the same as
-#' \code{MCMC.prop.args}.
+#'
+#' @param
+#'   MPLE.nonident,MPLE.nonident.tol,MCMLE.nonident,MCMLE.nonident.tol
+#'   A rudimentary nonidentifiability/multicollinearity diagnostic. If
+#'   `MPLE.nonident.tol > 0`, test the MPLE covariate matrix or the CD
+#'   statistics matrix has linearly dependent columns via [QR
+#'   decomposition][qr] with tolerance `MPLE.nonident.tol`. This is
+#'   often (not always) indicative of a non-identifiable
+#'   (multicollinear) model. If nonidentifiable, depending on
+#'   `MPLE.nonident` issue a warning, an error, or a message
+#'   specifying the potentially redundant statistics. The
+#'   corresponding `MCMLE.*` arguments provide a similar diagnostic
+#'   for the unconstrained MCMC sample's estimating functions.
+#'
+#' @template control_MCMC_prop
+#'
 #' @param MCMC.interval Number of proposals between sampled statistics.
 #' Increasing interval will reduces the autocorrelation in the sample, and may
 #' increase the precision in estimates by reducing MCMC error, at the expense
@@ -128,7 +138,7 @@
 #' network statistics.  This matrix should have \code{MCMC.samplesize} rows.
 #' This matrix can be used directly by the \code{coda} package to assess MCMC
 #' convergence.
-#' @param MCMC.runtime.traceplot Logical: If TRUE, plot traceplots of the MCMC
+#' @param MCMC.runtime.traceplot Logical: If `TRUE`, plot traceplots of the MCMC
 #' sample after every MCMC MLE iteration.
 #' @param MCMC.init.maxedges,MCMC.max.maxedges These parameters
 #'   control how much space is allocated for storing edgelists for
@@ -189,8 +199,8 @@
 #' the MLE optimization. Note that by default, ergm uses \code{trust}, and
 #' falls back to \code{optim} only when \code{trust} fails.
 #' @param
-#' obs.MCMC.samplesize,obs.MCMC.burnin,obs.MCMC.interval,obs.MCMC.burnin.min
-#' Sample size, burnin, and interval parameters for the MCMC sampling used when
+#' obs.MCMC.prop.weights,obs.MCMC.prop.args,obs.MCMC.samplesize,obs.MCMC.burnin,obs.MCMC.interval,obs.MCMC.burnin.min
+#' Corresponding MCMC parameters and settings used for the constrained sample when
 #' unobserved data are present in the estimation routine.
 #'
 #' @param
@@ -203,8 +213,6 @@
 #'   value. `obs.MCMC.impute.default_density` similarly controls the
 #'   imputation density when number of non-missing dyads is too low.
 #' 
-#' @param MCMLE.check.degeneracy Logical: If TRUE, employ a check for model
-#' degeneracy.
 #' @param MCMLE.MCMC.precision,MCMLE.MCMC.max.ESS.frac
 #' \code{MCMLE.MCMC.precision} is a vector of upper bounds on the standard
 #' errors induced by the MCMC algorithm, expressed as a percentage of the total
@@ -244,6 +252,14 @@
 #' serve as the maximum step length considered. However, setting it to anything
 #' other than 1 will preclude using Hummel or precision as termination
 #' criteria.
+#'
+#' @param MCMLE.steplength.parallel Whether parallel multisection
+#'   search (as opposed to a bisection search) for the Hummel step
+#'   length should be used if running in multiple threads. Possible
+#'   values (partially matched) are `"always"`, `"never"`, and
+#'   (default) `"observational"` (i.e., when missing data MLE is
+#'   used).
+#'
 #' @param MCMLE.adaptive.trustregion Maximum increase the algorithm will allow
 #' for the approximated loglikelihood at a given iteration when
 #' \code{MCMLE.steplength="adaptive"}.
@@ -261,12 +277,12 @@
 #' error.
 #' @param MCMLE.last.boost For the Hummel termination criterion, increase the
 #' MCMC sample size of the last iteration by this factor.
-#' @param MCMLE.Hummel.esteq For curved ERGMs, should the estimating function
+#' @param MCMLE.steplength.esteq For curved ERGMs, should the estimating function
 #' values be used to compute the Hummel step length? This allows the Hummel
 #' stepping algorithm converge when some sufficient statistics are at 0.
 #' @param MCMLE.steplength.min Stops MCMLE estimation when the step length gets
 #' stuck below this minimum value.
-#' @param MCMLE.Hummel.miss.sample In fitting the missing data MLE, the rules
+#' @param MCMLE.steplength.miss.sample In fitting the missing data MLE, the rules
 #' for step length become more complicated. In short, it is necessary for
 #' \emph{all} points in the constrained sample to be in the convex hull of the
 #' unconstrained (though they may be on the border); and it is necessary for
@@ -274,7 +290,7 @@
 #' of points against whether they are in the convex hull, so to speed up the
 #' procedure, a sample is taken of the points most likely to be outside it.
 #' This parameter specifies the sample size.
-#' @param MCMLE.Hummel.maxit Maximum number of iterations in searching for the
+#' @param MCMLE.steplength.maxit Maximum number of iterations in searching for the
 #' best step length.
 #' 
 #' @param checkpoint At the start of every iteration, save the state
@@ -347,36 +363,15 @@
 #' value, as the network passed is not necessarily a good start for CD.
 #' Therefore, these settings are in effect if there are missing dyads in the
 #' observed network, using a higher default number of steps.
-#' @param CD.maxit,CD.conv.min.pval,CD.NR.maxit,CD.NR.reltol,
 #' 
-#' Miscellaneous tuning parameters of the CD sampler and optimizer. These have
-#' the same meaning as their \code{MCMC.*} counterparts.
+#' @param CD.maxit,CD.conv.min.pval,CD.NR.maxit,CD.NR.reltol,CD.metric,CD.method,CD.trustregion,CD.dampening,CD.dampening.min.ess,CD.dampening.level,CD.steplength.margin,CD.steplength,CD.steplength.parallel,CD.adaptive.trustregion,CD.adaptive.epsilon,CD.steplength.esteq,CD.steplength.miss.sample,CD.steplength.maxit,CD.steplength.min
+#'   Miscellaneous tuning parameters of the CD sampler and
+#'   optimizer. These have the same meaning as their `MCMLE.*` and
+#'   `MCMC.*` counterparts.
 #' 
-#' Note that only the Hotelling's stopping criterion is implemented for CD.
-#' @param CD.metric,CD.method,CD.trustregion,CD.dampening,CD.dampening.min.ess,
+#'   Note that only the Hotelling's stopping criterion is implemented
+#'   for CD.
 #' 
-#' Miscellaneous tuning parameters of the CD sampler and optimizer. These have
-#' the same meaning as their \code{MCMC.*} counterparts.
-#' 
-#' Note that only the Hotelling's stopping criterion is implemented for CD.
-#' @param
-#' CD.dampening.level,CD.steplength.margin,CD.steplength,CD.adaptive.trustregion,
-#' 
-#' Miscellaneous tuning parameters of the CD sampler and optimizer. These have
-#' the same meaning as their \code{MCMC.*} counterparts.
-#' 
-#' Note that only the Hotelling's stopping criterion is implemented for CD.
-#' @param CD.adaptive.epsilon,CD.Hummel.esteq,CD.Hummel.miss.sample,
-#' 
-#' Miscellaneous tuning parameters of the CD sampler and optimizer. These have
-#' the same meaning as their \code{MCMC.*} counterparts.
-#' 
-#' Note that only the Hotelling's stopping criterion is implemented for CD.
-#' @param CD.Hummel.maxit,CD.steplength.min Miscellaneous tuning parameters of
-#' the CD sampler and optimizer. These have the same meaning as their
-#' \code{MCMC.*} counterparts.
-#' 
-#' Note that only the Hotelling's stopping criterion is implemented for CD.
 #' @param loglik.control See \code{\link{control.ergm.bridge}}
 #' @template term_options
 #' @template control_MCMC_parallel
@@ -430,10 +425,13 @@ control.ergm<-function(drop=TRUE,
                        checkpoint=NULL,
                        resume=NULL,
 
-                       MPLE.max.dyad.types=1e+6, 
-                       MPLE.samplesize=50000,                       
+                       MPLE.max.dyad.types=1e+6,
+                       MPLE.samplesize=.Machine$integer.max,
+                       init.MPLE.samplesize=function(d,e) max(sqrt(d),e,40)*8,
                        MPLE.type=c("glm", "penalized"),
-                      
+                       MPLE.nonident=c("warning","message","error"),
+                       MPLE.nonident.tol=1e-10,
+
                        MCMC.prop.weights="default", MCMC.prop.args=list(),
                        MCMC.interval=1024,
                        MCMC.burnin=MCMC.interval*16,
@@ -483,7 +481,6 @@ control.ergm<-function(drop=TRUE,
                        obs.MCMC.impute.min_informative = function(nw) network.size(nw)/4,
                        obs.MCMC.impute.default_density = function(nw) 2/network.size(nw),
 
-                       MCMLE.check.degeneracy=FALSE,
                        MCMLE.MCMC.precision=0.005,
                        MCMLE.MCMC.max.ESS.frac=0.1,
                        MCMLE.metric=c("lognormal", "logtaylor",
@@ -496,18 +493,21 @@ control.ergm<-function(drop=TRUE,
                        MCMLE.dampening.level=0.1,
                        MCMLE.steplength.margin=0.05,
                        MCMLE.steplength=NVL2(MCMLE.steplength.margin, 1, 0.5),
+                       MCMLE.steplength.parallel=c("observational","always","never"),
                        MCMLE.adaptive.trustregion=3,
                        MCMLE.sequential=TRUE,
                        MCMLE.density.guard.min=10000,
                        MCMLE.density.guard=exp(3),
                        MCMLE.effectiveSize=NULL,
                        MCMLE.last.boost=4,
-                       MCMLE.Hummel.esteq=TRUE, 
-                       MCMLE.Hummel.miss.sample=100,
-                       MCMLE.Hummel.maxit=25, 
+                       MCMLE.steplength.esteq=TRUE, 
+                       MCMLE.steplength.miss.sample=100,
+                       MCMLE.steplength.maxit=25, 
                        MCMLE.steplength.min=0.0001,
                        MCMLE.effectiveSize.interval_drop=2,
                        MCMLE.save_intermediates=NULL,
+                       MCMLE.nonident=c("warning","message","error"),
+                       MCMLE.nonident.tol=1e-10,
 
                        SA.phase1_n=NULL, SA.initial_gain=NULL, 
                        SA.nsubphases=4,
@@ -545,10 +545,11 @@ control.ergm<-function(drop=TRUE,
                        CD.steplength=1,
                        CD.adaptive.trustregion=3,
                        CD.adaptive.epsilon=0.01,
-                       CD.Hummel.esteq=TRUE, 
-                       CD.Hummel.miss.sample=100,
-                       CD.Hummel.maxit=25, 
+                       CD.steplength.esteq=TRUE, 
+                       CD.steplength.miss.sample=100,
+                       CD.steplength.maxit=25, 
                        CD.steplength.min=0.0001,
+                       CD.steplength.parallel=c("observational","always","never"),
                        
                        loglik.control=control.logLik.ergm(),
 
@@ -561,7 +562,14 @@ control.ergm<-function(drop=TRUE,
                        
                        ...
                        ){
-  old.controls <- list(nr.maxit="MCMLE.NR.maxit",
+  old.controls <- list(CD.Hummel.esteq="CD.steplength.esteq",
+                       CD.Hummel.miss.sample="CD.steplength.miss.sample",
+                       CD.Hummel.maxit="CD.steplength.maxit",
+                       MCMLE.Hummel.esteq="MCMLE.steplength.esteq",
+                       MCMLE.Hummel.miss.sample="MCMLE.steplength.miss.sample",
+                       MCMLE.Hummel.maxit="MCMLE.steplength.maxit",
+
+                       nr.maxit="MCMLE.NR.maxit",
                        nr.reltol="MCMLE.NR.reltol",
                        maxNumDyadTypes="MPLE.max.dyad.types",
                        maxedges="MCMC.init.maxedges",
@@ -579,7 +587,6 @@ control.ergm<-function(drop=TRUE,
                        mcmc.precision="MCMLE.MCMC.precision",
                        method="MCMLE.method",
                        MPLEtype="MPLE.type",
-                       check.degeneracy="MCMLE.check.degeneracy",
                        MPLEsamplesize="MPLE.samplesize",
                        phase1_n="SA.phase1_n", initial_gain="SA.initial_gain", 
                        nsubphases="SA.nsubphases", niterations="SA.niterations", phase3_n="SA.phase3_n",
@@ -602,7 +609,7 @@ control.ergm<-function(drop=TRUE,
                        SAN.burnin.times="SAN.nsteps.times"
                        )
 
-  match.arg.pars <- c("MPLE.type","MCMLE.metric","MCMLE.method","main.method",'MCMLE.termination',"CD.metric","CD.method")
+  match.arg.pars <- c("MPLE.type","MCMLE.metric","MCMLE.method","main.method",'MCMLE.termination',"CD.metric","CD.method","MCMLE.steplength.parallel","CD.steplength.parallel","MPLE.nonident","MCMLE.nonident")
   
   control<-list()
   formal.args<-formals(sys.function())

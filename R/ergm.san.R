@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution
 #
-#  Copyright 2003-2019 Statnet Commons
+#  Copyright 2003-2020 Statnet Commons
 #######################################################################
 
 #' Use Simulated Annealing to attempt to match a network to a vector of mean
@@ -14,6 +14,46 @@
 #' This function attempts to find a network or networks whose statistics match
 #' those passed in via the \code{target.stats} vector.
 #' 
+#' @details Acceptance probabilities for proposed toggles are computed as 
+#'   we now describe.  There are two contributions: one from targeted
+#'   statistics and one from offsets.
+#'
+#' For the targeted statistics, a matrix of weights \code{W} is determined on 
+#'   each \code{san} iteration as follows.  On the first iteration, the matrix
+#'   \code{W} is the \code{n} by \code{n} identity matrix (\code{n} = number of
+#'   target statistics), divided by \code{n}.  On subsequent iterations: if 
+#'   \code{control$SAN.invcov.diag = FALSE} (the default), then the matrix 
+#'   \code{W} is the inverse of the covariance matrix of the targeted 
+#'   statistics, divided by the sum of its (the inverse's) diagonal;
+#'   if \code{control$SAN.invcov.diag = TRUE}, then \code{W} is the inverse 
+#'   of the diagonal (regarded as a matrix) of the covariance matrix of the 
+#'   targeted statistics, divided by the sum of its (the inverse's) diagonal.
+#'   In either of these two cases, the covariance matrix is computed based on 
+#'   proposals (not acceptances) made on the previous iteration, and the 
+#'   normalization for \code{W} is such that \code{sum(diag(W)) = 1}.  The 
+#'   component of the acceptance probability coming from the targeted statistics
+#'   is then computed for a given \code{W} as \code{exp([y.Wy - x.Wx]/T)} where 
+#'   \code{T} is the temperature, \code{y} the column vector of differences 
+#'   \code{network statistics - target statistics} computed before the current 
+#'   proposal is made, \code{x} the column vector of differences 
+#'   \code{network statistics - target statistics} computed assuming the current proposal 
+#'   is accepted, and \code{.} the dot product.  If \code{control$SAN.maxit > 1},
+#'   then on the \code{i}th iteration, the temperature \code{T} takes the value 
+#'   \code{control$SAN.tau * (1/i - 1/control$SAN.maxit)/(1 - 1/control$SAN.maxit)};
+#'   if \code{control$SAN.maxit = 1}, then the temperature \code{T} takes the 
+#'   value \code{0}.  Thus, \code{T} steps down from \code{control$SAN.tau} to
+#'   \code{0} and is always \code{0} on the final iteration.
+#'
+#' Offsets also contribute to the acceptance probability, as follows.  If 
+#'   \code{eta} are the canonical offsets and \code{Delta} the corresponding
+#'   change statistics for a given proposal, then the offset contribution to
+#'   the acceptance probability is simply \code{exp(eta.Delta)} where 
+#'   \code{.} denotes the dot product.  By default, finite offsets are ignored,
+#'   but this behavior can be changed by setting
+#'   \code{control$SAN.ignore.finite.offsets = FALSE}.
+#'
+#' The overall acceptance probability is the product of the targeted statistics
+#'   contribution and the offset contribution (with the product capped at one).
 #' 
 #' @param object Either a [`formula`] or an [`ergm`] object. The
 #'   [`formula`] should be of the form \code{y ~ <model terms>}, where
@@ -40,10 +80,8 @@ san.default <- function(object,...)
 }
 #' @describeIn san Sufficient statistics are specified by a [`formula`].
 #' 
-#' @param response Name of the edge attribute whose value
-#' is to be modeled. Defaults to \code{NULL} for simple presence or absence.
-#' @param reference One-sided formula whose RHS gives the
-#' reference measure to be used. (Defaults to \code{~Bernoulli}.)
+#' @template response
+#' @template reference
 #' @param formula (By default, the \code{formula} is taken from the \code{ergm}
 #' object.  If a different \code{formula} object is wanted, specify it here.
 #' @param constraints A one-sided formula specifying one or more constraints on
@@ -53,7 +91,7 @@ san.default <- function(object,...)
 #' \code{simulate.formula}, defaults to no constraints. For
 #' \code{simulate.ergm}, defaults to using the same constraints as those with
 #' which \code{object} was fitted.
-#' @param target.stats A vector of the same length as the number of terms
+#' @param target.stats A vector of the same length as the number of non-offset statistics
 #' implied by the formula, which is either \code{object} itself in the case of
 #' \code{san.formula} or \code{object$formula} in the case of \code{san.ergm}.
 #' @param nsim Number of networks to generate. Deprecated: just use [replicate()].
@@ -69,6 +107,11 @@ san.default <- function(object,...)
 #' @param control A list of control parameters for algorithm tuning; see
 #' \code{\link{control.san}}.
 #' @param verbose Logical or numeric giving the level of verbosity. Higher values produce more verbose output.
+#' @param offset.coef A vector of offset coefficients; these must be passed in by the user.  
+#' Note that these should be the same set of coefficients one would pass to \code{ergm} via 
+#' its \code{offset.coef} argument.  For example, if one has a curved \code{offset(gwesp)} 
+#' term in the model, then the \code{decay} parameter should \emph{not} be passed in via 
+#' \code{offset.coef}.
 #' @param \dots Further arguments passed to other functions.
 #' @examples
 #' \donttest{
@@ -124,9 +167,13 @@ san.formula <- function(object, response=NULL, reference=~Bernoulli, constraints
                         output=c("network","edgelist","pending_update_network"),
                         only.last=TRUE,
                         control=control.san(),
-                        verbose=FALSE, ...) {
+                        verbose=FALSE, 
+                        offset.coef=NULL,
+                        ...) {
   check.control.class("san", "san")
   control.toplevel(...,myname="san")
+
+  output <- match.arg(output)
 
   formula <- object
 
@@ -151,7 +198,24 @@ san.formula <- function(object, response=NULL, reference=~Bernoulli, constraints
   proposal<-ergm_proposal(constraints,arguments=control$SAN.prop.args,nw=nw,weights=control$SAN.prop.weights, class="c",reference=reference,response=response)
   model <- ergm_model(formula, nw, response=response, term.options=control$term.options)
     
-  san(model, response=response, reference=reference, constraints=proposal, target.stats=target.stats, nsim=nsim, basis=nw, output=output, only.last=only.last, control=control, verbose=verbose, ...)
+  ## need to extract post-reviseinit theta offsets here
+  model.initial <- ergm_model(formula, nw, response=response, initialfit=TRUE, term.options=control$term.options)  
+  
+  if(length(offset.coef) != sum(model.initial$etamap$offsettheta)) {
+    stop("Length of ", sQuote("offset.coef"), " in SAN is ", length(offset.coef), ", while the number of offset coefficients in the model is ", sum(model.initial$etamap$offsettheta), ".")  
+  }
+  
+  if(any(is.na(offset.coef))) {
+    stop("Missing offset coefficients passed to SAN.")
+  }
+  
+  init.coefs <- numeric(nparam(model.initial, canonical=FALSE))
+  names(init.coefs) <- param_names(model.initial)
+  init.coefs[model.initial$etamap$offsettheta] <- offset.coef
+  coefs <- ergm.reviseinit(model, init.coefs)
+  offset.coef <- coefs[model$etamap$offsettheta]
+    
+  san(model, response=response, reference=reference, constraints=proposal, target.stats=target.stats, nsim=nsim, basis=nw, output=output, only.last=only.last, control=control, verbose=verbose, offset.coef=offset.coef, ...)
 }
 
 #' @describeIn san A lower-level function that expects a pre-initialized [`ergm_model`].
@@ -161,7 +225,9 @@ san.ergm_model <- function(object, response=NULL, reference=~Bernoulli, constrai
                            output=c("network","edgelist","pending_update_network"),
                            only.last=TRUE,
                            control=control.san(),
-                           verbose=FALSE, ...) {
+                           verbose=FALSE, 
+                           offset.coef=NULL,
+                           ...) {
   check.control.class("san", "san")
   control.toplevel(...,myname="san")
 
@@ -181,7 +247,9 @@ san.ergm_model <- function(object, response=NULL, reference=~Bernoulli, constrai
                                      output=output,
                                      only.last=only.last,
                                      control=control,
-                                     verbose=verbose, ...)),
+                                     verbose=verbose,
+                                     offset.coef=offset.coef,
+                                     ...)),
                        class="network.list"))
     }
   }
@@ -200,9 +268,27 @@ san.ergm_model <- function(object, response=NULL, reference=~Bernoulli, constrai
   }
 
   proposal <- if(inherits(constraints, "ergm_proposal")) constraints
-              else ergm_proposal(constraints,arguments=control$MCMC.prop.args,
-                                 nw=nw, weights=control$MCMC.prop.weights, class="c",reference=reference,response=response)
+              else ergm_proposal(constraints,arguments=control$SAN.prop.args,
+                                 nw=nw, weights=control$SAN.prop.weights, class="c",reference=reference,response=response)
+
+  ## we have the post-reviseinit offset thetas
+  ## need to remap them to etas using ergm.eta
+  ## then just keep the offsets because we don't
+  ## care about the non-offset coefs
+  coefs <- numeric(nparam(model, canonical=FALSE))
+  coefs[model$etamap$offsettheta] <- offset.coef
+  etas <- ergm.eta(coefs, model$etamap)
   
+  
+  offset.indicators <- model$etamap$offsetmap
+  
+  offsetindices <- which(offset.indicators)
+  statindices <- which(!offset.indicators)
+  offsets <- etas[offset.indicators]
+  if(control$SAN.ignore.finite.offsets) offsets[is.finite(offsets)] <- 0
+  
+  noffset <- sum(offset.indicators)
+    
   Clist <- ergm.Cprepare(nw, model, response=response)
   
   if (verbose) {
@@ -211,10 +297,10 @@ san.ergm_model <- function(object, response=NULL, reference=~Bernoulli, constrai
         " steps", ifelse(control$SAN.maxit>1, " each", ""), ".", sep=""))
   }
   maxedges <- max(control$SAN.init.maxedges, Clist$nedges)
-  netsumm<-summary(model,nw,response=response)
+  netsumm <- summary(model,nw,response=response)[!offset.indicators]
   target.stats <- vector.namesmatch(target.stats, names(netsumm))
   stats <- netsumm-target.stats
-  control$invcov <- diag(1/nparam(model, canonical=TRUE), nparam(model, canonical=TRUE))
+  control$invcov <- diag(1/(nparam(model, canonical=TRUE) - noffset), nparam(model, canonical=TRUE) - noffset)
 
   nstepss <-
     (if(is.function(control$SAN.nsteps.alloc)) control$SAN.nsteps.alloc(control$SAN.maxit) else control$SAN.nsteps.alloc) %>%
@@ -231,7 +317,11 @@ san.ergm_model <- function(object, response=NULL, reference=~Bernoulli, constrai
     tau <- control$SAN.tau * (if(control$SAN.maxit>1) (1/i-1/control$SAN.maxit)/(1-1/control$SAN.maxit) else 0)
     nsteps <- nstepss[i]
     
-    z <- ergm_SAN_slave(Clist, proposal, stats, tau, control, verbose,..., prev.run=z, nsteps=nsteps)
+    # if we have (essentially) zero temperature, need to zero out the finite offsets for the C code to work properly,
+    # even if control$SAN.ignore.finite.offsets is FALSE
+    if(abs(tau) < .Machine$double.eps) offsets[is.finite(offsets)] <- 0
+    
+    z <- ergm_SAN_slave(Clist, proposal, stats, tau, control, verbose,..., prev.run=z, nsteps=nsteps, statindices=statindices, offsetindices=offsetindices, offsets=offsets)
 
     if(z$status!=0) stop("Error in SAN.")
     
@@ -271,7 +361,7 @@ san.ergm_model <- function(object, response=NULL, reference=~Bernoulli, constrai
       out.mat <- z$s
       attr(out.mat, "W") <- invcov
     }else{
-      if(i<control$SAN.maxit && isTRUE(all.equal(stats, numeric(length(stats))))){
+      if(i<control$SAN.maxit && isTRUE(all.equal(unname(stats), numeric(length(stats))))){
         if(verbose) message("Target statistics matched exactly.")
         break
       }
@@ -289,8 +379,7 @@ san.ergm_model <- function(object, response=NULL, reference=~Bernoulli, constrai
   }
 }
 
-#' @describeIn san Sufficient statistics and other settings are
-#'   inherited from the [`ergm`] fit unless overridden.
+#' @describeIn ergm-deprecated The developers are not aware of a use case for this function. Please contact them if you would like to prevent its removal.
 #' @export
 san.ergm <- function(object, formula=object$formula, 
                      constraints=object$constraints, 
@@ -299,7 +388,11 @@ san.ergm <- function(object, formula=object$formula,
                      output=c("network","edgelist","pending_update_network"),
                      only.last=TRUE,
                      control=object$control$SAN.control,
-                     verbose=FALSE, ...) {
+                     verbose=FALSE, 
+                     offset.coef=NULL,
+                     ...) {
+  .Deprecate_once('The developers are not aware of a use case for this function. Please contact them if you would like to prevent its removal.')
+  output <- match.arg(output)
   san.formula(formula, nsim=nsim, 
               target.stats=target.stats,
               basis=basis,
@@ -307,10 +400,11 @@ san.ergm <- function(object, formula=object$formula,
               output=output,
               constraints=constraints,
               control=control,
-              verbose=verbose, ...)
+              verbose=verbose, 
+              offset.coef=offset.coef, ...)
 }
 
-ergm_SAN_slave <- function(Clist,proposal,stats,tau,control,verbose,...,prev.run=NULL, nsteps=NULL, samplesize=NULL, maxedges=NULL) {
+ergm_SAN_slave <- function(Clist,proposal,stats,tau,control,verbose,...,prev.run=NULL, nsteps=NULL, samplesize=NULL, maxedges=NULL, statindices=NULL, offsetindices=NULL, offsets=NULL) {
   if(is.null(prev.run)){ # Start from Clist
     nedges <- c(Clist$nedges,0,0)
     tails <- Clist$tails
@@ -340,7 +434,7 @@ ergm_SAN_slave <- function(Clist,proposal,stats,tau,control,verbose,...,prev.run
               as.character(Clist$fnamestring),
               as.character(Clist$snamestring),
               as.character(proposal$name), as.character(proposal$pkgname),
-              as.double(c(Clist$inputs,proposal$inputs)), as.double(.deinf(tau)),
+              as.double(c(Clist$inputs,proposal$inputs)), as.double(deInf(tau)),
               s = as.double(c(stats, numeric(length(stats)*(samplesize-1)))), s.prop = double(length(stats)*samplesize),
               as.integer(samplesize),
               as.integer(nsteps), 
@@ -353,10 +447,15 @@ ergm_SAN_slave <- function(Clist,proposal,stats,tau,control,verbose,...,prev.run
               as.integer(proposal$arguments$constraints$bd$condAllDegExact), as.integer(length(proposal$arguments$constraints$bd$attribs)),
               as.integer(maxedges),
               status = integer(1),
+              nstats=as.integer(length(statindices)),
+              statindices=as.integer(statindices - 1),
+              noffsets=as.integer(length(offsetindices)),
+              offsetindices=as.integer(offsetindices - 1),
+              offsets=as.double(deInf(offsets)),
               PACKAGE="ergm")
       
         # save the results (note that if prev.run is NULL, c(NULL$s,z$s)==z$s.
-      z<-list(s=matrix(z$s, ncol=Clist$nstats, byrow = TRUE), s.prop=matrix(z$s.prop, ncol=Clist$nstats, byrow = TRUE),
+      z<-list(s=matrix(z$s, ncol=length(statindices), byrow = TRUE), s.prop=matrix(z$s.prop, ncol=length(statindices), byrow = TRUE),
                 newnwtails=z$newnwtails, newnwheads=z$newnwheads, status=z$status, maxedges=maxedges)
     }else{
       z <- .C("WtSAN_wrapper",
@@ -368,7 +467,7 @@ ergm_SAN_slave <- function(Clist,proposal,stats,tau,control,verbose,...,prev.run
               as.character(Clist$fnamestring),
               as.character(Clist$snamestring),
               as.character(proposal$name), as.character(proposal$pkgname),
-              as.double(c(Clist$inputs,proposal$inputs)), as.double(.deinf(tau)),
+              as.double(c(Clist$inputs,proposal$inputs)), as.double(deInf(tau)),
               s = as.double(c(stats, numeric(length(stats)*(samplesize-1)))), s.prop = double(length(stats)*samplesize),
               as.integer(samplesize),
               as.integer(nsteps), 
@@ -379,9 +478,14 @@ ergm_SAN_slave <- function(Clist,proposal,stats,tau,control,verbose,...,prev.run
               as.integer(verbose), 
               as.integer(maxedges),
               status = integer(1),
+              nstats=as.integer(length(statindices)),
+              statindices=as.integer(statindices - 1),
+              noffsets=as.integer(length(offsetindices)),
+              offsetindices=as.integer(offsetindices - 1),
+              offsets=as.double(deInf(offsets)),              
               PACKAGE="ergm")
       # save the results
-      z<-list(s=matrix(z$s, ncol=Clist$nstats, byrow = TRUE), s.prop=matrix(z$s.prop, ncol=Clist$nstats, byrow = TRUE),
+      z<-list(s=matrix(z$s, ncol=length(statindices), byrow = TRUE), s.prop=matrix(z$s.prop, ncol=length(statindices), byrow = TRUE),
               newnwtails=z$newnwtails, newnwheads=z$newnwheads, newnwweights=z$newnwweights, status=z$status, maxedges=maxedges)
     }
 
@@ -396,7 +500,7 @@ ergm_SAN_slave <- function(Clist,proposal,stats,tau,control,verbose,...,prev.run
     if(!is.null(control$SAN.max.maxedges)){
       if(maxedges == control$SAN.max.maxedges*10) # True iff the previous maxedges exactly equaled control$SAN.max.maxedges and that was too small.
         return(z) # This will kick the too many edges problem upstairs, so to speak.
-      maxedges <- min(maxedges, control$MCMC.max.maxedges)
+      maxedges <- min(maxedges, control$SAN.max.maxedges)
     }
   }
 }

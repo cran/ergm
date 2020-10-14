@@ -4,7 +4,8 @@
 \name{faux.desert.high}
 \alias{faux.desert.high}
 \title{Faux desert High School as a network object}
-\format{\code{faux.desert.high} is a \code{\link[network]{network}} object
+\format{
+\code{faux.desert.high} is a \code{\link[network]{network}} object
 with 107 vertices (students, in this case) and 439 directed edges
 (friendship nominations). To obtain additional summary information about it,
 type \code{summary(faux.desert.high)}.
@@ -14,7 +15,8 @@ The vertex attributes are \code{Grade}, \code{Sex}, and \code{Race}. The
 grade in school.  The \code{Race} attribute is based on the answers to two
 questions, one on Hispanic identity and one on race, and takes six possible
 values: White (non-Hisp.), Black (non-Hisp.), Hispanic, Asian (non-Hisp.),
-Native American, and Other (non-Hisp.)}
+Native American, and Other (non-Hisp.)
+}
 \source{
 The data set is simulation based upon an ergm model fit to data from
 one school community from the AddHealth Study, Wave I (Resnick et al.,
@@ -23,7 +25,7 @@ one school community from the AddHealth Study, Wave I (Resnick et al.,
 The school in question (a single school with 7th through 12th grades) was
 selected from the Add Health "structure files."  Documentation on these
 files can be found here:
-\url{https://www.cpc.unc.edu/projects/addhealth/codebooks/wave1/structur.zip}.
+\url{https://addhealth.cpc.unc.edu/documentation/codebooks/}.
 
 The stucture file contains directed out-ties representing each instance of a
 student who named another student as a friend.  Students could nominate up

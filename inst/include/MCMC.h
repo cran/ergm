@@ -5,24 +5,16 @@
  *  open source, and has the attribution requirements (GPL Section 7) at
  *  https://statnet.org/attribution
  *
- *  Copyright 2003-2019 Statnet Commons
+ *  Copyright 2003-2020 Statnet Commons
  */
 #ifndef _MCMC_H_
 #define _MCMC_H_
 
+#include "ergm_constants.h"
 #include "ergm_edgetree.h"
 #include "ergm_changestat.h"
 #include "ergm_MHproposal.h"
 #include "ergm_model.h"
-
-// TODO: This might be worth moving into a common "constants.h".
-typedef enum MCMCStatus_enum {
-  MCMC_OK = 0,
-  MCMC_TOO_MANY_EDGES = 1,
-  MCMC_MH_FAILED = 2
-} MCMCStatus;
-
-/* *** don't forget tail-> head, so this function accepts tails first, not heads  */
 
 void MCMC_wrapper(int *dnedges,
 		  int *tails, int *heads,

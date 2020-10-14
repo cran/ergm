@@ -5,7 +5,7 @@
 %  open source, and has the attribution requirements (GPL Section 7) at
 %  https://statnet.org/attribution
 %
-%  Copyright 2003-2019 Statnet Commons
+%  Copyright 2003-2020 Statnet Commons
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{ergm-terms}
 \alias{ergm-terms}
@@ -24,6 +24,7 @@
 \alias{b1cov}
 \alias{b1degrange}
 \alias{b1degree}
+\alias{b1dsp}
 \alias{b1factor}
 \alias{b1mindegree}
 \alias{b1nodematch}
@@ -35,6 +36,7 @@
 \alias{b2cov}
 \alias{b2degrange}
 \alias{b2degree}
+\alias{b2dsp}
 \alias{b2factor}
 \alias{b2mindegree}
 \alias{b2nodematch}
@@ -73,7 +75,9 @@
 \alias{equalto}
 \alias{greaterthan}
 \alias{gwb1degree}
+\alias{gwb1dsp}
 \alias{gwb2degree}
+\alias{gwb2dsp}
 \alias{gwdegree}
 \alias{gwdsp}
 \alias{gwesp}
@@ -88,6 +92,7 @@
 \alias{idegreepopularity}
 \alias{ininterval}
 \alias{intransitive}
+\alias{isolatededges}
 \alias{isolates}
 \alias{istar}
 \alias{kstar}
@@ -159,7 +164,7 @@
 
 % levels= arguments
 
-\newcommand{\LevelsExplain}{The optional \code{levels} argument controls which levels of the attribute should be included and which should be excluded. (See \link[=node-attr]{Specifying Vertex Attributes and Levels} for details.) For example, if the \dQuote{fruit} attribute has levels \dQuote{orange}, \dQuote{apple}, \dQuote{banana}, and \dQuote{pear}, then to include just two levels, one for \dQuote{apple} and one for \dQuote{pear}, use any of \code{#1("fruit", levels=-(2:3))}, \code{#1("fruit", levels=c(1,4))}, and \code{#1("fruit", levels=c("apple", "pear"))}.}
+\newcommand{\LevelsExplain}{The optional \code{levels} argument controls which levels of the attribute should be included and which should be excluded. (See \link[=nodal_attributes]{Specifying Vertex Attributes and Levels} for details.) For example, if the \dQuote{fruit} attribute has levels \dQuote{orange}, \dQuote{apple}, \dQuote{banana}, and \dQuote{pear}, then to include just two levels, one for \dQuote{apple} and one for \dQuote{pear}, use any of \code{#1("fruit", levels=-(2:3))}, \code{#1("fruit", levels=c(1,4))}, and \code{#1("fruit", levels=c("apple", "pear"))}. Note: if you are using numeric values to specify the levels of a character variable, the levels will correspond to the alphabetically sorted character levels.}
 
 \newcommand{\LevelsAll}{By default, all levels are included.}
 
@@ -177,9 +182,11 @@
 
 % Shared partner types
 
-\newcommand{\SPTypes}{While there is only one shared partner configuration in the undirected case, nine distinct configurations are possible for directed graphs, selected using the \code{type} argument. Currently, terms may be defined with respect to five of these configurations; they are defined here as follows (using terminology from Butts (2008) and the \code{relevent} package): \describe{ \item{Outgoing Two-path (\code{"OTP"})}{vertex \eqn{k} is an OTP shared partner of ordered pair \eqn{(i,j)} iff \eqn{i \to k \to j}{i->k->j}. Also known as "transitive shared partner".}  \item{Incoming Two-path (\code{"ITP"})}{vertex \eqn{k} is an ITP shared partner of ordered pair \eqn{(i,j)} iff \eqn{j \to k \to i}{j->k->i}. Also known as "cyclical shared partner"} \item{Outgoing Shared Partner (\code{"OSP"})}{vertex \eqn{k} is an OSP shared partner of ordered pair \eqn{(i,j)} iff \eqn{i \to k, j \to k}{i->k, j->k}.}  \item{Incoming Shared Partner (\code{"ISP"})}{vertex \eqn{k} is an ISP shared partner of ordered pair \eqn{(i,j)} iff \eqn{k \to i, k \to j}{k->i, k->j}.}} By default, outgoing two-paths (\code{"OTP"}) are calculated. Note that Robins et al. (2009) define closely related statistics to several of the above, using slightly different terminology.}
+\newcommand{\SPTypes}{While there is only one shared partner configuration in the undirected case, nine distinct configurations are possible for directed graphs, selected using the \code{type} argument. Currently, terms may be defined with respect to five of these configurations; they are defined here as follows (using terminology from Butts (2008) and the \code{relevent} package): \describe{ \item{Outgoing Two-path (\code{"OTP"})}{vertex \eqn{k} is an OTP shared partner of ordered pair \eqn{(i,j)} iff \eqn{i \to k \to j}{i->k->j}. Also known as "transitive shared partner".}  \item{Incoming Two-path (\code{"ITP"})}{vertex \eqn{k} is an ITP shared partner of ordered pair \eqn{(i,j)} iff \eqn{j \to k \to i}{j->k->i}. Also known as "cyclical shared partner"} \item{Reciprocated Two-path (\code{"RTP"})}{vertex \eqn{k} is an RTP shared partner of ordered pair \eqn{(i,j)} iff \eqn{i \leftrightarrow k \leftrightarrow j}{i<->k<->j}.} \item{Outgoing Shared Partner (\code{"OSP"})}{vertex \eqn{k} is an OSP shared partner of ordered pair \eqn{(i,j)} iff \eqn{i \to k, j \to k}{i->k, j->k}.}  \item{Incoming Shared Partner (\code{"ISP"})}{vertex \eqn{k} is an ISP shared partner of ordered pair \eqn{(i,j)} iff \eqn{k \to i, k \to j}{k->i, k->j}.}} By default, outgoing two-paths (\code{"OTP"}) are calculated. Note that Robins et al. (2009) define closely related statistics to several of the above, using slightly different terminology.}
 
 \newcommand{\GWCutoff}{The optional argument \code{cutoff} sets the number of underlying #1 terms to use in computing the statistics when \code{fixed=FALSE}, in order to reduce the computational burden.  Its default value can also be controlled by the \code{gw.cutoff} term option control parameter. (See \code{\link{control.ergm}}.)}
+
+\newcommand{\SPtoDSP}{For directed networks, only outgoing two-path ("OTP") shared partners are counted.  In other words, for a #2 in a directed graph, the number of shared partners counted by \code{#1} is the number of nodes \code{k} that have edges \code{i -> k -> j}.  (These may also be called homogeneous shared partners.)  To count other types of shared partners instead, see \code{#3}.}
 
 \title{Terms used in Exponential Family Random Graph Models}
 \description{
@@ -258,7 +265,7 @@
   themselves.
 
   Both \code{levels} and \code{nodes} use the new level
-  selection UI. (See \link[=node-attr]{Specifying Vertex Attributes and
+  selection UI. (See \link[=nodal_attributes]{Specifying Vertex Attributes and
     Levels} for details.)
 
   \subsection{Legacy arguments}{
@@ -319,7 +326,7 @@
     %%beginTerms%%
     \item{\code{absdiff(attr, pow=1)}  (binary)  (dyad-independent)  (frequently-used)  (directed)  (undirected) (quantitative nodal attribute),
       \code{absdiff(attr, pow=1, form ="sum")}  (valued)  (dyad-independent) (directed)  (undirected) (quantitative nodal attribute)}{\emph{Absolute difference:}
-      The \code{attr} argument specifies a quantitative attribute (see \link[=node-attr]{Specifying Vertex
+      The \code{attr} argument specifies a quantitative attribute (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels} for details). This term adds one network statistic to the model equaling the
       sum of \code{abs(attr[i]-attr[j])^pow} for all edges (i,j)
       in the network.
@@ -329,13 +336,13 @@
     \item{\code{absdiffcat(attr, base=NULL, levels=NULL)}  (binary) (dyad-independent) (directed) (undirected) (categorical nodal attribute),
       \code{absdiffcat(attr, base=NULL, levels=NULL, form="sum")}  (valued)  (dyad-independent)   (directed)  (undirected) (categorical nodal attribute)}{\emph{Categorical absolute
 	difference:}
-      The \code{attr} argument specifies a quantitative attribute (see \link[=node-attr]{Specifying Vertex
+      The \code{attr} argument specifies a quantitative attribute (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels} for details). This term
       adds one statistic for every possible nonzero distinct value of
       \code{abs(attr[i]-attr[j])} in the network; the value of each such
       statistic is the number of edges in the network with the corresponding
       absolute difference. The optional argument \code{levels} specifies which
-      nonzero differences to include in or exclude from the model (see \link[=node-attr]{Specifying Vertex
+      nonzero differences to include in or exclude from the model (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels} for details). For example, if the possible values of
       \code{abs(attr[i]-attr[j])} are 0, 0.5, 3, 3.5, and 10, then to omit
       0.5 and 10 one could set \code{levels=2:3} (we wish to retain the second and third nonzero difference,
@@ -369,7 +376,7 @@
       number of pairs of actors for which exactly one of
       \eqn{(i{\rightarrow}j)}{(i,j)} or \eqn{(j{\rightarrow}i)}{(j,i)} exists.
       \Directed The optional argument
-      \code{attr} specifies a vertex attribute (see \link[=node-attr]{Specifying Vertex
+      \code{attr} specifies a vertex attribute (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels} for details).  If \code{attr} is specified, only asymmetric pairs that match on the
       vertex attribute \code{attr} are counted. The optional modifiers
       \code{diff} and \code{levels} are used in the same way as for the \code{nodematch} term; refer
@@ -393,7 +400,7 @@
       network statistic to the model, equal to the number of nodes in the first
       mode of the network with degree 2 or higher. The first mode of a bipartite
       network object is sometimes known as the "actor" mode. The optional argument
-      \code{by} specifies a vertex attribute (see \link[=node-attr]{Specifying Vertex
+      \code{by} specifies a vertex attribute (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels} for details);
       it functions just like the \code{by} argument of the \code{b1degree} term.
       Without the optional argument, this statistic is equivalent to \code{b1mindegree(2)}.
@@ -404,7 +411,7 @@
       \code{b1cov(attr, form="sum")}  (valued)  (undirected) (bipartite) (dyad-independent) (quantitative nodal attribute) (frequently-used)
     }{\emph{Main effect of a covariate for
 	the first mode in a bipartite (aka two-mode) network:}
-      The \code{attr} argument specifies one or more quantitative attributes (see \link[=node-attr]{Specifying Vertex
+      The \code{attr} argument specifies one or more quantitative attributes (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels} for details).  This term adds a single network statistic for each quantitative attribute or matrix column to the model equaling the total
       value of \code{attr(i)} for all edges \eqn{(i,j)} in the network. This
       term may only be used with bipartite networks. For categorical attributes,
@@ -426,7 +433,7 @@
       \code{from[i]} but strictly less than \code{to[i]}, i.e. with
       edge count
       in semiopen interval \code{[from,to)}. The optional argument
-      \code{by} specifies a vertex attribute (see \link[=node-attr]{Specifying Vertex
+      \code{by} specifies a vertex attribute (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels} for details).
       If this is specified and \code{homophily} is \code{TRUE},
       then degrees are calculated using the subnetwork consisting of only
@@ -449,18 +456,25 @@
       nodes of degree \code{d[i]} in the first mode of a bipartite network, i.e.
       with exactly \code{d[i]} edges. The first mode of a bipartite network object
       is sometimes known as the "actor" mode. The optional argument \code{by} specifies
-      a vertex attribute (see \link[=node-attr]{Specifying Vertex
+      a vertex attribute (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels} for details). If this is specified
       then each node's degree is tabulated only with other nodes having the same
       value of the \code{by} attribute.
 
       \Bipartite}
 
+    \item{\code{b1dsp(d)}  (binary)  (bipartite) (undirected)}{\emph{Dyadwise shared partners for dyads in the first bipartition:}
+      The \code{d} argument is a vector of distinct integers. This term adds one
+      network statistic to the model for each element in \code{d}; the \eqn{i}th
+      such statistic equals the number of dyads in the first bipartition with exactly
+      \code{d[i]} shared partners.  (Those shared partners, of course, must be members 
+      of the second bipartition.)  This term can only be used with bipartite networks.}
+
     \item{\code{b1factor(attr, base=1, levels=-1)}  (binary)  (bipartite) (undirected)  (dyad-independent) (frequently-used) (categorical nodal attribute),
       \code{b1factor(attr, base=1, levels=-1, form="sum")}  (valued)  (bipartite)  (undirected)  (dyad-independent) (frequently-used) (categorical nodal attribute)
     }{\emph{Factor attribute effect for
 	the first mode in a bipartite (aka two-mode) network:}
-      The \code{attr} argument specifies a categorical vertex attribute (see \link[=node-attr]{Specifying Vertex
+      The \code{attr} argument specifies a categorical vertex attribute (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels} for details). This term adds
       multiple network statistics to the model, one for each of (a subset of) the
       unique values of the \code{attr} attribute. Each of these statistics
@@ -490,7 +504,7 @@
     }{\emph{Nodal attribute-based homophily effect for
 	the first mode in a bipartite (aka two-mode) network:}  This term is introduced
       in Bomiriya et al (2014).
-      The \code{attr} argument specifies a categorical vertex attribute (see \link[=node-attr]{Specifying Vertex
+      The \code{attr} argument specifies a categorical vertex attribute (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels} for details). Out of the two arguments
       (discount parameters) \code{alpha} and \code{beta}, both of which take values from [0,1],
       only one should be set at a time. If none is set to a value other than 1, this term will
@@ -522,7 +536,7 @@
       ties of that node.  By default, \code{nodes=-1} means that the statistic for the
       first node will be omitted, but this argument may be changed to control
       which statistics are included.  The \code{nodes} argument is interpreted using the new UI for level specification
-      (see \link[=node-attr]{Specifying Vertex Attributes and Levels} for details), where both the attribute and the sorted
+      (see \link[=nodal_attributes]{Specifying Vertex Attributes and Levels} for details), where both the attribute and the sorted
       unique values are the vector of vertex indices \code{1:nb1}, where
       \code{nb1} is the size of the first bipartition.  This term can only be used with
       bipartite networks.  For directed networks, see \code{sender} and
@@ -538,43 +552,39 @@
       the "actor" mode. A \eqn{k}-star is defined to be a center node \eqn{N} and
       a set of \eqn{k} different nodes \eqn{\{O_1, \dots, O_k\}}{\{O[1], ..., O[k]\}} such that the
       ties \eqn{\{N, O_i\}}{\{N, O[i]\}} exist for \eqn{i=1, \dots, k}. The optional argument
-      \code{attr} specifies a vertex attribute (see \link[=node-attr]{Specifying Vertex
+      \code{attr} specifies a vertex attribute (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels} for details). If this is specified then the count is over
       the number of \eqn{k}-stars (with center node in the first mode) where all
       nodes have the same value of the attribute. This term can only be used for
       undirected bipartite networks. Note that \code{b1star(1)} is equal to
       \code{b2star(1)} and to \code{edges}.}
 
-    \item{\code{b1starmix(k, attrname, base=NULL, diff=TRUE, levels=NULL)}  (binary)  (bipartite)  (undirected) (categorical nodal attribute)
+    \item{\code{b1starmix(k, attr, base=NULL, diff=TRUE)}  (binary)  (bipartite)  (undirected) (categorical nodal attribute)
     }{\emph{ Mixing
 	matrix for k-stars centered on the first mode of a bipartite network:} Only
       a single value of \eqn{k} is allowed. This term counts all k-stars in which
       the b2 nodes (called events in some contexts) are homophilous in the sense
-      that they all share the same value of \code{attrname}. However, the b1 node
+      that they all share the same value of \code{attr}. However, the b1 node
       (in some contexts, the actor) at the center of the k-star does NOT have to
       have the same value as the b2 nodes; indeed, the values taken by the b1
       nodes may be completely distinct from those of the b2 nodes, which allows
       for the use of this term in cases where there are two separate nodal
       attributes, one for the b1 nodes and another for the b2 nodes (in this case,
       however, these two attributes should be combined to form a single nodal
-      attribute called \code{attrname}. A different statistic is created for each
-      value of \code{attrname} seen in a b1 node, even if no k-stars are observed
+      attribute, \code{attr}). A different statistic is created for each
+      value of \code{attr} seen in a b1 node, even if no k-stars are observed
       with this value. Whether a different statistic is created for each value
       seen in a b2 node depends on the value of the \code{diff} argument: When
       \code{diff=TRUE}, the default, a different statistic is created for each
       value and thus the behavior of this term is reminiscent of the
       \code{nodemix} term, from which it takes its name; when \code{diff=FALSE},
       all homophilous k-stars are counted together, though these k-stars are still
-      categorized according to the value of the central b1 node.
-
-      \LevelsExplain{b1starmix}  By default, all levels are included.
-
-      \BaseDep}
+      categorized according to the value of the central b1 node.}
 
     \item{\code{b1twostar(b1attr, b2attr, base=NULL, b1levels=NULL, b2levels=NULL, levels2=NULL)}  (binary) (bipartite)  (undirected) (categorical nodal attribute)
     }{\emph{ Two-star
 	census for central nodes centered on the first mode of a bipartite network:}
-      This term takes two nodal attributes (see \link[=node-attr]{Specifying Vertex
+      This term takes two nodal attributes (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels} for details), one for b1 nodes (actors in some
       contexts) and one for b2 nodes (events in some contexts). Only
       \code{b1attr} is required; if \code{b2attr} is not passed, it is
@@ -584,7 +594,7 @@
       distinct categories of two stars according to these two attributes is
       \eqn{n_1(n_2)(n_2+1)/2}.  By default, this model term creates a distinct statistic
       counting each of these categories.  The \code{b1levels}, \code{b2levels}, \code{base}, and \code{levels2} arguments
-      may be used to leave some of these categories out (see \link[=node-attr]{Specifying Vertex
+      may be used to leave some of these categories out (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels} for details).
 
       \BaseDep \BaseDepII}
@@ -595,7 +605,7 @@
       network statistic to the model, equal to the number of nodes in the second
       mode of the network with degree 2 or higher. The second mode of a bipartite
       network object is sometimes known as the "event" mode. The optional argument
-      \code{by} specifies	a vertex attribute (see \link[=node-attr]{Specifying Vertex
+      \code{by} specifies	a vertex attribute (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels} for details);
       it functions just like the \code{by} argument of the \code{b2degree} term.
       Without the optional argument, this statistic is equivalent to \code{b2mindegree(2)}.
@@ -606,7 +616,7 @@
       \code{b2cov(attr, form="sum")}  (valued) (undirected) (bipartite) (dyad-independent) (quantitative nodal attribute) (frequently-used)
     }{\emph{Main effect of a covariate for
 	the second mode in a bipartite (aka two-mode) network:}
-      The \code{attr} argument specifies one or more quantitative attributes (see \link[=node-attr]{Specifying Vertex
+      The \code{attr} argument specifies one or more quantitative attributes (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels} for details).  This term adds a single network statistic for each quantitative attribute or matrix column to the model equaling the total
       value of \code{attr(j)} for all edges \eqn{(i,j)} in the network. This
       term may only be used with bipartite networks. For categorical attributes,
@@ -629,7 +639,7 @@
       edge count
       in semiopen interval \code{[from,to)}. The optional argument
       \code{by} specifies
-      a vertex attribute (see \link[=node-attr]{Specifying Vertex
+      a vertex attribute (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels} for details).
       If this is specified and \code{homophily} is \code{TRUE},
       then degrees are calculated using the subnetwork consisting of only
@@ -653,19 +663,26 @@
       with exactly \code{d[i]} edges. The second mode of a bipartite network
       object is sometimes known as the "event" mode. The optional term
       \code{by} specifies
-      a vertex attribute (see \link[=node-attr]{Specifying Vertex
+      a vertex attribute (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels} for details). If this is specified
       then each node's degree is tabulated only with other nodes having the same
       value of the \code{by} attribute.
 
       \Bipartite}
 
+    \item{\code{b2dsp(d)}  (binary)  (bipartite) (undirected)}{\emph{Dyadwise shared partners for dyads in the second bipartition:}
+      The \code{d} argument is a vector of distinct integers. This term adds one
+      network statistic to the model for each element in \code{d}; the \eqn{i}th
+      such statistic equals the number of dyads in the second bipartition with exactly
+      \code{d[i]} shared partners.  (Those shared partners, of course, must be members 
+      of the first bipartition.)  This term can only be used with bipartite networks.}
+
     \item{\code{b2factor(attr, base=1, levels=-1)}  (binary)  (bipartite) (undirected)  (dyad-independent) (categorical nodal attribute) (frequently-used),
       \code{b2factor(attr, base=1, levels=-1, form="sum")}  (valued)  (bipartite)  (undirected)  (dyad-independent) (categorical nodal attribute) (frequently-used)
     }{\emph{Factor attribute effect for
 	the second mode in a bipartite (aka two-mode) network :}
       The \code{attr} argument specifies
-      a categorical vertex attribute (see \link[=node-attr]{Specifying Vertex
+      a categorical vertex attribute (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels} for details). This term adds
       multiple network statistics to the model, one for each of (a subset of) the
       unique values of the \code{attr} attribute. Each of these statistics
@@ -696,7 +713,7 @@
     }{\emph{Nodal attribute-based homophily effect for
 	the second mode in a bipartite (aka two-mode) network:} This term is introduced
       in Bomiriya et al (2014).
-      The \code{attr} argument specifies a categorical vertex attribute (see \link[=node-attr]{Specifying Vertex
+      The \code{attr} argument specifies a categorical vertex attribute (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels} for details).  Out of the two arguments
       (discount parameters) \code{alpha} and \code{beta}, both which takes values from [0,1],
       only one should be set at a time. If none is set to a value other than 1, this term will
@@ -731,7 +748,7 @@
       ties of that node.  By default, \code{nodes=-1} means that the statistic for the
       first node (in the second bipartition) will be omitted, but this argument may be changed to control
       which statistics are included.  The \code{nodes} argument is interpreted using the new UI for level specification
-      (see \link[=node-attr]{Specifying Vertex Attributes and Levels} for details), where both the attribute and the sorted
+      (see \link[=nodal_attributes]{Specifying Vertex Attributes and Levels} for details), where both the attribute and the sorted
       unique values are the vector of vertex indices \code{(nb1 + 1):n}, where
       \code{nb1} is the size of the first bipartition and \code{n} is the total number of nodes in the network.  Thus \code{nodes=120} will include only the statistic
       for the 120th node in the second biparition, while \code{nodes=I(120)} will include only the statistic for the 120th node in the entire network. \Bipartite For directed networks, see \code{sender} and
@@ -748,14 +765,14 @@
       a set of \eqn{k} different nodes \eqn{\{O_1, \dots, O_k\}}{\{O[1], ..., O[k]\}} such that the
       ties \eqn{\{N, O_i\}}{\{N, O[i]\}} exist for \eqn{i=1, \dots, k}. The optional argument
       \code{attr} specifies
-      a vertex attribute (see \link[=node-attr]{Specifying Vertex
+      a vertex attribute (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels} for details). If this is specified then the count is over
       the number of \eqn{k}-stars (with center node in the second mode) where all
       nodes have the same value of the attribute. This term can only be used for
       undirected bipartite networks. Note that \code{b2star(1)} is equal to
       \code{b1star(1)} and to \code{edges}.}
 
-    \item{\code{b2starmix(k, attrname, base=NULL, diff=TRUE, levels=NULL)}  (binary)  (bipartite)  (undirected) (categorical nodal attribute)
+    \item{\code{b2starmix(k, attr, base=NULL, diff=TRUE)}  (binary)  (bipartite)  (undirected) (categorical nodal attribute)
     }{\emph{ Mixing
 	matrix for k-stars centered on the second mode of a bipartite network:}
       This term is exactly the same as \code{b1starmix} except that the roles of
@@ -772,8 +789,8 @@
       triads in the network that are balanced. The balanced triads are those of
       type \code{102} or \code{300} in the categorization of Davis and Leinhardt (1972). For details on the 16 possible triad types, see
       \code{?triad.classify} in the \code{{sna}} package. For an undirected
-      network, the balanced triads are those with an even number of ties (i.e., 0
-      and 2).}
+      network, the balanced triads are those with an odd number of ties (i.e., 1
+      and 3).}
 
     \item{\code{coincidence(levels=NULL,active=0)}  (binary)  (bipartite)  (undirected)
     }{\emph{Coincident node count for the
@@ -782,7 +799,7 @@
       equal to the number of (first mode) mutual partners of that pair.
       The first mode of a bipartite
       network object is sometimes known as the "actor" mode and the seconds as the "event" mode. So this is the number of actors going to both events in the pair. The optional argument
-      \code{levels} specifies which pairs of nodes in mode two to include (see \link[=node-attr]{Specifying Vertex
+      \code{levels} specifies which pairs of nodes in mode two to include (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels} for details). The second optional argument, \code{active}, selects pairs for which the observed count is at least \code{active}.  If both \code{levels} and \code{active} are
       specified, then \code{active} is ignored.  (Thus, indices passed as \code{levels} should correspond to indices when \code{levels} = NULL and \code{active} = 0.) This term can only be
       used with undirected bipartite networks.
@@ -793,7 +810,7 @@
     }{\emph{Concurrent node count:}
       This term adds one network statistic to the model, equal to the number of
       nodes in the network with degree 2 or higher. The optional argument
-      \code{by} specifies a vertex attribute (see \link[=node-attr]{Specifying Vertex
+      \code{by} specifies a vertex attribute (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels} for details);
       it functions just like the \code{by} argument of the \code{degree} term.
       This term can only be used with undirected
@@ -803,7 +820,7 @@
     }{\emph{Concurrent tie count:}
       This term adds one network statistic to the model, equal to the number of
       ties incident on each actor beyond the first. The optional argument
-      \code{by} specifies a vertex attribute (see \link[=node-attr]{Specifying Vertex
+      \code{by} specifies a vertex attribute (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels} for details);
       it functions just like the \code{by} argument of the \code{degree} term.
       This term can only be used with undirected
@@ -817,24 +834,30 @@
       network, defined as a set of edges of the form \eqn{\{(i{\rightarrow}j), (j{\rightarrow}k), (k{\rightarrow}i)\}}{\{(i,j), (j,k), (k,i)\}}. Note that
       for all directed networks, \code{triangle} is equal to
       \code{ttriple+ctriple}, so at most two of these three terms can be in a
-      model. The optional argument \code{attr} specifies a vertex attribute (see \link[=node-attr]{Specifying Vertex
+      model. The optional argument \code{attr} specifies a vertex attribute (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels} for details).  If \code{attr} is
       specified and \code{diff} is \code{FALSE}, then the statistic is the number of cyclic triples where all
       three nodes have the same value of the attribute.  If \code{attr} is specified and \code{diff} is \code{TRUE}, then one statistic is added to the model for each value of \code{attr} (or each
       value of \code{attr} specified by \code{levels} if that argument is passed), equal to the number of cyclic triples where all
       three nodes have that value of the attribute.  \Directed}
 
-    \item{\code{cycle(k)}  (binary)  (directed)  (undirected)}{\emph{Cycles:}
-      The \code{k} argument is a vector of distinct integers. This term adds one
-      network statistic to the model for each element in \code{k}; the \eqn{i}th
-      such statistic equals the number of cycles in the network with length
-      exactly \code{k[i]}. The cycle statistic applies to both directed and
-      undirected networks. For directed networks, it counts directed cycles of
-      length \eqn{k}, as opposed to undirected cycles in the undirected case. The
-      directed cycle terms of lengths 2 and 3 are equivalent to \code{mutual} and
-      \code{ctriple} (respectively). The undirected cycle term of length 3 is
-      equivalent to \code{triangle}, and there is no undirected cycle term of
-      length 2.}
+    \item{\code{cycle(k, semi=FALSE)} (binary) (directed) (undirected)}{\emph{k-Cycle Census:}
+      The \code{k} argument must be a vector of integers giving the cycle lengths to count.
+      Directed cycle lengths may range from \code{2} to \code{N} (the network size); undirected
+      cycle lengths and semicycle lengths may range from \code{3} to \code{N}; length 2 semicycles
+      are not currently supported.  Note that directed 2-cycles are equivalent to mutual 
+      dyads.
+      
+      This term adds one network statistic to the model for each value of \code{k},
+      corresponding to the number of \code{k}-cycles (or, alternately, semicycles)
+      in the graph.
+      
+      The optional argument \code{semi} is a logical indicating whether semicycles 
+      (rather than directed cycles) should be counted; this is ignored in the 
+      undirected case.
+      
+      This term can be used with either directed or undirected networks.
+    }
 
     \item{\code{cyclicalties(attr=NULL, levels=NULL)}   (binary)  (directed), \code{cyclicalties(threshold=0)}   (valued)  (directed)  (undirected)}{\emph{Cyclical ties:}
       This term adds one statistic, equal to the number of ties
@@ -878,7 +901,7 @@
       greater than or equal to
       \code{from[i]} but strictly less than \code{to[i]}, i.e. with edges
       in semiopen interval \code{[from,to)}. The optional argument
-      \code{by} specifies a vertex attribute (see \link[=node-attr]{Specifying Vertex
+      \code{by} specifies a vertex attribute (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels} for details).
       If this is specified and \code{homophily} is \code{TRUE},
       then degrees are calculated using the subnetwork consisting of only
@@ -899,7 +922,7 @@
       network statistic to the model for each element in \code{d}; the \eqn{i}th
       such statistic equals the number of nodes in the network of degree
       \code{d[i]}, i.e. with exactly \code{d[i]} edges. The optional argument
-      \code{by} specifies a vertex attribute (see \link[=node-attr]{Specifying Vertex
+      \code{by} specifies a vertex attribute (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels} for details).
       If this is specified and \code{homophily} is \code{TRUE},
       then degrees are calculated using the subnetwork consisting of only
@@ -940,7 +963,7 @@
       divided by \eqn{n(n-1)}.}
 
     \item{\code{diff(attr, pow=1, dir="t-h", sign.action="identity")} (binary) (dyad-independent) (frequently-used) (directed) (undirected) (quantitative nodal attribute), \code{diff(attr, pow=1, dir="t-h", sign.action="identity", form ="sum")} (valued) (dyad-independent) (directed) (undirected) (bipartite) (quantitative nodal attribute)}{\emph{Difference:}
-      The \code{attr} argument specifies a quantitative vertex attribute (see \link[=node-attr]{Specifying Vertex
+      The \code{attr} argument specifies a quantitative vertex attribute (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels} for details). For values of \code{pow} other than
       \code{0}, this term adds one network statistic to the model,
       equaling the sum, over directed edges \eqn{(i,j)}, of
@@ -1009,10 +1032,10 @@
       The \code{d} argument is a vector of distinct integers. This term adds one
       network statistic to the model for each element in \code{d}; the \eqn{i}th
       such statistic equals the number of dyads in the network with exactly
-      \code{d[i]} shared partners. This term can be used with directed and
-      undirected networks. For directed networks the count is over homogeneous
-      shared partners only (i.e., only partners on a directed two-path connecting
-      the nodes in the dyad).}
+      \code{d[i]} shared partners.  This term can be used with directed and
+      undirected networks.
+      
+      \SPtoDSP{dsp}{(directed) dyad \code{(i,j)}}{ddsp}}
 
     \item{\code{dyadcov(x, attrname=NULL)}  (binary)  (dyad-independent)  (directed)  (undirected) (categorical nodal attribute)
     }{\emph{Dyadic covariate:} The \code{x}
@@ -1061,9 +1084,9 @@
       statistic to the model for each element in \code{d} where the \eqn{i}th such
       statistic equals the number of \emph{edges} (rather than dyads) in the
       network with exactly \code{d[i]} shared partners. This term can be used with
-      directed and undirected networks. For directed networks the count is over
-      homogeneous shared partners only (i.e., only partners on a directed two-path
-      connecting the nodes in the edge and in the same direction).}
+      directed and undirected networks.
+      
+      \SPtoDSP{esp}{(directed) edge \code{i -> j}}{desp}}
 
     \item{\code{equalto(value=0, tolerance=0)}  (valued)  (directed)  (undirected) (dyad-independent)}{\emph{Number of dyads with
 	values equal to a specific value (within tolerance):}
@@ -1092,12 +1115,24 @@
 
       \GWCutoff{degree}
 
-      If \code{attr} is specified (see \link[=node-attr]{Specifying Vertex
+      If \code{attr} is specified (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels} for details) then separate degree
       statistics are calculated for nodes having each separate
       value of the attribute.
       This term can only be used with undirected bipartite
       networks.}
+
+    \item{\code{gwb1dsp(decay=0, fixed=FALSE, cutoff=30)}  (binary)  (bipartite) (undirected) (curved)}{\emph{Geometrically weighted
+	dyadwise shared partner distribution for dyads in the first bipartition:}
+      This term adds one network statistic to the model equal to the geometrically
+      weighted dyadwise shared partner distribution for dyads in the first bipartition,
+      with decay parameter \code{decay} parameter, which should be non-negative. The value supplied for
+      this parameter may be fixed (if \code{fixed=TRUE}),
+      or it may be used instead as the starting value for the estimation of \code{decay}
+      in a curved exponential family model (when \code{fixed=FALSE}, the default) (see Hunter and Handcock, 2006).
+      This term can only be used with bipartite networks.
+
+      \GWCutoff{b1dsp}}
 
     \item{\code{gwb2degree(decay, fixed=FALSE, attr=NULL, cutoff=30, levels=NULL)}  (binary)  (bipartite)  (undirected) (curved)}{\emph{Geometrically weighted
 	degree distribution for the second mode in a bipartite (aka two-mode)
@@ -1115,12 +1150,24 @@
 
       \GWCutoff{degree}
 
-      If \code{attr} is specified (see \link[=node-attr]{Specifying Vertex
+      If \code{attr} is specified (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels} for details) then separate degree
       statistics are calculated for nodes having each separate
       value of the attribute.
       This term can only be used with undirected bipartite
       networks.}
+
+    \item{\code{gwb2dsp(decay=0, fixed=FALSE, cutoff=30)}  (binary)  (bipartite) (undirected) (curved)}{\emph{Geometrically weighted
+	dyadwise shared partner distribution for dyads in the second bipartition:}
+      This term adds one network statistic to the model equal to the geometrically
+      weighted dyadwise shared partner distribution for dyads in the second bipartition,
+      with decay parameter \code{decay} parameter, which should be non-negative. The value supplied for
+      this parameter may be fixed (if \code{fixed=TRUE}),
+      or it may be used instead as the starting value for the estimation of \code{decay}
+      in a curved exponential family model (when \code{fixed=FALSE}, the default) (see Hunter and Handcock, 2006).
+      This term can only be used with bipartite networks.
+
+      \GWCutoff{b2dsp}}
 
     \item{\code{gwdegree(decay, fixed=FALSE, attr=NULL, cutoff=30, levels=NULL)}  (binary)  (undirected)  (curved) (frequently-used)
     }{\emph{Geometrically weighted
@@ -1135,7 +1182,7 @@
 
       \GWCutoff{degree}
 
-      If \code{attr} is specified (see \link[=node-attr]{Specifying Vertex
+      If \code{attr} is specified (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels} for details) then separate degree
       statistics are calculated for nodes having each separate
       value of the attribute.  This term can only be used with undirected networks.}
@@ -1147,10 +1194,11 @@
       \code{decay} parameter, which should be non-negative. The value supplied for
       this parameter may be fixed (if \code{fixed=TRUE}),
       or it may be used instead as the starting value for the estimation of \code{decay}
-      in a curved exponential family model (when \code{fixed=FALSE}, the default) (see Hunter and Handcock, 2006). For
-      directed networks the count is over homogeneous shared partners only (i.e.,
-      only partners on a directed two-path connecting the nodes in the
-      dyad).
+      in a curved exponential family model (when \code{fixed=FALSE}, the default) (see Hunter and Handcock, 2006).
+      This term can be used with directed and
+      undirected networks.
+      
+      \SPtoDSP{gwdsp}{(directed) dyad \code{(i,j)}}{dgwdsp}
 
       \GWCutoff{DSP}
     }
@@ -1164,10 +1212,9 @@
       this parameter may be fixed (if \code{fixed=TRUE}),
       or it may be used instead as the starting value for the estimation of \code{decay}
       in a curved exponential family model (when \code{fixed=FALSE}, the default) (see Hunter and Handcock, 2006). This term can be used with directed and
-      undirected networks. For directed networks the geometric weighting is over
-      homogeneous shared partners only (i.e., only partners on a directed two-path
-      connecting the nodes in the edge and in the same direction).
-      The optional argument \code{cutoff}
+      undirected networks.
+      
+      \SPtoDSP{gwesp}{(directed) edge \code{i -> j}}{dgwesp}
 
       \GWCutoff{ESP}
     }
@@ -1183,7 +1230,7 @@
 
       \GWCutoff{degree}
 
-      If \code{attr} is specified (see \link[=node-attr]{Specifying Vertex
+      If \code{attr} is specified (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels} for details) then separate degree
       statistics are calculated for nodes having each separate
       value of the attribute.}
@@ -1198,10 +1245,10 @@
       exponential-family model (see Hunter and Handcock, 2006).  The
       default is \code{FALSE}, which means the scale parameter is not
       fixed and thus the model is a CEF model. This term can be used with
-      directed and undirected networks. For directed networks the
-      geometric weighting is over homogeneous shared partners only (i.e.,
-      only partners on a directed two-path connecting the nodes in the
-      non-edge and in the same direction).
+      directed and undirected networks.
+      
+      \SPtoDSP{gwnsp}{(directed) non-edge \code{(i,j)}}{dgwnsp}
+
 
       \GWCutoff{NSP}
     }
@@ -1217,7 +1264,7 @@
 
       \GWCutoff{degree}
 
-      If \code{attr} is specified (see \link[=node-attr]{Specifying Vertex
+      If \code{attr} is specified (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels} for details) then separate degree
       statistics are calculated for nodes having each separate
       value of the attribute.}
@@ -1240,12 +1287,12 @@
     \item{\code{hammingmix(attr, x, base=NULL, levels=NULL, levels2=NULL)}  (binary)  (directed)  (dyad-independent)}{\emph{Hamming
 	distance within mixing:}
       By default, this term adds one statistic to the model for every possible pairing of
-      attribute values of the network for the vertex attribute specified by \code{attr} (see \link[=node-attr]{Specifying Vertex
+      attribute values of the network for the vertex attribute specified by \code{attr} (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels}).  Each such statistic is the Hamming distance (i.e., the number of differences)
       between the appropriate subset of dyads in
       the network and the corresponding subset in \code{x}.  The ordering of the
       attribute values is alphabetical by default, but this may be overridden using the \code{levels} arguments.
-      The optional arguments \code{levels} and \code{levels2} allow the user to control what pairings are included (see \link[=node-attr]{Specifying Vertex
+      The optional arguments \code{levels} and \code{levels2} allow the user to control what pairings are included (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels}), and the order in which they appear. For example \code{levels2=-2} will
       omit the second statistic, making it the de facto reference
       category.
@@ -1266,7 +1313,7 @@
       \code{from[i]} but strictly less than \code{to[i]}, i.e. with
       in-edge count
       in semiopen interval \code{[from,to)}. The optional argument
-      \code{by} specifies a vertex attribute (see \link[=node-attr]{Specifying Vertex
+      \code{by} specifies a vertex attribute (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels} for details).
       If this is specified and \code{homophily} is \code{TRUE},
       then degrees are calculated using the subnetwork consisting of only
@@ -1287,7 +1334,7 @@
       the model for each element in \code{d}; the \eqn{i}th such statistic equals
       the number of nodes in the network of in-degree \code{d[i]}, i.e. the number
       of nodes with exactly \code{d[i]} in-edges. The optional term
-      \code{by} specifies a vertex attribute (see \link[=node-attr]{Specifying Vertex
+      \code{by} specifies a vertex attribute (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels} for details).
       If this is specified and \code{homophily} is \code{TRUE},
       then degrees are calculated using the subnetwork consisting of only
@@ -1330,6 +1377,12 @@
       \code{\link[sna]{sna}} package. Note the distinction from the \code{ctriple}
       term. \Directed}
 
+    \item{\code{isolatededges}  (binary)  (undirected) (bipartite)
+    }{\emph{Isolated edges:} This term adds one statistic to the
+      model equal to the number of isolated edges in the network, i.e., the number
+      of edges each of whose endpoints has degree 1.  This term can only be used
+      with undirected networks.}      
+      
     \item{\code{isolates}  (binary)  (directed)  (undirected) (frequently-used)
     }{\emph{Isolates:} This term adds one statistic to the
       model equal to the number of isolates in the network. For an undirected
@@ -1345,7 +1398,7 @@
       \eqn{k}-instar is defined to be a node \eqn{N} and a set of \eqn{k}
       different nodes \eqn{\{O_1, \dots, O_k\}}{\{O[1], ..., O[k]\}} such that the ties
       \eqn{(O_j{\rightarrow}N)}{(O_j, N)} exist for \eqn{j=1, \dots, k}. The
-      optional argument \code{attr} specifies a vertex attribute (see \link[=node-attr]{Specifying Vertex
+      optional argument \code{attr} specifies a vertex attribute (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels} for details). If this is specified
       then the count is over the number of \eqn{k}-instars where all nodes have
       the same value of the attribute. This term can only be used for directed
@@ -1360,7 +1413,7 @@
       network, where a \eqn{k}-star is defined to be a node \eqn{N} and a set of
       \eqn{k} different nodes \eqn{\{O_1, \dots, O_k\}}{\{O[1], ..., O[k]\}} such that the ties
       \eqn{\{N, O_i\}} exist for \eqn{i=1, \dots, k}. The optional argument
-      \code{attr} specifies a vertex attribute (see \link[=node-attr]{Specifying Vertex
+      \code{attr} specifies a vertex attribute (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels} for details). If this is specified then the count is over
       the number of \eqn{k}-stars where all nodes have the same value of the
       attribute. This term can only be used for undirected networks; for directed
@@ -1403,7 +1456,7 @@
 
     \item{\code{mm(attrs, levels=NULL, levels2=NULL)} (binary)  (dyad-independent)  (frequently-used) (directed)  (undirected) (categorical nodal attribute), \code{mm(attrs, levels=NULL, levels2=NULL, form="sum")} (valued)  (dyad-independent)  (frequently-used) (directed)  (undirected) (categorical nodal attribute)}{\emph{Mixing matrix cells and margins:}
       \code{attrs} is a two-sided formula whose LHS gives the attribute or
-      attribute function (see \link[=node-attr]{Specifying Vertex
+      attribute function (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels}) for the rows of the mixing matrix and whose RHS gives
       that for its columns. A one-sided formula (e.g.,
       \code{~A}) is symmetrized (e.g., \code{A~A}). \code{levels}
@@ -1430,10 +1483,10 @@
 
       This term can only be used
       with directed networks. The binary version also has the following capabilities: if the optional \code{same} argument is passed
-      (see \link[=node-attr]{Specifying Vertex Attributes and Levels} for details),
+      (see \link[=nodal_attributes]{Specifying Vertex Attributes and Levels} for details),
       only mutual pairs that match on the attribute are counted;
       separate counts for each unique matching value can be obtained by using
-      \code{diff=TRUE} with \code{same}; and if \code{by} is passed (again, see \link[=node-attr]{Specifying Vertex Attributes and Levels}),
+      \code{diff=TRUE} with \code{same}; and if \code{by} is passed (again, see \link[=nodal_attributes]{Specifying Vertex Attributes and Levels}),
       then each node is counted separately for each mutual pair in which it
       occurs and the counts are tabulated by unique values of the attribute.
       This means that the sum of the mutual statistics when \code{by} is used
@@ -1441,7 +1494,7 @@
       or \code{by} may be used, and only the former is affected by \code{diff};
       if both \code{same} and \code{by} are passed, \code{by} is ignored.
       Finally, if \code{levels} is passed, this tells which statistics should be kept
-      whenever the \code{mutual} term would ordinarily result in multiple statistics (see \link[=node-attr]{Specifying Vertex Attributes and Levels}).
+      whenever the \code{mutual} term would ordinarily result in multiple statistics (see \link[=nodal_attributes]{Specifying Vertex Attributes and Levels}).
 
       \KeepDep}
 
@@ -1452,7 +1505,7 @@
       \Directed}
 
     \item{\code{nodecov(attr)}  (binary)  (dyad-independent)  (frequently-used)   (directed)  (undirected) (quantitative nodal attribute), \code{nodecov(attr, form="sum")}  (valued)  (dyad-independent)  (directed)  (undirected) (quantitative nodal attribute), a.k.a. \code{nodemain}  (binary)   (directed)  (undirected)}{\emph{Main effect of a covariate:}
-      The \code{attr} argument specifies one or more quantitative attributes (see \link[=node-attr]{Specifying Vertex
+      The \code{attr} argument specifies one or more quantitative attributes (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels} for details).
       This term adds a single network statistic for each quantitative attribute or matrix column to the model equaling the sum of
       \code{attr(i)} and \code{attr(j)} for all edges \eqn{(i,j)} in the
@@ -1473,7 +1526,7 @@
       ,
       \code{nodefactor(attr, base=1, levels=-1, form="sum")}  (dyad-independent)  (valued)  (directed)  (undirected) (categorical nodal attribute)
     }{\emph{Factor attribute
-	effect:} The \code{attr} argument specifies one or more categorical attributes (see \link[=node-attr]{Specifying Vertex
+	effect:} The \code{attr} argument specifies one or more categorical attributes (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels} for details). This term adds multiple network statistics to the
       model, one for each of (a subset of) the unique values of the
       \code{attr} attribute (or each combination of the attributes
@@ -1491,7 +1544,7 @@
       , \code{nodeicov(attr, form="sum")}  (valued)  (directed) (quantitative nodal attribute)
     }{\emph{Main effect of a covariate for
 	in-edges:}
-      The \code{attr} argument specifies one or more quantitative attributes (see \link[=node-attr]{Specifying Vertex
+      The \code{attr} argument specifies one or more quantitative attributes (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels} for details).  This term adds a single network statistic for each quantitative attribute or matrix column to the model equaling the total
       value of \code{attr(j)} for all edges \eqn{(i,j)} in the network. This
       term may only be used with directed networks. For categorical attributes,
@@ -1510,7 +1563,7 @@
       ,
       \code{nodeifactor(attr, base=1, levels=-1, form="sum")}  (valued)  (dyad-independent)  (directed) (categorical nodal attribute)
     }{\emph{Factor attribute
-	effect for in-edges:} The \code{attr} argument specifies one or more categorical attributes (see \link[=node-attr]{Specifying Vertex
+	effect for in-edges:} The \code{attr} argument specifies one or more categorical attributes (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels} for details). This term adds multiple network
       statistics to the model, one for each of (a subset of) the unique
       values of the \code{attr} attribute (or each combination of the
@@ -1526,7 +1579,7 @@
 
       For an analogous term for quantitative vertex attributes, see \code{nodeicov}.}
 
-    \item{\code{nodeisqrtcovar}  (valued)  (directed)  (non-negative) (quantitative nodal attribute)
+    \item{\code{nodeisqrtcovar}  (valued)  (directed)  (non-negative)
     }{\emph{Uncentered covariance of square roots of in-dyad values
 	incident on each actor:} This term adds one statistic equal to \eqn{\sum_{i,j,k}
 	\sqrt{y_{i,j}}\sqrt{y_{k,j}}}. This can be
@@ -1537,7 +1590,7 @@
       , \code{nodematch(attr, diff=FALSE, keep=NULL, levels=NULL, form="sum")}  (valued)  (dyad-independent)  (directed)  (undirected) (categorical nodal attribute)
       a.k.a. \code{match}  (binary)  (directed)  (dyad-independent)  (undirected) (categorical nodal attribute)
     }{\emph{Uniform homophily and differential homophily:}
-      The \code{attr} argument specifies one or more attributes (see \link[=node-attr]{Specifying Vertex
+      The \code{attr} argument specifies one or more attributes (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels} for details).  When \code{diff=FALSE}, this term adds one network statistic
       to the model, which counts the number of edges \eqn{(i,j)} for which
       \code{attr(i)==attr(j)}. This is also called ''uniform homophily,'' because each group is assumed to have the same propensity for within-group ties.  When multiple attribute names are given, the
@@ -1560,7 +1613,7 @@
       \code{nodemix(attr, base=NULL, b1levels=NULL, b2levels=NULL, levels=NULL, levels2=NULL, form="sum")}  (valued)  (dyad-independent)  (directed)  (undirected) (categorical nodal attribute)
     }{\emph{Nodal attribute
 	mixing:} The \code{attr} argument specifies one or more categorical vertex attributes
-      (see \link[=node-attr]{Specifying Vertex Attributes and Levels} for details). By default, this term adds one network statistic to
+      (see \link[=nodal_attributes]{Specifying Vertex Attributes and Levels} for details). By default, this term adds one network statistic to
       the model for each possible pairing of attribute values. The
       statistic equals the number of edges in the network in which the
       nodes have that pairing of values. (When multiple attributes are specified, a
@@ -1573,7 +1626,7 @@
       The optional arguments \code{levels}, \code{levels2},
       \code{b1levels}, and \code{b2levels} control what statistics are included in the model, and the order in which they appear.
       \code{levels2} apply to all networks; \code{levels} applies to unipartite networks; \code{b1levels} and \code{b2levels} apply to
-      bipartite networks (see \link[=node-attr]{Specifying Vertex
+      bipartite networks (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels}).
 
       \BaseDepII}
@@ -1583,7 +1636,7 @@
       (quantitative nodal attribute)
     }{\emph{Main effect of a covariate for
 	out-edges:}
-      The \code{attr} argument specifies one or more quantitative attributes (see \link[=node-attr]{Specifying Vertex
+      The \code{attr} argument specifies one or more quantitative attributes (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels} for details).  This term adds a single network statistic for each quantitative attribute or matrix column to the model equaling the total
       value of \code{attr(i)} for all edges \eqn{(i,j)} in the network. This
       term may only be used with directed networks. For categorical attributes,
@@ -1601,7 +1654,7 @@
     \item{\code{nodeofactor(attr, base=1, levels=-1)}  (binary)  (dyad-independent)  (directed) (categorical nodal attribute)
       ,
       \code{nodeofactor(attr, base=1, levels=-1, form="sum")}  (valued)  (dyad-independent)  (categorical nodal attribute) (directed)}{\emph{Factor attribute
-	effect for out-edges:} The \code{attr} argument specifies one or more categorical attributes (see \link[=node-attr]{Specifying Vertex
+	effect for out-edges:} The \code{attr} argument specifies one or more categorical attributes (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels} for details). This term adds multiple network
       statistics to the model, one for each of (a subset of) the unique
       values of the \code{attr} attribute (or each combination of the
@@ -1618,21 +1671,20 @@
       \Directed}
 
     \item{\code{nodeosqrtcovar}  (valued)  (directed)  (non-negative)
-      (quantitative nodal attribute)
     }{\emph{Uncentered covariance of square roots of out-dyad values
 	incident on each actor:} This term adds one statistic equal to \eqn{\sum_{i,j,k}
 	\sqrt{y_{i,j}}\sqrt{y_{i,k}}}. This can be
       viewed as a valued analog of the \code{\link[=ergm-terms]{ostar(2)}}
       statistic.}
 
-    \item{\code{nodesqrtcovar(center=TRUE)}  (valued)  (non-negative)  (directed)  (undirected) (quantitative nodal attribute)
+    \item{\code{nodesqrtcovar(center=TRUE)}  (valued)  (non-negative)  (directed)  (undirected)
     }{\emph{Covariance of square roots of dyad values
 	incident on each actor:} This term adds one statistic equal to
       \eqn{\sum_{i,j,k}
 	(\sqrt{y_{i,j}}\sqrt{y_{i,k}}+\sqrt{y_{k,j}}\sqrt{y_{k,j}})} if
       \code{center=FALSE}. This can be
       viewed as a valued analog of the \code{\link[=ergm-terms]{kstar(2)}}
-      statistic. If \code{center=FALSE} (the default), the statistic is
+      statistic. If \code{center=TRUE} (the default), the statistic is
       instead \eqn{\sum_{i,j,k}
 	((\sqrt{y_{i,j}}-\bar{\sqrt{y}})(\sqrt{y_{i,k}}-\bar{\sqrt{y}})+(\sqrt{y_{k,j}}-\bar{\sqrt{y}})(\sqrt{y_{k,j}}-\bar{\sqrt{y}}))},
       where \eqn{\bar{\sqrt{y}}} is the mean of the square root of
@@ -1644,10 +1696,9 @@
       where the \eqn{i}th such statistic equals the number of
       \emph{non-edges} (that is, dyads that do not have an edge) in the network
       with exactly \code{d[i]} shared partners. This term can be used with
-      directed and undirected networks. For directed networks the count is
-      over homogeneous shared partners only (i.e., only partners on a
-      directed two-path connecting the nodes in the non-edge and in the same
-      direction).}
+      directed and undirected networks. 
+      
+      \SPtoDSP{nsp}{(directed) non-edge \code{(i,j)}}{dnsp}}
 
     \item{\code{odegrange(from, to=+Inf, by=NULL, homophily=FALSE, levels=NULL)} (binary)  (directed) (categorical nodal attribute)
     }{\emph{Out-degree range:}
@@ -1661,7 +1712,7 @@
       \code{from[i]} but strictly less than \code{to[i]}, i.e. with
       out-edge count
       in semiopen interval \code{[from,to)}. The optional argument
-      \code{by} specifies a vertex attribute (see \link[=node-attr]{Specifying Vertex
+      \code{by} specifies a vertex attribute (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels} for details).
       If this is specified and \code{homophily} is \code{TRUE},
       then degrees are calculated using the subnetwork consisting of only
@@ -1682,7 +1733,7 @@
       the model for each element in \code{d}; the \eqn{i}th such statistic equals
       the number of nodes in the network of out-degree \code{d[i]}, i.e. the
       number of nodes with exactly \code{d[i]} out-edges. The optional argument
-      \code{by} specifies a vertex attribute (see \link[=node-attr]{Specifying Vertex
+      \code{by} specifies a vertex attribute (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels} for details).
       If this is specified and \code{homophily} is \code{TRUE},
       then degrees are calculated using the subnetwork consisting of only
@@ -1718,7 +1769,7 @@
       \eqn{k}-outstar is defined to be a node \eqn{N} and a set of \eqn{k}
       different nodes \eqn{\{O_1, \dots, O_k\}}{\{O[1], ..., O[k]\}} such that the ties
       \eqn{(N{\rightarrow}O_j)}{(N,O_j)} exist for \eqn{j=1, \dots, k}. The
-      optional argument \code{attr} specifies a vertex attribute (see \link[=node-attr]{Specifying Vertex
+      optional argument \code{attr} specifies a vertex attribute (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels} for details). If this is specified
       then the count is the number of \eqn{k}-outstars where all nodes have the
       same value of the attribute. This term can only be used with directed
@@ -1736,7 +1787,7 @@
       other actors. That is, the average coefficient is zero, following the
       Holland-Leinhardt parametrization of the $p_1$ model (Holland and Leinhardt,
       1981). The \code{base} and \code{nodes} arguments allow the user to determine which nodes'
-      statistics should be included or excluded (see \link[=node-attr]{Specifying Vertex
+      statistics should be included or excluded (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels} for details).  The argument \code{nodes} is preferred to \code{base}, although \code{base}
       carries a default value of 1 for backwards compatibility.  (If both \code{base} and \code{nodes} are supplied, then \code{nodes} overrides \code{base}.)  This
       term can only be used with directed networks. For undirected networks, see
@@ -1753,7 +1804,7 @@
       other actors. That is, the average coefficient is zero, following the
       Holland-Leinhardt parametrization of the $p_1$ model (Holland and Leinhardt,
       1981). The \code{nodes} arguments allow the user to determine which nodes'
-      statistics should be included or excluded (see \link[=node-attr]{Specifying Vertex
+      statistics should be included or excluded (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels} for details).
 
       \BaseDepNodes
@@ -1777,7 +1828,7 @@
     \item{\code{smalldiff(attr, cutoff)}  (binary)  (dyad-independent)  (directed)  (undirected) (quantitative nodal attribute)
     }{\emph{Number of
 	ties between actors with similar (but not necessarily identical)
-	attribute values:} The \code{attr} argument specifies a quantitative vertex attribute (see \link[=node-attr]{Specifying Vertex
+	attribute values:} The \code{attr} argument specifies a quantitative vertex attribute (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels} for details). This term adds one statistic, having as its
       value the number of edges in the network for which the incident
       actors' attribute values differ less than \code{cutoff}; that is,
@@ -1789,7 +1840,7 @@
       \code{sociality(attr=NULL, base=1, levels=NULL, nodes=-1, form="sum")}  (valued) (undirected) (dyad-independent) (categorical nodal attribute)
     }{\emph{Undirected degree:}
       This term adds one network statistic for each node equal to the number of
-      ties of that node. The optional \code{attr} argument specifies a categorical vertex attribute (see \link[=node-attr]{Specifying Vertex
+      ties of that node. The optional \code{attr} argument specifies a categorical vertex attribute (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels} for details). If provided, this term only counts ties
       between nodes with the same value of the attribute (an actor-specific
       version of the \code{nodematch} term), restricted to be one of the values specified by \code{levels} if \code{levels} is not \code{NULL}.  \Undirected  For directed networks, see \code{sender} and
@@ -1883,7 +1934,7 @@
       three-node sets. By default, the category \code{003}, which is the category
       of completely empty three-node sets, is dropped. This is considered category
       zero, and the others are numbered 1 through 15 in the order given above. By
-      using the \code{levels} argument (see \link[=node-attr]{Specifying Vertex
+      using the \code{levels} argument (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels} for details), the user may specify a set of terms to add other than the default
       value of \code{1:15}. Each statistic is the count of the corresponding triad
       type in the network. For details on the 16 types, see \code{?triad.classify}
@@ -1904,7 +1955,7 @@
       triple'' and the latter is called a ``cyclic triple'', so in the case of a
       directed network, \code{triangle} equals \code{ttriple} plus \code{ctriple}
       --- thus at most two of these three terms can be in a model. The optional
-      argument \code{attr} specifies a vertex attribute (see \link[=node-attr]{Specifying Vertex
+      argument \code{attr} specifies a vertex attribute (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels} for details).  If \code{attr} is specified and \code{diff} is \code{FALSE},	
       then the count is restricted to those triples of nodes with
       equal values of the vertex attribute specified by \code{attr}. If \code{attr} is specified and \code{diff} is \code{TRUE},
@@ -1918,7 +1969,7 @@
       and the number of 2-stars not in triangles (the latter is considered a
       potential but incomplete triangle).  In case the denominator equals zero,
       the statistic is defined to be zero. For the definition of triangle, see
-      \code{triangle}. The optional argument \code{attr} specifies a vertex attribute (see \link[=node-attr]{Specifying Vertex
+      \code{triangle}. The optional argument \code{attr} specifies a vertex attribute (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels} for details).  If \code{attr} is specified and \code{diff} is \code{FALSE}, the counts
       (both numerator and denominator) are restricted to those triples of nodes with equal values
       of the vertex attribute specified by \code{attr}.  If \code{attr} is specified and \code{diff} is \code{TRUE}, then one statistic is added
@@ -1937,7 +1988,7 @@
 	(j{\rightarrow}k), (i{\rightarrow}k)\}}{\{(i,j), (j,k), (i,k)\}}. Note that
       \code{triangle} equals \code{ttriple+ctriple} for a directed network, so at
       most two of the three terms can be in a model. The optional argument
-      \code{attr} specifies a vertex attribute (see \link[=node-attr]{Specifying Vertex
+      \code{attr} specifies a vertex attribute (see \link[=nodal_attributes]{Specifying Vertex
 	Attributes and Levels} for details).  If \code{attr} is specified and \code{diff} is \code{FALSE}, then the count is over
       the number of transitive triples where all three nodes have the same value
       of the attribute.  If \code{attr} is specified and \code{diff} is \code{TRUE}, then one statistic is added for each value of \code{attr}

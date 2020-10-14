@@ -5,7 +5,7 @@
  *  open source, and has the attribution requirements (GPL Section 7) at
  *  https://statnet.org/attribution
  *
- *  Copyright 2003-2019 Statnet Commons
+ *  Copyright 2003-2020 Statnet Commons
  */
 #include "CD.h"
 
@@ -65,10 +65,12 @@ void CD_wrapper(int *nedges,
   undohead = Calloc(MHp->ntoggles * CDparams[0] * CDparams[1], Vertex);
   double *extraworkspace = Calloc(m->n_stats, double);
 
-  *status = CDSample(MHp,
-		     theta0, sample, *samplesize, CDparams, undotail, undohead,
-		     *fVerbose, nwp, m, extraworkspace);
-  
+  if(MHp)
+    *status = CDSample(MHp,
+		       theta0, sample, *samplesize, CDparams, undotail, undohead,
+		       *fVerbose, nwp, m, extraworkspace);
+  else *status = MCMC_MH_FAILED;
+
   Free(undotail);
   Free(undohead);
   Free(extraworkspace);
@@ -134,8 +136,8 @@ MCMCStatus CDSample(MHProposal *MHp,
   }
 
   if (fVerbose){
-    Rprintf("Sampler accepted %7.3f%% of %d proposed steps.\n",
-	    staken*100.0/(1.0*sattempted*CDparams[0]), sattempted*CDparams[0]); 
+    Rprintf("Sampler accepted %7.3f%% of %lld proposed steps.\n",
+	    staken*100.0/(1.0*sattempted*CDparams[0]), (long long) sattempted*CDparams[0]); 
   }
   
   return MCMC_OK;

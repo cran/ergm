@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution
 #
-#  Copyright 2003-2019 Statnet Commons
+#  Copyright 2003-2020 Statnet Commons
 #######################################################################
 ############################################################################
 # The <ergm.CD> function provides one of the styles of maximum
@@ -251,10 +251,11 @@ ergm.CD.fixed <- function(init, nw, model,
       steplen <-
         if(!is.null(control$CD.steplength.margin))
           .Hummel.steplength(
-            if(control$CD.Hummel.esteq) esteq else statsmatrix.0[,!model$etamap$offsetmap,drop=FALSE], 
-            if(control$CD.Hummel.esteq) esteq.obs else statsmatrix.0.obs[,!model$etamap$offsetmap,drop=FALSE],
+            if(control$CD.steplength.esteq) esteq else statsmatrix.0[,!model$etamap$offsetmap,drop=FALSE], 
+            if(control$CD.steplength.esteq) esteq.obs else statsmatrix.0.obs[,!model$etamap$offsetmap,drop=FALSE],
             control$CD.steplength.margin, control$CD.steplength, steplength.prev=steplen, verbose=verbose,
-            x2.num.max=control$CD.Hummel.miss.sample, steplength.maxit=control$CD.Hummel.maxit, control=control)
+            x2.num.max=control$CD.steplength.miss.sample, steplength.maxit=control$CD.steplength.maxit,
+            parallel=control$CD.steplength.parallel, control=control)
         else control$CD.steplength
       
       statsmean <- apply(statsmatrix.0,2,base::mean)

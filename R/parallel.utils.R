@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution
 #
-#  Copyright 2003-2019 Statnet Commons
+#  Copyright 2003-2020 Statnet Commons
 #######################################################################
 # Save the cluster we are in charge of.
 ergm.cluster.started <- local({
@@ -52,10 +52,6 @@ ergm.MCMC.packagenames <- local({
     }
   }
 })
-
-#' @importFrom utils packageDescription
-myLibLoc <- function()
-  sub('/ergm/Meta/package.rds','',attr(packageDescription("ergm"),"file"))
 
 #' Parallel Processing in the \code{\link[=ergm-package]{ergm}} Package
 #' 
@@ -108,10 +104,11 @@ myLibLoc <- function()
 #'   \code{ergm} will detect the number of nodes in the cluster, and
 #'   use all of them for MCMC sampling. This method is flexible: it
 #'   will accept any cluster type that is compatible with \code{snow}
-#'   or \code{parallel} packages. Usage examples for a
-#'   multiple-machine high performance MPI cluster can be found at the
-#'   statnet wiki:
-#'   \url{https://statnet.csde.washington.edu/trac/wiki/ergmParallel}
+#'   or \code{parallel} packages.
+## #'   Usage examples for a
+## #'   multiple-machine high performance MPI cluster can be found at the
+## #'   statnet wiki:
+## #'   \url{https://statnet.csde.washington.edu/trac/wiki/ergmParallel}
 #'
 #'
 #' @examples
@@ -192,29 +189,24 @@ ergm.getCluster <- function(control=NULL, verbose=FALSE, stop_on_exit=parent.fra
   for(pkg in ergm.MCMC.packagenames(pending=TRUE)){
 
     # Try loading from the same location as the master.
-  #' @importFrom parallel clusterCall
+    #' @importFrom parallel clusterCall
     attached <- unlist(clusterCall(cl, require,
                                    package=pkg,
                                    character.only=TRUE,
-                                   lib.loc=myLibLoc()))
+                                   lib.loc=.libPaths()))
     # If something failed, warn and try loading from anywhere.
     if(!all(attached)){
-      if(verbose) message("Failed to attach package ", sQuote(pkg), " on the slave nodes from the same location as the master node. Will try to load from anywhere in the library path.")
-      attached <- clusterCall(cl, require,
-                              package=pkg,
-                              character.only=TRUE)
-      if(!all(attached)){
-        stop("Failed to attach package ", sQuote(pkg), " on one or more slave nodes. Make sure it's installed on or accessible from all of them and is in the library path.")
-      }
+      stop("Failed to attach package ", sQuote(pkg), " on one or more slave nodes. Make sure it's installed on or accessible from all of them and is in the library path.")
     }
-    
+
     if(control$parallel.version.check){
       slave.versions <- clusterCall(cl,packageVersion,pkg)
       #' @importFrom utils packageVersion
       master.version <- packageVersion(pkg)
-      
-      if(!all(sapply(slave.versions,identical,master.version)))
-        stop("The version of ", sQuote(pkg), " attached on one or more slave nodes is different from from that on the master node (this node). Make sure that the same version is installed on all nodes. If you are absolutely certain that this message is in error, override with the parallel.version.check=FALSE control parameter.")
+
+      wrong <- !sapply(slave.versions,identical,master.version)
+      if(any(wrong))
+        stop("The version of ", sQuote(pkg), " (", paste(slave.versions[wrong], collapse=", "), ") attached on one or more slave nodes is different from that on the (this) master node (", master.version,"). Make sure that the same version is installed on all nodes. If you are absolutely certain that this message is in error, override with the parallel.version.check=FALSE control parameter.")
     }
     ergm.MCMC.packagenames(loaded=pkg)
   }
@@ -231,7 +223,7 @@ ergm.getCluster <- function(control=NULL, verbose=FALSE, stop_on_exit=parent.fra
 #' @param \dots not currently used
 #' @export ergm.stopCluster
 ergm.stopCluster <- function(..., verbose=FALSE){
-  if(length(list(...))) warning("Arguments to ergm.stopCluster() have been deprecated.")
+  if(...length()) warning("Arguments to ergm.stopCluster() have been deprecated.")
   if(!is.null(ergm.cluster.started())){
     #' @importFrom parallel stopCluster
     if(verbose) message("Stopping the running cluster.")
@@ -285,7 +277,7 @@ ergm.sample.tomcmc<-function(sample, params){
 #'   parallel processes represented by its argument, keeping in mind
 #'   that having no cluster (e.g., `NULL`) represents one thread.
 #'
-#' @param clinfo a [`cluster`] or another object.
+#' @param clinfo a [`cluster`][parallel::makeCluster] or another object.
 #' @export
 nthreads <- function(clinfo=NULL, ...){
   UseMethod("nthreads")

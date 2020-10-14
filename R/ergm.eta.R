@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution
 #
-#  Copyright 2003-2019 Statnet Commons
+#  Copyright 2003-2020 Statnet Commons
 #######################################################################
 ##############################################################################
 # The <ergm.eta> function calculates and returns eta, mapped from
@@ -59,88 +59,9 @@ ergm.eta <- function(theta, etamap) {
   ec <- etamap$canonical
   eta[ec[ec>0]] <- theta[ec>0]
   if(length(etamap$curved)>0) {
-    for(i in 1:length(etamap$curved)) {
-      cm <- etamap$curved[[i]]
+    for(cm in etamap$curved) {
       eta[cm$to] <- cm$map(theta[cm$from],length(cm$to),cm$cov)
     }
   }
   eta
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

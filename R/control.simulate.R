@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution
 #
-#  Copyright 2003-2019 Statnet Commons
+#  Copyright 2003-2020 Statnet Commons
 #######################################################################
 
 #' Auxiliary for Controlling ERGM Simulation
@@ -19,26 +19,15 @@
 #' function.  See the \code{usage} section in \code{\link{simulate.ergm}} for
 #' details.
 #'
-#' @param MCMC.prop.weights Specifies the proposal distribution used in the
-#' MCMC Metropolis-Hastings algorithm.  Possible choices are \code{"TNT"} or
-#' \code{"random"}; the \code{"default"} is one of these two, depending on the
-#' constraints in place (as defined by the \code{constraints} argument of the
-#' \code{\link{ergm}} function), though not all weights may be used with all
-#' constraints.  The \code{TNT} (tie / no tie) option puts roughly equal weight
-#' on selecting a dyad with or without a tie as a candidate for toggling,
-#' whereas the \code{random} option puts equal weight on all possible dyads,
-#' though the interpretation of \code{random} may change according to the
-#' constraints in place.  When no constraints are in place, the default is TNT,
-#' which appears to improve Markov chain mixing particularly for networks with
-#' a low edge density, as is typical of many realistic social networks.
-#' @param MCMC.prop.args An alternative, direct way of specifying additional
-#' arguments to proposal.
+#' @templateVar MCMCType MCMC
+#'
+#' @template control_MCMC_prop
 #' @param MCMC.burnin Number of proposals before any MCMC sampling is done. It
 #' typically is set to a fairly large number.
 #' @param MCMC.interval Number of proposals between sampled statistics.
 #' @param MCMC.init.maxedges Maximum number of edges expected in network.
-#' @param MCMC.runtime.traceplot Logical: If TRUE, plot traceplots of the MCMC
-#' sample after every MCMC MLE iteration.
+#' @param MCMC.runtime.traceplot Logical: If `TRUE`, plot traceplots of the MCMC
+#' sample.
 #' @param network.output R class with which to output networks. The options are
 #' "network" (default) and "edgelist.compressed" (which saves space but only
 #' supports networks without vertex attributes)

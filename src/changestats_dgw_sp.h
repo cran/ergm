@@ -5,7 +5,7 @@
  *  open source, and has the attribution requirements (GPL Section 7) at
  *  https://statnet.org/attribution
  *
- *  Copyright 2003-2019 Statnet Commons
+ *  Copyright 2003-2020 Statnet Commons
  */
 #ifndef CHANGESTATS_H
 #define CHANGESTATS_H
@@ -48,5 +48,9 @@ D_CHANGESTAT_FN(d_dgwdsp);
 /*Changescore functions*/
 D_CHANGESTAT_FN(d_dnsp);
 D_CHANGESTAT_FN(d_dgwnsp);
+
+/*Changescore functions*/
+D_CHANGESTAT_FN(d_ddspbwrap);
+D_CHANGESTAT_FN(d_dgwdspbwrap);
 
 #endif

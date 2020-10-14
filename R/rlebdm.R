@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution
 #
-#  Copyright 2003-2019 Statnet Commons
+#  Copyright 2003-2020 Statnet Commons
 #######################################################################
 #' RLE-Compressed Boolean Dyad Matrix
 #'
@@ -28,6 +28,7 @@
 #' stopifnot(length(big)==50000^2)
 #'
 #' @seealso [as.rlebdm.ergm_conlist()]
+#' @import rle
 #' @import statnet.common
 #' @keywords internal
 #' @export
@@ -78,20 +79,61 @@ as.rlebdm.matrix <- function(x, ...){
 #' 
 #' @export
 as.rlebdm.edgelist <- function(x, ...){
-  n <- attr(x, "n")
-  ils <- lapply(lapply(lapply(seq_len(n), function(j) x[x[,2]==j,1]), unique), sort)
-  o <- lapply(ils, function(il){
-    o <- rle(c(rep(c(FALSE,TRUE), length(il)),FALSE))
+  n <- as.integer(attr(x, "n")) # network size
+
+  x <- as.matrix(x) # matrix edgelist
+  storage.mode(x) <- "integer" # be sure tails and heads are stored as integers
+
+  o <- order(x[,2L],x[,1L]) # order edges by head, then tail
+  t <- x[o,1L] # tails
+  h <- x[o,2L] # heads
+  
+  ne <- length(t) # number of edges
+
+  vals <- logical(n + 2L*ne) # RLE values, defaulting to FALSE
+  lens <- rep(n, n + 2L*ne) # RLE lengths, defaulting to n
+
+  ci <- 1L # current index in vals and lens
+  
+  lh <- 1L # last head we handled
+  lt <- 0L # last tail we handled
+  
+  for(i in seq_len(ne)){ # for each edge
+    if(h[i] == lh){ # if this head is the same as the last head
+      # add the FALSE run between this tail and the last tail
+      lens[ci] <- t[i] - lt - 1L
+    }else{ # else this head is different than the last head
+      # add the final FALSE run for the last head
+      lens[ci] <- n - lt
+      
+      # move the index forward to correspond to the current head
+      ci <- ci + h[i] - lh
+
+      # add the initial FALSE run for the current head
+      lens[ci] <- t[i] - 1L
+      
+      # update the last head
+      lh <- h[i]
+    }
+
+    # update the index for the (last) FALSE run added in the above conditional
+    ci <- ci + 1L
     
-    # Construct repetition counts: gaps between the i's, as well as
-    # the gap before the first i and after the last i for that j,
-    # and interleave it with 1s.
-    lens <- c(rbind(diff(c(0,il,n+1))-1,1))
-    lens <- lens[-length(lens)]
-    rep(o, lens, scale='run')
-  })
-  # Concatenate the RLEs and compact.
-  rlebdm(compact.rle(do.call(c, o)), attr(x, "n"))
+    # add the TRUE run for the current tail
+    lens[ci] <- 1L
+    vals[ci] <- TRUE
+    ci <- ci + 1L
+    
+    # update the last tail
+    lt <- t[i]    
+  }
+  
+  # add the final FALSE run, if needed
+  if(ne > 0){
+    lens[ci] <- n - lt
+  }
+  
+  rlebdm(compress(structure(list(values=vals, lengths=lens), class = "rle")), n)
 }
 
 #' @describeIn rlebdm
@@ -135,67 +177,25 @@ print.rlebdm <- function(x, compact=TRUE, ...){
 }
 
 #' @rdname rlebdm
+#' @param e1,e2 arguments to the unary (`e1`) or the binary (`e1` and `e2`) operators.
+#'
+#' @note The arithmetic operators are mathematical functions are
+#'   implemented for the [`Ops`] and the [`Math`] group generics and
+#'   therefore work for almost all of them automatically. To preserve
+#'   the integrity of the data structure, the results are cast to
+#'   logical before return.
+#'
 #' @export
-`!.rlebdm` <- function(x){
+Ops.rlebdm <- function(e1, e2){
+  o <- NextMethod()
+  rlebdm(o, attr(e1, "n"))
+}
+
+#' @rdname rlebdm
+#' @export
+Math.rlebdm <- function(x, ...){
   o <- NextMethod()
   rlebdm(o, attr(x, "n"))
-}
-
-#' @rdname rlebdm
-#' @param e1,e2 arguments to the binary operations.
-#' @export
-`|.rlebdm` <- function(e1, e2){
-  o <- NextMethod()
-  rlebdm(o, attr(e1, "n"))
-}
-
-#' @rdname rlebdm
-#' @export
-`&.rlebdm` <- function(e1, e2){
-  o <- NextMethod()
-  rlebdm(o, attr(e1, "n"))
-}
-
-#' @rdname rlebdm
-#' @export
-`<.rlebdm` <- function(e1, e2){
-  o <- NextMethod()
-  rlebdm(o, attr(e1, "n"))
-}
-
-#' @rdname rlebdm
-#' @export
-`>.rlebdm` <- function(e1, e2){
-  o <- NextMethod()
-  rlebdm(o, attr(e1, "n"))
-}
-
-#' @rdname rlebdm
-#' @export
-`<=.rlebdm` <- function(e1, e2){
-  o <- NextMethod()
-  rlebdm(o, attr(e1, "n"))
-}
-
-#' @rdname rlebdm
-#' @export
-`>=.rlebdm` <- function(e1, e2){
-  o <- NextMethod()
-  rlebdm(o, attr(e1, "n"))
-}
-
-#' @rdname rlebdm
-#' @export
-`==.rlebdm` <- function(e1, e2){
-  o <- NextMethod()
-  rlebdm(o, attr(e1, "n"))
-}
-
-#' @rdname rlebdm
-#' @export
-`!=.rlebdm` <- function(e1, e2){
-  o <- NextMethod()
-  rlebdm(o, attr(e1, "n"))
 }
 
 #' Extract dyad-level ERGM constraint information into an [`rlebdm`] object
@@ -252,23 +252,31 @@ as.rlebdm.ergm_conlist <- function(x, constraints.obs = NULL, which = c("free", 
                  }
              }
            }
-           if(!is.null(y)) rlebdm(compact.rle(y), sqrt(length(y)))
+           if(!is.null(y)) compress(y)
          },
          missing={
            free_dyads <- as.rlebdm(x)
            free_dyads.obs <- as.rlebdm(constraints.obs)
            
            if(is.null(free_dyads)){
-             free_dyads.obs
+             free_dyads.obs # Already compacted.
            }else{
-             NVL3(free_dyads.obs, free_dyads & .,  NULL)
+             NVL3(free_dyads.obs, compress(free_dyads & .),  NULL)
            }
          },
          informative={
            y <- as.rlebdm(x)
-           NVL3(constraints.obs, y & !as.rlebdm(x, ., which="missing"), y)
+           NVL3(constraints.obs, compress(y & !as.rlebdm(x, ., which="missing")), y)
          }
          )
+}
+
+#' @describeIn rlebdm Compress the `rle` data structure in the
+#'   `rlebdm` by merging successive runs with identical values.
+#' @export
+compress.rlebdm <- function(x, ...){
+  y <- NextMethod()
+  structure(y, n=attr(x, "n"), class=class(x))
 }
 
 
@@ -348,8 +356,9 @@ as.edgelist.rlebdm <- function(x, prototype=NULL, ...){
 #' * number of nonzero dyads,
 #' * number of runs of nonzeros,
 #' * starting positions of the runs, and
-#' * cumulative lenght of the runs, prepended by 0.
+#' * cumulative lengths of the runs, prepended with 0.
 to_ergm_Cdouble.rlebdm <- function(x, ...){
+  x <- compress(x) # Just in case.
   cumlen <- cumsum(as.numeric(x$lengths[x$values==TRUE]))
   nruns <- length(cumlen)
   ndyads <- cumlen[nruns]

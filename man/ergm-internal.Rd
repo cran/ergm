@@ -5,7 +5,7 @@
 %  open source, and has the attribution requirements (GPL Section 7) at
 %  https://statnet.org/attribution
 %
-%  Copyright 2003-2019 Statnet Commons
+%  Copyright 2003-2020 Statnet Commons
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{ergm-internal}
 \title{Internal ergm Objects}
@@ -72,7 +72,6 @@
 %\alias{model.matrix.pen.glm}
 
 \alias{ergm_conlist}
-%\alias{myLibLoc}
 %\alias{nologLik.message}
 \alias{summary.statsmatrix.ergm}
 

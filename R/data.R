@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution
 #
-#  Copyright 2003-2019 Statnet Commons
+#  Copyright 2003-2020 Statnet Commons
 #######################################################################
 #' Two versions of an E. Coli network dataset
 #' 
@@ -94,7 +94,7 @@ NULL
 #' The school in question (a single school with 7th through 12th grades) was
 #' selected from the Add Health "structure files."  Documentation on these
 #' files can be found here:
-#' \url{https://www.cpc.unc.edu/projects/addhealth/codebooks/wave1/structur.zip}.
+#' \url{https://addhealth.cpc.unc.edu/documentation/codebooks/}.
 #' 
 #' The stucture file contains directed out-ties representing each instance of a
 #' student who named another student as a friend.  Students could nominate up
@@ -170,7 +170,7 @@ NULL
 #' The school in question (a single school with 7th through 12th grades) was
 #' selected from the Add Health "structure files."  Documentation on these
 #' files can be found here:
-#' \url{https://www.cpc.unc.edu/projects/addhealth/codebooks/wave1/structur.zip}.
+#' \url{https://addhealth.cpc.unc.edu/documentation/codebooks/}.
 #' 
 #' The stucture file contains directed out-ties representing each instance of a
 #' student who named another student as a friend.  Students could nominate up

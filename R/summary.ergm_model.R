@@ -5,15 +5,9 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution
 #
-#  Copyright 2003-2019 Statnet Commons
+#  Copyright 2003-2020 Statnet Commons
 #######################################################################
 
-#' @describeIn ergm-deprecated Use [summary.ergm_model()] instead.
-#' @export ergm.getglobalstats
-ergm.getglobalstats <- function(nw, m, response=NULL) {
-  .Deprecated("summary.ergm_model")
-  summary(m, nw, response=response)
-}
 #' Evaluate network summary statistics from an initialized ergm model
 #' 
 #' Returns a vector of the model's statistics for a given network or
@@ -65,7 +59,7 @@ summary.ergm_model <- function(object, nw=NULL, response=NULL,...){
   # *** don't forget, tails are passes in first now, notheads  
   gs <- if(is.null(response))
          .C("network_stats_wrapper",
-            as.integer(Clist$tails), as.integer(Clist$heads), as.integer(!is.null(Clist$time)), as.integer(Clist$time), as.integer(NVL(Clist$lasttoggle,0)),
+            as.integer(Clist$tails), as.integer(Clist$heads), as.integer(!is.null(Clist$time)), as.integer(Clist$time), as.integer(!is.null(Clist$lasttoggle)), as.integer(Clist$lasttoggle),
             as.integer(Clist$nedges),
             as.integer(Clist$n),
             as.integer(Clist$dir), as.integer(Clist$bipartite), 
@@ -77,7 +71,7 @@ summary.ergm_model <- function(object, nw=NULL, response=NULL,...){
             )$gs
          else
          .C("wt_network_stats_wrapper",
-            as.integer(Clist$tails), as.integer(Clist$heads), as.double(Clist$weights), as.integer(!is.null(Clist$time)), as.integer(Clist$time), as.integer(NVL(Clist$lasttoggle,0)),
+            as.integer(Clist$tails), as.integer(Clist$heads), as.double(Clist$weights), as.integer(!is.null(Clist$time)), as.integer(Clist$time), as.integer(!is.null(Clist$lasttoggle)), as.integer(Clist$lasttoggle),
             as.integer(Clist$nedges),
             as.integer(Clist$n),
             as.integer(Clist$dir), as.integer(Clist$bipartite), 

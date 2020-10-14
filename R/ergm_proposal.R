@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution
 #
-#  Copyright 2003-2019 Statnet Commons
+#  Copyright 2003-2020 Statnet Commons
 #######################################################################
 
 #=======================================================================================
@@ -115,16 +115,15 @@ prune.ergm_conlist <- function(conlist){
 #' 
 #' @aliases ergm_proposal.NULL ergm_proposal.ergm_proposal
 #' @param object Either a character, a \code{\link{formula}} or an
-#' \code{\link{ergm}} object.  The \code{\link{formula}} should be of the form
-#' \code{y ~ <model terms>}, where \code{y} is a network object or a matrix
-#' that can be coerced to a \code{\link[network]{network}} object.
+#' \code{\link{ergm}} object.  The \code{\link{formula}} should be of the format documented in the `constraints` argument of [ergm()] and in the [ERGM constraints][ergm-constraints] documentation.
 #' @param \dots Further arguments passed to other functions.
 #' @return Returns an ergm_proposal object: a list with class `ergm_proposal`
 #' containing the following named elements:
-#' \item{ name}{the C name of the proposal}
+#' \item{name}{the C name of the proposal}
 #' \item{inputs}{inputs to be passed to C}
-#' \item{package}{shared library name where the proposal
+#' \item{pkgname}{shared library name where the proposal
 #' can be found (usually `"ergm"`)}
+#' \item{reference}{the reference distribution}
 #' \item{arguments}{list of arguments passed to
 #' the `InitErgmProposal` function; in particular,
 #' \describe{
@@ -168,22 +167,14 @@ ergm_proposal.ergm_proposal<-function(object,...) return(object)
 #'   via 'formula'
 #' @param arguments A list of parameters used by the InitErgmProposal routines
 #' @template response
-#' @param reference One-sided formula whose RHS gives the reference
-#'   measure to be used. (Defaults to \code{~Bernoulli}.)
+#' @template reference
 #' @export
-ergm_proposal.character <- function(object, arguments, nw, ..., response=NULL, reference=reference){
+ergm_proposal.character <- function(object, arguments, nw, ..., response=NULL, reference=~Bernoulli){
   name<-object
 
   arguments$reference <- reference
 
-  # TODO: Remove this around the end of 2018.
-  f <- try(
-    locate.InitFunction(name, NVL2(response, "InitWtMHP", "InitMHP"), "Metropolis-Hastings proposal"),
-    silent=TRUE
-  )
-  if(!is(f, "try-error")){
-    .Deprecated(msg="InitWtMHP and InitMHP convention has been replaced by InitWtErgm and InitErgm, respectively.")
-  }else f <- locate.InitFunction(name, NVL2(response, "InitWtErgmProposal", "InitErgmProposal"), "Metropolis-Hastings proposal")
+  f <- locate.InitFunction(name, NVL2(response, "InitWtErgmProposal", "InitErgmProposal"), "Metropolis-Hastings proposal")
 
   proposal <- NVL3(response,
                    eval(as.call(list(f, arguments, nw, .))),
@@ -244,14 +235,7 @@ ergm_conlist <- function(object, nw){
     ## There may be other constraints in the formula, however.
     if(constraint==".") next
 
-    # TODO: Remove this around the end of 2018.
-    f <- try(
-      f <- locate.InitFunction(constraint, "InitConstraint", "Sample space constraint"),
-      silent=TRUE
-    )
-    if(!is(f, "try-error")){
-      .Deprecated(msg="InitConstraint convention has been replaced by InitErgmConstraint.")
-    }else f <- locate.InitFunction(constraint, "InitErgmConstraint", "Sample space constraint")
+    f <- locate.InitFunction(constraint, "InitErgmConstraint", "Sample space constraint")
     
     if(is.call(constraint)){
       conname <- as.character(constraint[[1]])
@@ -290,30 +274,20 @@ ergm_conlist <- function(object, nw){
 #' [list of implemented constraints][ergm-constraints] for more information.
 #' @export
 ergm_proposal.formula <- function(object, arguments, nw, weights="default", class="c", reference=~Bernoulli, response=NULL, ...) {
-  reference <- reference
+  if(is(reference, "formula")){
+    f <- locate.InitFunction(reference[[2]], "InitErgmReference", "Reference distribution")
 
-  # TODO: Remove this around the end of 2018.
-  f <- try(
-    locate.InitFunction(reference[[2]], "InitReference", "Reference distribution"),
-    silent=TRUE
-  )
-  if(!is(f, "try-error")){
-    .Deprecated(msg="InitReference convention has been replaced by InitErgmReference.")
-  }else f <- locate.InitFunction(reference[[2]], "InitErgmReference", "Reference distribution") 
-  
-  if(is.call(reference[[2]])){
-    ref.call <- list(f, lhs.nw=nw)
-    ref.call <- c(ref.call,as.list(reference[[2]])[-1])
-  }else{
-    ref.call <- list(f, lhs.nw=nw)
-  }
-  reference <- eval(as.call(ref.call),environment(reference))
-
-  # TODO: Remove this around the end of 2018.
-  if(is.null(reference$init_methods)){
-    .Deprecated(msg="Initial methods are now specified in the InitErgmReference.* function. Defaulting to 'CD' and 'zeros'.")
-    reference$init_methods <- c("CD", "zeros")
-  }
+    if(is.call(reference[[2]])){
+      ref.call <- list(f, lhs.nw=nw)
+      ref.call <- c(ref.call,as.list(reference[[2]])[-1])
+    }else{
+      ref.call <- list(f, lhs.nw=nw)
+    }
+    ref <- eval(as.call(ref.call),environment(reference))
+    class(ref) <- "ergm_reference"
+  }else if(is(reference, "ergm_reference")){
+    ref <- reference
+  }else stop("Invalid reference= argument.")
 
   if(length(object)==3){
     lhs <- object[[2]]
@@ -342,19 +316,19 @@ ergm_proposal.formula <- function(object, arguments, nw, weights="default", clas
 
     qualifying.specific <-
       if(all(sapply(conlist, `[[`, "sign")==+1)){ # If all constraints are conjunctive...
-        with(ergm_proposal_table(),ergm_proposal_table()[Class==class & Constraints==constraints.specific & Reference==reference$name & if(is.null(weights) || weights=="default") TRUE else Weights==weights,])
+        with(ergm_proposal_table(),ergm_proposal_table()[Class==class & Constraints==constraints.specific & Reference==ref$name & if(is.null(weights) || weights=="default") TRUE else Weights==weights,])
       }
 
     # Try the general dyad-independent constraint combination.
     constraints.general <- tolower(unlist(ifelse(sapply(conlist,`[[`,"dependence"),lapply(conlist, `[[`, "constrain"), ".dyads")))
     constraints.general <- paste(sort(unique(constraints.general)),collapse="+")
-    qualifying.general <- with(ergm_proposal_table(),ergm_proposal_table()[Class==class & Constraints==constraints.general & Reference==reference$name & if(is.null(weights) || weights=="default") TRUE else Weights==weights,])
+    qualifying.general <- with(ergm_proposal_table(),ergm_proposal_table()[Class==class & Constraints==constraints.general & Reference==ref$name & if(is.null(weights) || weights=="default") TRUE else Weights==weights,])
 
     qualifying <- rbind(qualifying.general, qualifying.specific)
     
     if(nrow(qualifying)<1){
-      commonalities<-(ergm_proposal_table()$Class==class)+(ergm_proposal_table()$Weights==weights)+(ergm_proposal_table()$Reference==reference)+(ergm_proposal_table()$Constraints==constraints.specific)
-      stop("The combination of class (",class,"), model constraints (",constraints.specific,"), reference measure (",reference,"), proposal weighting (",weights,"), and conjunctions and disjunctions is not implemented. ", "Check your arguments for typos. ", if(any(commonalities>=3)) paste("Nearest matching proposals: (",paste(apply(ergm_proposal_table()[commonalities==3,-5],1,paste, sep="), (",collapse=", "),collapse="), ("),")",sep="",".") else "")
+      commonalities<-(ergm_proposal_table()$Class==class)+(ergm_proposal_table()$Weights==weights)+(ergm_proposal_table()$Reference==ref)+(ergm_proposal_table()$Constraints==constraints.specific)
+      stop("The combination of class (",class,"), model constraints (",constraints.specific,"), reference measure (",deparse(ult(reference)),"), proposal weighting (",weights,"), and conjunctions and disjunctions is not implemented. ", "Check your arguments for typos. ", if(any(commonalities>=3)) paste("Nearest matching proposals: (",paste(apply(ergm_proposal_table()[commonalities==3,-5],1,paste, sep="), (",collapse=", "),collapse="), ("),")",sep="",".") else "")
     }
     
     if(nrow(qualifying)==1){
@@ -366,7 +340,7 @@ ergm_proposal.formula <- function(object, arguments, nw, weights="default", clas
   
   arguments$constraints<-conlist
   ## Hand it off to the class character method.
-  ergm_proposal.character(name, arguments, nw, response=response, reference=reference)
+  ergm_proposal.character(name, arguments, nw, response=response, reference=ref)
 }
 
 
@@ -400,6 +374,6 @@ ergm_proposal.ergm<-function(object,...,constraints=NULL, arguments=NULL, nw=NUL
   if(is.null(nw)) nw<-object$network
   if(is.null(reference)) reference<-object$reference
   if(is.null(response)) response<-object$response
-  
+
   ergm_proposal(constraints,arguments=arguments,nw=nw,weights=weights,class=class,reference=reference,response=response)
 }

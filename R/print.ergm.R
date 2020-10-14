@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution
 #
-#  Copyright 2003-2019 Statnet Commons
+#  Copyright 2003-2020 Statnet Commons
 #######################################################################
 ###############################################################################
 # The <print.ergm> function prints summary information for a given ergm
@@ -32,6 +32,9 @@
 #' vector governing the selection of the sample, and the Monte Carlo MLE. The optional `digits` argument specifies the significant digits for coefficients
 #' @export
 print.ergm <- function (x, digits = max(3, getOption("digits") - 3), ...) {
+  # The following code is based on stats:::print.lm(), but there really isn't another concise way to do this:
+  if(!is.null(x$call)) cat("\nCall:\n", paste(deparse(x$call), sep="\n", collapse="\n"), "\n\n", sep="")
+
    if(is.matrix(x$sample)){
 #    if(!is.matrix(x$thetasample) && !is.null(x$iterations)){
 #     cat("Newton-Raphson iterations: ", x$iterations[1], "\n")

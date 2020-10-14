@@ -5,7 +5,7 @@
  *  open source, and has the attribution requirements (GPL Section 7) at
  *  https://statnet.org/attribution
  *
- *  Copyright 2003-2019 Statnet Commons
+ *  Copyright 2003-2020 Statnet Commons
  */
 #ifndef CHANGESTATS_H
 #define CHANGESTATS_H
@@ -54,15 +54,12 @@ D_CHANGESTAT_FN(d_concurrent);
 D_CHANGESTAT_FN(d_concurrent_by_attr);
 D_CHANGESTAT_FN(d_ctriple);
 D_CHANGESTAT_FN(d_cycle);
-  void edgewise_path_recurse(Network *g, Vertex dest, 
-     Vertex curnode, Vertex *availnodes, long int availcount, 
-     long int curlen, double *countv, long int maxlen);
 
-/* *** I didn't swap heads and tails here, since these already 
-   seem in line with the tails->heads naming convenction*/
-       
-  void edgewise_cycle_census(Network *g, Vertex tail, Vertex head, 
-     double *countv, long int maxlen);
+void edgewise_path_recurse(Network *nwp, Vertex dest, Vertex curnode, 
+     Vertex *visited, long int curlen, double *countv, long int maxlen, int semi);
+
+void edgewise_cycle_census(Network *nwp, Vertex tail, Vertex head, 
+                           double *countv, long int maxlen, int semi);
 /********************  changestats:  D    ***********/
 D_CHANGESTAT_FN(d_degcor); S_CHANGESTAT_FN(s_degcor);
 D_CHANGESTAT_FN(d_degcrossprod);
@@ -105,6 +102,7 @@ D_CHANGESTAT_FN(d_idegree_by_attr);
 D_CHANGESTAT_FN(d_idegree_w_homophily);
 D_CHANGESTAT_FN(d_idegreepopularity);
 D_CHANGESTAT_FN(d_intransitive);
+D_CHANGESTAT_FN(d_isolatededges);
 D_CHANGESTAT_FN(d_isolates);
 S_CHANGESTAT_FN(s_isolates);
 D_CHANGESTAT_FN(d_istar);

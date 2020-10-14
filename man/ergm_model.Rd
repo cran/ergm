@@ -14,8 +14,15 @@
 \alias{param_names.ergm_model}
 \title{Internal representation of an \code{ergm} network model}
 \usage{
-ergm_model(formula, nw = NULL, response = NULL, silent = FALSE,
-  role = "static", ..., term.options = list())
+ergm_model(
+  formula,
+  nw = NULL,
+  response = NULL,
+  silent = FALSE,
+  role = "static",
+  ...,
+  term.options = list()
+)
 
 \method{c}{ergm_model}(...)
 
@@ -31,8 +38,7 @@ as.ergm_model(x, ...)
 
 \method{is.dyad.independent}{ergm_model}(object, ...)
 
-\method{nparam}{ergm_model}(object, canonical = FALSE, offset = NA,
-  byterm = FALSE, ...)
+\method{nparam}{ergm_model}(object, canonical = FALSE, offset = NA, byterm = FALSE, ...)
 
 \method{param_names}{ergm_model}(object, canonical = FALSE, ...)
 }
@@ -73,8 +79,6 @@ coefficients for each term.}
 \value{
 \code{ergm_model} returns an  \code{ergm_model} object as a list
 containing:
-\item{ formula}{the formula inputted to
-\code{\link{ergm_model}}}
 \item{coef.names}{a vector of coefficient names}
 \item{offset}{a logical vector of whether each term was "offset", i.e.
 fixed}

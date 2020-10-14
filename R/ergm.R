@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution
 #
-#  Copyright 2003-2019 Statnet Commons
+#  Copyright 2003-2020 Statnet Commons
 #######################################################################
 ###############################################################################
 # The <ergm> function fits ergms from a specified formula returning either
@@ -47,8 +47,6 @@
 #       <ergm.stocapprox>  = %
 #       <ergm.estimate>    = ^
 #       <ergm.robmon>      = &
-#       <ergm.mapl>        = #
-#       <ergm.maple>       = ~
 #
 #   the components include:
 #
@@ -81,10 +79,6 @@
 #    $*!@% &#~+  mle.lik         :  the approximate log-likelihood for the MLE, if computed
 #    $* @        etamap          :  the set of function mapping theta -> eta;
 #                                   see <etamap>? for the components of this list
-#    $           degeneracy.value:  the degeneracy value assigned by <ergm.degeneracy>
-#    $           degeneracy.type :  a vector of length 2, as returned by
-#                                   <ergm.compute.degeneracy> (found in the
-#                                   <ergm.degeracy> file)
 #    $      #    formula         :  the 'formula' value inputted to <ergm>
 #    $      #    constraints     :  the 'constraints' value inputted to <ergm>
 #           #    prop.args       :  the list of arguments that were passed onto the
@@ -103,7 +97,6 @@
 #      !    #~   glm.null        :  the null fit established by MPL estimation and
 #                                   returned by <ergm.logitreg>, <ergm.pen.glm> or <glm>
 #                                   depending on the 'MPLEtype';
-#      !   #~    theta1          :  the vector of ??
 #         &      rm.coef         :  the robmon coefficients used as 'init' in the final
 #                                   estimation
 #      !   #~   loglikelihoodratio: the log-likelihood corresponding to
@@ -143,11 +136,7 @@
 #' fixes its value to one specified in \code{offset.coef}.
 #' }
 #' @template response
-#' @param reference {A one-sided formula specifying
-#' the reference measure (\eqn{h(y)}) to be used. (Defaults to \code{~Bernoulli}.)
-#' See help for [ERGM reference measures][ergm-references] implemented in the
-#' **[ergm][ergm-package]** package.}
-#' 
+#' @template reference
 #' @param constraints {A formula specifying one or more constraints
 #' on the support of the distribution of the networks being modeled,
 #' using syntax similar to the \code{formula} argument, on the
@@ -202,16 +191,18 @@
 #' \code{force.main} argument of \code{\link{control.ergm}}. If "CD" (\emph{EXPERIMENTAL}),
 #' the Monte-Carlo contrastive divergence estimate is returned. )
 #' }
-#' @param control {A list of control parameters for algorithm
+#' @param control A list of control parameters for algorithm
 #' tuning. Constructed using \code{\link{control.ergm}}. 
-#' }
-#' @param verbose {logical; if this is
-#' \code{TRUE}, the program will print out additional
-#' information, including goodness of fit statistics.
-#' }
-#' @param \dots {Additional
+#'
+#' @param verbose A `logical` or an integer: if this is
+#'   \code{TRUE}/\code{1}, the program will print out additional
+#'   information about the progress of estimation and
+#'   simulation. Higher values produce more verbosity.
+#'
+#' @param \dots Additional
 #' arguments, to be passed to lower-level functions.
-#' }
+#'
+#' @template basis
 #' 
 #' @return
 #' \code{\link{ergm}} returns an object of class \code{\link{ergm}} that is a list
@@ -242,7 +233,7 @@
 #' \item{covar}{Approximate covariance matrix for the MLE, based on the inverse
 #' Hessian of the approximated loglikelihood evaluated at the maximizer.}
 #' \item{failure}{Logical:  Did the MCMC estimation fail?}
-#' \item{network}{Original network}
+#' \item{network}{Network passed on the left-hand side of `formula`. If `target.stats` are passed, it is replaced by the network returned by [san()].}
 #' \item{newnetworks}{A list of the final networks at the end of the MCMC
 #' simulation, one for each thread.}
 #' \item{newnetwork}{The first (possibly only) element of \code{netwonetworks}.}
@@ -286,16 +277,6 @@
 #' \item{mle.lik}{The approximate log-likelihood for the MLE.
 #' The value is only approximate because it is estimated based 
 #' on the MCMC random sample.}
-#' 
-#' \item{degeneracy.value}{Score calculated to assess the degree of 
-#' degeneracy in the model. Only shows when MCMLE.check.degeneracy is TRUE in \code{control.ergm}. }
-#' \item{degeneracy.type}{Supporting output for \code{degeneracy.value}. Only shows when MCMLE.check.degeneracy is TRUE in \code{control.ergm}. Mainly for internal use.}
-#' 
-#' See the method \code{\link{print.ergm}} for details on how
-#' an \code{\link{ergm}} object is printed.  Note that the
-#' method \code{\link{summary.ergm}} returns a summary of the
-#' relevant parts of the \code{\link{ergm}} object in concise summary
-#' format.
 #' 
 #' @section Notes on model specification:
 #' Although each of the statistics in a given model is a summary
@@ -370,7 +351,7 @@
 #' Working Paper \#39, 
 #' Center for Statistics and the Social Sciences,
 #' University of Washington.
-#' \url{https://www.csss.washington.edu/Papers/wp39.pdf}
+#' \url{https://www.csss.washington.edu/research/working-papers/assessing-degeneracy-statistical-models-social-networks}
 #' 
 #' Handcock MS (2003b).
 #' \pkg{degreenet}: Models for Skewed Count Distributions Relevant
@@ -418,8 +399,8 @@
 #' Available from 
 #' \url{https://www.cmu.edu/joss/content/articles/volume3/Snijders.pdf}.
 #' 
-#' @seealso network, \%v\%, \%n\%, \code{\link{ergm-terms}}, \code{\link{ergmMPLE}},
-#' \code{\link{summary.ergm}}, \code{\link{print.ergm}}
+#' @seealso [`network`], [`%v%`], [`%n%`], [ergm-terms], [`ergmMPLE`],
+#' [summary.ergm()]
 #' 
 #' @examples
 #' \donttest{
@@ -508,9 +489,10 @@ ergm <- function(formula, response=NULL,
                  eval.loglik=getOption("ergm.eval.loglik"),
                  estimate=c("MLE", "MPLE", "CD"),
                  control=control.ergm(),
-                 verbose=FALSE,...) {
+                 verbose=FALSE,..., basis=ergm.getnetwork(formula)) {
   check.control.class("ergm", "ergm")
   control.toplevel(control,...)
+  ergm_call <- match.call(ergm)
   
   estimate <- match.arg(estimate)
 
@@ -526,7 +508,7 @@ ergm <- function(formula, response=NULL,
   if(!is.null(control$seed))  set.seed(as.integer(control$seed))
   if (verbose) message("Evaluating network in model.")
   
-  nw <- ergm.getnetwork(formula)
+  nw <- basis
   proposalclass <- "c"
   
   
@@ -572,7 +554,7 @@ ergm <- function(formula, response=NULL,
     init.candidates <- init.candidates[init.candidates!="MPLE"]
     if(verbose) message("MPLE cannot be used for this constraint structure.")
   }
-  if("MPLE" %in% init.candidates && !is.null(target.stats) && is.curved(formula, response=response, term.options=control$term.options)){
+  if("MPLE" %in% init.candidates && !is.null(target.stats) && is.curved(formula, response=response, basis=nw, term.options=control$term.options)){
     init.candidates <- init.candidates[init.candidates!="MPLE"]
     if(verbose) message("At this time, MPLE cannot be used for curved families when target.stats are passed.")
   }
@@ -602,14 +584,15 @@ ergm <- function(formula, response=NULL,
     ## If target.stats are given, overwrite the given network and formula
     ## with SAN-ed network and formula.
     if(control$SAN.maxit > 0){
-      TARGET_STATS<-san(formula.no, target.stats=target.stats,
+      TARGET_STATS<-san(formula, target.stats=target.stats,
                 response=response,
                 reference=reference,
                 constraints=constraints,
                 control=san.control,
                 only.last=TRUE,
                 output="pending_update_network",
-                verbose=verbose)
+                verbose=verbose,
+                offset.coef=NVL(offset.coef,control$init[model.initial$etamap$offsettheta]))
       if(verbose) message("Finished SAN run.")
     }else{
       TARGET_STATS <- nw
@@ -687,7 +670,7 @@ ergm <- function(formula, response=NULL,
   
   MPLE.is.MLE <- (proposal$reference$name=="Bernoulli"
                   && is.dyad.independent(model.initial)
-                  && !is.curved(formula, response=response, term.options=control$term.options)
+                  && !is.curved(formula, response=response, basis=nw, term.options=control$term.options)
                   && !control$force.main
                   && is.dyad.independent(proposal$arguments$constraints,
                                          proposal.obs$arguments$constraints))
@@ -704,6 +687,7 @@ ergm <- function(formula, response=NULL,
     # Note that this cannot be overridden with control$force.main.
     message("All terms are either offsets or extreme values. No optimization is performed.")
     return(structure(list(coef=control$init,
+                          call=ergm_call,
                           iterations=0,
                           loglikelihood=NA,
                           mle.lik=NULL,
@@ -721,7 +705,7 @@ ergm <- function(formula, response=NULL,
                           constrained.obs=proposal.obs$arguments$constraints,
                           constraints=constraints,
                           target.stats=model.initial$target.stats,
-                          target.esteq=if(!is.null(model.initial$target.stats)) ergm.estfun(rbind(model.initial$target.stats), initialfit$coef, model.initial),
+                          target.esteq=if(!is.null(model.initial$target.stats)) ergm.estfun(rbind(model.initial$target.stats), control$init, model.initial),
                           estimate=estimate,
                           ergm_version=packageVersion("ergm"),
                           control=control
@@ -743,12 +727,21 @@ ergm <- function(formula, response=NULL,
                                 control=control,
                                 proposal=proposal,
                                 proposal.obs=proposal.obs,
-                                verbose=verbose, response=response,
-                                maxNumDyadTypes=control$MPLE.max.dyad.types,
+                                verbose=if(MCMCflag) FALSE else verbose, response=response,
                                 ...)
-  
+
+  switch(control$init.method,
+         MPLE = NVL3(initialfit$xmat.full, check_nonidentifiability(., initialfit$coef, model.initial,
+                                         tol = control$MPLE.nonident.tol, type="covariates",
+                                         action = control$MPLE.nonident)),
+         CD = NVL3(initialfit$sample, check_nonidentifiability(as.matrix(.), initialfit$coef, model.initial,
+                                       tol = control$MPLE.nonident.tol, type="statistics",
+                                       action = control$MPLE.nonident))
+         )
+
   if (!MCMCflag){ # Just return initial (non-MLE) fit and exit.
     message("Stopping at the initial estimate.")
+    initialfit$call <- ergm_call
     initialfit$MPLE_is_MLE <- MPLE.is.MLE
     initialfit$ergm_version <- packageVersion("ergm")
     initialfit$offset <- model.initial$etamap$offsettheta
@@ -835,18 +828,9 @@ ergm <- function(formula, response=NULL,
   
   # done with main fit
   
-  if(!is.null(control$MCMLE.check.degeneracy) && control$MCMLE.check.degeneracy && (is.null(mainfit$theta1$independent) || !all(mainfit$theta1$independent))){
-    if(verbose) {
-      message("Checking for degeneracy.")
-    }
-    degeneracy <- ergm.degeneracy(mainfit, test.only=TRUE)
-  } else {
-    degeneracy <- list(degeneracy.value=NULL, degeneracy.type=NULL)
-  }
+  mainfit$call <- ergm_call
   mainfit$ergm_version <- packageVersion("ergm")
   mainfit$MPLE_is_MLE <- MPLE.is.MLE
-  mainfit$degeneracy.value <- degeneracy$degeneracy.value
-  mainfit$degeneracy.type <- degeneracy$degeneracy.type
   
   mainfit$formula <- formula
   mainfit$target.stats <- model$target.stats

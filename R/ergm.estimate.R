@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution
 #
-#  Copyright 2003-2019 Statnet Commons
+#  Copyright 2003-2020 Statnet Commons
 #######################################################################
 ##################################################################################
 # The <ergm.estimate> function searches for and returns a maximizer of the
@@ -389,9 +389,6 @@ ergm.estimate<-function(init, model, statsmatrix, statsmatrix.obs=NULL,
     #
     mcmcloglik <- -abs(c0 - c01)
     
-    #   c1 <- theta1$loglikelihood
-    #   c1  <- c01
-    # loglikelihood <- mcmcloglik
     loglikelihood <- Lout$value
     
     #

@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution
 #
-#  Copyright 2003-2019 Statnet Commons
+#  Copyright 2003-2020 Statnet Commons
 #######################################################################
 ############################################################################
 # The <ergmMPLE> function has different behavior based on whether the given
@@ -71,7 +71,7 @@
 #' must be greater than \code{network.dyadcount(.)} of the response network, or
 #' not all elements of the array that ought to be filled in will be.
 #' 
-#' @param formula An ERGM formula. See \code{\link{ergm}}.
+#' @param formula,constraints An ERGM formula and a constraint formula. See \code{\link{ergm}}.
 #' @param fitmodel Deprecated. Use \code{output="fit"} instead.
 #' @param output Character, partially matched. See Value.
 #' @param as.initialfit Logical. Specifies whether terms are initialized with
@@ -145,7 +145,7 @@
 #' # The term is treated as curved: individual esp# terms are returned:
 #' colnames(ergmMPLE(formula2, as.initialfit=FALSE)$predictor)
 #' @export ergmMPLE
-ergmMPLE <- function(formula, fitmodel=FALSE, output=c("matrix", "array", "fit"), as.initialfit = TRUE, control=control.ergm(),
+ergmMPLE <- function(formula, constraints=~., fitmodel=FALSE, output=c("matrix", "array", "fit"), as.initialfit = TRUE, control=control.ergm(),
                      verbose=FALSE, ...){
   if(!missing(fitmodel)){
       warning("Argument fitmodel= to ergmMPLE() has been deprecated and will be removed in a future version. Use output=\"fit\" instead.")
@@ -155,34 +155,40 @@ ergmMPLE <- function(formula, fitmodel=FALSE, output=c("matrix", "array", "fit")
   control.toplevel(...,myname="ergm")
   output <- match.arg(output)
   if (output=="fit") {
-    return(ergm(formula, estimate="MPLE", control=control, verbose=verbose, ...))
+    return(ergm(formula, estimate="MPLE", control=control, verbose=verbose, constraints=constraints, ...))
   }
 
   if(output == "array") formula <- nonsimp_update.formula(formula, .~indices+.)
   
   nw <- ergm.getnetwork(formula)
   model <- ergm_model(formula, nw, initialfit=as.initialfit, term.options=control$term.options)
-  fd <- ergm.design(nw, verbose=verbose)
+  basecon <- ergm_conlist(constraints, nw)
+  misscon <- if(network.naedgecount(nw)) ergm_conlist(~observed, nw)
+  fd <- as.rlebdm(basecon, misscon, which="informative")
+
   pl <- ergm.pl(nw, fd, model, verbose=verbose, control=control,...)
 
   switch(output,
-         matrix = list(response = pl$zy, predictor = pl$xmat, 
+         matrix = list(response = pl$zy, predictor = pl$xmat.full,
            weights = pl$wend),
          array = {
+           bip <- NVL(nw %n% "bipartite", 0)
            vn <- if(all(is.na(nw %v% "vertex.names"))) 1:network.size(nw) else nw %v% "vertex.names"
-           t.names <- if(is.bipartite(nw)) vn[seq_len(nw %n% "bipartite")] else vn
-           h.names <- if(is.bipartite(nw)) vn[-seq_len(nw %n% "bipartite")] else vn
-           term.names <- colnames(pl$xmat)[-(1:2),drop=FALSE]
+           t.names <- if(bip) vn[seq_len(bip)] else vn
+           h.names <- if(bip) vn[-seq_len(bip)] else vn
+           term.names <- colnames(pl$xmat.full)[-(1:2),drop=FALSE]
+
+           if(bip) pl$xmat.full[,2] <- pl$xmat.full[,2] - bip
            
-           xa <- array(NA, dim = c(length(t.names), length(h.names), ncol(pl$xmat)-2), dimnames = list(tail = t.names, head = h.names, term = term.names))
+           xa <- array(NA, dim = c(length(t.names), length(h.names), ncol(pl$xmat.full)-2), dimnames = list(tail = t.names, head = h.names, term = term.names))
            
            for(k in seq_along(term.names))
-             xa[cbind(pl$xmat[,1:2,drop=FALSE],k)] <- pl$xmat[,k+2]
+             xa[cbind(pl$xmat.full[,1:2,drop=FALSE],k)] <- pl$xmat.full[,k+2]
            
            ym <- as.matrix(nw, matrix.type="adjacency")
 
            wm <- matrix(0, nrow(ym), ncol(ym))
-           wm[cbind(pl$xmat[,1:2,drop=FALSE])] <- pl$wend
+           wm[cbind(pl$xmat.full[,1:2,drop=FALSE])] <- pl$wend
 
            list(response = ym, predictor = xa, weights = wm)
          }

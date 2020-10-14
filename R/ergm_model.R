@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution
 #
-#  Copyright 2003-2019 Statnet Commons
+#  Copyright 2003-2020 Statnet Commons
 #######################################################################
 #===================================================================================
 # This file contains the following 2 functions for creating the 'ergm_model' object
@@ -35,8 +35,6 @@
 #' @param object An `ergm_model` object.
 #' @return `ergm_model` returns an  `ergm_model` object as a list
 #' containing:
-#' \item{ formula}{the formula inputted to
-#' \code{\link{ergm_model}}}
 #' \item{coef.names}{a vector of coefficient names}
 #' \item{offset}{a logical vector of whether each term was "offset", i.e.
 #' fixed}
@@ -66,7 +64,7 @@ ergm_model <- function(formula, nw=NULL, response=NULL, silent=FALSE, role="stat
   
   formula.env<-environment(formula)
   
-  model <- structure(list(formula=formula, coef.names = NULL,
+  model <- structure(list(coef.names = NULL,
                       offset = NULL,
                       terms = NULL, networkstats.0 = NULL, etamap = NULL),
                  class = "ergm_model")
@@ -115,7 +113,7 @@ ergm_model <- function(formula, nw=NULL, response=NULL, silent=FALSE, role="stat
     if(ult(model$offset)){
       outlist$coef.names <- paste0("offset(",outlist$coef.names,")")
       if(!is.null(outlist$params))
-        names(outlist$params) <- paste0("offset(",outlist$params,")")
+        names(outlist$params) <- paste0("offset(",names(outlist$params),")")
     }
     # Now it is necessary to add the output to the model formula
     model <- updatemodel.ErgmTerm(model, outlist)
@@ -128,13 +126,6 @@ ergm_model <- function(formula, nw=NULL, response=NULL, silent=FALSE, role="stat
   
   class(model) <- "ergm_model"
   model
-}
-
-#' @describeIn ergm-deprecated Use `ergm_model` instead.
-#' @export ergm.getmodel
-ergm.getmodel <- function(object, ...){
-  .Deprecated("ergm_model")
-  ergm_model(object, ...)
 }
 
 #######################################################################
@@ -191,7 +182,6 @@ c.ergm_model <- function(...){
                   "offset",
                   "term.skipped"))
       o[[name]] <- c(o[[name]], m[[name]])
-    o$formula <- append_rhs.formula(o$formula, m$formula, keep.onesided=TRUE)
   }
 
   o$etamap <- ergm.etamap(o)

@@ -12,10 +12,20 @@
 \alias{vcov.ergm}
 \title{Exponential-Family Random Graph Models}
 \usage{
-ergm(formula, response = NULL, reference = ~Bernoulli,
-  constraints = ~., offset.coef = NULL, target.stats = NULL,
-  eval.loglik = getOption("ergm.eval.loglik"), estimate = c("MLE",
-  "MPLE", "CD"), control = control.ergm(), verbose = FALSE, ...)
+ergm(
+  formula,
+  response = NULL,
+  reference = ~Bernoulli,
+  constraints = ~.,
+  offset.coef = NULL,
+  target.stats = NULL,
+  eval.loglik = getOption("ergm.eval.loglik"),
+  estimate = c("MLE", "MPLE", "CD"),
+  control = control.ergm(),
+  verbose = FALSE,
+  ...,
+  basis = ergm.getnetwork(formula)
+)
 
 is.ergm(object)
 
@@ -27,8 +37,7 @@ is.ergm(object)
 
 \method{coefficients}{ergm}(object, ...)
 
-\method{vcov}{ergm}(object, sources = c("all", "model", "estimation"),
-  ...)
+\method{vcov}{ergm}(object, sources = c("all", "model", "estimation"), ...)
 }
 \arguments{
 \item{formula}{{An \R \code{\link{formula}} object, of the form
@@ -49,10 +58,10 @@ fixes its value to one specified in \code{offset.coef}.
 modeled in the valued ERGM framework. Defaults to \code{NULL} for
 simple presence or absence, modeled via a binary ERGM.}
 
-\item{reference}{{A one-sided formula specifying
-the reference measure (\eqn{h(y)}) to be used. (Defaults to \code{~Bernoulli}.)
+\item{reference}{A one-sided formula specifying
+the reference measure (\eqn{h(y)}) to be used.
 See help for \link[=ergm-references]{ERGM reference measures} implemented in the
-\strong{\link[=ergm-package]{ergm}} package.}}
+\strong{\link[=ergm-package]{ergm}} package.}
 
 \item{constraints}{{A formula specifying one or more constraints
 on the support of the distribution of the networks being modeled,
@@ -113,18 +122,18 @@ likelihood calculation even when the MLE and MPLE are the same, see the
 the Monte-Carlo contrastive divergence estimate is returned. )
 }}
 
-\item{control}{{A list of control parameters for algorithm
-tuning. Constructed using \code{\link{control.ergm}}.
-}}
+\item{control}{A list of control parameters for algorithm
+tuning. Constructed using \code{\link{control.ergm}}.}
 
-\item{verbose}{{logical; if this is
-\code{TRUE}, the program will print out additional
-information, including goodness of fit statistics.
-}}
+\item{verbose}{A \code{logical} or an integer: if this is
+\code{TRUE}/\code{1}, the program will print out additional
+information about the progress of estimation and
+simulation. Higher values produce more verbosity.}
 
-\item{\dots}{{Additional
-arguments, to be passed to lower-level functions.
-}}
+\item{\dots}{Additional
+arguments, to be passed to lower-level functions.}
+
+\item{basis}{a value (usually a \code{\link{network}}) to override the LHS of the formula.}
 
 \item{object}{{an \code{ergm} object.}}
 
@@ -167,7 +176,7 @@ should be very close to zero.}
 \item{covar}{Approximate covariance matrix for the MLE, based on the inverse
 Hessian of the approximated loglikelihood evaluated at the maximizer.}
 \item{failure}{Logical:  Did the MCMC estimation fail?}
-\item{network}{Original network}
+\item{network}{Network passed on the left-hand side of \code{formula}. If \code{target.stats} are passed, it is replaced by the network returned by \code{\link[=san]{san()}}.}
 \item{newnetworks}{A list of the final networks at the end of the MCMC
 simulation, one for each thread.}
 \item{newnetwork}{The first (possibly only) element of \code{netwonetworks}.}
@@ -211,16 +220,6 @@ unconstrained models.}
 \item{mle.lik}{The approximate log-likelihood for the MLE.
 The value is only approximate because it is estimated based
 on the MCMC random sample.}
-
-\item{degeneracy.value}{Score calculated to assess the degree of
-degeneracy in the model. Only shows when MCMLE.check.degeneracy is TRUE in \code{control.ergm}. }
-\item{degeneracy.type}{Supporting output for \code{degeneracy.value}. Only shows when MCMLE.check.degeneracy is TRUE in \code{control.ergm}. Mainly for internal use.}
-
-See the method \code{\link{print.ergm}} for details on how
-an \code{\link{ergm}} object is printed.  Note that the
-method \code{\link{summary.ergm}} returns a summary of the
-relevant parts of the \code{\link{ergm}} object in concise summary
-format.
 }
 \description{
 \code{\link{ergm}} is used to fit exponential-family random graph
@@ -412,10 +411,10 @@ Random Graph Models to Investigate Adolescent Social Networks.
 
 Handcock, M. S. (2003)
 \emph{Assessing Degeneracy in Statistical Models of Social Networks},
-Working Paper #39,
+Working Paper \#39,
 Center for Statistics and the Social Sciences,
 University of Washington.
-\url{https://www.csss.washington.edu/Papers/wp39.pdf}
+\url{https://www.csss.washington.edu/research/working-papers/assessing-degeneracy-statistical-models-social-networks}
 
 Handcock MS (2003b).
 \pkg{degreenet}: Models for Skewed Count Distributions Relevant
@@ -464,7 +463,7 @@ Available from
 \url{https://www.cmu.edu/joss/content/articles/volume3/Snijders.pdf}.
 }
 \seealso{
-network, \%v\%, \%n\%, \code{\link{ergm-terms}}, \code{\link{ergmMPLE}},
-\code{\link{summary.ergm}}, \code{\link{print.ergm}}
+\code{\link{network}}, \code{\link{\%v\%}}, \code{\link{\%n\%}}, \link{ergm-terms}, \code{\link{ergmMPLE}},
+\code{\link[=summary.ergm]{summary.ergm()}}
 }
 \keyword{models}

@@ -7,33 +7,69 @@
 \alias{control.simulate.formula}
 \title{Auxiliary for Controlling ERGM Simulation}
 \usage{
-control.simulate.formula.ergm(MCMC.burnin = 10000,
-  MCMC.interval = 1000, MCMC.prop.weights = "default",
-  MCMC.prop.args = list(), MCMC.init.maxedges = 20000,
-  MCMC.packagenames = c(), MCMC.runtime.traceplot = FALSE,
-  network.output = "network", term.options = NULL, parallel = 0,
-  parallel.type = NULL, parallel.version.check = TRUE, ...)
+control.simulate.formula.ergm(
+  MCMC.burnin = 10000,
+  MCMC.interval = 1000,
+  MCMC.prop.weights = "default",
+  MCMC.prop.args = list(),
+  MCMC.init.maxedges = 20000,
+  MCMC.packagenames = c(),
+  MCMC.runtime.traceplot = FALSE,
+  network.output = "network",
+  term.options = NULL,
+  parallel = 0,
+  parallel.type = NULL,
+  parallel.version.check = TRUE,
+  ...
+)
 
-control.simulate(MCMC.burnin = 10000, MCMC.interval = 1000,
-  MCMC.prop.weights = "default", MCMC.prop.args = list(),
-  MCMC.init.maxedges = 20000, MCMC.packagenames = c(),
-  MCMC.runtime.traceplot = FALSE, network.output = "network",
-  term.options = NULL, parallel = 0, parallel.type = NULL,
-  parallel.version.check = TRUE, ...)
+control.simulate(
+  MCMC.burnin = 10000,
+  MCMC.interval = 1000,
+  MCMC.prop.weights = "default",
+  MCMC.prop.args = list(),
+  MCMC.init.maxedges = 20000,
+  MCMC.packagenames = c(),
+  MCMC.runtime.traceplot = FALSE,
+  network.output = "network",
+  term.options = NULL,
+  parallel = 0,
+  parallel.type = NULL,
+  parallel.version.check = TRUE,
+  ...
+)
 
-control.simulate.formula(MCMC.burnin = 10000, MCMC.interval = 1000,
-  MCMC.prop.weights = "default", MCMC.prop.args = list(),
-  MCMC.init.maxedges = 20000, MCMC.packagenames = c(),
-  MCMC.runtime.traceplot = FALSE, network.output = "network",
-  term.options = NULL, parallel = 0, parallel.type = NULL,
-  parallel.version.check = TRUE, ...)
+control.simulate.formula(
+  MCMC.burnin = 10000,
+  MCMC.interval = 1000,
+  MCMC.prop.weights = "default",
+  MCMC.prop.args = list(),
+  MCMC.init.maxedges = 20000,
+  MCMC.packagenames = c(),
+  MCMC.runtime.traceplot = FALSE,
+  network.output = "network",
+  term.options = NULL,
+  parallel = 0,
+  parallel.type = NULL,
+  parallel.version.check = TRUE,
+  ...
+)
 
-control.simulate.ergm(MCMC.burnin = NULL, MCMC.interval = NULL,
-  MCMC.prop.weights = NULL, MCMC.prop.args = NULL,
-  MCMC.init.maxedges = NULL, MCMC.packagenames = NULL,
-  MCMC.runtime.traceplot = FALSE, network.output = "network",
-  term.options = NULL, parallel = 0, parallel.type = NULL,
-  parallel.version.check = TRUE, ...)
+control.simulate.ergm(
+  MCMC.burnin = NULL,
+  MCMC.interval = NULL,
+  MCMC.prop.weights = NULL,
+  MCMC.prop.args = NULL,
+  MCMC.init.maxedges = NULL,
+  MCMC.packagenames = NULL,
+  MCMC.runtime.traceplot = FALSE,
+  network.output = "network",
+  term.options = NULL,
+  parallel = 0,
+  parallel.type = NULL,
+  parallel.version.check = TRUE,
+  ...
+)
 }
 \arguments{
 \item{MCMC.burnin}{Number of proposals before any MCMC sampling is done. It
@@ -41,21 +77,23 @@ typically is set to a fairly large number.}
 
 \item{MCMC.interval}{Number of proposals between sampled statistics.}
 
-\item{MCMC.prop.weights}{Specifies the proposal distribution used in the
-MCMC Metropolis-Hastings algorithm.  Possible choices are \code{"TNT"} or
-\code{"random"}; the \code{"default"} is one of these two, depending on the
-constraints in place (as defined by the \code{constraints} argument of the
-\code{\link{ergm}} function), though not all weights may be used with all
-constraints.  The \code{TNT} (tie / no tie) option puts roughly equal weight
-on selecting a dyad with or without a tie as a candidate for toggling,
-whereas the \code{random} option puts equal weight on all possible dyads,
-though the interpretation of \code{random} may change according to the
-constraints in place.  When no constraints are in place, the default is TNT,
-which appears to improve Markov chain mixing particularly for networks with
-a low edge density, as is typical of many realistic social networks.}
+\item{MCMC.prop.weights}{Specifies the proposal
+distribution used in the MCMC Metropolis-Hastings algorithm.  Possible
+choices depending on selected \code{reference} and \code{constraints}
+arguments of the \code{\link[=ergm]{ergm()}} function, but often include \code{"TNT"}
+and \code{"random"}, and the \code{"default"} is to use the one with the
+highest priority available.
 
-\item{MCMC.prop.args}{An alternative, direct way of specifying additional
-arguments to proposal.}
+The \code{TNT} (tie / no tie) option puts roughly equal weight on selecting
+a dyad with or without a tie as a candidate for toggling, whereas the
+\code{random} option puts equal weight on all possible dyads, though the
+interpretation of \code{random} may change according to the constraints in
+place.  When no constraints are in place, the default is TNT, which appears
+to improve Markov chain mixing particularly for networks with a low edge
+density, as is typical of many realistic social networks.}
+
+\item{MCMC.prop.args}{An alternative, direct way of
+specifying additional arguments to proposal.}
 
 \item{MCMC.init.maxedges}{Maximum number of edges expected in network.}
 
@@ -63,8 +101,8 @@ arguments to proposal.}
 statistic functions in addition to those autodetected. This argument should
 not be needed outside of very strange setups.}
 
-\item{MCMC.runtime.traceplot}{Logical: If TRUE, plot traceplots of the MCMC
-sample after every MCMC MLE iteration.}
+\item{MCMC.runtime.traceplot}{Logical: If \code{TRUE}, plot traceplots of the MCMC
+sample.}
 
 \item{network.output}{R class with which to output networks. The options are
 "network" (default) and "edgelist.compressed" (which saves space but only

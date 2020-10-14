@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution
 #
-#  Copyright 2003-2019 Statnet Commons
+#  Copyright 2003-2020 Statnet Commons
 #######################################################################
 
 # Also, while we are at it, test the options setting in .onLoad().
@@ -62,7 +62,7 @@ stopifnot(all(e(y0)==rowSums(ys)/2),
           any(sweep(ys, 2, od(y0))!=0)) # Edges shouldn't vary, but degrees should.
 
 ###### Bipartite undirected
-y0 <- as.network(n-m, density=d, directed=FALSE, bipartite=m)
+y0 <- as.network(n, density=d, directed=FALSE, bipartite=m)
 
 ### B1degrees
 ys <- simulate(y0~sociality(nodes=TRUE), constraints=~b1degrees, coef=rep(0,n), nsim=nsim, output="stats")

@@ -5,7 +5,7 @@
  *  open source, and has the attribution requirements (GPL Section 7) at
  *  https://statnet.org/attribution
  *
- *  Copyright 2003-2019 Statnet Commons
+ *  Copyright 2003-2020 Statnet Commons
  */
 #ifndef WTSAN_H
 #define WTSAN_H
@@ -31,16 +31,31 @@ void WtSAN_wrapper (int *nedges,
 		    double *invcov,
 		    int *fVerbose, 
 		    int *maxedges,
-		    int *status);
+		    int *status,
+            int *nstats,
+            int *statindices,
+            int *noffsets,
+            int *offsetindices,
+            double *offsets);
 
-WtMCMCStatus WtSANSample (WtMHProposal *MHp,
+MCMCStatus WtSANSample (WtMHProposal *MHp,
 		double *invcov, double *tau, double *networkstatistics, double *prop_networkstatistics,
 		int samplesize, int nsteps, 
 	        int fVerbose, int nmax,
-		WtNetwork *nwp, WtModel *m);
-WtMCMCStatus WtSANMetropolisHastings (WtMHProposal *MHp,
+		WtNetwork *nwp, WtModel *m,
+        int nstats,
+        int *statindices,
+        int noffsets,
+        int *offsetindices,
+        double *offsets);
+MCMCStatus WtSANMetropolisHastings (WtMHProposal *MHp,
 			 double *invcov, double *tau, double *statistics, double *prop_statistics,
 			 int nsteps, int *staken,
 			 int fVerbose,
-			 WtNetwork *nwp, WtModel *m);
+			 WtNetwork *nwp, WtModel *m,
+             int nstats,
+             int *statindices,
+             int noffsets,
+             int *offsetindices,
+             double *offsets);
 #endif

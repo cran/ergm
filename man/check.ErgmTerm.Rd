@@ -4,11 +4,20 @@
 \alias{check.ErgmTerm}
 \title{Ensures an Ergm Term and its Arguments Meet Appropriate Conditions}
 \usage{
-check.ErgmTerm(nw, arglist, directed = NULL, bipartite = NULL,
-  nonnegative = FALSE, varnames = NULL, vartypes = NULL,
-  defaultvalues = list(), required = NULL, response = NULL,
-  dep.inform = rep(FALSE, length(required)), dep.warn = rep(FALSE,
-  length(required)))
+check.ErgmTerm(
+  nw,
+  arglist,
+  directed = NULL,
+  bipartite = NULL,
+  nonnegative = FALSE,
+  varnames = NULL,
+  vartypes = NULL,
+  defaultvalues = list(),
+  required = NULL,
+  response = NULL,
+  dep.inform = rep(FALSE, length(required)),
+  dep.warn = rep(FALSE, length(required))
+)
 }
 \arguments{
 \item{nw}{the network that term X is being checked against}
@@ -28,7 +37,7 @@ nonnegative weights; default=FALSE}
 term X; default=NULL}
 
 \item{vartypes}{the vector of types of the possible arguments for
-term X; default=NULL}
+term X, separated by commas; an empty string (\code{""}) or \code{NA} disables the check for that argument; default=NULL}
 
 \item{defaultvalues}{the list of default values for the possible
 arguments of term X; default=list()}

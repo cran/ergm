@@ -4,14 +4,24 @@
 \alias{as.network.numeric}
 \title{Create a Simple Random network of a Given Size}
 \usage{
-\method{as.network}{numeric}(x, directed = TRUE, hyper = FALSE,
-  loops = FALSE, multiple = FALSE, bipartite = FALSE,
-  ignore.eval = TRUE, names.eval = NULL, edge.check = FALSE,
-  density = NULL, init = NULL, numedges = NULL, ...)
+\method{as.network}{numeric}(
+  x,
+  directed = TRUE,
+  hyper = FALSE,
+  loops = FALSE,
+  multiple = FALSE,
+  bipartite = FALSE,
+  ignore.eval = TRUE,
+  names.eval = NULL,
+  edge.check = FALSE,
+  density = NULL,
+  init = NULL,
+  numedges = NULL,
+  ...
+)
 }
 \arguments{
-\item{x}{count; the number of nodes in the network. If
-\code{bipartite=TRUE}, it is the number of events in the network.}
+\item{x}{count; the number of nodes in the network}
 
 \item{directed}{logical; should edges be interpreted as directed?}
 
@@ -56,7 +66,7 @@ An object of class \code{\link[network]{network}}
 given size as an object of class \code{\link[network]{network}}.
 }
 \details{
-The network will have not have vertex, edge or network attributes.  These
+The network will not have vertex, edge or network attributes.  These
 can be added with operators such as \code{\%v\%}, \code{\%n\%}, \code{\%e\%}.
 }
 \examples{
@@ -65,8 +75,8 @@ can be added with operators such as \code{\%v\%}, \code{\%n\%}, \code{\%e\%}.
 g<-network(25)
 #Draw a random undirected network with density 0.1
 g<-network(25, directed=FALSE, density=0.1)
-#Draw a random bipartite network with 10 events and 5 actors and density 0.1
-g<-network(5, bipartite=10, density=0.1)
+#Draw a random bipartite network with 4 actors and 6 events and density 0.1
+g<-network(10, bipartite=4, density=0.1)
 }
 \references{
 Butts, C.T.  2002.  ``Memory Structures for Relational Data in

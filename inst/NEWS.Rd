@@ -5,7 +5,7 @@
 %  open source, and has the attribution requirements (GPL Section 7) at
 %  https://statnet.org/attribution
 %
-%  Copyright 2003-2019 Statnet Commons
+%  Copyright 2003-2020 Statnet Commons
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{NEWS}
 \title{NEWS file for the \code{\link[=ergm-package]{ergm}} package}
@@ -64,6 +64,183 @@
 
 %% }
 
+\section{Changes in version 3.11.0}{
+
+  \subsection{NEW FEATURES}{
+    \itemize{
+      \item{
+        \code{\link{ergm}} now checks models for evidence of nonidentifiability (linear dependence between statistics) after MPLE and during the MCMLE and CD estimation. QR decomposition is used to attempt to identify which statistics are redundant.
+      }      
+      \item{
+        It is now possible to limit the systematic sample size taken by \code{\link[=ergm.mple]{MPLE}} before resorting to the case-control likelihood using the \code{MPLE.samplesize} control parameter (if initial fit is final) and by the \code{init.MPLE.samplesize} control parameter (if it is used only to initialize the MCMC-based estimation).
+      }
+      \item{
+        A new \dQuote{operator} constraint \code{\link[=ergm-constraints]{Dyads}} takes \code{ergm} formulas and constrains dyads based on which dyads affect their change statistics.
+      }
+      \item{
+        It is now possible to calculate model-predicted \strong{conditional} and \strong{unconditional} tie probabilities using  \code{\link{predict.ergm}} and \code{\link{predict.formula}}. (Contributed by Michal Bojanowski.)
+      }
+      \item{
+        The nodal attribute specification mechamism (i.e., the \code{attr=} and \code{levels=} arguments to terms) now includes a number of convenience functions and predicates, such as \code{\link[=nodal_attributes]{LARGEST}} and \code{\link[=nodal_attributes]{SMALLEST}} to select or exclude the most/least frequent levels, and \code{\link[=nodal_attributes]{COLLAPSE_SMALLEST}} to collapse the smallest categories into one.
+      }
+      \item{
+        \code{\link{ergmMPLE}} now takes a \code{constraints} argument and handles it and missing dyads correctly.
+      }
+      \item{
+        \code{\link{san}} now has the ability to take offsets into account.
+      }
+      \item{
+        \code{\link{mcmc.diagnostics.ergm}} now takes an argument \code{which=} to  to specify which output is wanted.
+      }
+      \item{
+        The following new model terms have been implemented:
+        \itemize{
+          \item{
+            \code{\link{b1dsp}}, \code{\link{b2dsp}}, \code{\link{gwb1dsp}}, and \code{\link{gwb1dsp}}, the bipartite versions of \code{\link{dsp}} and \code{\link{gwdsp}}.
+          }
+          \item{
+            \code{\link{isolatededges}}, to count the number of edges that are in a single component.
+          }
+        }
+      }
+      \item{
+        A vignette for the \link[=nodal_attributes]{nodal attributes UI} has been added.
+      }
+      \item{The \code{\link{simulate.ergm}} family of functions' \code{output=} argument can no only takes a function through which the simulated networks are mapped before returning.
+      }
+      \item{
+        The \code{\link[ergm]{cycle}} term implementation has been greatly improved.
+      }
+      \item{
+        \code{\link{ergm}} now takes a \code{basis=} argument as others.
+      }
+      \item{
+        \code{\link{plot.gof}} now plots a blue rhombus to indicate the simulated mean.
+      }
+    }
+  }
+
+
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item{
+        A bug involving assumptions based on the first entry in the \code{lasttoggle} vector has been corrected.
+      }
+      \item{
+        In \code{\link{logLik.ergm}}, degrees of freedom no longer count offsets.
+      }
+      \item{
+        The \code{Dyad} type used in C code is now at least 64 bits on all systems, fixing some issues around large networks.
+      }
+      \item{
+        A bug that made \code{\link{san}} fail to terminate when it had hit its target stats exactly has been corrected.
+      }
+      \item{
+        The \code{\link{as.rlebdm.edgelist}} function now correctly handles the network size attribute attached to the edgelist.
+      }
+      \item{
+        Fixed incorrect use of \code{MCMC.*} control parameters in \code{\link{san}}.
+      }
+      \item{
+        Fixed the documentation for the \code{object} argument to \code{\link{ergm_proposal}}, and fixed a recursive default argument to \code{\link{ergm_proposal.character}}.
+      }
+      \item{
+        Added a workaround for a limitation of \code{coda::densityplot.mcmc.list} when variable names are not unique, which caused a problem in \code{\link{mcmc.diagnostics}} pointed out by James Wells.
+      }
+      \item{
+        The \code{levels} argument was removed from \code{starmix} terms, as it was not functioning correctly.
+      }
+      \item{
+        A bug in \code{\link{ergmMPLE}} for bipartite networks has been fixed.
+      }
+      \item{
+        Some fixes to \code{\link{approx.hotelling.diff.test}}.
+      }
+      \item{
+        Contrastive divergence runtime diagnostics now work correctly.
+      }
+      \item{
+        \code{\link{ergm.godfather}} now handles undirected valued networks correctly.
+      }
+      \item{
+        Per CRAN warning, none of the internal \code{\link{glm}}-alike functions default to \code{data=sys.parent()} anymore.
+      }
+      \item{
+        \code{\link{as.network.numeric}} now handles the \code{bip} argument consistently with \code{\link{network.initialize}}.
+      }
+      \item{
+        For bipartite terms, \code{NA}s in nodal attributes are now tolerated if they are in the unused bipartition.
+      }
+      \item{
+        \code{\link{ergm.bridge}} now correctly updates the state of the network after every bridge's burn-in. (This bug did not invalidate any prior results, but it made the log-likelihoods and derived quantities reported by \code{\link{summary.ergm}} less accurate.)
+      }
+      \item{
+        \code{\link{ergmMPLE}} now handles offsets corectly when returning matrix and array output.
+      }
+      \item{
+        Miscellaneous fixes to \code{\link{predict.ergm}} and \code{\link{ergmMPLE}}, particularly in handling offsets.
+      }
+    }
+  }
+
+
+  \subsection{OTHER USER-VISIBLE CHANGES}{
+    \itemize{
+      \item{
+        Datasets \code{fauxhigh} and \code{fauxhigh.withnumericattributes} have been removed.
+      }
+      \item{
+        Control parameters \code{*.Hummel.*} have been renamed to \code{*.steplength.*} for consistency.
+      }
+      \item{
+        Parallel multisection search for the Hummel step length is now only enabled for missing data MLE by default, and can be disabled altogether with appropriate control parameters.
+      }
+      \item{
+        Formulas are no longer attached to \code{\link{ergm_model}}, \code{\link{ergm_proposal}}, \code{\link{ergm_conlist}}, and others.
+      }
+      \item{
+        The \code{\link[=simulate.ergm]{simulate}} family of methods has been restructured. In particular, it is now possible to call \code{simulate()} on an \code{\link{ergm_model}} object without reinitializing it.
+      }
+      \item{
+        A number of improvements have been made to the nodal attribute API. In particular, \code{\link{ergm_get_vattr}} now has an \code{AsIs} method that makes minimal changes to the input before returning, \code{\link{ergm_get_vattr.function}} now propagates its arguments to the function it calls, and \code{\link{ergm_get_vattr}} now accepts a \code{"index"} type argument representing vertex indices (a logical of appropriate length, or a nonnegative or nonpositive integer vector).
+      }
+      \item{
+        Missing nodal attributes now generate an error in model initialization.
+      }
+      \item{
+        \code{\link{summary.ergm}} and its printing method have been cleaned up.
+      }
+      \item{
+        A variety of miscellaneous optimizations, coleanups, and documentation improvements.
+      }
+      \item{
+        The \code{InitErgmTerm} API's \code{\link{check.ErgmTerm}} now accepts \code{NA} or \code{""} for argument type, indicating that any type is accepted.
+      }
+      \item{
+        In parallel computing, worker nodes now load packges \code{\link{.libPaths}} of the manager node.
+      }
+      \item{
+        The following deprecated functions have been made defunct: \code{ergm.update.formula}, \code{remove.offset.formula}, \code{network.update}, \code{ergm.getmodel}, \code{ergm.getglobalstats}, \code{as.edgelist.compressed}, \code{as.network.uncompressed}, \code{standardize.network}, and \code{newnw.extract}.
+      }
+      \item{
+        \code{san.ergm} has been deprecated, since it lacks a known use case.
+      }
+      \item{
+        The \code{\link{simulate.formula}} dispatching mechanism has been rewritten to coexist with other pacakges that want to dispatch based on the LHS of the formula, particularly \code{lme4}. The \code{\link{simulate_formula}} API still works, but it may be phased out in the future.
+      }
+      \item{
+        \code{\link{ergm.bridge}} has has been optimised to avoid repeated calls to model and proposal initialisation.
+      }
+    }
+  }
+
+  \subsection{C-LEVEL FACILITIES}{
+    \itemize{
+      \item{C export \code{ergm_constants.h} now exports the major and the minor version of \code{\link[ergm-package]{ergm}}.
+      }
+    }
+  }
+}
 
 \section{Changes in version 3.10.4}{
 
@@ -128,7 +305,7 @@
       }
 
       \item{
-	A number of terms (see terms help) now use the new \link[node-attr]{nodal attributes UI}.
+	A number of terms (see terms help) now use the new \link[nodal_attributes]{nodal attributes UI}.
       }
 
       \item{
@@ -418,7 +595,7 @@
 	  \item{
 	    A new set of helper functions has been added to
 	    improve handling of nodal attributes. See
-	    \link{node-attr-api} for details.
+	    \link{nodal_attributes-API} for details.
 	  }
 	  \item{
 	    \code{\link[=summary.ergm]{summary}} method for \code{ergm}

@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution
 #
-#  Copyright 2003-2019 Statnet Commons
+#  Copyright 2003-2020 Statnet Commons
 #######################################################################
 
 #' Internal Function to Sample Networks and Network Statistics
@@ -124,9 +124,8 @@ ergm_MCMC_sample <- function(nw, model, proposal, control, theta=NULL,
         if(verbose) message("Increasing thinning to ",interval,".")
       }
       
-      esteq <- lapply.mcmc.list(lapply(outl, function(out)
-                      NVL3(theta, ergm.estfun(out$s, ., model), out$s[,Clists[[1]]$diagnosable,drop=FALSE])
-                      ), mcmc, start=1, thin=interval)
+      esteq <- lapply(outl, function(out) NVL3(theta, ergm.estfun(out$s, ., model), out$s[,Clists[[1]]$diagnosable,drop=FALSE])) %>%
+        lapply.mcmc.list(mcmc, start=1, thin=interval) %>% lapply.mcmc.list(`-`)
       
       meS <- .max.effectiveSize(esteq, npts=control$MCMC.effectiveSize.points, base=control$MCMC.effectiveSize.base, ar.order=control$MCMC.effectiveSize.order)
       if(verbose>1) message("Maximum harmonic mean ESS of ",meS$eS," attained with burn-in of ", round(meS$b/nrow(outl[[1]]$s)*100,2),"%.")
@@ -252,7 +251,7 @@ ergm_MCMC_slave <- function(Clist,proposal,eta,control,verbose,...,prev.run=NULL
               as.character(Clist$fnamestring),
               as.character(Clist$snamestring),
               as.character(proposal$name), as.character(proposal$pkgname),
-              as.double(c(Clist$inputs,proposal$inputs)), as.double(.deinf(eta)),
+              as.double(c(Clist$inputs,proposal$inputs)), as.double(deInf(eta)),
               as.integer(samplesize),
               s = as.double(rep(stats, samplesize)),
               as.integer(burnin), 
@@ -280,7 +279,7 @@ ergm_MCMC_slave <- function(Clist,proposal,eta,control,verbose,...,prev.run=NULL
               as.character(Clist$fnamestring),
               as.character(Clist$snamestring),
               as.character(proposal$name), as.character(proposal$pkgname),
-              as.double(c(Clist$inputs,proposal$inputs)), as.double(.deinf(eta)),
+              as.double(c(Clist$inputs,proposal$inputs)), as.double(deInf(eta)),
               as.integer(samplesize),
               s = as.double(rep(stats, samplesize)),
               as.integer(burnin), 

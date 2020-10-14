@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution
 #
-#  Copyright 2003-2019 Statnet Commons
+#  Copyright 2003-2020 Statnet Commons
 #######################################################################
 ###################################################################
 ## This file has utilities whose primary purpose is examining or ##
@@ -32,7 +32,7 @@
 is.dyad.independent<-function(object,...) UseMethod("is.dyad.independent")
 
 #' @rdname is.dyad.independent
-#' @description The method for `NULL` always returns `FALSE` by
+#' @description The method for `NULL` always returns `TRUE` by
 #'   convention.
 #' @export
 is.dyad.independent.NULL <- function(object, ...) TRUE # By convention.

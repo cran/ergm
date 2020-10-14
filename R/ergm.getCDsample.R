@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution
 #
-#  Copyright 2003-2019 Statnet Commons
+#  Copyright 2003-2020 Statnet Commons
 #######################################################################
 
 ergm_CD_sample <- function(nw, model, proposal, control, theta=NULL, 
@@ -35,11 +35,9 @@ ergm_CD_sample <- function(nw, model, proposal, control, theta=NULL,
   }
   
   if(control.parallel$MCMC.runtime.traceplot){
-      esteq <- lapply.mcmc.list(lapply(outl, function(out)
-                      NVL3(theta, ergm.estfun(out$s, ., model), out$s[,Clists[[1]]$diagnosable,drop=FALSE])
-                      ), mcmc, start=1)
-        plot(window(esteq, thin=thin(esteq)*max(1,floor(niter(esteq)/1000)))
-             ,ask=FALSE,smooth=TRUE,density=FALSE)
+    lapply(outl, function(out) NVL3(theta, ergm.estfun(out$s, ., model), out$s[,Clists[[1]]$diagnosable,drop=FALSE])) %>%
+      lapply.mcmc.list(mcmc, start=1) %>% lapply.mcmc.list(`-`) %>% window(., thin=thin(.)*max(1,floor(niter(.)/1000))) %>%
+      plot(ask=FALSE,smooth=TRUE,density=FALSE)
   }
 
   #
@@ -90,7 +88,7 @@ ergm_CD_slave <- function(Clist,proposal,eta,control,verbose,..., samplesize=NUL
             as.character(Clist$fnamestring),
             as.character(Clist$snamestring),
             as.character(proposal$name), as.character(proposal$pkgname),
-            as.double(c(Clist$inputs,proposal$inputs)), as.double(.deinf(eta)),
+            as.double(c(Clist$inputs,proposal$inputs)), as.double(deInf(eta)),
             as.integer(samplesize), as.integer(c(control$CD.nsteps,control$CD.multiplicity)),
             s = as.double(rep(stats, samplesize)),
             as.integer(verbose), as.integer(proposal$arguments$constraints$bd$attribs),
@@ -112,7 +110,7 @@ ergm_CD_slave <- function(Clist,proposal,eta,control,verbose,..., samplesize=NUL
             as.character(Clist$fnamestring),
             as.character(Clist$snamestring),
             as.character(proposal$name), as.character(proposal$pkgname),
-            as.double(c(Clist$inputs,proposal$inputs)), as.double(.deinf(eta)),
+            as.double(c(Clist$inputs,proposal$inputs)), as.double(deInf(eta)),
             as.integer(samplesize), as.integer(c(control$CD.nsteps,control$CD.multiplicity)),
             s = as.double(rep(stats, samplesize)),
             as.integer(verbose), 

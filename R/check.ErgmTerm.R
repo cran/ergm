@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution
 #
-#  Copyright 2003-2019 Statnet Commons
+#  Copyright 2003-2020 Statnet Commons
 #######################################################################
 
 ergm_Init_inform_once <- once(ergm_Init_inform)
@@ -41,7 +41,7 @@ ergm_Init_warn_once <- once(ergm_Init_warn)
 #' @param varnames the vector of names of the possible arguments for
 #'   term X; default=NULL
 #' @param vartypes the vector of types of the possible arguments for
-#'   term X; default=NULL
+#'   term X, separated by commas; an empty string (`""`) or `NA` disables the check for that argument; default=NULL
 #' @param defaultvalues the list of default values for the possible
 #'   arguments of term X; default=list()
 #' @param required the logical vector of whether each possible
@@ -134,7 +134,7 @@ check.ErgmTerm <- function(nw, arglist, directed=NULL, bipartite=NULL, nonnegati
           ergm_Init_abort("Model term does not recognize ", sQuote(name), " argument.")
         }
         # valid name match with mth variable if we got to here
-        if (all(sapply(strsplit(vartypes[m],",",fixed=TRUE)[[1]], function(vartype) !is.null(arglist[[i]]) && !is(arglist[[i]], vartype)))) {
+        if (!is.na(vartypes[m]) && nchar(vartypes[m]) && all(sapply(strsplit(vartypes[m],",",fixed=TRUE)[[1]], function(vartype) !is.null(arglist[[i]]) && !is(arglist[[i]], vartype)))) {
           # Wrong type
           ergm_Init_abort(sQuote(name), " argument is not of the expected ", sQuote(vartypes[m]), " type.")
         }
@@ -152,7 +152,7 @@ check.ErgmTerm <- function(nw, arglist, directed=NULL, bipartite=NULL, nonnegati
             ergm_Init_inform_once("Argument ", sQuote(varnames[m]), " has been deprecated and may be removed in a future version.")
         }
         if(dep.warn[[m]] != FALSE) {
-          if(is.character(dep.inform[[m]]))
+          if(is.character(dep.warn[[m]]))
             ergm_Init_warn_once("Argument ", sQuote(varnames[m]), " has been deprecated and may be removed in a future version.  Use ", sQuote(dep.warn[[m]]), " instead.  Note that its interpretation may be different.")
           else
             ergm_Init_warn_once("Argument ", sQuote(varnames[m]), " has been deprecated and may be removed in a future version.")
@@ -161,7 +161,7 @@ check.ErgmTerm <- function(nw, arglist, directed=NULL, bipartite=NULL, nonnegati
         if (!is.null(m)) {
           ergm_Init_abort("Unnamed argument follows named argument.")
         }
-        if (all(sapply(strsplit(vartypes[i],",",fixed=TRUE)[[1]], function(vartype) !is.null(arglist[[i]]) && !is(arglist[[i]], vartype)))) {
+        if (!is.na(vartypes[i]) && nchar(vartypes[i]) && all(sapply(strsplit(vartypes[i],",",fixed=TRUE)[[1]], function(vartype) !is.null(arglist[[i]]) && !is(arglist[[i]], vartype)))) {
           # Wrong type
           ergm_Init_abort("Argument number ", i, " is not of the expected ", sQuote(vartypes[i]), " type.")
         }
@@ -172,12 +172,18 @@ check.ErgmTerm <- function(nw, arglist, directed=NULL, bipartite=NULL, nonnegati
         still.required[i] <- FALSE
         argument.counts[i] <- argument.counts[i] + 1
 
-        if(dep.inform[[i]] != FALSE)
-          ergm_Init_inform_once("Argument ", sQuote(varnames[i]), " has been superseded by ", sQuote(dep.inform[[i]]), ", and it is recommended to use the latter.  Note that its interpretation may be different.")
-
-        if(dep.warn[[i]] != FALSE)
-          ergm_Init_warn_once("Argument ", sQuote(varnames[i]), " has been deprecated and may be removed in a future version.  Use ", sQuote(dep.warn[[i]]), " instead.  Note that its interpretation may be different.")
-
+        if(dep.inform[[i]] != FALSE) {
+          if(is.character(dep.inform[[i]]))
+            ergm_Init_inform_once("Argument ", sQuote(varnames[i]), " has been superseded by ", sQuote(dep.inform[[i]]), ", and it is recommended to use the latter.  Note that its interpretation may be different.")
+          else
+            ergm_Init_inform_once("Argument ", sQuote(varnames[i]), " has been deprecated and may be removed in a future version.")
+        }
+        if(dep.warn[[i]] != FALSE) {
+          if(is.character(dep.warn[[i]]))
+            ergm_Init_warn_once("Argument ", sQuote(varnames[i]), " has been deprecated and may be removed in a future version.  Use ", sQuote(dep.warn[[i]]), " instead.  Note that its interpretation may be different.")
+          else
+            ergm_Init_warn_once("Argument ", sQuote(varnames[i]), " has been deprecated and may be removed in a future version.")
+        }
       }
     }
   }

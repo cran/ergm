@@ -5,7 +5,7 @@
  *  open source, and has the attribution requirements (GPL Section 7) at
  *  https://statnet.org/attribution
  *
- *  Copyright 2003-2019 Statnet Commons
+ *  Copyright 2003-2020 Statnet Commons
  */
 #include "MCMC.h"
 
@@ -65,11 +65,13 @@ void MCMC_wrapper(int *nedges,
 	  nwp, attribs, maxout, maxin, minout, minin,
 	  *condAllDegExact, *attriblength);
 
-  *status = MCMCSample(MHp,
-		       theta0, sample, *samplesize,
-		       *burnin, *interval,
-		       *fVerbose, nmax, nwp, m);
-  
+  if(MHp)
+    *status = MCMCSample(MHp,
+			 theta0, sample, *samplesize,
+			 *burnin, *interval,
+			 *fVerbose, nmax, nwp, m);
+  else *status = MCMC_MH_FAILED;
+
   MHProposalDestroy(MHp);
         
 /* Rprintf("Back! %d %d\n",nwp[0].nedges, nmax); */
@@ -166,14 +168,8 @@ MCMCStatus MCMCSample(MHProposal *MHp,
     when the chain doesn't accept many of the proposed steps.
     *********************/
     if (fVerbose){
-	  if (samplesize > 0 && interval > LONG_MAX / samplesize) {
-		// overflow
-		Rprintf("Sampler accepted %7.3f%% of %d proposed steps.\n",
-	      tottaken*100.0/(1.0*interval*samplesize), interval, samplesize); 
-	  } else {
-	    Rprintf("Sampler accepted %7.3f%% of %d proposed steps.\n",
-	      tottaken*100.0/(1.0*interval*samplesize), interval*samplesize); 
-	  }
+      Rprintf("Sampler accepted %7.3f%% of %lld proposed steps.\n",
+	    tottaken*100.0/(1.0*interval*samplesize), (long long) interval*samplesize); 
     }
   }else{
     if (fVerbose){
@@ -344,11 +340,13 @@ void MCMCPhase12 (int *tails, int *heads, int *dnedges,
 	  *fVerbose,
 	  nwp, attribs, maxout, maxin, minout, minin,
 	  *condAllDegExact, *attriblength);
-  
-  MCMCSamplePhase12 (MHp,
-		     theta0, *gain, meanstats, nphase1, nsubphases, sample, *samplesize,
-		     *burnin, *interval,
-		     (int)*fVerbose, nwp, m);
+
+  if(MHp)
+    MCMCSamplePhase12(MHp,
+		      theta0, *gain, meanstats, nphase1, nsubphases, sample, *samplesize,
+		      *burnin, *interval,
+		      (int)*fVerbose, nwp, m);
+  else error("MH Proposal failed.");
 
   MHProposalDestroy(MHp);
   
@@ -536,5 +534,6 @@ void MCMCSamplePhase12(MHProposal *MHp,
 
   Free(ubar);
   Free(u2bar);
+  Free(aDdiaginv);
 }
 

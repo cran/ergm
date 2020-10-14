@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution
 #
-#  Copyright 2003-2019 Statnet Commons
+#  Copyright 2003-2020 Statnet Commons
 #######################################################################
 
 binary_wrap <- function(InitFun, nw, a, valued_args, ddd, namemap = identity, cnmap = identity){
@@ -252,7 +252,7 @@ InitWtErgmTerm.ininterval<-function(nw, arglist, response, ...) {
 
   list(name="ininterval",
        coef.names=paste("ininterval",if(open[1]) "(" else "[", a$lower,",",a$upper, if(open[2]) ")" else "]",sep=""),
-       inputs=c(.deinf(a$lower),.deinf(a$upper),open),
+       inputs=c(deInf(a$lower),deInf(a$upper),open),
        dependence=FALSE,
        minval=0, maxval=network.dyadcount(nw,FALSE),
        emptynwstats=if(

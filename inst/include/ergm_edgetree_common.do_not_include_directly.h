@@ -5,7 +5,7 @@
  *  open source, and has the attribution requirements (GPL Section 7) at
  *  https://statnet.org/attribution
  *
- *  Copyright 2003-2019 Statnet Commons
+ *  Copyright 2003-2020 Statnet Commons
  */
 #ifndef _ERGM_EDGETREE_COMMON_H_
 #define  _ERGM_EDGETREE_COMMON_H_
@@ -13,6 +13,7 @@
 #include <R.h>
 #include <Rinternals.h>
 #include <Rmath.h>
+#include "ergm_edgetree_types.h"
 
 #define MIN(a,b) ((a)<(b) ? (a) : (b))
 #define MAX(a,b) ((a)<(b) ? (b) : (a))
@@ -25,14 +26,9 @@
 #define _GET_OVERRIDE6(_1, _2, _3, _4, _5, _6, NAME, ...) NAME
 
 #define _DYADCOUNT1(nwp) _DYADCOUNT3(nwp->nnodes, nwp->bipartite, nwp->directed_flag)
-#define _DYADCOUNT3(nnodes, bipartite, directed) ((bipartite)? (unsigned long)((nnodes)-(bipartite))*(unsigned long)(bipartite) : ((directed)? (unsigned long)(nnodes)*(unsigned long)((nnodes)-1) : (((unsigned long)(nnodes)*(unsigned long)((nnodes)-1))/2)))
+#define _DYADCOUNT3(nnodes, bipartite, directed) ((bipartite)? (Dyad)((nnodes)-(bipartite))*(Dyad)(bipartite) : ((directed)? (Dyad)(nnodes)*(Dyad)((nnodes)-1) : (((Dyad)(nnodes)*(Dyad)((nnodes)-1))/2)))
 #define DYADCOUNT(...) _GET_OVERRIDE3(__VA_ARGS__, _DYADCOUNT3, , _DYADCOUNT1,)(__VA_ARGS__)
 #define EDGECOUNT(nwp) nwp->nedges
-
-/*typedef unsigned int Vertex; */
-typedef unsigned int Vertex;
-typedef unsigned int Edge;
-typedef unsigned long int Dyad;
 
 /* Ensure that tail < head for undriected networks. */
 #define ENSURE_TH_ORDER							\

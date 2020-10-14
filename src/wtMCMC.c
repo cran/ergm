@@ -5,7 +5,7 @@
  *  open source, and has the attribution requirements (GPL Section 7) at
  *  https://statnet.org/attribution
  *
- *  Copyright 2003-2019 Statnet Commons
+ *  Copyright 2003-2020 Statnet Commons
  */
 #include "wtMCMC.h"
 
@@ -63,17 +63,19 @@ void WtMCMC_wrapper(int *nedges,
 	    *fVerbose,
 	    nwp);
 
-  *status = WtMCMCSample(MHp,
-			 theta0, sample, *samplesize,
-			 *burnin, *interval,
-			 *fVerbose, nmax, nwp, m);
+  if(MHp)
+    *status = WtMCMCSample(MHp,
+			   theta0, sample, *samplesize,
+			   *burnin, *interval,
+			   *fVerbose, nmax, nwp, m);
+  else *status = MCMC_MH_FAILED;
 
   WtMHProposalDestroy(MHp);
         
 /* Rprintf("Back! %d %d\n",nwp[0].nedges, nmax); */
 
   /* record new generated network to pass back to R */
-  if(*status == WtMCMC_OK && *maxedges>0 && newnetworktails && newnetworkheads)
+  if(*status == MCMC_OK && *maxedges>0 && newnetworktails && newnetworkheads)
     newnetworktails[0]=newnetworkheads[0]=WtEdgeTree2EdgeList((Vertex*)newnetworktails+1,(Vertex*)newnetworkheads+1,newnetworkweights+1,nwp,nmax-1);
   
   WtModelDestroy(m);
@@ -92,7 +94,7 @@ void WtMCMC_wrapper(int *nedges,
  networks in the sample.  Put all the sampled statistics into
  the networkstatistics array. 
 *********************/
-WtMCMCStatus WtMCMCSample(WtMHProposal *MHp,
+MCMCStatus WtMCMCSample(WtMHProposal *MHp,
 			  double *theta, double *networkstatistics, 
 			  int samplesize, int burnin, 
 			  int interval, int fVerbose, int nmax,
@@ -120,10 +122,10 @@ WtMCMCStatus WtMCMCSample(WtMHProposal *MHp,
    *********************/
 /*  Catch more edges than we can return */
   if(WtMetropolisHastings(MHp, theta, networkstatistics, burnin, &staken,
-			fVerbose, nwp, m)!=WtMCMC_OK)
-    return WtMCMC_MH_FAILED;
+			fVerbose, nwp, m)!=MCMC_OK)
+    return MCMC_MH_FAILED;
   if(nmax!=0 && EDGECOUNT(nwp) >= nmax-1){
-    return WtMCMC_TOO_MANY_EDGES;
+    return MCMC_TOO_MANY_EDGES;
   }
   
 /*   if (fVerbose){ 
@@ -145,10 +147,10 @@ WtMCMCStatus WtMCMCSample(WtMHProposal *MHp,
       
       /* Catch massive number of edges caused by degeneracy */
       if(WtMetropolisHastings(MHp, theta, networkstatistics, interval, &staken,
-			    fVerbose, nwp, m)!=WtMCMC_OK)
-	return WtMCMC_MH_FAILED;
+			    fVerbose, nwp, m)!=MCMC_OK)
+	return MCMC_MH_FAILED;
       if(nmax!=0 && EDGECOUNT(nwp) >= nmax-1){
-	return WtMCMC_TOO_MANY_EDGES;
+	return MCMC_TOO_MANY_EDGES;
       }
       tottaken += staken;
 
@@ -164,14 +166,8 @@ WtMCMCStatus WtMCMCSample(WtMHProposal *MHp,
     when the chain doesn't accept many of the proposed steps.
     *********************/
     if (fVerbose){
-	  if (samplesize > 0 && interval > LONG_MAX / samplesize) {
-		// overflow
-		Rprintf("Sampler accepted %7.3f%% of %d proposed steps.\n",
-	      tottaken*100.0/(1.0*interval*samplesize), interval, samplesize); 
-	  } else {
-	    Rprintf("Sampler accepted %7.3f%% of %d proposed steps.\n",
-	      tottaken*100.0/(1.0*interval*samplesize), interval*samplesize); 
-	  }
+      Rprintf("Sampler accepted %7.3f%% of %lld proposed steps.\n",
+	    tottaken*100.0/(1.0*interval*samplesize), (long long) interval*samplesize); 
     }
   }else{
     if (fVerbose){
@@ -179,7 +175,7 @@ WtMCMCStatus WtMCMCSample(WtMHProposal *MHp,
       staken*100.0/(1.0*burnin), burnin); 
     }
   }
-  return WtMCMC_OK;
+  return MCMC_OK;
 }
 
 /*********************
@@ -193,7 +189,7 @@ WtMCMCStatus WtMCMCSample(WtMHProposal *MHp,
  the networkstatistics vector.  In other words, this function 
  essentially generates a sample of size one
 *********************/
-WtMCMCStatus WtMetropolisHastings (WtMHProposal *MHp,
+MCMCStatus WtMetropolisHastings (WtMHProposal *MHp,
 				 double *theta, double *networkstatistics,
 				 int nsteps, int *staken,
 				 int fVerbose,
@@ -214,14 +210,14 @@ WtMCMCStatus WtMetropolisHastings (WtMHProposal *MHp,
 	
       case MH_IMPOSSIBLE:
 	Rprintf("MH MHProposal function encountered a configuration from which no toggle(s) can be proposed.\n");
-	return WtMCMC_MH_FAILED;
+	return MCMC_MH_FAILED;
 	
       case MH_UNSUCCESSFUL:
 	warning("MH MHProposal function failed to find a valid proposal.");
 	unsuccessful++;
 	if(unsuccessful>taken*MH_QUIT_UNSUCCESSFUL){
 	  Rprintf("Too many MH MHProposal function failures.\n");
-	  return WtMCMC_MH_FAILED;
+	  return MCMC_MH_FAILED;
 	}
       case MH_CONSTRAINT:
 	continue;
@@ -292,6 +288,6 @@ WtMCMCStatus WtMetropolisHastings (WtMHProposal *MHp,
   }
   
   *staken = taken;
-  return WtMCMC_OK;
+  return MCMC_OK;
 }
 

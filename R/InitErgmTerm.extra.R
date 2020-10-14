@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution
 #
-#  Copyright 2003-2019 Statnet Commons
+#  Copyright 2003-2020 Statnet Commons
 #######################################################################
 # These are InitErgm functions that were never included in the public release.
 #NOTE: a number of undocumented terms have been removed from this file
@@ -32,7 +32,7 @@ InitErgmTerm.concurrentties<-function(nw, arglist, ..., version=packageVersion("
     nodecov <- ergm_get_vattr(byarg, nw)
 	attrname <- attr(nodecov, "name")
     u <- ergm_attr_levels(levels, nodecov, nw, sort(unique(nodecov)))
-    if(any(is.na(nodecov))){u<-c(u,NA)}
+
     nodecov <- match(nodecov,u,nomatch=length(u)+1) # Recode to numeric
     if (length(u)==1)
       ergm_Init_abort ("Attribute given to concurrentties() has only one value")

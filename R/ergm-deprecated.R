@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution
 #
-#  Copyright 2003-2019 Statnet Commons
+#  Copyright 2003-2020 Statnet Commons
 #######################################################################
 #' @name ergm-deprecated
 #' @rdname ergm-deprecated
@@ -15,3 +15,17 @@
 #' Arguments to deprecated functions.
 #' @keywords misc internal
 NULL
+
+# Workarounds so that tergm and EpiModel are not broken.
+.deinf <- function(...){
+  .Deprecated("statnet.common::deInf()")
+  statnet.common::deInf(...)
+}
+
+#' @rdname ergm-deprecated
+#' @export
+remove.offset.formula <- function(object, ...){
+  .Deprecated("statnet.common::filter_rhs.formula")
+  statnet.common::filter_rhs.formula(object, function(x) (if(is.call(x)) x[[1]] else x)!="offset")
+}
+

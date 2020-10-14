@@ -2,33 +2,102 @@
 % Please edit documentation in R/simulate.ergm.R
 \name{simulate.ergm}
 \alias{simulate.ergm}
-\alias{simulate.formula}
+\alias{simulate.formula_lhs_network}
 \alias{simulate.formula.ergm}
+\alias{simulate_formula}
+\alias{.simulate_formula.network}
+\alias{simulate_formula.network}
+\alias{simulate.formula_lhs_pending_update_network}
+\alias{simulate_formula.pending_update_network}
 \alias{simulate.ergm_model}
 \title{Draw from the distribution of an Exponential Family Random Graph Model}
 \usage{
-\method{simulate}{formula}(object, nsim = 1, seed = NULL, coef,
-  response = NULL, reference = ~Bernoulli, constraints = ~.,
-  monitor = NULL, basis = NULL, statsonly = FALSE, esteq = FALSE,
-  output = c("network", "stats", "edgelist", "pending_update_network"),
-  simplify = TRUE, sequential = TRUE,
-  control = control.simulate.formula(), verbose = FALSE, ...,
-  do.sim = TRUE)
+\method{simulate}{formula_lhs_network}(object, nsim = 1, seed = NULL, ...)
 
-\method{simulate}{ergm_model}(object, nsim = 1, seed = NULL, coef,
-  response = NULL, reference = ~Bernoulli, constraints = ~.,
-  monitor = NULL, basis = NULL, esteq = FALSE,
-  output = c("network", "stats", "edgelist", "pending_update_network"),
-  simplify = TRUE, sequential = TRUE,
-  control = control.simulate.formula(), verbose = FALSE, ...)
+simulate_formula(object, ..., basis = eval_lhs.formula(object))
 
-\method{simulate}{ergm}(object, nsim = 1, seed = NULL,
-  coef = object$coef, response = object$response,
-  reference = object$reference, constraints = object$constraints,
-  monitor = NULL, basis = object$newnetwork, statsonly = FALSE,
-  esteq = FALSE, output = c("network", "stats", "edgelist",
-  "pending_update_network"), simplify = TRUE, sequential = TRUE,
-  control = control.simulate.ergm(), verbose = FALSE, ...)
+\method{simulate_formula}{network}(
+  object,
+  nsim = 1,
+  seed = NULL,
+  coef,
+  response = NULL,
+  reference = ~Bernoulli,
+  constraints = ~.,
+  monitor = NULL,
+  statsonly = FALSE,
+  esteq = FALSE,
+  output = c("network", "stats", "edgelist", "pending_update_network"),
+  simplify = TRUE,
+  sequential = TRUE,
+  control = control.simulate.formula(),
+  verbose = FALSE,
+  ...,
+  basis = eval_lhs.formula(object),
+  do.sim = TRUE
+)
+
+\method{simulate}{formula_lhs_pending_update_network}(object, nsim = 1, seed = NULL, ...)
+
+\method{simulate_formula}{pending_update_network}(
+  object,
+  nsim = 1,
+  seed = NULL,
+  coef,
+  response = NULL,
+  reference = ~Bernoulli,
+  constraints = ~.,
+  monitor = NULL,
+  statsonly = FALSE,
+  esteq = FALSE,
+  output = c("network", "stats", "edgelist", "pending_update_network"),
+  simplify = TRUE,
+  sequential = TRUE,
+  control = control.simulate.formula(),
+  verbose = FALSE,
+  ...,
+  basis = eval_lhs.formula(object),
+  do.sim = TRUE
+)
+
+\method{simulate}{ergm_model}(
+  object,
+  nsim = 1,
+  seed = NULL,
+  coef,
+  response = NULL,
+  reference = ~Bernoulli,
+  constraints = ~.,
+  monitor = NULL,
+  basis = NULL,
+  esteq = FALSE,
+  output = c("network", "stats", "edgelist", "pending_update_network"),
+  simplify = TRUE,
+  sequential = TRUE,
+  control = control.simulate.formula(),
+  verbose = FALSE,
+  ...
+)
+
+\method{simulate}{ergm}(
+  object,
+  nsim = 1,
+  seed = NULL,
+  coef = object$coef,
+  response = object$response,
+  reference = object$reference,
+  constraints = object$constraints,
+  monitor = NULL,
+  basis = object$newnetwork,
+  statsonly = FALSE,
+  esteq = FALSE,
+  output = c("network", "stats", "edgelist", "pending_update_network"),
+  simplify = TRUE,
+  sequential = TRUE,
+  control = control.simulate.ergm(),
+  verbose = FALSE,
+  ...
+)
 }
 \arguments{
 \item{object}{Either a \code{\link{formula}} or an
@@ -47,6 +116,10 @@ algorithm.}
 \item{seed}{Seed value (integer) for the random number generator.  See
 \code{\link[base]{set.seed}}.}
 
+\item{\dots}{Further arguments passed to or used by methods.}
+
+\item{basis}{a value (usually a \code{\link{network}}) to override the LHS of the formula.}
+
 \item{coef}{Vector of parameter values for the model from which the sample
 is to be drawn.  If \code{object} is of class \code{ergm}, the default value
 is the vector of estimated coefficients.}
@@ -55,10 +128,10 @@ is the vector of estimated coefficients.}
 modeled in the valued ERGM framework. Defaults to \code{NULL} for
 simple presence or absence, modeled via a binary ERGM.}
 
-\item{reference}{A one-sided formula specifying the
-reference measure (\eqn{h(y)}) to be used. (Defaults to \code{~Bernoulli}.)
-See help for \link[=ergm-references]{ERGM reference measures} implemented in
-the \code{\link[=ergm-package]{ergm}} package.}
+\item{reference}{A one-sided formula specifying
+the reference measure (\eqn{h(y)}) to be used.
+See help for \link[=ergm-references]{ERGM reference measures} implemented in the
+\strong{\link[=ergm-package]{ergm}} package.}
 
 \item{constraints}{A one-sided formula specifying one or more
 constraints on the support of the distribution of the networks
@@ -73,23 +146,27 @@ whose value is to be monitored. These terms are appeneded to the
 model, along with a coefficient of 0, so their statistics are
 returned. An \code{\link{ergm_model}} objectcan be passed as well.}
 
-\item{basis}{An optional \code{\link[network]{network}} object to start the
-Markov chain.  If omitted, the default is the left-hand-side of the
-\code{formula}.  If neither a left-hand-side nor a \code{basis} is present,
-an error results because the characteristics of the network (e.g., size and
-directedness) must be specified.}
-
 \item{statsonly}{Logical: If TRUE, return only the network statistics, not
-the network(s) themselves. Deprecated in favor of \code{output=}.}
+the network(s) themselves. Deprecated in favor of \verb{output=}.}
 
 \item{esteq}{Logical: If TRUE, compute the sample estimating equations of an
 ERGM: if the model is non-curved, all non-offset statistics are returned
 either way, but if the model is curved, the score estimating function values
 (3.1) by Hunter and Handcock (2006) are returned instead.}
 
-\item{output}{Character, one of \code{"network"} (default), \code{"stats"},
-\code{"edgelist"}, or \code{"pending_update_network"}: determines the
-output format. Partial matching is performed.}
+\item{output}{Normally character, one of \code{"network"} (default),
+\code{"stats"}, \code{"edgelist"}, or \code{"pending_update_network"} to
+determine the output format. Partial matching is
+performed.
+
+Alternatively, a function with prototype
+\verb{function(pending_update_network, chain, iter, ...)} that is
+called for each returned network, and its return value, rather
+than the network itself, is stored. This can be used to, for
+example, store the simulated networks to disk without storing
+them in memory or compute network statistics not implemented
+using the ERGM API, without having to store the networks
+themselves.}
 
 \item{simplify}{Logical: If \code{TRUE} the output is "simplified":
 sampled networks are returned in a single list, statistics from
@@ -107,8 +184,6 @@ Constructed using \code{\link{control.simulate.ergm}} or
 \item{verbose}{Logical: If TRUE, extra information is printed as the Markov
 chain progresses.}
 
-\item{\dots}{Further arguments passed to or used by methods.}
-
 \item{do.sim}{Logical: If \code{FALSE}, do not proceed to the simulation
 but rather return a list of arguments that would have been passed
 to \code{\link[=simulate.ergm_model]{simulate.ergm_model()}}. This can be useful if, for example,
@@ -122,7 +197,7 @@ simulated network statistics. If \code{control$parallel>0}, an
 \code{\link{mcmc.list}} object. If \code{simplify=TRUE} (the default), these
 would then be "stacked" and converted to a standard \code{\link{matrix}}. A
 logical vector indicating whether or not the term had come from
-the \code{monitor=} formula is stored in \code{\link[=attr]{attr()}}-style attribute
+the \verb{monitor=} formula is stored in \code{\link[=attr]{attr()}}-style attribute
 \code{"monitored"}.
 
 Otherwise, a representation of the simulated network is returned,
@@ -260,6 +335,16 @@ g.sim <- simulate(gest, nsim=10,
             monitor=~triangles, output="stats",
             control=control.simulate.ergm(MCMC.burnin=1000, MCMC.interval=100))
 g.sim
+
+# Custom output: store the edgecount (computed in R), iteration index, and chain index.
+output.f <- function(x, iter, chain, ...){
+  list(nedges = network.edgecount(as.network(x)),
+       chain = chain, iter = iter)
+}
+g.sim <- simulate(gest, nsim=3,
+            output=output.f, simplify=FALSE,
+            control=control.simulate.ergm(MCMC.burnin=1000, MCMC.interval=100))
+unclass(g.sim)
 }
 \seealso{
 \code{\link{ergm}}, \code{\link[network]{network}}

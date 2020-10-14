@@ -15,20 +15,15 @@ summary_formula(object, ..., basis = NULL)
 
 \method{summary_formula}{ergm}(object, ..., basis = NULL)
 
-\method{summary_formula}{network.list}(object, response = NULL, ...,
-  basis = NULL)
+\method{summary_formula}{network.list}(object, response = NULL, ..., basis = NULL)
 
-\method{summary_formula}{network}(object, response = NULL, ...,
-  basis = NULL)
+\method{summary_formula}{network}(object, response = NULL, ..., basis = NULL)
 
-\method{summary_formula}{pending_update_network}(object, response = NULL,
-  ..., basis = NULL)
+\method{summary_formula}{pending_update_network}(object, response = NULL, ..., basis = NULL)
 
-\method{summary_formula}{matrix}(object, response = NULL, ...,
-  basis = NULL)
+\method{summary_formula}{matrix}(object, response = NULL, ..., basis = NULL)
 
-\method{summary_formula}{default}(object, response = NULL, ...,
-  basis = NULL)
+\method{summary_formula}{default}(object, response = NULL, ..., basis = NULL)
 }
 \arguments{
 \item{object}{A two-sided formula.}
@@ -37,9 +32,9 @@ summary_formula(object, ..., basis = NULL)
 
 \item{basis}{Optional object of the same class as the LHS of the formula, substituted in place of the LHS.}
 
-\item{response}{Name of the edge attribute whose value is to be modeled.
-Defaults to \code{NULL} for simple presence or absence, modeled via binary
-ERGM terms. Passing anything but \code{NULL} uses valued ERGM terms.}
+\item{response}{Name of the edge attribute whose value is to be
+modeled in the valued ERGM framework. Defaults to \code{NULL} for
+simple presence or absence, modeled via a binary ERGM.}
 }
 \value{
 A vector of statistics measured on the network.

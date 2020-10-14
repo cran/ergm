@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution
 #
-#  Copyright 2003-2019 Statnet Commons
+#  Copyright 2003-2020 Statnet Commons
 #######################################################################
 #' Sensible error and warning messages by `ergm` initializers
 #'
@@ -60,10 +60,9 @@ format.traceback <- function(x){
   else paste0(x[1], ' (', paste('called from', x[-1], collapse=', '), ')')
 }
 
-#' @importFrom dplyr bind_rows
 traceback.Initializers <- function(){
   pat <- '^((?<pkg>[^:]+):::?)?Init(?<valued>Wt)?Ergm(?<type>Term|Proposal|Reference|Constraint)\\.(?<name>.*)$'
-  traceback.search(pat, perl=TRUE) %>% map(regexpr_list, pat) %>% bind_rows()
+  traceback.search(pat, perl=TRUE) %>% map(regexpr_list, pat) %>% do.call(rbind,.)
 }
 
 # Search back in time through sys.calls() to find the name of the last

@@ -5,13 +5,22 @@
 \alias{ergm.pl}
 \title{Find a maximizer to the psuedolikelihood function}
 \usage{
-ergm.mple(nw, fd, m, init = NULL, MPLEtype = "glm",
-  family = "binomial", maxMPLEsamplesize = 1e+06, save.glm = TRUE,
-  theta1 = NULL, control = NULL, proposal = NULL, verbose = FALSE,
-  ...)
+ergm.mple(
+  nw,
+  fd,
+  m,
+  init = NULL,
+  MPLEtype = "glm",
+  family = "binomial",
+  save.glm = TRUE,
+  save.xmat = TRUE,
+  control = NULL,
+  proposal = NULL,
+  verbose = FALSE,
+  ...
+)
 
-ergm.pl(nw, fd, m, theta.offset = NULL, maxMPLEsamplesize = 1e+06,
-  control, verbose = FALSE)
+ergm.pl(nw, fd, m, theta.offset = NULL, control, verbose = FALSE)
 }
 \arguments{
 \item{nw}{response network.}
@@ -29,16 +38,9 @@ or "logitreg"; default="glm"}
 \code{\link{glm}}; only applicable if "glm" is the 'MPLEtype';
 default="binomial"}
 
-\item{maxMPLEsamplesize}{the sample size to use for endogenous
-sampling in the psuedo-likelihood computation; default=1e6}
-
 \item{save.glm}{whether the mple fit and the null mple fit should
 be returned (T or F); if false, NULL is returned for both;
 default==TRUE}
-
-\item{theta1}{the independence theta; if specified and non-NULL,
-this is ignored except to return its value in the returned ergm;
-default=NULL, in which case 'theta1' is computed}
 
 \item{control}{a list of MCMC related parameters; recognized
 components include: samplesize : the number of networks to sample
@@ -53,30 +55,24 @@ or F); default=FALSE}
 \item{\dots}{additional parameters passed from within; all will be
 ignored}
 
-\item{theta.offset}{a logical vector specifying which of the model
-coefficients are offset, i.e. fixed}
+\item{theta.offset}{a numeric vector of length equal to the number
+of statistics of the model, specifying (positionally) the
+coefficients of the offset statistics; elements corresponding to
+free parameters are ignored.}
 }
 \value{
 \code{ergm.mple} returns an ergm object as a list
 containing several items; for details see the return list in the
 \code{\link{ergm}}
 
-\code{ergm.pl} returns a list containing: \itemize{ \item
-xmat : the compressed and possibly sampled matrix of change
-statistics \item zy : the corresponding vector of responses,
-i.e. tie values \item foffset : ?? \item wend : the vector of
-weights for 'xmat' and 'zy' \item numobs : the number of dyads
-\item xmat.full: the 'xmat' before sampling; if no sampling is
-needed, this is NULL \item zy.full : the 'zy' before sampling; if
-no sampling is needed, this is NULL \item foffset.full : ?? \item
-theta.offset : a numeric vector whose ith entry tells whether the
-the ith curved coefficient?? was offset/fixed; -Inf implies the
-coefficient was fixed, 0 otherwise; if the model hasn't any
-curved terms, the first entry of this vector is one of
-log(Clist$nedges/(Clist$ndyads-Clist$nedges))
-log(1/(Clist$ndyads-1)) depending on 'Clist$nedges' \item
-maxMPLEsamplesize: the 'maxMPLEsamplesize' inputted to
-\code{ergm.pl} }
+\code{ergm.pl} returns a list containing: \itemize{
+\item \code{xmat} : the compressed and possibly sampled matrix of change statistics
+\item \code{xmat.full} : as \code{xmat} but with offset terms
+\item \code{zy} : the corresponding vector of responses,
+i.e. tie values
+\item \code{foffset} : combined effect of offset terms
+\item \code{wend} : the vector of weights for \code{xmat} and \code{zy}
+\item \code{numobs} : the number of dyads}
 }
 \description{
 The \code{ergm.mple} function finds a maximizer to the psuedolikelihood

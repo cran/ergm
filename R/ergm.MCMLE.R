@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution
 #
-#  Copyright 2003-2019 Statnet Commons
+#  Copyright 2003-2020 Statnet Commons
 #######################################################################
 ############################################################################
 # The <ergm.MCMLE> function provides one of the styles of maximum
@@ -263,6 +263,11 @@ ergm.MCMLE <- function(init, nw, model,
     esteq <- ergm.estfun(statsmatrix, mcmc.init, model)
     if(isTRUE(all.equal(apply(esteq,2,stats::sd), rep(0,ncol(esteq)), check.names=FALSE))&&!all(esteq==0))
       stop("Unconstrained MCMC sampling did not mix at all. Optimization cannot continue.")
+
+    check_nonidentifiability(esteq, NULL, model,
+                             tol = control$MCMLE.nonident.tol, type="statistics",
+                             action = control$MCMLE.nonident)
+
     esteq.obs <- if(obs) ergm.estfun(statsmatrix.obs, mcmc.init, model) else NULL
 
     # Update the interval to be used.
@@ -351,10 +356,11 @@ ergm.MCMLE <- function(init, nw, model,
       steplen <-
         if(!is.null(control$MCMLE.steplength.margin))
           .Hummel.steplength(
-            if(control$MCMLE.Hummel.esteq) esteq else statsmatrix.0[,!model$etamap$offsetmap,drop=FALSE], 
-            if(control$MCMLE.Hummel.esteq) esteq.obs else statsmatrix.0.obs[,!model$etamap$offsetmap,drop=FALSE],
+            if(control$MCMLE.steplength.esteq) esteq else statsmatrix.0[,!model$etamap$offsetmap,drop=FALSE], 
+            if(control$MCMLE.steplength.esteq) esteq.obs else statsmatrix.0.obs[,!model$etamap$offsetmap,drop=FALSE],
             control$MCMLE.steplength.margin, control$MCMLE.steplength,steplength.prev=steplen,verbose=verbose,
-            x2.num.max=control$MCMLE.Hummel.miss.sample, steplength.maxit=control$MCMLE.Hummel.maxit, control=control
+            x2.num.max=control$MCMLE.steplength.miss.sample, steplength.maxit=control$MCMLE.steplength.maxit,
+            parallel=control$MCMLE.steplength.parallel, control=control
           )
         else control$MCMLE.steplength
       

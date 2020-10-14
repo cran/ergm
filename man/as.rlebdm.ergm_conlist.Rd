@@ -4,8 +4,12 @@
 \alias{as.rlebdm.ergm_conlist}
 \title{Extract dyad-level ERGM constraint information into an \code{\link{rlebdm}} object}
 \usage{
-\method{as.rlebdm}{ergm_conlist}(x, constraints.obs = NULL,
-  which = c("free", "missing", "informative"), ...)
+\method{as.rlebdm}{ergm_conlist}(
+  x,
+  constraints.obs = NULL,
+  which = c("free", "missing", "informative"),
+  ...
+)
 }
 \arguments{
 \item{x}{an \code{\link{ergm_conlist}} object: a list of initialised

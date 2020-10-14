@@ -5,7 +5,7 @@
  *  open source, and has the attribution requirements (GPL Section 7) at
  *  https://statnet.org/attribution
  *
- *  Copyright 2003-2019 Statnet Commons
+ *  Copyright 2003-2020 Statnet Commons
  */
 #include "ergm_wtedgetree.h"
 
@@ -298,12 +298,12 @@ void WtCheckEdgetreeFull (WtNetwork *nwp) {
   // Note that maximum index in the nwp->*edges is nwp->maxedges-1, and we need to keep one element open for the next insertion.
   if(nwp->last_outedge==nwp->maxedges-2 || nwp->last_inedge==nwp->maxedges-2){
     // Only enlarge the non-root part of the array.
-    Edge newmax = nwp->maxedges + (nwp->maxedges - nwp->nnodes - 1)*mult;
+    Edge newmax = nwp->nnodes + 1 + (nwp->maxedges - nwp->nnodes - 1)*mult;
     nwp->inedges = (WtTreeNode *) Realloc(nwp->inedges, newmax, WtTreeNode);
-    memset(nwp->inedges+nwp->last_inedge+2,0,
+    memset(nwp->inedges+nwp->maxedges, 0,
 	   sizeof(WtTreeNode) * (newmax-nwp->maxedges));
     nwp->outedges = (WtTreeNode *) Realloc(nwp->outedges, newmax, WtTreeNode);
-    memset(nwp->outedges+nwp->last_outedge+2,0,
+    memset(nwp->outedges+nwp->maxedges, 0,
 	   sizeof(WtTreeNode) * (newmax-nwp->maxedges));
     nwp->maxedges = newmax;
   }
@@ -528,7 +528,7 @@ int WtGetRandEdge(Vertex *tail, Vertex *head, double *weight, WtNetwork *nwp) {
   if(EDGECOUNT(nwp)==0) return(0);
   // FIXME: The constant maxEattempts needs to be tuned.
   const unsigned int maxEattempts=10;
-  unsigned int Eattempts = (nwp->maxedges-1)/EDGECOUNT(nwp);
+  unsigned int Eattempts = nwp->last_outedge/EDGECOUNT(nwp);
   Edge rane;
   
   if(Eattempts>maxEattempts){

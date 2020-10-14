@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution
 #
-#  Copyright 2003-2019 Statnet Commons
+#  Copyright 2003-2020 Statnet Commons
 #######################################################################
 ####################################################################################
 # The <ergm.initialfit> function fits an initial ergm object using either ML or MPL
@@ -68,6 +68,7 @@ ergm.initialfit<-function(init, initial.is.final,
                   MPLE = {
                     nw <- single.impute.dyads(nw, response=response, constraints=proposal$arguments$constraints, constraints.obs=proposal.obs$arguments$constraints, min_informative = control$obs.MCMC.impute.min_informative, default_density = control$obs.MCMC.impute.default_density, output="pending", verbose=verbose)
                     fd <- as.rlebdm(proposal$arguments$constraints, proposal.obs$arguments$constraints, which="informative")
+                    if(!initial.is.final) control$MPLE.samplesize <- control$init.MPLE.samplesize
                     ergm.mple(nw, fd, m, MPLEtype=MPLEtype,
                               init=init,
                               control=control, proposal=proposal,

@@ -9,15 +9,9 @@
 \alias{as.matrix.rlebdm}
 \alias{dim.rlebdm}
 \alias{print.rlebdm}
-\alias{!.rlebdm}
-\alias{|.rlebdm}
-\alias{&.rlebdm}
-\alias{<.rlebdm}
-\alias{>.rlebdm}
-\alias{<=.rlebdm}
-\alias{>=.rlebdm}
-\alias{==.rlebdm}
-\alias{!=.rlebdm}
+\alias{Ops.rlebdm}
+\alias{Math.rlebdm}
+\alias{compress.rlebdm}
 \alias{as.edgelist.rlebdm}
 \title{RLE-Compressed Boolean Dyad Matrix}
 \usage{
@@ -37,23 +31,11 @@ as.rlebdm(x, ...)
 
 \method{print}{rlebdm}(x, compact = TRUE, ...)
 
-\method{!}{rlebdm}(x)
+\method{Ops}{rlebdm}(e1, e2)
 
-\method{|}{rlebdm}(e1, e2)
+\method{Math}{rlebdm}(x, ...)
 
-\method{&}{rlebdm}(e1, e2)
-
-\method{<}{rlebdm}(e1, e2)
-
-\method{>}{rlebdm}(e1, e2)
-
-\method{<=}{rlebdm}(e1, e2)
-
-\method{>=}{rlebdm}(e1, e2)
-
-\method{==}{rlebdm}(e1, e2)
-
-\method{!=}{rlebdm}(e1, e2)
+\method{compress}{rlebdm}(x, ...)
 
 \method{as.edgelist}{rlebdm}(x, prototype = NULL, ...)
 }
@@ -66,7 +48,7 @@ as.rlebdm(x, ...)
 
 \item{compact}{whether to print the matrix compactly (dots and stars) or to print it as a logical matrix.}
 
-\item{e1, e2}{arguments to the binary operations.}
+\item{e1, e2}{arguments to the unary (\code{e1}) or the binary (\code{e1} and \code{e2}) operators.}
 
 \item{prototype}{an optional network with network attributes that
 are transferred to the edgelist and will filter it (e.g., if the
@@ -91,10 +73,20 @@ cells are set to \code{FALSE}.
 whose cells corresponding to extant edges are set to \code{TRUE} and
 whose other cells are set to \code{FALSE}.
 
+\item \code{compress}: Compress the \code{rle} data structure in the
+\code{rlebdm} by merging successive runs with identical values.
+
 \item \code{as.edgelist}: Convert an \code{\link{rlebdm}} object to an \code{\link{edgelist}}: a two-column
 integer matrix giving the cells with \code{TRUE} values.
 }}
 
+\note{
+The arithmetic operators are mathematical functions are
+implemented for the \code{\link{Ops}} and the \code{\link{Math}} group generics and
+therefore work for almost all of them automatically. To preserve
+the integrity of the data structure, the results are cast to
+logical before return.
+}
 \examples{
 # From a vector
 rlebdm(rep(rep(c(0,1),each=3),14)[seq_len(81)], 9)

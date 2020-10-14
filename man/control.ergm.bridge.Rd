@@ -4,14 +4,24 @@
 \alias{control.ergm.bridge}
 \title{Auxiliary for Controlling ergm.bridge}
 \usage{
-control.ergm.bridge(nsteps = 20, MCMC.burnin = 10000,
-  MCMC.interval = 100, MCMC.samplesize = 10000,
+control.ergm.bridge(
+  nsteps = 20,
+  MCMC.burnin = 10000,
+  MCMC.interval = 100,
+  MCMC.samplesize = 10000,
   obs.MCMC.samplesize = MCMC.samplesize,
-  obs.MCMC.interval = MCMC.interval, obs.MCMC.burnin = MCMC.burnin,
-  MCMC.prop.weights = "default", MCMC.prop.args = list(),
-  MCMC.init.maxedges = 20000, MCMC.packagenames = c(),
-  term.options = list(), seed = NULL, parallel = 0,
-  parallel.type = NULL, parallel.version.check = TRUE)
+  obs.MCMC.interval = MCMC.interval,
+  obs.MCMC.burnin = MCMC.burnin,
+  MCMC.prop.weights = "default",
+  MCMC.prop.args = list(),
+  MCMC.init.maxedges = 20000,
+  MCMC.packagenames = c(),
+  term.options = list(),
+  seed = NULL,
+  parallel = 0,
+  parallel.type = NULL,
+  parallel.version.check = TRUE
+)
 }
 \arguments{
 \item{nsteps}{Number of geometric bridges to use.}
@@ -29,21 +39,23 @@ Metropolis-Hastings algorithm.}
 versions of these arguments are for the unobserved data simulation
 algorithm.}
 
-\item{MCMC.prop.weights}{Specifies the proposal distribution used in the
-MCMC Metropolis-Hastings algorithm.  Possible choices are \code{"TNT"} or
-\code{"random"}; the \code{"default"} is one of these two, depending on the
-constraints in place (as defined by the \code{constraints} argument of the
-\code{\link{ergm}} function), though not all weights may be used with all
-constraints.  The \code{TNT} (tie / no tie) option puts roughly equal weight
-on selecting a dyad with or without a tie as a candidate for toggling,
-whereas the \code{random} option puts equal weight on all possible dyads,
-though the interpretation of \code{random} may change according to the
-constraints in place.  When no constraints are in place, the default is TNT,
-which appears to improve Markov chain mixing particularly for networks with
-a low edge density, as is typical of many realistic social networks.}
+\item{MCMC.prop.weights}{Specifies the proposal
+distribution used in the MCMC Metropolis-Hastings algorithm.  Possible
+choices depending on selected \code{reference} and \code{constraints}
+arguments of the \code{\link[=ergm]{ergm()}} function, but often include \code{"TNT"}
+and \code{"random"}, and the \code{"default"} is to use the one with the
+highest priority available.
 
-\item{MCMC.prop.args}{An alternative, direct way of specifying additional
-arguments to proposal.}
+The \code{TNT} (tie / no tie) option puts roughly equal weight on selecting
+a dyad with or without a tie as a candidate for toggling, whereas the
+\code{random} option puts equal weight on all possible dyads, though the
+interpretation of \code{random} may change according to the constraints in
+place.  When no constraints are in place, the default is TNT, which appears
+to improve Markov chain mixing particularly for networks with a low edge
+density, as is typical of many realistic social networks.}
+
+\item{MCMC.prop.args}{An alternative, direct way of
+specifying additional arguments to proposal.}
 
 \item{MCMC.init.maxedges}{Maximum number of edges expected in network.}
 

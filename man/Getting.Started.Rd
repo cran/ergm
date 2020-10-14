@@ -5,7 +5,7 @@
 %  open source, and has the attribution requirements (GPL Section 7) at
 %  https://statnet.org/attribution
 %
-%  Copyright 2003-2019 Statnet Commons
+%  Copyright 2003-2020 Statnet Commons
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{Getting.Started}
 \alias{Getting.Started}
@@ -125,7 +125,7 @@ Handcock, M. S. (2003)
     Working Paper \#39, 
 Center for Statistics and the Social Sciences,
 University of Washington.
-\url{https://www.csss.washington.edu/Papers/wp39.pdf}
+\url{https://www.csss.washington.edu/research/working-papers/assessing-degeneracy-statistical-models-social-networks}
 
 Handcock MS (2003b).
  \pkg{degreenet}: Models for Skewed Count Distributions Relevant
