@@ -1,18 +1,18 @@
-#  File R/InitErgmTerm.transitiveties.R in package ergm, part of the Statnet suite
-#  of packages for network analysis, https://statnet.org .
+#  File R/InitErgmTerm.transitiveties.R in package ergm, part of the
+#  Statnet suite of packages for network analysis, https://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) at
-#  https://statnet.org/attribution
+#  https://statnet.org/attribution .
 #
-#  Copyright 2003-2020 Statnet Commons
-#######################################################################
+#  Copyright 2003-2021 Statnet Commons
+################################################################################
 # This new InitErgmTerm function still needs to be tested:
 
 #################################################################################
 InitErgmTerm.transitiveties<-function (nw, arglist, ..., version=packageVersion("ergm")) {
   if(version <= as.package_version("3.9.4")){
-    a <- check.ErgmTerm(nw, arglist, directed=TRUE,
+    a <- check.ErgmTerm(nw, arglist,
                         varnames = c("attrname", "diff", "levels"),
                         vartypes = c("character", "logical", "character,numeric,logical"),
                         defaultvalues = list(NULL, FALSE, TRUE),
@@ -20,7 +20,7 @@ InitErgmTerm.transitiveties<-function (nw, arglist, ..., version=packageVersion(
 	attrarg <- a$attrname
 	levels <- if(!is.null(a$levels)) I(a$levels) else NULL
   }else{
-    a <- check.ErgmTerm(nw, arglist, directed=TRUE,
+    a <- check.ErgmTerm(nw, arglist,
                         varnames = c("attr", "diff", "levels"),
                         vartypes = c(ERGM_VATTR_SPEC, "logical", ERGM_LEVELS_SPEC),
                         defaultvalues = list(NULL, FALSE, NULL),
@@ -58,7 +58,7 @@ InitErgmTerm.transitiveties<-function (nw, arglist, ..., version=packageVersion(
 #################################################################################
 InitErgmTerm.cyclicalties<-function (nw, arglist, ..., version=packageVersion("ergm")) {
   if(version <= as.package_version("3.9.4")){
-    a <- check.ErgmTerm(nw, arglist, directed=TRUE,
+    a <- check.ErgmTerm(nw, arglist,
                         varnames = c("attrname", "diff", "levels"),
                         vartypes = c("character", "logical", "character,numeric,logical"),
                         defaultvalues = list(NULL, FALSE, TRUE),
@@ -66,7 +66,7 @@ InitErgmTerm.cyclicalties<-function (nw, arglist, ..., version=packageVersion("e
 	attrarg <- a$attrname
 	levels <- if(!is.null(a$levels)) I(a$levels) else NULL						
   }else{
-    a <- check.ErgmTerm(nw, arglist, directed=TRUE,
+    a <- check.ErgmTerm(nw, arglist,
                         varnames = c("attr", "diff", "levels"),
                         vartypes = c(ERGM_VATTR_SPEC, "logical", ERGM_LEVELS_SPEC),
                         defaultvalues = list(NULL, FALSE, TRUE),

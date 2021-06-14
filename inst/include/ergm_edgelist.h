@@ -1,11 +1,11 @@
-/*  File inst/include/ergm_edgelist.h in package ergm, part of the Statnet suite
- *  of packages for network analysis, https://statnet.org .
+/*  File inst/include/ergm_edgelist.h in package ergm, part of the
+ *  Statnet suite of packages for network analysis, https://statnet.org .
  *
  *  This software is distributed under the GPL-3 license.  It is free,
  *  open source, and has the attribution requirements (GPL Section 7) at
- *  https://statnet.org/attribution
+ *  https://statnet.org/attribution .
  *
- *  Copyright 2003-2020 Statnet Commons
+ *  Copyright 2003-2021 Statnet Commons
  */
 #ifndef _ERGM_EDGELIST_H_
 #define _ERGM_EDGELIST_H_
@@ -33,8 +33,54 @@ tails (first column), with ties broken by heads.
 
 */
 
+/*********************
+ unsigned int dEdgeListSearch
 
-unsigned int dEdgeListSearch(Vertex tail, Vertex head, double *el);
-unsigned int iEdgeListSearch(Vertex tail, Vertex head, int *el);
+ A function to check whether a given edge is in an edgelist formatted
+ as documented above, using an array of double.
+
+ Returns the index of the edge (counting from 1) if found, 0 if not.
+*********************/
+
+static inline unsigned int dEdgeListSearch(Vertex tail, Vertex head, double *el){
+  unsigned int nedges=el[0];
+  unsigned int u=nedges,l=1;
+  double *tails = el, *heads = el+nedges;
+
+  if(nedges==0) return(0);
+
+  while(l<u){
+    unsigned int m = l + (u-l)/2;
+    if(tail>tails[m] || (tail==tails[m] && head>heads[m])) l = m+1;
+    else u = m;
+  }
+
+  if((u==l) && tail==tails[l] && head==heads[l]) return(l); else return(0);
+}
+
+/*********************
+ unsigned int iEdgeListSearch
+
+ A function to check whether a given edge is in an edgelist formatted
+ as documented above, using an array of int.
+
+ Returns the index of the edge (counting from 1) if found, 0 if not.
+*********************/
+
+static inline unsigned int iEdgeListSearch(Vertex tail, Vertex head, int *el){
+  unsigned int nedges=el[0];
+  unsigned int u=nedges,l=1;
+  int *tails = el, *heads = el+nedges;
+
+  if(nedges==0) return(0);
+
+  while(l<u){
+    unsigned int m = l + (u-l)/2;
+    if(tail>tails[m] || (tail==tails[m] && head>heads[m])) l = m+1;
+    else u = m;
+  }
+
+  if((u==l) && tail==tails[l] && head==heads[l]) return(l); else return(0);
+}
 
 #endif

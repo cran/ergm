@@ -12,7 +12,10 @@ search.ergmTerms(keyword='triangle')
 search.ergmTerms(categories=c('bipartite','dyad-independent'))
 
 ## ----results='asis',echo=FALSE------------------------------------------------
-ergm:::.termMatrix(terms,categories=c('binary', 'valued', 'directed', 'undirected', 'bipartite', 'dyad-independent'),only.include='frequently-used')
+ergm:::.termMatrix(terms,categories=c('binary', 'valued', 'directed', 'undirected', 'bipartite', 'dyad-independent','operator','layer-aware'),only.include='frequently-used')
+
+## ----results='asis',echo=FALSE------------------------------------------------
+ergm:::.termMatrix(terms,categories=c('binary', 'valued', 'directed', 'undirected', 'bipartite', 'dyad-independent','operator','layer-aware'),only.include='operator')
 
 ## ----results='asis',echo=FALSE------------------------------------------------
 ergm:::.termMatrix(terms)

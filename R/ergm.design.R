@@ -1,12 +1,12 @@
-#  File R/ergm.design.R in package ergm, part of the Statnet suite
-#  of packages for network analysis, https://statnet.org .
+#  File R/ergm.design.R in package ergm, part of the
+#  Statnet suite of packages for network analysis, https://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) at
-#  https://statnet.org/attribution
+#  https://statnet.org/attribution .
 #
-#  Copyright 2003-2020 Statnet Commons
-#######################################################################
+#  Copyright 2003-2021 Statnet Commons
+################################################################################
 #################################################################################
 # The <ergm.design> function functions as <ergm.Cprepare> would, but acts on the
 # network of missing edges
@@ -18,11 +18,6 @@
 #
 # --RETURNED--
 #   fd
-#      if 'nw' has missing edges, see the return list, 'Clist', from the
-#                                 <ergm.Cprepare> function header
-#      if 'nw' hasn't any missing edges, the list will only contain NULL
-#                                 values for the 'tails' and 'heads' components,
-#                                 a 0 for 'nedges' and 'dir' appropriately set
 #
 # The <ergm.Cprepare.miss> function functions constructs a static edgelist for
 # the proposals that need it.
@@ -35,13 +30,21 @@
 #      missing edges, and the remainder a column-major edgelist
 ################################################################################
 
-#' @rdname ergm_Clist
-#' @description \code{ergm.design} obtain the set of informative dyads based on the network structure. Note that `model=` argument is not needed and will be removed in a future release.
+#' Obtain the set of informative dyads based on the network structure.
+#'
+#' Note that this function is not recommended for general use, since
+#' it only supports only one way of specifying observational
+#' structure---through `NA` edges. It is likely to be deprecated in
+#' the future.
+#'
+#' @param nw a [`network`] object.
+#' @param ... term options.
+#'
 #' @return \code{ergm.design} returns a \code{\link{rlebdm}} of
 #'   informative (non-missing, non fixed) dyads.
 #' @export ergm.design
-ergm.design <- function(nw, verbose=FALSE){
-  basecon <- ergm_conlist(~.attributes, nw)
-  misscon <- if(!is.pending_update_network(nw) && network.naedgecount(nw)) ergm_conlist(~.attributes+observed, nw)
+ergm.design <- function(nw, ...){
+  basecon <- ergm_conlist(~.attributes, nw, ...)
+  misscon <- if(!is.ergm_state(nw) && network.naedgecount(nw)) ergm_conlist(~.attributes+observed, nw, ...)
   as.rlebdm(basecon, misscon, which="informative")
 }

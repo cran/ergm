@@ -1,19 +1,19 @@
-/*  File src/changestats_homoproportion.c in package ergm, part of the Statnet suite
- *  of packages for network analysis, https://statnet.org .
+/*  File src/changestats_homoproportion.c in package ergm, part of the
+ *  Statnet suite of packages for network analysis, https://statnet.org .
  *
  *  This software is distributed under the GPL-3 license.  It is free,
  *  open source, and has the attribution requirements (GPL Section 7) at
- *  https://statnet.org/attribution
+ *  https://statnet.org/attribution .
  *
- *  Copyright 2003-2020 Statnet Commons
+ *  Copyright 2003-2021 Statnet Commons
  */
-#include "changestats_homoproportion.h"
+#include "ergm_changestat.h"
 
 D_CHANGESTAT_FN(d_homoproportion) { 
   double change;
   int i;
   double multfactor;
-  int edgeflag, num01ties, num11ties;
+  int edgestate, num01ties, num11ties;
   Vertex ninputs, tail, head;
   Edge e;
   
@@ -40,11 +40,11 @@ D_CHANGESTAT_FN(d_homoproportion) {
     if(num11ties+num01ties>0){
      change -= num11ties*multfactor/((double)(num11ties+num01ties));
     }
-    edgeflag = IS_OUTEDGE(tail, head);
+    edgestate = IS_OUTEDGE(tail, head);
     if (INPUT_PARAM[tail+ninputs-1] == INPUT_PARAM[head+ninputs-1]) {
-     if(edgeflag){num11ties--;}else{num11ties++;}
+     if(edgestate){num11ties--;}else{num11ties++;}
     }else{
-     if(edgeflag){num01ties--;}else{num01ties++;}
+     if(edgestate){num01ties--;}else{num01ties++;}
     }
     if(num11ties+num01ties>0){
      change += num11ties*multfactor/((double)(num11ties+num01ties));

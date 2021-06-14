@@ -1,12 +1,12 @@
-#  File R/ergm.etagradmult.R in package ergm, part of the Statnet suite
-#  of packages for network analysis, https://statnet.org .
+#  File R/ergm.etagradmult.R in package ergm, part of the
+#  Statnet suite of packages for network analysis, https://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) at
-#  https://statnet.org/attribution
+#  https://statnet.org/attribution .
 #
-#  Copyright 2003-2020 Statnet Commons
-#######################################################################
+#  Copyright 2003-2021 Statnet Commons
+################################################################################
 ##############################################################################
 # The <ergm.etagradmult> function calculates and returns the product of the
 # gradient of eta with a vector v
@@ -28,23 +28,9 @@
 #' @param v a vector of the same length as the vector of mapped eta
 #'   parameters
 #' @return For \code{ergm.etagradmult}, the vector that is the product
-#'   of the gradient of eta and \code{v}; infinite values are replaced
-#'   by (+-)10000.
+#'   of the gradient of eta and \code{v}.
 #' @export ergm.etagradmult
-ergm.etagradmult <- function(theta, v, etamap) {
-  v <- as.matrix(v)
-  ans <- matrix(0, length(theta), dim(v)[2])
-  if(dim(v)[1] != etamap$etalength)
-    stop("Non-conforming matrix multiply: grad(eta) %*% v.\n",
-         "grad(eta) has ", etamap$etalength, " columns ",
-         "and v has ", dim(v)[1], " rows.")
-  ec <- etamap$canonical
-# Set gradient for canonical parameters to the identity matrix
-  ans[ec>0,] <- v[ec[ec>0],]
-  if(length(etamap$curved)>0) {
-    for(cm in etamap$curved) {
-      ans[cm$from,] <- cm$gradient(theta[cm$from], length(cm$to), cm$cov)%*%v[cm$to,]  
-    }
-  }
-  ans
+ergm.etagradmult <- function(theta, v, etamap){
+  storage.mode(v) <- "double"
+  .Call("ergm_etagradmult_wrapper", as.numeric(theta), v,  etamap, PACKAGE="ergm")
 }

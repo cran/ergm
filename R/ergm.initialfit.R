@@ -1,12 +1,12 @@
-#  File R/ergm.initialfit.R in package ergm, part of the Statnet suite
-#  of packages for network analysis, https://statnet.org .
+#  File R/ergm.initialfit.R in package ergm, part of the
+#  Statnet suite of packages for network analysis, https://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) at
-#  https://statnet.org/attribution
+#  https://statnet.org/attribution .
 #
-#  Copyright 2003-2020 Statnet Commons
-#######################################################################
+#  Copyright 2003-2021 Statnet Commons
+################################################################################
 ####################################################################################
 # The <ergm.initialfit> function fits an initial ergm object using either ML or MPL
 # estimation.  If initial parameters are provided in 'init' and 'MLestimate' is 
@@ -51,7 +51,7 @@
 
 ergm.initialfit<-function(init, initial.is.final,
                           formula, nw,
-                          m, response=NULL, reference=~Bernoulli, method = NULL,
+                          m, reference=~Bernoulli, method = NULL,
                           MPLEtype="glm",
                           control=NULL, proposal=NULL, proposal.obs=NULL,
                           verbose=FALSE, ...) {
@@ -66,23 +66,37 @@ ergm.initialfit<-function(init, initial.is.final,
     # Also make sure that any initial values specified by the user are respected.
     fit <- switch(method,
                   MPLE = {
-                    nw <- single.impute.dyads(nw, response=response, constraints=proposal$arguments$constraints, constraints.obs=proposal.obs$arguments$constraints, min_informative = control$obs.MCMC.impute.min_informative, default_density = control$obs.MCMC.impute.default_density, output="pending", verbose=verbose)
+                    nw <- single.impute.dyads(nw, constraints=proposal$arguments$constraints, constraints.obs=proposal.obs$arguments$constraints, min_informative = control$obs.MCMC.impute.min_informative, default_density = control$obs.MCMC.impute.default_density, output="ergm_state", verbose=verbose)
+
+                    if(control$MPLE.constraints.ignore) proposal$arguments$constraints <- proposal$arguments$constraints[".attributes"] # Drop all constraints except for .attributes .
                     fd <- as.rlebdm(proposal$arguments$constraints, proposal.obs$arguments$constraints, which="informative")
+
                     if(!initial.is.final) control$MPLE.samplesize <- control$init.MPLE.samplesize
                     ergm.mple(nw, fd, m, MPLEtype=MPLEtype,
-                              init=init,
-                              control=control, proposal=proposal,
+                              init=init, 
+                              control=control,
                               verbose=verbose, ...)
                   },
-                  zeros = structure(list(coef=ifelse(is.na(init),0,init)),class="ergm"),
-                  CD = ergm.CD.fixed(ifelse(is.na(init),0,init),
-                      nw, m, control, proposal, proposal.obs, verbose,response=response,...),
+                  zeros = structure(list(coefficients=.constrain_init(m, ifelse(is.na(init),0,init))),class="ergm"),
+                  CD = ergm.CD.fixed(.constrain_init(m, ifelse(is.na(init),0,init)),
+                      nw, m, control, proposal, proposal.obs, verbose,...),
                   stop(paste("Invalid method specified for initial parameter calculation. Available methods are ",paste.and(formals()$method),".",sep=""))
                   )
   }else{
     # If this is just the initial value, *and* the user has supplied
     # all elements for init, just echo init.
-    fit <- structure(list(coef=init),class="ergm")
+    fit <- structure(list(coefficients=init),class="ergm")
   }
   fit
+}
+
+.constrain_init <- function(m, init){
+  if(is(m, "ergm_model")) m <- m$etamap
+  init.no <- init[!m$offsettheta]
+  maxtheta <- m$maxtheta[!m$offsettheta]
+  init.no <- pmin(init.no, maxtheta - deInf(pmax(abs(maxtheta),1)*sqrt(.Machine$double.eps)))
+  mintheta <- m$mintheta[!m$offsettheta]
+  init.no <- pmax(init.no, mintheta + deInf(pmax(abs(mintheta),1)*sqrt(.Machine$double.eps)))
+  init[!m$offsettheta] <- init.no
+  init
 }

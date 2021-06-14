@@ -18,7 +18,7 @@ san(object, ...)
   target.stats = NULL,
   nsim = NULL,
   basis = NULL,
-  output = c("network", "edgelist", "pending_update_network"),
+  output = c("network", "edgelist", "ergm_state"),
   only.last = TRUE,
   control = control.san(),
   verbose = FALSE,
@@ -28,13 +28,12 @@ san(object, ...)
 
 \method{san}{ergm_model}(
   object,
-  response = NULL,
   reference = ~Bernoulli,
   constraints = ~.,
   target.stats = NULL,
   nsim = NULL,
   basis = NULL,
-  output = c("network", "edgelist", "pending_update_network"),
+  output = c("network", "edgelist", "ergm_state"),
   only.last = TRUE,
   control = control.san(),
   verbose = FALSE,
@@ -46,17 +45,23 @@ san(object, ...)
 \item{object}{Either a \code{\link{formula}} or an \code{\link{ergm}} object. The
 \code{\link{formula}} should be of the form \code{y ~ <model terms>}, where
 \code{y} is a network object or a matrix that can be coerced to a
-\code{\link{network}} object.  For the details on the
-possible \code{<model terms>}, see \code{\link{ergm-terms}}.  To
-create a \code{\link[network]{network}} object in , use the
+\code{\link{network}} object.  For the details on the possible \code{<model
+  terms>}, see \code{\link{ergm-terms}}.  To create a
+\code{\link[network]{network}} object in , use the
 \code{network()} function, then add nodal attributes to it using
 the \code{\%v\%} operator if necessary.}
 
 \item{\dots}{Further arguments passed to other functions.}
 
-\item{response}{Name of the edge attribute whose value is to be
-modeled in the valued ERGM framework. Defaults to \code{NULL} for
-simple presence or absence, modeled via a binary ERGM.}
+\item{response}{Either a character string, a formula, or \code{NULL} (the default), to specify the response attributes and whether the ERGM is binary or valued. Interpreted as follows: \describe{
+
+\item{\code{NULL}}{Model simple presence or absence, via a binary ERGM.}
+
+\item{character string}{The name of the edge attribute whose value is to be modeled. Type of ERGM will be determined by whether the attribute is \code{\link{logical}} (\code{TRUE}/\code{FALSE}) for binary or \code{\link{numeric}} for valued.}
+
+\item{a formula}{must be of the form \code{NAME~EXPR|TYPE} (with \code{|} being literal). \code{EXPR} is evaluated in the formula's environment with the network's edge attributes accessible as variables. The optional \code{NAME} specifies the name of the edge attribute into which the results should be stored, with the default being a concise version of \code{EXPR}. Normally, the type of ERGM is determined by whether the result of evaluating \code{EXPR} is logical or numeric, but the optional \code{TYPE} can be used to override by specifying a scalar of the type involved (e.g., \code{TRUE} for binary and \code{1} for valued).}
+
+}}
 
 \item{reference}{A one-sided formula specifying
 the reference measure (\eqn{h(y)}) to be used.
@@ -81,29 +86,36 @@ implied by the formula, which is either \code{object} itself in the case of
 chain.  If NULL, this is taken to be the network named in the formula.}
 
 \item{output}{Character, one of \code{"network"} (default),
-\code{"edgelist"}, or \code{"pending_update_network"}: determines the
+\code{"edgelist"}, or \code{"ergm_state"}: determines the
 output format. Partial matching is performed.}
 
 \item{only.last}{if \code{TRUE}, only return the last network generated;
 otherwise, return a \code{\link{network.list}} with \code{nsim} networks.}
 
-\item{control}{A list of control parameters for algorithm tuning; see
-\code{\link{control.san}}.}
+\item{control}{A list of control parameters for algorithm tuning,
+typically constructed with \code{\link[=control.san]{control.san()}}. Its documentation
+gives the the list of recognized control parameters and their
+meaning. The more generic utility \code{\link[=snctrl]{snctrl()}} (StatNet ConTRoL)
+also provides argument completion for the available control
+functions and limited argument name checking.}
 
-\item{verbose}{Logical or numeric giving the level of verbosity. Higher values produce more verbose output.}
+\item{verbose}{A logical or an integer to control the amount of
+progress and diagnostic information to be printed. \code{FALSE}/\code{0}
+produces minimal output, wit higher values producing more
+detail. Note that very high values (5+) may significantly slow
+down processing.}
 
 \item{offset.coef}{A vector of offset coefficients; these must be passed in by the user.
 Note that these should be the same set of coefficients one would pass to \code{ergm} via
-its \code{offset.coef} argument.  For example, if one has a curved \code{offset(gwesp)}
-term in the model, then the \code{decay} parameter should \emph{not} be passed in via
-\code{offset.coef}.}
+its \code{offset.coef} argument.}
 
 \item{formula}{(By default, the \code{formula} is taken from the \code{ergm}
 object.  If a different \code{formula} object is wanted, specify it here.}
 }
 \value{
 A network or list of networks that hopefully have network
-statistics close to the \code{target.stats} vector.
+statistics close to the \code{target.stats} vector. Additionally,
+\code{\link[=attr]{attr()}}-style attributes \code{formula} and \code{stats} are included.
 }
 \description{
 This function attempts to find a network or networks whose statistics match

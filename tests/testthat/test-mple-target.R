@@ -1,12 +1,12 @@
-#  File tests/testthat/test-mple-target.R in package ergm, part of the Statnet suite
-#  of packages for network analysis, https://statnet.org .
+#  File tests/testthat/test-mple-target.R in package ergm, part of the
+#  Statnet suite of packages for network analysis, https://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) at
-#  https://statnet.org/attribution
+#  https://statnet.org/attribution .
 #
-#  Copyright 2003-2020 Statnet Commons
-#######################################################################
+#  Copyright 2003-2021 Statnet Commons
+################################################################################
 n<-500
 base.net <- network.initialize(n=n,directed=FALSE)
 norm.stats<-c(.7,.1,.5)
@@ -28,5 +28,13 @@ test_that("estimate with target.stats matches that with LHS", {
 })
 
 test_that("simulating from the MPLE target statistics fit", {
-  ergm.sim<-simulate(ergm.ts.fit,nsim=10,output="stats", control=control.simulate.ergm(MCMC.burnin=10,MCMC.interval=1))
+  expect_error(ergm.sim<-simulate(ergm.ts.fit,nsim=10,output="stats", control=control.simulate.ergm(MCMC.burnin=10,MCMC.interval=1)), NA)
+})
+
+test_that("MPLE with no estimable parameters fails at a later stage", {
+  net1<-network.initialize(5578,directed=FALSE)
+  expect_error(expect_warning(
+    ergm(net1~triangles,target.stats=c(1)),
+    "^Model statistics .*triangle.* are not varying..*"),
+    "^Number of edges in a simulated network exceeds that in the observed by a factor of more than.*")
 })

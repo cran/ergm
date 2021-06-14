@@ -1,12 +1,12 @@
-#  File tests/mple_largenetwork.R in package ergm, part of the Statnet suite
-#  of packages for network analysis, https://statnet.org .
+#  File tests/mple_largenetwork.R in package ergm, part of the
+#  Statnet suite of packages for network analysis, https://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) at
-#  https://statnet.org/attribution
+#  https://statnet.org/attribution .
 #
-#  Copyright 2003-2020 Statnet Commons
-#######################################################################
+#  Copyright 2003-2021 Statnet Commons
+################################################################################
 library(statnet.common)
 opttest({
 library(ergm)
@@ -18,7 +18,7 @@ for(n in 500) { # n must be even
   m <- cbind(1:n,n:1) #n must be even here
   e <- ergm(network(m, directed=TRUE)~edges)
   eta <- log(n) - 2*log(n-1)  # What the coefficient estimate should be
-  if (round(e$coef - eta, 4) !=0) {
+  if (round(coef(e) - eta, 4) !=0) {
     stop("Failed test of simple MPLE (sparse) estimation for n =",n)
   }
   cat(paste("Passed first MPLE test for n =",n))
@@ -34,7 +34,7 @@ for(n in 500) { # n should be a multiple of 100
   m[,2] <- m[,2] + apply(m,1,function(x) x[1]<=x[2])
   e <- ergm(network(m, directed=TRUE)~edges)
   eta <- log(n) - log(99*n-100)  # What the coefficient estimate should be
-  if (round(e$coef -eta, 4) !=0) {
+  if (round(coef(e) -eta, 4) !=0) {
     stop("Failed test of simple MPLE (nonsparse) estimation for n =",n)
   }
   cat(paste("Passed second MPLE test for n =",n))

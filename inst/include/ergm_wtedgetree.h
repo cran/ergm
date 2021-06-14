@@ -1,25 +1,16 @@
-/*  File inst/include/ergm_wtedgetree.h in package ergm, part of the Statnet suite
- *  of packages for network analysis, https://statnet.org .
+/*  File inst/include/ergm_wtedgetree.h in package ergm, part of the
+ *  Statnet suite of packages for network analysis, https://statnet.org .
  *
  *  This software is distributed under the GPL-3 license.  It is free,
  *  open source, and has the attribution requirements (GPL Section 7) at
- *  https://statnet.org/attribution
+ *  https://statnet.org/attribution .
  *
- *  Copyright 2003-2020 Statnet Commons
+ *  Copyright 2003-2021 Statnet Commons
  */
 #ifndef _ERGM_WTEDGETREE_H_
 #define _ERGM_WTEDGETREE_H_
 
 #include "ergm_edgetree_common.do_not_include_directly.h"
-
-/* Ensure that tail < head for undriected networks. */
-#define ENSURE_TH_ORDER							\
-  if(!(nwp->directed_flag) && tail>head){				\
-    Vertex temp;							\
-    temp = tail;							\
-    tail = head;							\
-    head = temp;							\
-  }
 
 /* WtTreeNode is just like TreeNode but with an extra field for a
    weight, or value, that might be associated with the node */
@@ -44,10 +35,15 @@ typedef struct WtNetworkstruct {
   Edge last_outedge;
   Vertex *indegree;
   Vertex *outdegree;
-  double *value;  
-  Dur_Inf duration_info;
+  const char *eattrname;
   Edge maxedges;
+
+  unsigned int n_on_edge_change;
+  unsigned int max_on_edge_change;
+  void (**on_edge_change)(Vertex, Vertex, double, void*, struct WtNetworkstruct*, double);
+  void **on_edge_change_payload;
 } WtNetwork;
+typedef void (*OnWtNetworkEdgeChange)(Vertex, Vertex, double, void*, WtNetwork*, double);
 
 /* Initialization and destruction. */
 WtNetwork *WtNetworkInitialize(Vertex *tails, Vertex *heads, double *weights, Edge nedges,
@@ -59,6 +55,9 @@ WtNetwork *WtNetworkInitializeD(double *tails, double *heads, double *weights, E
 				int lasttoggle_flag, int time, int *lasttoggle);
 
 WtNetwork *WtNetworkCopy(WtNetwork *src);
+
+SEXP WtNetwork2Redgelist(WtNetwork *nwp);
+WtNetwork *Redgelist2WtNetwork(SEXP elR, Rboolean empty);
 
 /* /\* Accessors. *\/ */
 /* static inline Edge WtEdgetreeSearch (Vertex a, Vertex b, WtTreeNode *edges); */
@@ -74,20 +73,18 @@ WtNetwork *WtNetworkCopy(WtNetwork *src);
    heads & tails, now list tails before heads */
 
 void WtSetEdge (Vertex tail, Vertex head, double weight, WtNetwork *nwp);
-void WtSetEdgeWithTimestamp (Vertex tail, Vertex head, double weight, WtNetwork *nwp);
 int WtToggleEdge (Vertex tail, Vertex head, double weight, WtNetwork *nwp);
-int WtToggleEdgeWithTimestamp (Vertex tail, Vertex head, double weight, WtNetwork *nwp);
-int WtAddEdgeToTrees(Vertex tail, Vertex head, double weight, WtNetwork *nwp);
-void WtAddHalfedgeToTree (Vertex a, Vertex b, double weight, WtTreeNode *edges, Edge *last_edge);
-void WtCheckEdgetreeFull (WtNetwork *nwp);
+void WtAddEdgeToTrees(Vertex tail, Vertex head, double weight, WtNetwork *nwp);
+/* void WtAddHalfedgeToTree (Vertex a, Vertex b, double weight, WtTreeNode *edges, Edge *last_edge); */
+/* void WtCheckEdgetreeFull (WtNetwork *nwp); */
 int WtDeleteEdgeFromTrees(Vertex tail, Vertex head, WtNetwork *nwp);
-int WtDeleteHalfedgeFromTree(Vertex a, Vertex b, WtTreeNode *edges,
-		     Edge *last_edge);
-void WtRelocateHalfedge(Edge from, Edge to, WtTreeNode *edges);
+/* int WtDeleteHalfedgeFromTree(Vertex a, Vertex b, WtTreeNode *edges, */
+/* 		     Edge *last_edge); */
+/* void WtRelocateHalfedge(Edge from, Edge to, WtTreeNode *edges); */
 
-/* /\* Duration functions. *\/ */
-/* static inline int WtElapsedTime (Vertex tail, Vertex head, WtNetwork *nwp); */
-void WtTouchEdge(Vertex tail, Vertex head, WtNetwork *nwp);
+/* Callback management. */
+void AddOnWtNetworkEdgeChange(WtNetwork *nwp, OnWtNetworkEdgeChange callback, void *payload, unsigned int pos);
+void DeleteOnWtNetworkEdgeChange(WtNetwork *nwp, OnWtNetworkEdgeChange callback, void *payload);
 
 #include "ergm_wtedgetree_inline.do_not_include_directly.h"
 
@@ -101,6 +98,7 @@ void WtInOrderTreeWalk(WtTreeNode *edges, Edge x);
 void WtNetworkEdgeList(WtNetwork *nwp);
 void WtShuffleEdges(Vertex *tails, Vertex *heads, double *weights, Edge nedges);
 void WtDetShuffleEdges(Vertex *tails, Vertex *heads, double *weights, Edge nedges);
+void WtDetUnShuffleEdges(Vertex *tails, Vertex *heads, double *weights, Edge nedges);
 
 /* Others... */
 Edge WtDesignMissing (Vertex a, Vertex b, WtNetwork *mnwp);

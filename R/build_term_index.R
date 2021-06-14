@@ -1,12 +1,12 @@
-#  File R/build_term_index.R in package ergm, part of the Statnet suite
-#  of packages for network analysis, https://statnet.org .
+#  File R/build_term_index.R in package ergm, part of the
+#  Statnet suite of packages for network analysis, https://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) at
-#  https://statnet.org/attribution
+#  https://statnet.org/attribution .
 #
-#  Copyright 2003-2020 Statnet Commons
-#######################################################################
+#  Copyright 2003-2021 Statnet Commons
+################################################################################
 
 # parse the ergm-terms doc file to create structured data about each set of terms
 # so that we can generate indexed documentation
@@ -129,12 +129,12 @@
       }
       cat('</a><br>')
       cat(capture.output(tools::Rd2HTML(matchedTerms[[1]]$description.rd,fragment=TRUE)),"</p></td>")
-      cat("<td>",paste(unique(unlist(lapply(matchedTerms,'[[','categories'))),collapse=", "),"</td></tr>")
+      cat("<td>",paste(unique(unlist(lapply(matchedTerms,'[[','categories'))),collapse=", "),"</td></tr>\n")
     }
   } else {
     for (term in terms){
       cat("<tr><td><a id='",term$term.id,"'>",term$term.name,"(",ifelse(is.na(term$term.args),'',term$term.args),")</a><br>",sep='')
-      cat(capture.output(tools::Rd2HTML(term$description.rd,fragment=TRUE)),"</p></td><td>",paste(term$categories,collapse=", "),"</td></tr>")
+      cat(capture.output(tools::Rd2HTML(term$description.rd,fragment=TRUE)),"</p></td><td>",paste(term$categories,collapse=", "),"</td></tr>\n")
     }
   }
   cat("</table>")
@@ -194,7 +194,7 @@
     for(c in seq_along(categories)){
       cat("<td align='center'>",membership[[c]][[t]],"</td>")
     }
-    cat("</tr>",sep='')
+    cat("</tr>\n",sep='')
   }
   cat("</table>")
 }
@@ -207,20 +207,20 @@
   
   for (term in terms){
     
-    # every term must include at least one of 'directed' and 'undirected'
-    if (!any(c('directed','undirected')%in%term$categories)){
+    # every term must include at least one of 'directed', 'undirected', or 'operator'
+    if (!any(c('directed','undirected','operator')%in%term$categories)){
       stop('the term ',term$term.name,' must be marked as directed and/or undirected in the documentation')
     }
     # every term must include either 'valued' or 'binary'
     # check that there is a visable init function defined for the term
     # some terms have both valued an binary forms
     if ('valued'%in%term$categories){
-      if(!is.function(eval(locate.InitFunction(term$term.name, 'InitWtErgmTerm')))){
+      if(!is.function(eval(locate_prefixed_function(term$term.name, 'InitWtErgmTerm')))){
         stop('unable to locate an InitWtErgmTerm function defined for weighted term ',term$term.name,' in documentation')
       }
     } 
     if ('binary'%in%term$categories){
-      if(!is.function(eval(locate.InitFunction(term$term.name, 'InitErgmTerm')))){
+      if(!is.function(eval(locate_prefixed_function(term$term.name, 'InitErgmTerm')))){
         stop('unable to locate an InitErgmTerm function defined for term ',term$term.name,' in documentation')
       }
     }

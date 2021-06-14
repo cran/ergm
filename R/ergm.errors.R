@@ -1,12 +1,12 @@
-#  File R/ergm.errors.R in package ergm, part of the Statnet suite
-#  of packages for network analysis, https://statnet.org .
+#  File R/ergm.errors.R in package ergm, part of the
+#  Statnet suite of packages for network analysis, https://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) at
-#  https://statnet.org/attribution
+#  https://statnet.org/attribution .
 #
-#  Copyright 2003-2020 Statnet Commons
-#######################################################################
+#  Copyright 2003-2021 Statnet Commons
+################################################################################
 #' Sensible error and warning messages by `ergm` initializers
 #'
 #' These functions use traceback and pattern matching to find which
@@ -47,9 +47,22 @@ ergm_Init_inform <- function(..., default.loc=NULL){
   inform(paste0('In ', NVL(loc, default.loc, "unknown function"), ': ', ...))
 }
 
+#' @describeIn ergm-errors A helper function that evaluates the
+#'   specified expression in the caller's environment, passing any
+#'   errors to [ergm_Init_abort()].
+#' @param expr Expression to be evaluated (in the caller's
+#'   environment).
+#' @seealso [try()], [tryCatch()]
+#' @export
+ergm_Init_try <- function(expr){
+  expr <- substitute(expr)
+  tryCatch(eval(expr, parent.frame(1)),
+           error = function(e) ergm_Init_abort(e$message))
+}
+
 format.traceback <- function(x){
-  if(nrow(x)==0) return(NULL)
-  x <- x[nrow(x):1,]
+  if(EVL(nrow(x)==0,TRUE)) return(NULL)
+  x <- as.data.frame(x)[nrow(x):1,,drop=FALSE]
   x <- paste0(ifelse(x$valued,"valued ", ""),
               x$type, " ",
               sQuote(x$name),

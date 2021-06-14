@@ -1,12 +1,12 @@
-#  File tests/parallel.R in package ergm, part of the Statnet suite
-#  of packages for network analysis, https://statnet.org .
+#  File tests/parallel.R in package ergm, part of the
+#  Statnet suite of packages for network analysis, https://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) at
-#  https://statnet.org/attribution
+#  https://statnet.org/attribution .
 #
-#  Copyright 2003-2020 Statnet Commons
-#######################################################################
+#  Copyright 2003-2021 Statnet Commons
+################################################################################
 library(statnet.common)
 opttest({
 library(ergm)
@@ -101,3 +101,19 @@ opttest({
   }
   
 }, "parallel_MPI", testvar="ENABLE_MPI_TESTS")
+
+if(inherits(try(get.MT_terms(), silent=TRUE),"try-error")){
+  message("Skipping OpenMP test. This package installation was built without OpenMP support.")
+}else{
+  library(ergm)
+  data(florentine)
+  set.seed(0)
+  sim.ser <- simulate(flomarriage~edges+triangle, nsim=100, control=control.simulate(MCMC.burnin=1, MCMC.interval=1), output="stats")
+  
+  prev <- set.MT_terms(2)
+  set.seed(0)
+  sim.par <- simulate(flomarriage~edges+triangle, nsim=100, control=control.simulate(MCMC.burnin=1, MCMC.interval=1), output="stats")
+  set.MT_terms(prev)
+  
+  stopifnot(all.equal(sim.ser,sim.par))
+}

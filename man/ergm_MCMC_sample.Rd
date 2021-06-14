@@ -6,67 +6,50 @@
 \title{Internal Function to Sample Networks and Network Statistics}
 \usage{
 ergm_MCMC_sample(
-  nw,
-  model,
-  proposal,
+  state,
   control,
   theta = NULL,
-  response = NULL,
-  update.nws = TRUE,
   verbose = FALSE,
   ...,
-  eta = ergm.eta(theta, model$etamap)
+  eta = ergm.eta(theta, (if (is.ergm_state(state)) as.ergm_model(state) else
+    as.ergm_model(state[[1]]))$etamap)
 )
 
 ergm_MCMC_slave(
-  Clist,
-  proposal,
+  state,
   eta,
   control,
   verbose,
   ...,
-  prev.run = NULL,
   burnin = NULL,
   samplesize = NULL,
-  interval = NULL,
-  maxedges = NULL
+  interval = NULL
 )
 }
 \arguments{
-\item{nw}{a \code{\link{network}} (or \code{\link{pending_update_network}}) object representing the sampler state.}
+\item{state}{an \code{\link{ergm_state}} representing the sampler state, containing information about the network, the model, the proposal, and (optionally) initial statistics, or a list thereof.}
 
-\item{model}{an \code{\link{ergm_model}} to be sampled from, as returned by
-\code{\link[=ergm_model]{ergm_model()}}.}
-
-\item{proposal}{a list of the parameters needed for
-Metropolis-Hastings proposals and the result of calling
-\code{\link[=ergm_proposal]{ergm_proposal()}}.}
-
-\item{control}{list of MCMC tuning parameters; see
-\code{\link[=control.ergm]{control.ergm()}}.}
+\item{control}{A list of control parameters for algorithm tuning,
+typically constructed with \code{\link[=control.ergm]{control.ergm()}}, \code{\link[=control.simulate.ergm]{control.simulate.ergm()}}, etc., which have different
+defaults. Their documentation gives the the list of recognized
+control parameters and their meaning. The more generic utility
+\code{\link[=snctrl]{snctrl()}} (StatNet ConTRoL) also provides argument completion
+for the available control functions and limited argument name
+checking.}
 
 \item{theta}{the (possibly curved) parameters of the model.}
 
-\item{response}{Name of the edge attribute whose value is to be
-modeled in the valued ERGM framework. Defaults to \code{NULL} for
-simple presence or absence, modeled via a binary ERGM.}
-
-\item{update.nws}{whether to actually update the network state or
-to return an object "promising" to update the network.}
-
-\item{verbose}{verbosity level.}
+\item{verbose}{A logical or an integer to control the amount of
+progress and diagnostic information to be printed. \code{FALSE}/\code{0}
+produces minimal output, wit higher values producing more
+detail. Note that very high values (5+) may significantly slow
+down processing.}
 
 \item{...}{additional arugments.}
 
 \item{eta}{the natural parameters of the model; by default constructed from \code{theta}.}
 
-\item{Clist}{the list of parameters returned by
-\code{\link{ergm.Cprepare}}}
-
-\item{prev.run}{a summary of the state of the sampler allowing a
-run to be resumed quickly by \code{ergm_MCMC_slave}.}
-
-\item{burnin, samplesize, interval, maxedges}{MCMC paramters that can
+\item{burnin, samplesize, interval}{MCMC paramters that can
 be used to temporarily override those in the \code{control} list.}
 }
 \value{
@@ -74,45 +57,110 @@ be used to temporarily override those in the \code{control} list.}
 containing:
 \item{stats}{an \code{\link{mcmc.list}} with sampled statistics.}
 \item{networks}{a list of final sampled networks, one for each thread.}
-\item{status}{status code, propagated from \code{ergm.mcmcslave}.}
+\item{status}{status code, propagated from \code{ergm_MCMC_slave()}.}
 \item{final.interval}{adaptively determined MCMC interval.}
 
-If \code{update.nws==FALSE}, rather than returning the updated networks,
-the function will return a \code{\link{pending_update_network}}.
+\item{sampnetworks}{If \code{control$MCMC.save_networks} is set and is
+\code{TRUE}, a list of lists of \code{ergm_state}s corresponding to the
+sampled networks.}
 
 \code{ergm_MCMC_slave} returns the MCMC sample as a list of
 the following: \item{s}{the matrix of statistics.}
-\item{newnwtails}{the vector of tails for the new network.}
-\item{newnwheads}{the vector of heads for the new network.}
-\item{newnwweights}{the vector of weights for the new network (if
-applicable)} \item{status}{success or failure code: \code{0} is
+\item{state}{an \code{\link{ergm_state}} object for the new network.}
+\item{status}{success or failure code: \code{0} is
 success, \code{1} for too many edges, and \code{2} for a
-Metropolis-Hastings proposal failing.}  \item{maxedges}{maximum
-allowed edges at the time of return.}
+Metropolis-Hastings proposal failing.}
 }
 \description{
 This is an internal function, not normally called directly by the
 user. The \code{ergm_MCMC_sample} function samples networks and
 network statistics using an MCMC algorithm via \code{MCMC_wrapper}
-and is caple of running in multiple threads using
+and is capable of running in multiple threads using
 \code{ergm_MCMC_slave}.
 
 The \code{ergm_MCMC_slave} function calls the actual C
 routine and does minimal preprocessing.
 }
-\details{
-Note that the returned stats will be relative to the original network, i.e.,
-the calling function must shift the statistics if required. The calling
-function must also attach column names to the statistics matrix if required.
-}
 \note{
 \code{ergm_MCMC_sample} and \code{ergm_MCMC_slave} replace
 \code{ergm.getMCMCsample} and \code{ergm.mcmcslave} respectively. They
 differ slightly in their argument names and in their return
-formats. For example, \code{ergm_MCMC_sample} expects \code{proposal}
-rather than \code{MHproposal} and \code{theta} or \code{eta} rather than \code{eta0};
+formats. For example, \code{ergm_MCMC_sample} expects \code{ergm_state}
+rather than network/model/proposal, and \code{theta} or \code{eta} rather than \code{eta0};
 and it does not return \code{statsmatrix} or \code{newnetwork}
 elements. Rather, if parallel processing is not in effect,
 \code{stats} is an \code{\link{mcmc.list}} with one chain and \code{networks} is a
 list with one element.
+
+Note that unless \code{stats} is a part of the \code{ergm_state}, the
+returned stats will be relative to the original network, i.e.,
+the calling function must shift the statistics if required.
+
+At this time, repeated calls to \code{ergm_MCMC_sample} will not
+produce the same sequence of networks as a single long call, even
+with the same starting seeds. This is because the network
+sampling algorithms rely on the internal state of the network
+representation in C, which may not be reconstructed exactly the
+same way when "resuming". This behaviour may change in the
+future.
+}
+\examples{
+
+# This example illustrates constructing "ingredients" for calling
+# ergm_MCMC_sample() from calls to simulate.ergm(). One can also
+# construct an ergm_state object directly from ergm_model(),
+# ergm_proposal(), etc., but the approach shown here is likely to
+# be the least error-prone and the most robust to future API
+# changes.
+#
+# The regular simulate() call hierarchy is
+#
+# simulate_formula.network(formula) ->
+#   simulate.ergm_model(ergm_model) ->
+#     simulate.ergm_state_full(ergm_state)
+#
+# They take an argument, return.args=, that will interrupt the call
+# and have it return its arguments. We can use it to obtain
+# low-level inputs robustly.
+
+data(florentine)
+control <- control.simulate(MCMC.burnin = 2, MCMC.interval = 1)
+
+
+# FYI: Obtain input for simulate.ergm_model():
+sim.mod <- simulate(flomarriage~absdiff("wealth"), constraints=~edges,
+                    coef = NULL, nsim=3, control=control,
+                    return.args="ergm_model")
+names(sim.mod)
+str(sim.mod$object,1) # ergm_model
+
+# Obtain input for simulate.ergm_state_full():
+sim.state <- simulate(flomarriage~absdiff("wealth"), constraints=~edges,
+                      coef = NULL, nsim=3, control=control,
+                      return.args="ergm_state")
+names(sim.state)
+str(sim.state$object, 1) # ergm_state
+
+# This control parameter would be set by nsim in the regular
+# simulate() call:
+control$MCMC.samplesize <- 3
+
+# Capture intermediate networks; can also be left NULL for just the
+# statistics:
+control$MCMC.save_networks <- TRUE
+
+# Simulate starting from this state:
+out <- ergm_MCMC_sample(sim.state$object, control, theta = -1, verbose=6)
+names(out)
+out$stats # Sampled statistics
+str(out$networks, 1) # Updated ergm_state (one per thread)
+# List (an element per thread) of lists of captured ergm_states,
+# one for each sampled network:
+str(out$sampnetworks, 2)
+lapply(out$sampnetworks[[1]], as.network) # Converted to networks.
+
+# One more, picking up where the previous sampler left off, but see Note:
+control$MCMC.samplesize <- 1
+str(ergm_MCMC_sample(out$networks, control, theta = -1, verbose=6), 2)
+
 }

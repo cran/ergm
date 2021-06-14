@@ -1,12 +1,12 @@
-#  File tests/testthat/test-valued-terms.R in package ergm, part of the Statnet suite
-#  of packages for network analysis, https://statnet.org .
+#  File tests/testthat/test-valued-terms.R in package ergm, part of the
+#  Statnet suite of packages for network analysis, https://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) at
-#  https://statnet.org/attribution
+#  https://statnet.org/attribution .
 #
-#  Copyright 2003-2020 Statnet Commons
-#######################################################################
+#  Copyright 2003-2021 Statnet Commons
+################################################################################
 
 # Correct values. Note that for undirected networks, this needs to be
 # divied by 2.
@@ -33,16 +33,17 @@ simulate.call <- function(y)
            + cyclicalweights("min","max","min")
            + cyclicalweights("min","sum","min")
            + cyclicalweights("geomean","sum","geomean"),
-           coef=rep(0,6),reference=~DiscUnif(0,4),response="w",control=control.simulate(MCMC.burnin=0,MCMC.interval=100),nsim=100,output="pending_update_network")
+           coef=rep(0,6),reference=~DiscUnif(0,4),response="w",control=control.simulate(MCMC.burnin=0,MCMC.interval=100),nsim=100,output="ergm_state")
 
 test_that("valued triadic effects in undirected networks", {
 
   # Undirected
   y <- network.initialize(20, dir=FALSE)
+  y %ergmlhs% "response" <- "w"
   
   # Check the s_ statistics
   
-  y <- simulate(y~sum,coef=0,reference=~DiscUnif(0,4),response="w",control=control.simulate(MCMC.burnin=1000),nsim=1)
+  y <- simulate(y~sum,coef=0,reference=~DiscUnif(0,4),control=control.simulate(MCMC.burnin=1000),nsim=1)
   
   y.summ <- summary.call(y)
   

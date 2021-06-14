@@ -15,9 +15,9 @@ gof(object, ...)
 \method{gof}{ergm}(
   object,
   ...,
-  coef = NULL,
+  coef = coefficients(object),
   GOF = NULL,
-  constraints = NULL,
+  constraints = object$constraints,
   control = control.gof.ergm(),
   verbose = FALSE
 )
@@ -28,6 +28,7 @@ gof(object, ...)
   coef = NULL,
   GOF = NULL,
   constraints = ~.,
+  basis = eval_lhs.formula(object),
   control = NULL,
   unconditional = TRUE,
   verbose = FALSE
@@ -59,8 +60,8 @@ set to a vector of 0.}
 specifying the statistics to use to diagnosis the goodness-of-fit of the
 model.  They do not need to be in the model formula specified in
 \code{formula}, and typically are not.  Currently supported terms are the
-degree distribution (\dQuote{degree} for undirected graphs, or
-\dQuote{idegree} and/or \dQuote{odegree} for directed graphs), geodesic
+degree distribution (\dQuote{degree} for undirected graphs,
+\dQuote{idegree} and/or \dQuote{odegree} for directed graphs, and \dQuote{b1degree} and \dQuote{b2degree} for bipartite undirected graphs), geodesic
 distances (\dQuote{distance}), shared partner distributions
 (\dQuote{espartners} and \dQuote{dspartners}), the triad census
 (\dQuote{triadcensus}), and the terms of the original model
@@ -78,12 +79,21 @@ for similarly-named argument in \code{\link{ergm}} for more information. For
 \code{gof.formula}, defaults to unconstrained. For \code{gof.ergm}, defaults
 to the constraints with which \code{object} was fitted.}
 
-\item{control}{A list to control parameters, constructed using
-\code{\link{control.gof.formula}} or \code{\link{control.gof.ergm}} (which
-have different defaults).}
+\item{control}{A list of control parameters for algorithm tuning,
+typically constructed with \code{\link[=control.gof.formula]{control.gof.formula()}} or \code{\link[=control.gof.ergm]{control.gof.ergm()}}, which have different
+defaults. Their documentation gives the the list of recognized
+control parameters and their meaning. The more generic utility
+\code{\link[=snctrl]{snctrl()}} (StatNet ConTRoL) also provides argument completion
+for the available control functions and limited argument name
+checking.}
 
-\item{verbose}{Provide verbose information on the progress of the
-simulation.}
+\item{verbose}{A logical or an integer to control the amount of
+progress and diagnostic information to be printed. \code{FALSE}/\code{0}
+produces minimal output, wit higher values producing more
+detail. Note that very high values (5+) may significantly slow
+down processing.}
+
+\item{basis}{a value (usually a \code{\link{network}}) to override the LHS of the formula.}
 
 \item{unconditional}{logical; if \code{TRUE}, the simulation is
 unconditional on the observed dyads.  if not \code{TRUE}, the simulation is

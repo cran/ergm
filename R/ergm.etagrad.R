@@ -1,12 +1,12 @@
-#  File R/ergm.etagrad.R in package ergm, part of the Statnet suite
-#  of packages for network analysis, https://statnet.org .
+#  File R/ergm.etagrad.R in package ergm, part of the
+#  Statnet suite of packages for network analysis, https://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) at
-#  https://statnet.org/attribution
+#  https://statnet.org/attribution .
 #
-#  Copyright 2003-2020 Statnet Commons
-#######################################################################
+#  Copyright 2003-2021 Statnet Commons
+################################################################################
 ################################################################################
 # The <ergm.etagrad> function caculates and returns the gradient of eta
 # mapped from theta using the etamap object created by <ergm.etamap>. If the
@@ -32,15 +32,6 @@
 #' @return For \code{ergm.etagrad}, a matrix of the gradient of eta
 #'   with respect to theta.
 #' @export ergm.etagrad
-ergm.etagrad <- function(theta, etamap) {
-  etagrad <- matrix(0, length(theta), etamap$etalength)
-  ec <- etamap$canonical
-# Set gradient for canonical parameters to the identity matrix
-  etagrad[ec>0, ec[ec>0]] <- diag(sum(ec>0))
-  if(length(etamap$curved)>0) {
-    for(cm in etamap$curved) {
-      etagrad[cm$from,cm$to] <- cm$gradient(theta[cm$from], length(cm$to), cm$cov)
-    }
-  }
-  etagrad
+ergm.etagrad <- function(theta, etamap){
+  .Call("ergm_etagrad_wrapper", as.numeric(theta), etamap, PACKAGE="ergm")
 }

@@ -6,6 +6,7 @@
 \alias{ergm_proposal.ergm_proposal}
 \alias{ergm_proposal.character}
 \alias{ergm_proposal.formula}
+\alias{ergm_proposal.ergm_conlist}
 \alias{ergm_proposal.ergm}
 \title{Functions to initialize the ergm_proposal object}
 \usage{
@@ -16,19 +17,29 @@ ergm_proposal(object, ...)
   arguments,
   nw,
   ...,
-  response = NULL,
-  reference = ~Bernoulli
+  reference = ergm_reference(trim_env(~Bernoulli), nw, term.options = term.options,
+    ...),
+  term.options = list()
 )
 
 \method{ergm_proposal}{formula}(
   object,
   arguments,
   nw,
+  hints = trim_env(~sparse),
+  ...,
+  term.options = list()
+)
+
+\method{ergm_proposal}{ergm_conlist}(
+  object,
+  arguments,
+  nw,
   weights = "default",
   class = "c",
-  reference = ~Bernoulli,
-  response = NULL,
-  ...
+  reference = trim_env(~Bernoulli),
+  ...,
+  term.options = list()
 )
 
 \method{ergm_proposal}{ergm}(
@@ -39,8 +50,7 @@ ergm_proposal(object, ...)
   nw = NULL,
   weights = NULL,
   class = "c",
-  reference = NULL,
-  response = NULL
+  reference = NULL
 )
 }
 \arguments{
@@ -54,21 +64,21 @@ ergm_proposal(object, ...)
 \item{nw}{The network object originally given to \code{\link{ergm}}
 via 'formula'}
 
-\item{response}{Name of the edge attribute whose value is to be
-modeled in the valued ERGM framework. Defaults to \code{NULL} for
-simple presence or absence, modeled via a binary ERGM.}
-
 \item{reference}{A one-sided formula specifying
 the reference measure (\eqn{h(y)}) to be used.
 See help for \link[=ergm-references]{ERGM reference measures} implemented in the
 \strong{\link[=ergm-package]{ergm}} package.}
 
-\item{weights}{Specifies the method used to allocate probabilities of being
-proposed to dyads; options are "TNT", "TNT10", "random", "nonobserved" and
-"default"; default="default"}
+\item{term.options}{A list of additional arguments to be passed to term initializers. See \code{\link[=term.options]{? term.options}}.}
 
-\item{class}{The class of the proposal; choices include "c", "f", and "d"
-default="c".}
+\item{weights}{Specifies the method used to allocate probabilities
+of being proposed to dyads, providing an intermediate method
+(between hints and specifying the proposal name directly) for
+specifying the proposal; options include "TNT", "StratTNT",
+"TNT10", "random", "nonobserved" and "default"; default="default"}
+
+\item{class}{The class of the proposal; choices include "c", "f",
+and "d" default="c".}
 
 \item{constraints}{A one-sided formula specifying one or more constraints on
 the support of the distribution of the networks being simulated. See the
@@ -102,7 +112,11 @@ Metropolis-Hastings proposal types.
 \item \code{character}: \code{object} argument is a character string
 giving the \R name of the proposal.
 
-\item \code{formula}: \code{object} argument is an ERGM constraint formula.
+\item \code{formula}: \code{object} argument is an ERGM constraint formula; constructs the \code{\link{ergm_conlist}} object and hands off to \code{ergm_proposal.ergm_conlist()}.
+
+\item \code{ergm_conlist}: \code{object} argument is an ERGM constraint
+list; constructs the internal \code{ergm_reference} object, looks up the
+proposal, and hands off to \code{ergm_proposal.character()}.
 
 \item \code{ergm}: \code{object} argument is an \code{\link{ergm}} fit whose proposals are extracted which is reproduced as best as possible.
 }}

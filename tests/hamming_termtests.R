@@ -1,12 +1,12 @@
-#  File tests/hamming_termtests.R in package ergm, part of the Statnet suite
-#  of packages for network analysis, https://statnet.org .
+#  File tests/hamming_termtests.R in package ergm, part of the
+#  Statnet suite of packages for network analysis, https://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) at
-#  https://statnet.org/attribution
+#  https://statnet.org/attribution .
 #
-#  Copyright 2003-2020 Statnet Commons
-#######################################################################
+#  Copyright 2003-2021 Statnet Commons
+################################################################################
 library(ergm)
 
 # Create test bipartite network (from SMG)
@@ -109,6 +109,7 @@ c(1607, 1674, 1839, 1179, 1198, 1705, 1610, 1803, 1385, 1555, 1884, 1681,
 1434, 1369, 1213, 1977, 1033, 1729, 1838, 1047, 1258, 1090, 1146, 1198, 
 1810))
 
+attr(gmat, "n") <- 2000
 g <- network(gmat, directed=F, bipartite=1006)
 
 en <- matrix(0, 1006, 994)

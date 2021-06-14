@@ -1,12 +1,12 @@
-#  File R/mcmc.diagnostics.ergm.R in package ergm, part of the Statnet suite
-#  of packages for network analysis, https://statnet.org .
+#  File R/mcmc.diagnostics.ergm.R in package ergm, part of the
+#  Statnet suite of packages for network analysis, https://statnet.org .
 #
 #  This software is distributed under the GPL-3 license.  It is free,
 #  open source, and has the attribution requirements (GPL Section 7) at
-#  https://statnet.org/attribution
+#  https://statnet.org/attribution .
 #
-#  Copyright 2003-2020 Statnet Commons
-#######################################################################
+#  Copyright 2003-2021 Statnet Commons
+################################################################################
 #=================================================================================
 # This file contains the following 10 diagnostic tools and their helper functions
 #      <mcmc.diagnostics>            <traceplot.ergm>
@@ -191,8 +191,8 @@ mcmc.diagnostics.ergm <- function(object,
   if(is.null(sm)) stop("MCMC was not run or MCMC sample was not stored.")
 
   if(!center){
-    sm <- sweep.mcmc.list(sm, object$target.stats, "+")
-    if(!is.null(sm.obs)) sm.obs <- sweep.mcmc.list(sm.obs, object$target.stats, "+")
+    sm <- sweep.mcmc.list(sm, NVL(object$target.stats,object$nw.stats), "+")
+    if(!is.null(sm.obs)) sm.obs <- sweep.mcmc.list(sm.obs, NVL(object$target.stats,object$nw.stats), "+")
   }else{
     # Then sm is already centered, *unless* there is missing data.  In
     # that case, center sm relative to sm.obs and center sm.obs to
@@ -206,7 +206,7 @@ mcmc.diagnostics.ergm <- function(object,
   }
 
   if(esteq){
-    if (!is.null(object$coef) && !is.null(object$etamap)) {
+    if (!is.null(coef(object)) && !is.null(object$etamap)) {
       sm <- ergm.estfun(sm, theta=coef(object), model=object$etamap) %>% lapply.mcmc.list(`-`)
       if(!is.null(sm.obs)) sm.obs <- ergm.estfun(sm.obs, theta=coef(object), model=object$etamap) %>% lapply.mcmc.list(`-`)
     }
@@ -221,7 +221,7 @@ mcmc.diagnostics.ergm <- function(object,
     }
 
     # only show if we are using Hotelling termination criterion
-    if (identical(object$control$MCMLE.termination, "Hotelling")) {
+    if(EVL(object$control$MCMLE.termination %in% c("Hotelling","precision","confidence"), TRUE)){
       # This can probably be improved.
       if(is.null(sm.obs)){
         cat("\nAre sample statistics significantly different from observed?\n")

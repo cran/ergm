@@ -1,11 +1,11 @@
-/*  File inst/include/ergm_wtedgetree_inline.do_not_include_directly.h in package ergm, part of the Statnet suite
- *  of packages for network analysis, https://statnet.org .
+/*  File inst/include/ergm_wtedgetree_inline.do_not_include_directly.h in package ergm, part of the
+ *  Statnet suite of packages for network analysis, https://statnet.org .
  *
  *  This software is distributed under the GPL-3 license.  It is free,
  *  open source, and has the attribution requirements (GPL Section 7) at
- *  https://statnet.org/attribution
+ *  https://statnet.org/attribution .
  *
- *  Copyright 2003-2020 Statnet Commons
+ *  Copyright 2003-2021 Statnet Commons
  */
 
 /* *** don't forget, edges are now given by tails -> heads, and as
@@ -127,36 +127,6 @@ static inline Edge WtEdgetreePredecessor (WtTreeNode *edges, Edge x) {
     x=y;
   return y; 
 }   
-
-/*****************
- long int ElapsedTime
-
- Return time since given (tail,head) was last toggled using
- ToggleEdgeWithTimestamp function
-*****************/
-
-/* *** don't forget tail->head, so this function now accepts tail before head */
-
-static inline int WtElapsedTime (Vertex tail, Vertex head, WtNetwork *nwp){
-  Edge k;
-  /* don't forget, tails < heads now in undirected networks */
-  ENSURE_TH_ORDER;
-
-  if(nwp->duration_info.lasttoggle){ /* Return 0 if no duration info. */
-    if(nwp->bipartite){
-      k = (head-nwp->bipartite-1)*(nwp->bipartite) + tail - 1;
-    }else{
-      if (nwp->directed_flag) 
-	k = (head-1)*(nwp->nnodes-1) + tail - ((tail>head) ? 1:0) - 1; 
-      else
-	k = (head-1)*(head-2)/2 + tail - 1;    
-    }
-    return nwp->duration_info.time - nwp->duration_info.lasttoggle[k];
-  }
-  else return 0; 
-  /* Should maybe return an error code of some sort, since 0 elapsed time
-     is valid output. Need to think about it. */
-}
 
 /*****************
  int WtGetEdge
