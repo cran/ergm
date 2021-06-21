@@ -64,6 +64,44 @@
 
 %% }
 
+\section{Changes in version 4.0.1}{
+
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item{
+        Fixes to extended state API propagation in \code{\link{Passthrough}} term.
+      }
+      \item{
+        Fixes to the handling, particularly of curved terms and offsets, in the \code{\link{Sum}()} and \code{\link{Offset}()} operators.
+      }
+      \item{
+        Minor fixes and improvements to some terms' C implementations.
+      }
+    }
+  }
+
+
+  \subsection{OTHER USER-VISIBLE CHANGES}{
+    \itemize{
+      \item{
+        Per request of the \pkg{sna} maintainer, \code{\link[=ergm_symmetrize]{symmetrize}()} generic and methods have been renamed to \code{\link{ergm_symmetrize}}.
+      }
+      \item{
+        Metadata set by \code{\link{\%ergmlhs\%}} is now pretty-printed.
+      }
+    }
+  }
+
+  \subsection{C-LEVEL FACILITIES}{
+    \itemize{
+      \item{
+        In the C API, the \code{ToggleKnownEdge()}, function now ensures that tail < head for undirected networks.
+      }
+    }
+  }
+}
+
+
 \section{Changes in version 4.0.0}{
 
   \subsection{NEW FEATURES}{
@@ -1866,7 +1904,7 @@ fixes issue reported by Sebastian Daza}
       \eqn{\theta} and simulated statistics.
 
       \item \code{\link{ergm}} extreme statistics detection (if
-      \code{\code{\link{control.ergm}}(drop=TRUE)}) can now detect both extremely high
+      \code{\link{control.ergm}(drop=TRUE)}) can now detect both extremely high
       and extremely low values, setting the coefficients to +Inf and
       -Inf respectively. Direction of \dQuote{dropping} is returned.
 
