@@ -12,7 +12,7 @@
 
 <meta name="author" content="The Statnet Team" />
 
-<meta name="date" content="2021-07-26" />
+<meta name="date" content="2022-05-10" />
 
 <title>Nodal Attribute Specification in ERGM Terms</title>
 
@@ -54,6 +54,7 @@ document.addEventListener('DOMContentLoaded', function() {
   div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
   ul.task-list{list-style: none;}
     </style>
+
 
 
 <style type="text/css">
@@ -348,7 +349,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 <h1 class="title toc-ignore">Nodal Attribute Specification in ERGM Terms</h1>
 <h4 class="author">The Statnet Team</h4>
-<h4 class="date">2021-07-26</h4>
+<h4 class="date">2022-05-10</h4>
 
 
 
@@ -420,7 +421,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true"></a>randomcov &lt;-<span class="st"> </span><span class="kw">structure</span>(<span class="kw">I</span>(<span class="kw">rbinom</span>(<span class="kw">network.size</span>(faux.mesa.high),<span class="dv">1</span>,<span class="fl">0.5</span>)), <span class="dt">name=</span><span class="st">&quot;random&quot;</span>)</span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true"></a><span class="kw">summary</span>(faux.mesa.high<span class="op">~</span><span class="kw">nodefactor</span>(<span class="kw">I</span>(randomcov)))</span></code></pre></div>
 <pre><code>## nodefactor.random.1 
-##                 177</code></pre>
+##                 204</code></pre>
 </div>
 <div id="level-selection" class="section level2">
 <h2>Level selection</h2>

@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2021 Statnet Commons
+#  Copyright 2003-2022 Statnet Commons
 ################################################################################
 
 #' Conduct Goodness-of-Fit Diagnostics on a Exponential Family Random Graph
@@ -257,7 +257,7 @@ gof.formula <- function(object, ...,
   }
 
   if(is.bipartite(nw)){
-    nb1 <- nw %v% "bipratite"
+    nb1 <- nw %n% "bipartite"
     nb2 <- n-nb1
   }else{
     nb1 <- nb2 <- n
@@ -291,7 +291,7 @@ gof.formula <- function(object, ...,
     obsname <- paste("obs", gv, sep=".")
 
     obs <- if(!network.naedgecount(nw) | !unconditional) calc(nw)
-           else SimCond[[obs]]
+           else colMeans(SimCond[[simname]])
     assign(obsname, obs, parent.frame())
 
     sim <- array(0,

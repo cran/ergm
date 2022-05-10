@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2021 Statnet Commons
+#  Copyright 2003-2022 Statnet Commons
 ################################################################################
 ##################################################################################
 # The <ergm.estimate> function searches for and returns a maximizer of the
@@ -64,7 +64,7 @@ ergm.estimate<-function(init, model, statsmatrices, statsmatrices.obs=NULL,
                         dampening=FALSE,
                         dampening.min.ess=100,
                         dampening.level=0.1,
-                        steplen=1, steplen.point.exp=1,
+                        steplen=1,
                         cov.type="normal",# cov.type="robust", 
                         estimateonly=FALSE, ...) {
   estimateonly <- estimateonly & !calc.mcmc.se
@@ -84,7 +84,7 @@ ergm.estimate<-function(init, model, statsmatrices, statsmatrices.obs=NULL,
 
   statsmean <- colMeans.mcmc.list(statsmatrices.orig)
   if(!is.null(statsmatrices.orig.obs)){
-    statsmatrices.obs <- lapply.mcmc.list(statsmatrices.orig.obs, .shift_scale_points, statsmean, steplen, steplen^steplen.point.exp) # I.e., shrink each point of statsmatrix.obs towards the centroid of statsmatrix.
+    statsmatrices.obs <- lapply.mcmc.list(statsmatrices.orig.obs, .shift_scale_points, statsmean, steplen) # I.e., shrink each point of statsmatrix.obs towards the centroid of statsmatrix.
   }else{
     statsmatrices <- lapply.mcmc.list(statsmatrices.orig,sweep,2,(1-steplen)*statsmean,"-")
   }
@@ -219,7 +219,7 @@ ergm.estimate<-function(init, model, statsmatrices, statsmatrices.obs=NULL,
       Lout <- list(hessian = -V)
     }
     Lout$par <- try(eta0 
-                    - solve(Lout$hessian, xobs),
+                    + ssolve(-Lout$hessian, xobs),
                     silent=TRUE)
     # If there's an error, first try a robust matrix inverse.  This can often
     # happen if the matrix of simulated statistics does not ever change for one
@@ -227,7 +227,7 @@ ergm.estimate<-function(init, model, statsmatrices, statsmatrices.obs=NULL,
     #' @importFrom MASS ginv
     if(inherits(Lout$par,"try-error")){
       Lout$par <- try(eta0 
-                      - ginv(Lout$hessian) %*% 
+                      + sginv(-Lout$hessian) %*%
                       xobs,
                       silent=TRUE)
     }
@@ -240,7 +240,7 @@ ergm.estimate<-function(init, model, statsmatrices, statsmatrices.obs=NULL,
       }else{
         Lout <- list(hessian = -(as.matrix(nearPD(V)$mat)))
       }
-      Lout$par <- eta0 - solve(Lout$hessian, xobs)
+      Lout$par <- eta0 + ssolve(-Lout$hessian, xobs)
     }
     Lout$convergence <- 0 # maybe add some error-checking here to get other codes
     Lout$value <- 0.5*crossprod(xobs,
@@ -344,7 +344,7 @@ ergm.estimate<-function(init, model, statsmatrices, statsmatrices.obs=NULL,
     }
     
     covar <- matrix(NA, ncol=length(theta), nrow=length(theta))
-    covar[!model$etamap$offsettheta,!model$etamap$offsettheta ] <- ginv(-Lout$hessian)
+    covar[!model$etamap$offsettheta,!model$etamap$offsettheta ] <- sginv(-Lout$hessian)
     dimnames(covar) <- list(names(theta),names(theta))
     He <- matrix(NA, ncol=length(theta), nrow=length(theta))
     He[!model$etamap$offsettheta,!model$etamap$offsettheta ] <- Lout$hessian

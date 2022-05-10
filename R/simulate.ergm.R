@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2021 Statnet Commons
+#  Copyright 2003-2022 Statnet Commons
 ################################################################################
 #========================================================================
 # This file contains the following 2 functions for simulating ergms
@@ -41,7 +41,7 @@
 #' \code{\link{ergm}} object.  The \code{\link{formula}} should be of the form
 #' \code{y ~ <model terms>}, where \code{y} is a network object or a matrix
 #' that can be coerced to a \code{\link[network]{network}} object.  For the
-#' details on the possible \code{<model terms>}, see \code{\link{ergm-terms}}.
+#' details on the possible \code{<model terms>}, see \code{\link{ergmTerm}}.
 #' To create a \code{\link[network]{network}} object in , use the
 #' \code{network()} function, then add nodal attributes to it using the
 #' \code{\%v\%} operator if necessary.
@@ -61,7 +61,7 @@
 #'   constraints on the support of the distribution of the networks
 #'   being simulated. See the documentation for a similar argument for
 #'   \code{\link{ergm}} and see [list of implemented
-#'   constraints][ergm-constraints] for more information. For
+#'   constraints][ergmConstraint] for more information. For
 #'   \code{simulate.formula}, defaults to no constraints. For
 #'   \code{simulate.ergm}, defaults to using the same constraints as
 #'   those with which \code{object} was fitted.
@@ -70,7 +70,7 @@
 #'   constraints.
 #' 
 #' @param monitor A one-sided formula specifying one or more terms
-#'   whose value is to be monitored. These terms are appeneded to the
+#'   whose value is to be monitored. These terms are appended to the
 #'   model, along with a coefficient of 0, so their statistics are
 #'   returned. An [`ergm_model`] objectcan be passed as well.
 #'
@@ -276,9 +276,9 @@ simulate_formula <- function(object, ..., basis=eval_lhs.formula(object)) {
                              simplify=TRUE,
                              sequential=TRUE,
                                control=control.simulate.formula(),
-                             verbose=FALSE, ..., basis=ergm.getnetwork(object), do.sim=TRUE,
+                             verbose=FALSE, ..., basis=ergm.getnetwork(object), do.sim=NULL,
                              return.args = NULL){
-  if(!missing(do.sim)){
+  if(!missing(do.sim) && !is.null(do.sim)){
     .Deprecate_once(msg=paste0("Use of ",sQuote("do.sim=")," argument has been deprecated. Use ",sQuote("return.args=")," instead."))
     if(!do.sim) return.args <- "ergm_model"
   }
@@ -366,9 +366,9 @@ simulate.ergm_model <- function(object, nsim=1, seed=NULL,
                                 simplify=TRUE,
                                 sequential=TRUE,
                                 control=control.simulate.formula(),
-                                verbose=FALSE, ..., do.sim=TRUE,
+                                verbose=FALSE, ..., do.sim=NULL,
                                 return.args = NULL){
-  if(!missing(do.sim)){
+  if(!missing(do.sim) && !is.null(do.sim)){
     .Deprecate_once(msg=paste0("Use of ",sQuote("do.sim=")," argument has been deprecated. Use ",sQuote("return.args=")," instead."))
     if(!do.sim) return.args <- "ergm_state"
   }

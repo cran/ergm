@@ -1,30 +1,27 @@
 ## ---- include=FALSE-----------------------------------------------------------
 library(ergm)
-termBlock<-ergm:::.extractTermBlock()
-items<-ergm:::.extractTags(termBlock,"\\item")
-terms<-lapply(items,ergm:::.extractTerms)
-terms<-unlist(terms,recursive=FALSE)
 
 ## -----------------------------------------------------------------------------
-search.ergmTerms(keyword='triangle')
+search.ergmTerms(search='triangle')
 
 ## -----------------------------------------------------------------------------
-search.ergmTerms(categories=c('bipartite','dyad-independent'))
+search.ergmTerms(keywords=c('bipartite','dyad-independent'))
 
 ## ----results='asis',echo=FALSE------------------------------------------------
-ergm:::.termMatrix(terms,categories=c('binary', 'valued', 'directed', 'undirected', 'bipartite', 'dyad-independent','operator','layer-aware'),only.include='frequently-used')
+ergm:::.formatMatrixHtml(ergm:::.termMatrix('ergmTerm', keywords=~"frequently-used"%in%., display.keywords = subset(ergm::ergm_keyword(), popular)$name), wrapRdTags=FALSE)
 
 ## ----results='asis',echo=FALSE------------------------------------------------
-ergm:::.termMatrix(terms,categories=c('binary', 'valued', 'directed', 'undirected', 'bipartite', 'dyad-independent','operator','layer-aware'),only.include='operator')
+ergm:::.formatMatrixHtml(ergm:::.termMatrix('ergmTerm', keywords=~"operator"%in%., display.keywords = subset(ergm::ergm_keyword(), popular & name!="operator")$name), wrapRdTags=FALSE)
 
 ## ----results='asis',echo=FALSE------------------------------------------------
-ergm:::.termMatrix(terms)
+ergm:::.formatMatrixHtml(ergm:::.termMatrix('ergmTerm'), wrapRdTags=FALSE)
 
 ## ----results='asis',echo=FALSE------------------------------------------------
+terms<-ergm:::ergmTermCache('ergmTerm')
 ergm:::.termTable(terms)
 
 ## ----results='asis',echo=FALSE------------------------------------------------
-ergm:::.termToc(terms)
+cat(ergm:::.formatTocHtml(ergm:::.termToc('ergmTerm'), wrapRdTags=FALSE))
 
 ## -----------------------------------------------------------------------------
 sessionInfo()

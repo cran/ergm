@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2021 Statnet Commons
+#  Copyright 2003-2022 Statnet Commons
 ################################################################################
 
 #' Use Simulated Annealing to attempt to match a network to a vector of mean
@@ -59,7 +59,7 @@
 #'   [`formula`] should be of the form \code{y ~ <model terms>}, where
 #'   \code{y} is a network object or a matrix that can be coerced to a
 #'   [`network`] object.  For the details on the possible \code{<model
-#'   terms>}, see \code{\link{ergm-terms}}.  To create a
+#'   terms>}, see \code{\link{ergmTerm}}.  To create a
 #'   \code{\link[network]{network}} object in , use the
 #'   \code{network()} function, then add nodal attributes to it using
 #'   the \code{\%v\%} operator if necessary.
@@ -88,7 +88,7 @@ san.default <- function(object,...)
 #' @param constraints A one-sided formula specifying one or more constraints on
 #' the support of the distribution of the networks being simulated. See the
 #' documentation for a similar argument for \code{\link{ergm}} and see
-#' [list of implemented constraints][ergm-constraints] for more information. For
+#' [list of implemented constraints][ergmConstraint] for more information. For
 #' \code{simulate.formula}, defaults to no constraints. For
 #' \code{simulate.ergm}, defaults to using the same constraints as those with
 #' which \code{object} was fitted.
@@ -337,8 +337,8 @@ san.ergm_model <- function(object, reference=~Bernoulli, constraints=~., target.
     stats <- sm[nrow(sm),]
     # Use *proposal* distribution of statistics for weights.
     invcov <-
-      if(control$SAN.invcov.diag) ginv(diag(diag(cov(sm.prop)), ncol(sm.prop)), tol=.Machine$double.eps)
-      else ginv(cov(sm.prop), tol=.Machine$double.eps)
+      if(control$SAN.invcov.diag) sginv(diag(diag(cov(sm.prop)), ncol(sm.prop)), tol=.Machine$double.eps)
+      else sginv(cov(sm.prop), tol=.Machine$double.eps)
 
     # Ensure no statistic has weight 0:
     diag(invcov)[abs(diag(invcov))<.Machine$double.eps] <- min(diag(invcov)[abs(diag(invcov))>=.Machine$double.eps],1)

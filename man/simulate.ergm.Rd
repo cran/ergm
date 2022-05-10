@@ -36,7 +36,7 @@ simulate_formula(object, ..., basis = eval_lhs.formula(object))
   verbose = FALSE,
   ...,
   basis = ergm.getnetwork(object),
-  do.sim = TRUE,
+  do.sim = NULL,
   return.args = NULL
 )
 
@@ -59,7 +59,7 @@ simulate_formula(object, ..., basis = eval_lhs.formula(object))
   verbose = FALSE,
   ...,
   basis = ergm.getnetwork(object),
-  do.sim = TRUE,
+  do.sim = NULL,
   return.args = NULL
 )
 
@@ -80,7 +80,7 @@ simulate_formula(object, ..., basis = eval_lhs.formula(object))
   control = control.simulate.formula(),
   verbose = FALSE,
   ...,
-  do.sim = TRUE,
+  do.sim = NULL,
   return.args = NULL
 )
 
@@ -125,7 +125,7 @@ simulate_formula(object, ..., basis = eval_lhs.formula(object))
 \code{\link{ergm}} object.  The \code{\link{formula}} should be of the form
 \code{y ~ <model terms>}, where \code{y} is a network object or a matrix
 that can be coerced to a \code{\link[network]{network}} object.  For the
-details on the possible \code{<model terms>}, see \code{\link{ergm-terms}}.
+details on the possible \code{<model terms>}, see \code{\link{ergmTerm}}.
 To create a \code{\link[network]{network}} object in , use the
 \code{network()} function, then add nodal attributes to it using the
 \code{\%v\%} operator if necessary.}
@@ -164,7 +164,7 @@ See help for \link[=ergm-references]{ERGM reference measures} implemented in the
 \item{constraints}{A one-sided formula specifying one or more
 constraints on the support of the distribution of the networks
 being simulated. See the documentation for a similar argument for
-\code{\link{ergm}} and see \link[=ergm-constraints]{list of implemented constraints} for more information. For
+\code{\link{ergm}} and see \link[=ergmConstraint]{list of implemented constraints} for more information. For
 \code{simulate.formula}, defaults to no constraints. For
 \code{simulate.ergm}, defaults to using the same constraints as
 those with which \code{object} was fitted.}
@@ -173,7 +173,7 @@ those with which \code{object} was fitted.}
 constraints.}
 
 \item{monitor}{A one-sided formula specifying one or more terms
-whose value is to be monitored. These terms are appeneded to the
+whose value is to be monitored. These terms are appended to the
 model, along with a coefficient of 0, so their statistics are
 returned. An \code{\link{ergm_model}} objectcan be passed as well.}
 

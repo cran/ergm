@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2021 Statnet Commons
+#  Copyright 2003-2022 Statnet Commons
 ################################################################################
 .onAttach <- function(libname, pkgname){
   #' @importFrom statnet.common statnetStartupMessage
@@ -27,6 +27,7 @@
   eval(COLLATE_ALL_MY_CONTROLS_EXPR)
 
   .RegisterProposals()
+  .RegisterKeywords()
 }
 
 # TODO: Figure out some automatic way to keep this in sync with statnet.common.
@@ -70,8 +71,8 @@ eval(UPDATE_MY_SCTRL_EXPR)
   ergm_proposal_table("c", "Bernoulli", "|bd&edges",  0, "random", "ConstantEdges")
   ergm_proposal_table("c", "Bernoulli", "&edges&hamming",  0, "random", "HammingConstantEdges")
   ergm_proposal_table("c", "Bernoulli", "&hamming&sparse",  0, "random", "HammingTNT")
-  ergm_proposal_table("c", "Bernoulli", "dyadnoise",  1, "TNT", "dyadnoiseTNT")
-  ergm_proposal_table("c", "Bernoulli", "dyadnoise",  0, "random", "dyadnoise")
+  ergm_proposal_table("c", "Bernoulli", "&dyadnoise&sparse",  1, "TNT", "dyadnoiseTNT")
+  ergm_proposal_table("c", "Bernoulli", "&dyadnoise",  0, "random", "dyadnoise")
 
   ergm_proposal_table("c", "StdNormal", "",  0, "random", "StdNormal")
   ergm_proposal_table("c", "StdNormal", "|.dyads",  0, "random", "DistRLE")
@@ -85,6 +86,28 @@ eval(UPDATE_MY_SCTRL_EXPR)
 
   ergm_proposal_table("c", "DiscUnif", "",  -1, "random2", "DiscUnif2")
   ergm_proposal_table("c", c("Unif","DiscUnif","StdNormal","Poisson","Binomial"), "|.dyads",  -3, "random", "DistRLE")
+}
+
+
+.RegisterKeywords <- function() {
+  ergm_keyword(name="binary", short="bin", description="suitable for binary ERGMs", popular=TRUE, package="ergm")
+  ergm_keyword(name="bipartite", short="bip", description="suitable for bipartite networks", popular=TRUE, package="ergm")
+  ergm_keyword(name="categorical nodal attribute", short="cat nodal attr", description="involves a categorical nodal attribute", popular=FALSE, package="ergm")
+  ergm_keyword(name="continuous", short="cont", description="a continuous distribution for edge values", popular=FALSE, package="ergm")
+  ergm_keyword(name="curved", short="curved", description="is a curved term", popular=FALSE, package="ergm")
+  ergm_keyword(name="directed", short="dir", description="suitable for directed networks", popular=TRUE, package="ergm")
+  ergm_keyword(name="discrete", short="discrete", description="a discrete distribution for edge values", popular=FALSE, package="ergm")
+  ergm_keyword(name="dyad-independent", short="dyad-indep", description="does not induce dyadic dependence", popular=TRUE, package="ergm")
+  ergm_keyword(name="finite", short="fin", description="finite edge values only", popular=FALSE, package="ergm")
+  ergm_keyword(name="frequently-used", short="freq", description="is frequently used", popular=FALSE, package="ergm")
+  ergm_keyword(name="nonnegative", short="nneg", description="only meaningful for nonnegative edge values", popular=FALSE, package="ergm")
+  ergm_keyword(name="operator", short="op", description="a term operator", popular=TRUE, package="ergm")
+  ergm_keyword(name="positive", short="pos", description="only meaningful for positive edge values", popular=FALSE, package="ergm")
+  ergm_keyword(name="quantitative nodal attribute", short="quant nodal attr", description="involves a quantitative nodal attribute", popular=FALSE, package="ergm")
+  ergm_keyword(name="soft", short="soft", description="a constraint that does not necessarily forbid specific networks outright but reweights their probabilities", popular=FALSE, package="ergm")
+  ergm_keyword(name="triad-related", short="triad rel", description="involves triangles, two-paths, and other triadic structures", popular=FALSE, package="ergm")
+  ergm_keyword(name="valued", short="val", description="suitable for valued ERGMs", popular=TRUE, package="ergm")
+  ergm_keyword(name="undirected", short="undir", description="suitable for undirected networks", popular=TRUE, package="ergm")
 }
 
 .onUnload <- function(libpath){

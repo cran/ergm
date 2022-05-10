@@ -5,9 +5,8 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2021 Statnet Commons
+#  Copyright 2003-2022 Statnet Commons
 ################################################################################
-local_edition(3)
 
 edges_mle <- function(y) {
   e <- network.edgecount(y)
@@ -50,6 +49,13 @@ test_that("log-likelihood ratio for an edges model between two random values", {
   )
 })
 
+test_that("log-likelihood for an edges model MLE with missing data", {
+  expect_equal(
+    ergm.bridge.dindstart.llk(nw~edges, coef=edges_mle(nw)),
+    edges_mle_llk(nw),
+    ignore_attr = TRUE, tolerance = 0.01
+  )
+})
 
 nw[cbind(2:n, 1:(n-1))] <- NA
 
@@ -65,6 +71,14 @@ test_that("log-likelihood ratio for an edges model between two random values wit
   expect_equal(
     ergm.bridge.llr(nw ~ edges, from = (from <- rnorm(1)), to = (to <- rnorm(1)))$llr,
     edges_llk(to, nw) - edges_llk(from, nw),
+    ignore_attr = TRUE, tolerance = 0.01
+  )
+})
+
+test_that("log-likelihood for an edges model MLE with missing data", {
+  expect_equal(
+    ergm.bridge.dindstart.llk(nw~edges, coef=edges_mle(nw)),
+    edges_mle_llk(nw),
     ignore_attr = TRUE, tolerance = 0.01
   )
 })
