@@ -714,7 +714,7 @@ InitErgmTerm.b1degrange<-function(nw, arglist, ..., version=packageVersion("ergm
     if (any(du[1,]==0)) {
       emptynwstats <- rep(0, ncol(du))
       tmp <- du[3,du[1,]==0]
-      for(i in 1:length(tmp)) tmp[i] <- sum(nodecov==tmp[i])
+      for(i in seq_along(tmp)) tmp[i] <- sum(nodecov==tmp[i])
         emptynwstats[du[1,]==0] <- tmp
     }
   } else {
@@ -874,8 +874,7 @@ InitErgmTerm.b1degree <- function(nw, arglist, ..., version=packageVersion("ergm
     emptynwstats <- rep(0, ncol(du))
     if (any(du[1,]==0)) { # Alter emptynwstats
       tmp <- du[2,du[1,]==0]
-      for(i in 1:length(tmp)) 
-        tmp[i] <- sum(nodecov==tmp[i])
+      for(i in seq_along(tmp)) tmp[i] <- sum(nodecov==tmp[i])
       emptynwstats[du[1,]==0] <- tmp
     }
     name <- "b1degree_by_attr"
@@ -1515,7 +1514,7 @@ InitErgmTerm.b2degrange<-function(nw, arglist, ..., version=packageVersion("ergm
     if (any(du[1,]==0)) {
       emptynwstats <- rep(0, ncol(du))
       tmp <- du[3,du[1,]==0]
-      for(i in 1:length(tmp)) tmp[i] <- sum(nodecov==tmp[i])
+      for(i in seq_along(tmp)) tmp[i] <- sum(nodecov==tmp[i])
         emptynwstats[du[1,]==0] <- tmp
     }
   } else {
@@ -1621,8 +1620,7 @@ InitErgmTerm.b2degree <- function(nw, arglist, ..., version=packageVersion("ergm
     emptynwstats <- rep(0, ncol(du))
     if (any(du[1,]==0)) { # Alter emptynwstats
       tmp <- du[2,du[1,]==0]
-      for(i in 1:length(tmp)) 
-        tmp[i] <- sum(nodecov==tmp[i])
+      for(i in seq_along(tmp)) tmp[i] <- sum(nodecov==tmp[i])
       emptynwstats[du[1,]==0] <- tmp
     }
     name <- "b2degree_by_attr"
@@ -2424,7 +2422,7 @@ InitErgmTerm.degrange<-function(nw, arglist, ..., version=packageVersion("ergm")
     if (any(du[1,]==0)) {
       emptynwstats <- rep(0, ncol(du))
       tmp <- du[3,du[1,]==0]
-      for(i in 1:length(tmp)) tmp[i] <- sum(nodecov==tmp[i])
+      for(i in seq_along(tmp)) tmp[i] <- sum(nodecov==tmp[i])
         emptynwstats[du[1,]==0] <- tmp
     }
   } else {
@@ -2523,7 +2521,7 @@ InitErgmTerm.degree<-function(nw, arglist, ..., version=packageVersion("ergm")) 
     if (any(du[1,]==0)) {
       emptynwstats <- rep(0, ncol(du))
       tmp <- du[2,du[1,]==0]
-      for(i in 1:length(tmp)) tmp[i] <- sum(nodecov==tmp[i])
+      for(i in seq_along(tmp)) tmp[i] <- sum(nodecov==tmp[i])
         emptynwstats[du[1,]==0] <- tmp
     }
   } else {
@@ -2806,7 +2804,7 @@ InitErgmTerm.dsp<-function(nw, arglist, cache.sp=TRUE, ...) {
 #' @concept dyad-independent
 #' @concept directed
 #' @concept undirected
-#' @concept categorical nodal attribute
+#' @concept quantitative dyadic attribute
 InitErgmTerm.dyadcov<-function (nw, arglist, ...) {
   a <- check.ErgmTerm(nw, arglist,
                       varnames = c("x","attrname"),
@@ -2868,6 +2866,7 @@ InitErgmTerm.dyadcov<-function (nw, arglist, ...) {
 #' @concept directed
 #' @concept undirected
 #' @concept frequently-used
+#' @concept quantitative dyadic attribute
 InitErgmTerm.edgecov <- function(nw, arglist, ...) {
   ### Check the network and arguments to make sure they are appropriate.
   a <- check.ErgmTerm(nw, arglist, 
@@ -3934,7 +3933,7 @@ InitErgmTerm.idegrange<-function(nw, arglist, ..., version=packageVersion("ergm"
     if (any(du[1,]==0)) {
       emptynwstats <- rep(0, ncol(du))
       tmp <- du[3,du[1,]==0]
-      for(i in 1:length(tmp)) tmp[i] <- sum(nodecov==tmp[i])
+      for(i in seq_along(tmp)) tmp[i] <- sum(nodecov==tmp[i])
         emptynwstats[du[1,]==0] <- tmp
     }
   } else {
@@ -4031,7 +4030,7 @@ InitErgmTerm.idegree<-function(nw, arglist, ..., version=packageVersion("ergm"))
     if (any(du[1,]==0)) {
       emptynwstats <- rep(0, ncol(du))
       tmp <- du[2,du[1,]==0]
-      for(i in 1:length(tmp)) tmp[i] <- sum(nodecov==tmp[i])
+      for(i in seq_along(tmp)) tmp[i] <- sum(nodecov==tmp[i])
         emptynwstats[du[1,]==0] <- tmp
     }
   } else {
@@ -4375,6 +4374,7 @@ InitErgmTerm.kstar<-function(nw, arglist, ..., version=packageVersion("ergm")) {
 #' @concept triad-related
 #' @concept directed
 #' @concept undirected
+#' @concept categorical dyadic attribute
 InitErgmTerm.localtriangle<-function (nw, arglist, ...) {
   a <- check.ErgmTerm(nw, arglist,
                       varnames = c("x", "attrname"),
@@ -5578,7 +5578,7 @@ InitErgmTerm.odegrange<-function(nw, arglist, ..., version=packageVersion("ergm"
     if (any(du[1,]==0)) {
       emptynwstats <- rep(0, ncol(du))
       tmp <- du[3,du[1,]==0]
-      for(i in 1:length(tmp)) tmp[i] <- sum(nodecov==tmp[i])
+      for(i in seq_along(tmp)) tmp[i] <- sum(nodecov==tmp[i])
         emptynwstats[du[1,]==0] <- tmp
     }
   } else {
@@ -5675,7 +5675,7 @@ InitErgmTerm.odegree<-function(nw, arglist, ..., version=packageVersion("ergm"))
     if (any(du[1,]==0)) {
       emptynwstats <- rep(0, ncol(du))
       tmp <- du[2,du[1,]==0]
-      for(i in 1:length(tmp)) tmp[i] <- sum(nodecov==tmp[i])
+      for(i in seq_along(tmp)) tmp[i] <- sum(nodecov==tmp[i])
         emptynwstats[du[1,]==0] <- tmp
     }
   } else {

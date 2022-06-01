@@ -1,6 +1,6 @@
 Package: ergm
-Version: 4.2.1
-Date: 2022-05-10
+Version: 4.2.2
+Date: 2022-06-01
 Title: Fit, Simulate and Diagnose Exponential-Family Models for
         Networks
 Authors@R: c(
@@ -28,8 +28,7 @@ Imports: robustbase (>= 0.93.7), coda (>= 0.19.4), trust (>= 0.1.8),
 Suggests: lattice (>= 0.20.41), latticeExtra (>= 0.6.29), sna (>= 2.6),
         snow (>= 0.4.3), latentnet (>= 2.10.5), rmarkdown, Rmpi (>=
         0.6.9.1), testthat (>= 3.0.2), tergm (>= 4.0.0), ergm.count (>=
-        4.0), ergm.userterms (>= 3.10.0), networkDynamic (>= 0.10.1),
-        withr, covr, Rglpk, slam
+        4.0), networkDynamic (>= 0.10.1), withr, covr, Rglpk, slam
 SystemRequirements: OpenMPI
 BugReports: https://github.com/statnet/ergm/issues
 Description: An integrated set of tools to analyze and simulate networks based on exponential-family random graph models (ERGMs). 'ergm' is a part of the Statnet suite of packages for network analysis. See Hunter, Handcock, Butts, Goodreau, and Morris (2008) <doi:10.18637/jss.v024.i03> and Krivitsky, Hunter, Morris, and Klumb (2021) <arXiv:2106.04997>.
@@ -38,7 +37,7 @@ License_is_FOSS: yes
 License_restricts_use: no
 URL: https://statnet.org
 VignetteBuilder: knitr
-RoxygenNote: 7.1.2
+RoxygenNote: 7.2.0
 Config/testthat/parallel: true
 Config/testthat/edition: 3
 Encoding: UTF-8
@@ -85,7 +84,7 @@ Collate: 'InitErgmConstraint.R' 'InitErgmConstraint.blockdiag.R'
         'summary.statistics.network.R' 'to_ergm_Cdouble.R'
         'vcov.ergm.R' 'wtd.median.R' 'zzz.R'
 NeedsCompilation: yes
-Packaged: 2022-05-09 14:16:15 UTC; pavel
+Packaged: 2022-06-01 08:51:34 UTC; pavel
 Author: Mark S. Handcock [aut],
   David R. Hunter [aut],
   Carter T. Butts [aut],
@@ -102,4 +101,4 @@ Author: Mark S. Handcock [aut],
   Joyce Cheng [ctb]
 Maintainer: Pavel N. Krivitsky <pavel@statnet.org>
 Repository: CRAN
-Date/Publication: 2022-05-10 07:50:02 UTC
+Date/Publication: 2022-06-01 12:00:04 UTC

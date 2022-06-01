@@ -64,7 +64,41 @@
 
 %% }
 
-\section{Changes in version 4.2.0}{
+
+\section{Changes in version 4.2.2}{
+
+  \subsection{NEW FEATURES}{
+    \itemize{
+      \item{
+        More \code{\link{ergmKeyword}}s have been added for dyadic and triadic covariates, and terms have been tagged appropriately.
+      }
+    }
+  }
+
+
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item{
+        Robustification of step length calculation, documentation processing, numerical optimization, and elsewhere.
+      }
+
+      \item{
+        Minor documentation and vignettes fixes and clarifications.
+      }
+    }
+  }
+
+  \subsection{INSTALLATION}{
+    \itemize{
+      \item{
+        Package \pkg{ergm.userterms} for implementing custom ERGM terms is no longer maintained on CRAN and is instead maintained on GitHub at \url{https://github.com/statnet/ergm.userterms}. It is no longer listed as a Suggested package.
+      }
+    }
+  }
+}
+
+
+\section{Changes in version 4.2.1}{
 
   \subsection{NEW FEATURES}{
     \itemize{

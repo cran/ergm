@@ -19,7 +19,10 @@ library(ergm)
 set.seed(0)
 
 ## ---- eval=FALSE---------------------------------------------------------
-#  ?'ergm-terms'
+#  ergmTerm
+
+## ---- eval=FALSE---------------------------------------------------------
+#  ergmTerm?edges
 
 ## ------------------------------------------------------------------------
 search.ergmTerms(keyword='homophily')
@@ -169,7 +172,7 @@ plot(flomodel.03.gof)
 ## ------------------------------------------------------------------------
 mesamodel.02 <- ergm(mesa~edges)
 mesamodel.02.gof <- gof(mesamodel.02~degree + esp + distance, 
-                        control = control.gof.formula(nsim=10))
+                        control = control.gof.ergm(nsim=10))
 plot(mesamodel.02.gof)
 
 
