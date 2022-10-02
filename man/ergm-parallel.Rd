@@ -43,7 +43,7 @@ if started, or no cluster otherwise.}
 
 \item{verbose}{A logical or an integer to control the amount of
 progress and diagnostic information to be printed. \code{FALSE}/\code{0}
-produces minimal output, wit higher values producing more
+produces minimal output, with higher values producing more
 detail. Note that very high values (5+) may significantly slow
 down processing.}
 
@@ -156,7 +156,7 @@ argument. See the second example below.}
 
 \item{MPI clusters}{ To use MPI to accelerate ERGM sampling,
 pass the control parameter \code{parallel.type="MPI"}.
-\link[=ergm-package]{ergm} requires the \code{snow} and \code{Rmpi} packages to
+\link[=ergm-package]{ergm} requires the \CRANpkg{snow} and \CRANpkg{Rmpi} packages to
 communicate with an MPI cluster.
 
 Using MPI clusters requires the system to have an existing MPI

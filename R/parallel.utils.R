@@ -125,7 +125,7 @@ ergm.MCMC.packagenames <- local({
 #'
 #' \item{MPI clusters}{ To use MPI to accelerate ERGM sampling,
 #' pass the control parameter `parallel.type="MPI"`.
-#' [ergm][ergm-package] requires the `snow` and `Rmpi` packages to
+#' [ergm][ergm-package] requires the \CRANpkg{snow} and \CRANpkg{Rmpi} packages to
 #' communicate with an MPI cluster.
 #'   
 #' Using MPI clusters requires the system to have an existing MPI
@@ -421,18 +421,18 @@ nthreads.control.list <- function(clinfo=NULL, ...){
 #' @param comm a character string giving the desired function; see the
 #'   default argument above for permitted values and Details for
 #'   meanings; partial matching is supported.
-#' @param hash a character string, typically a [digest()] of the
-#'   object.
+#' @param key a character string, typically a `digest::digest()` of
+#'   the object or a random string.
 #' @param object the object to be stored.
 #'
 #'
 #' Supported tasks are, respectively, to do nothing (the default),
 #' return all entries (mainly useful for testing), clear the cache,
-#' insert into cache, retrieve an object by hash, check if a hash is
-#' present, or list hashes defined.
+#' insert into cache, retrieve an object by key, check if a key is
+#' present, or list keys defined.
 #'
 #' Deleting an entry can be accomplished by inserting a `NULL` for
-#' that hash.
+#' that key.
 #'
 #' Cache is limited to a hard-coded size (currently 4). This should
 #' accommodate an [`ergm_model`] and an [`ergm_proposal`] for
@@ -470,23 +470,28 @@ ergm_state_cache <- local({
   objects <- list()
 
   function(comm = c("pass", "all", "clear", "insert", "get", "check", "list"),
-           hash, object){
+           key, object){
     comm <- match.arg(comm)
 
     if(comm == "all") objects
     else if(comm == "clear") objects <<- list()
     else if(comm == "insert"){
-      objects[[hash]] <<- object # Add object to cache.
+      objects[[key]] <<- object # Add object to cache.
       if(length(objects) > size){
         objects <<- objects[-1] # If too many, clear the oldest.
         gc()
       }
       invisible(NULL)
     }
-    else if(comm == "get") objects[[hash]]
-    else if(comm == "check") hash %in% names(objects)
+    else if(comm == "get") objects[[key]]
+    else if(comm == "check") key %in% names(objects)
     else if(comm == "pass") invisible(NULL)
     else if(comm == "list") names(objects)
     else stop("Unknown command.")
   }
+})
+
+.GUID <- local({
+  counter <- -.Machine$integer.max
+  function() paste(c(unclass(Sys.time()), Sys.getpid(), (counter<<-counter+1)), collapse="-")
 })

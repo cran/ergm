@@ -18,7 +18,7 @@ When publishing results obtained using this package, please cite the
 original authors as described in \code{citation(package="ergm")}.
 
 All programs derived from this package must cite it. Please see the
-file \code{LICENSE} and \url{http://statnet.org/attribution}.
+file \code{LICENSE} and \url{https://statnet.org/attribution}.
 
 Recent advances in the statistical modeling of random networks have had an
 impact on the empirical study of social networks. Statistical exponential
@@ -102,7 +102,7 @@ Friend? Using Exponential Random Graph Models to Investigate Adolescent
 Social Networks.  \emph{Demography}, 45, in press.
 
 Handcock, M. S. (2003) Assessing Degeneracy in Statistical Models of Social
-Networks, Working Paper \#39, Center for Statistics and the Social Sciences,
+Networks, Working Paper #39, Center for Statistics and the Social Sciences,
 University of Washington.
 \url{https://csss.uw.edu/research/working-papers/assessing-degeneracy-statistical-models-social-networks}
 
@@ -134,8 +134,7 @@ cluster models for statistical networks.  Seattle, WA.  Version 2,
 
 Krivitsky PN (2012). Exponential-Family Random Graph Models for Valued
 Networks. \emph{Electronic Journal of Statistics}, 2012, 6, 1100-1128.
-c("\\Sexpr[results=rd,stage=build]{tools:::Rd_expr_doi(\"#1\")}",
-"10.1214/12-EJS696")\Sexpr{tools:::Rd_expr_doi("10.1214/12-EJS696")}
+\doi{10.1214/12-EJS696}
 
 Morris M, Handcock MS, Hunter DR (2008).  Specification of
 Exponential-Family Random Graph Models: Terms and Computational Aspects.

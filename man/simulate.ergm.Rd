@@ -217,7 +217,7 @@ checking.}
 
 \item{verbose}{A logical or an integer to control the amount of
 progress and diagnostic information to be printed. \code{FALSE}/\code{0}
-produces minimal output, wit higher values producing more
+produces minimal output, with higher values producing more
 detail. Note that very high values (5+) may significantly slow
 down processing.}
 
@@ -321,10 +321,16 @@ More information can be found by looking at the documentation of
 }
 \section{Functions}{
 \itemize{
-\item \code{simulate.ergm_state_full}: a low-level function to simulate from an \code{\link{ergm_state}} object.
-}}
+\item \code{simulate(ergm_state_full)}: a low-level function to simulate from an \code{\link{ergm_state}} object.
 
+}}
 \note{
+The actual \code{\link{network}} method for \code{\link[=simulate_formula]{simulate_formula()}} is
+actually called \code{.simulate_formula.network()} and is also
+exported as an object. This allows it to be overridden by
+extension packages, such as \code{tergm}, but also accessed directly
+when needed.
+
 \code{\link[=simulate.ergm_model]{simulate.ergm_model()}} is a lower-level interface, providing
 a \code{\link[=simulate]{simulate()}} method for \code{\link{ergm_model}} class. The \code{basis}
 argument is required; \code{monitor}, if passed, must be an

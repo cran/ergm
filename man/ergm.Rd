@@ -162,7 +162,7 @@ functions and limited argument name checking.}
 
 \item{verbose}{A logical or an integer to control the amount of
 progress and diagnostic information to be printed. \code{FALSE}/\code{0}
-produces minimal output, wit higher values producing more
+produces minimal output, with higher values producing more
 detail. Note that very high values (5+) may significantly slow
 down processing.}
 
@@ -276,14 +276,14 @@ on a similar scheme.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{nobs}: Return the number of informative dyads of a model fit.
+\item \code{nobs(ergm)}: Return the number of informative dyads of a model fit.
 
-\item \code{print}: 
+\item \code{print(ergm)}: 
 
-\item \code{vcov}: extracts the variance-covariance matrix of
+\item \code{vcov(ergm)}: extracts the variance-covariance matrix of
 parameter estimates.
-}}
 
+}}
 \section{Notes on model specification}{
 
 Although each of the statistics in a given model is a summary
@@ -438,7 +438,7 @@ Random Graph Models to Investigate Adolescent Social Networks.
 
 Handcock, M. S. (2003)
 \emph{Assessing Degeneracy in Statistical Models of Social Networks},
-Working Paper \#39,
+Working Paper #39,
 Center for Statistics and the Social Sciences,
 University of Washington.
 \url{https://csss.uw.edu/research/working-papers/assessing-degeneracy-statistical-models-social-networks}

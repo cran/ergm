@@ -376,7 +376,7 @@
 #' 
 #' Handcock, M. S. (2003)
 #' \emph{Assessing Degeneracy in Statistical Models of Social Networks},
-#' Working Paper \#39, 
+#' Working Paper #39,
 #' Center for Statistics and the Social Sciences,
 #' University of Washington.
 #' \url{https://csss.uw.edu/research/working-papers/assessing-degeneracy-statistical-models-social-networks}
@@ -620,6 +620,7 @@ ergm <- function(formula, response=NULL,
                 only.last=TRUE,
                 output="ergm_state",
                 verbose=verbose,
+                basis=nw,
                 offset.coef=NVL(offset.coef,control$init[model$etamap$offsettheta]))
       if(verbose) message("Finished SAN run.")
     }else{

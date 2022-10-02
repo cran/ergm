@@ -101,7 +101,7 @@ functions and limited argument name checking.}
 
 \item{verbose}{A logical or an integer to control the amount of
 progress and diagnostic information to be printed. \code{FALSE}/\code{0}
-produces minimal output, wit higher values producing more
+produces minimal output, with higher values producing more
 detail. Note that very high values (5+) may significantly slow
 down processing.}
 
@@ -165,11 +165,11 @@ contribution and the offset contribution (with the product capped at one).
 }
 \section{Methods (by class)}{
 \itemize{
-\item \code{formula}: Sufficient statistics are specified by a \code{\link{formula}}.
+\item \code{san(formula)}: Sufficient statistics are specified by a \code{\link{formula}}.
 
-\item \code{ergm_model}: A lower-level function that expects a pre-initialized \code{\link{ergm_model}}.
+\item \code{san(ergm_model)}: A lower-level function that expects a pre-initialized \code{\link{ergm_model}}.
+
 }}
-
 \examples{
 \donttest{
 # initialize x to a random undirected network with 50 nodes and a density of 0.1

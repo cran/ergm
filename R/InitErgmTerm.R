@@ -186,7 +186,12 @@ ergm_edgecov_args <- function(name, nw, a){
     xm <- as.matrix(a$x, matrix.type="adjacency", a$attrname)
   }else if(is.character(a$x)){
     xm <- get.network.attribute(nw, a$x)
-    if (is.null(xm)) ergm_Init_abort("There is no network attribute named ", sQuote(a$x), ".")
+    if(is.null(xm) || !is.matrix(xm)) ergm_Init_abort("There is no network attribute named ", sQuote(a$x), " or it is not a matrix.")
+    if(is.network(xm)){
+      if(!is.null(a$attrname) && !a$attrname %in% list.edge.attributes(xm)) ergm_Init_abort("Network at attribute named ", sQuote(a$x), " does not have an edge attribute ", sQuote(a$attrname), ".")
+      xm <- as.matrix(xm, matrix.type="adjacency", attrname=a$attrname)
+      name <- paste(name, a$x, sep=".")
+    }
   }else xm <- as.matrix(a$x)
 
   cn <- if(!is.null(a$attrname)) paste(name, a$attrname, sep = ".")
@@ -346,9 +351,9 @@ InitErgmTerm.absdiffcat <- function(nw, arglist, ..., version=packageVersion("er
 ################################################################################
 
 #' @templateVar name altkstar
-#' @title Alternating k-star
+#' @title Alternating \eqn{k}-star
 #' @description Add one network statistic to the model equal to a weighted alternating
-#'   sequence of k-star statistics with weight parameter `lambda`.
+#'   sequence of \eqn{k}-star statistics with weight parameter `lambda`.
 #' @details This is the version given in Snijders et al. (2006). The `gwdegree` and
 #'   `altkstar` produce mathematically equivalent models, as long as they are used
 #'   together with the `edges` (or `kstar(1)`) term, yet the interpretation of the
@@ -427,9 +432,9 @@ InitErgmTerm.altkstar <- function(nw, arglist, ...) {
 #'
 #' @param attr quantitative attribute (see Specifying Vertex attributes and Levels (`?nodal_attributes`) for details.) If specified, only symmetric pairs that match on the vertex attribute are counted.
 #'
-#' @param diff Used in the same way as for the `nodematch` term. (See `nodematch` (`?nodematch`) for details.)
+#' @param diff Used in the same way as for the `nodematch` term. (See `nodematch` (`ergmTerm?nodematch`) for details.)
 #' @param keep deprecated
-#' @param level Used in the same way as for the `nodematch` term. (See `nodematch` (`?nodematch`) for details.)
+#' @param level Used in the same way as for the `nodematch` term. (See `nodematch` (`ergmTerm?nodematch`) for details.)
 #'
 #' @template ergmTerm-general
 #'
@@ -1062,7 +1067,7 @@ InitErgmTerm.b1sociality<-function(nw, arglist, ...) {
 ################################################################################
 
 #' @templateVar name b1star
-#' @title k-Stars for the first mode in a bipartite network
+#' @title \eqn{k}-stars for the first mode in a bipartite network
 #' @description This term adds one network statistic to the model for
 #'   each element in `k` . The \eqn{i} th such statistic counts the number of
 #'   distinct `k[i]` -stars whose center node is in the first mode of the
@@ -1133,18 +1138,18 @@ InitErgmTerm.b1star <- function(nw, arglist, ..., version=packageVersion("ergm")
 ################################################################################
 
 #' @templateVar name b1starmix
-#' @title Mixing matrix for k-stars centered on the first mode of a bipartite network
-#' @description This term counts all k-stars in which
+#' @title Mixing matrix for \eqn{k}-stars centered on the first mode of a bipartite network
+#' @description This term counts all \eqn{k}-stars in which
 #'   the b2 nodes (called events in some contexts) are homophilous in the sense
 #'   that they all share the same value of `attr` . However, the b1 node
-#'   (in some contexts, the actor) at the center of the k-star does NOT have to
+#'   (in some contexts, the actor) at the center of the \eqn{k}-star does NOT have to
 #'   have the same value as the b2 nodes; indeed, the values taken by the b1
 #'   nodes may be completely distinct from those of the b2 nodes, which allows
 #'   for the use of this term in cases where there are two separate nodal
 #'   attributes, one for the b1 nodes and another for the b2 nodes (in this case,
 #'   however, these two attributes should be combined to form a single nodal
-#'   attribute, `attr` ). A different statistic is created for each
-#'   value of `attr` seen in a b1 node, even if no k-stars are observed
+#'   attribute, `attr`). A different statistic is created for each
+#'   value of `attr` seen in a b1 node, even if no \eqn{k}-stars are observed
 #'   with this value.
 #'
 #' @usage
@@ -1157,7 +1162,7 @@ InitErgmTerm.b1star <- function(nw, arglist, ..., version=packageVersion("ergm")
 #' @param diff whether a different statistic is created for each value seen in a b2 node. When `diff=TRUE`,
 #'    the default, a different statistic is created for each value and thus the behavior of this term is reminiscent of the
 #'   `nodemix` term, from which it takes its name; when `diff=FALSE` ,
-#'   all homophilous k-stars are counted together, though these k-stars are still
+#'   all homophilous \eqn{k}-stars are counted together, though these \eqn{k}-stars are still
 #'   categorized according to the value of the central b1 node.
 #'
 #' @template ergmTerm-general
@@ -1808,7 +1813,7 @@ InitErgmTerm.b2sociality<-function(nw, arglist, ...) {
 ################################################################################
 
 #' @templateVar name b2star
-#' @title k-Stars for the second mode in a bipartite network
+#' @title \eqn{k}-stars for the second mode in a bipartite network
 #' @description This term adds one network statistic to the model for
 #'   each element in `k` . The \eqn{i} th such statistic counts the number of
 #'   distinct `k[i]` -stars whose center node is in the second mode of the
@@ -1880,7 +1885,7 @@ InitErgmTerm.b2star <- function(nw, arglist, ..., version=packageVersion("ergm")
 ################################################################################
 
 #' @templateVar name b2starmix
-#' @title Mixing matrix for k-stars centered on the second mode of a bipartite network
+#' @title Mixing matrix for \eqn{k}-stars centered on the second mode of a bipartite network
 #' @description This term is exactly the same as `b1starmix` except that the roles of
 #'   b1 and b2 are reversed.
 #'
@@ -1893,7 +1898,7 @@ InitErgmTerm.b2star <- function(nw, arglist, ..., version=packageVersion("ergm")
 #' @param diff whether a different statistic is created for each value seen in a b1 node. When `diff=TRUE`,
 #'    the default, a different statistic is created for each value and thus the behavior of this term is reminiscent of the
 #'   `nodemix` term, from which it takes its name; when `diff=FALSE` ,
-#'   all homophilous k-stars are counted together, though these k-stars are still
+#'   all homophilous \eqn{k}-stars are counted together, though these \eqn{k}-stars are still
 #'   categorized according to the value of the central b1 node.
 #'
 #' @template ergmTerm-general
@@ -4280,7 +4285,7 @@ InitErgmTerm.istar<-function(nw, arglist, ..., version=packageVersion("ergm")) {
 ################################################################################
 
 #' @templateVar name kstar
-#' @title k-Stars
+#' @title \eqn{k}-stars
 #' @description This term adds one
 #'   network statistic to the model for each element in `k` . The \eqn{i} th
 #'   such statistic counts the number of distinct `k[i]` -stars in the
@@ -5023,14 +5028,13 @@ InitErgmTerm.nodeifactor<-function (nw, arglist, ..., version=packageVersion("er
 #' @title Uniform homophily and differential homophily
 #' @description When `diff=FALSE` , this term adds one network statistic
 #'   to the model, which counts the number of edges \eqn{(i,j)} for which
-#'   `attr(i)==attr(j)` . This is also called ''uniform homophily,'' because each group is assumed to have the same propensity for within-group ties. When multiple attribute names are given, the
+#'   `attr(i)==attr(j)` . This is also called \dQuote{uniform homophily}, because each group is assumed to have the same propensity for within-group ties. When multiple attribute names are given, the
 #'   statistic counts only ties for which all of the attributes
 #'   match. When `diff=TRUE` , \eqn{p} network statistics are added
 #'   to the model, where \eqn{p} is the number of unique values of the
 #'   `attr` attribute. The \eqn{k} th such statistic counts the
-#'   number of edges \eqn{(i,j)} for which `attr(i) ==
-#'   ` `	attr(j) == value(k)` , where `value(k)` is the \eqn{k} th
-#'   smallest unique value of the `attr` attribute. This is also called ''differential homophily,'' because each group is allowed to have a unique propensity for within-group ties. Note that a statistical test of uniform vs. differential homophily should be conducted using the ANOVA function.
+#'   number of edges \eqn{(i,j)} for which `attr(i) == attr(j) == value(k)` , where `value(k)` is the \eqn{k} th
+#'   smallest unique value of the `attr` attribute. This is also called \dQuote{differential homophily}, because each group is allowed to have a unique propensity for within-group ties. Note that a statistical test of uniform vs. differential homophily should be conducted using the ANOVA function.
 #'   
 #'   By default, matches on all levels \eqn{k} are
 #'   counted. This works for both
