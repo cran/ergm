@@ -2,9 +2,21 @@
 % Please edit documentation in R/ergm-terms-index.R
 \name{search.ergmTerms}
 \alias{search.ergmTerms}
-\title{Search the ERGM terms}
+\alias{search.ergmConstraints}
+\alias{search.ergmReferences}
+\alias{search.ergmHints}
+\alias{search.ergmProposals}
+\title{Search ERGM terms, constraints, references, hints, and proposals}
 \usage{
 search.ergmTerms(search, net, keywords, name, packages)
+
+search.ergmConstraints(search, keywords, name, packages)
+
+search.ergmReferences(search, keywords, name, packages)
+
+search.ergmHints(search, keywords, name, packages)
+
+search.ergmProposals(search, name, reference, constraints, packages)
 }
 \arguments{
 \item{search}{optional character search term to search for in the text of the
@@ -20,6 +32,8 @@ restrict the results (i.e. 'curved', 'triad-related')}
 \item{name}{optional character name of a specific term to return}
 
 \item{packages}{optional character vector indicating the subset of packages in which to search}
+
+\item{reference, constraints}{optional names of references and constraints to narrow down the proposal}
 }
 \value{
 prints out the name and short description of matching terms, and
@@ -27,9 +41,11 @@ invisibly returns them as a list.  If \code{name} is specified, prints out
 the full definition for the named term.
 }
 \description{
-Searches through the \code{\link{ergm.terms}} help page and prints out a
-list of terms appropriate for the specified network's structural
-constraints, optionally restricting by additional keywords and search term
+Searches through the database of \code{\link{ergmTerm}}s,
+\code{\link{ergmConstraint}}s, \code{\link{ergmReference}}s, \code{\link{ergmHint}}s, and
+\code{\link{ergmProposal}}s and prints out a list of terms and term-alikes
+appropriate for the specified network's structural constraints,
+optionally restricting by additional keywords and search term
 matches.
 }
 \details{
@@ -61,9 +77,51 @@ search.ergmTerms(name='b2factor')
 # request the bipartite keyword in the ergm package
 search.ergmTerms(keywords='bipartite', packages='ergm')
 }
+\donttest{
+# find all of the constraint that mention degrees
+search.ergmConstraints('degree')
+
+# search for hints only
+search.ergmConstraints(keywords='hint')
+
+# search on multiple keywords
+search.ergmConstraints(keywords=c('directed','dyad-independent'))
+
+# print out the content for a specific constraint
+search.ergmConstraints(name='b1degrees')
+
+# request the bipartite keyword in the ergm package
+search.ergmConstraints(keywords='directed', packages='ergm')
+}
+\donttest{
+# find all discrete references
+search.ergmReferences(keywords='discrete')
+}
+\donttest{
+# find all of the hints
+search.ergmHints('degree')
+}
+\donttest{
+# find all of the proposals that mention triangles
+search.ergmProposals('MH algorithm')
+
+# print out the content for a specific proposals
+search.ergmProposals(name='randomtoggle')
+
+# find all proposals with required or optional constraints
+search.ergmProposals(constraints='.dyads')
+
+# find all proposals with references
+search.ergmProposals(reference='Bernoulli')
+
+# request proposals that mention triangle in the ergm package
+search.ergmProposals('MH algorithm', packages='ergm')
+}
 }
 \seealso{
-See also \code{\link{ergm.terms}} for the complete documentation
+See also \code{\link{ergmTerm}},
+\code{\link{ergmConstraint}}, \code{\link{ergmReference}}, \code{\link{ergmHint}}, and
+\code{\link{ergmProposal}}, for lists of terms and term-alikes visible to \pkg{ergm}.
 }
 \author{
 skyebend@uw.edu

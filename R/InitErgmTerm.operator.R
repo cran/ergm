@@ -60,6 +60,14 @@ wrap.ergm_model <- function(m, nw, namewrap = identity){
   list(map=map, gradient=gradient, params=params, minpar=minpar, maxpar=maxpar, coef.names=coef.names, emptynwstats=emptynwstats, dependence=!is.dyad.independent(m), offset=offsettheta)
 }
 
+ergm_rename_terms <- function(model, namewrap){
+  for(i in seq_along(model$terms)){
+    model$terms[[i]]$coef.names <- namewrap(model$terms[[i]]$coef.names)
+    if(!is.null(model$terms[[i]]$params)) names(model$terms[[i]]$params) <- namewrap(names(model$terms[[i]]$params))
+  }
+  model
+}
+
 #' Combine an operator term's and a subterm's name in a standard fashion.
 #'
 #' @param opname Name of the operator (or an abbreviation thereof).
@@ -135,16 +143,23 @@ ergm_no_ext.encode <- function(submodel) {
 ##
 InitErgmTerm.Passthrough <- function(nw, arglist, ...){
   a <- check.ErgmTerm(nw, arglist,
-                      varnames = c("formula", "label"),
-                      vartypes = c("formula", "logical"),
-                      defaultvalues = list(NULL, FALSE),
-                      required = c(TRUE, FALSE))
+                      varnames = c("formula", "label", "submodel"),
+                      vartypes = c("formula", "logical", "logical"),
+                      defaultvalues = list(NULL, FALSE, TRUE),
+                      required = c(TRUE, FALSE, FALSE))
 
-  m <- ergm_model(a$formula, nw, ..., offset.decorate=FALSE)
-  
-  c(list(name="passthrough_term", submodel=m),
-    ergm_propagate_ext.encode(m),
-    wrap.ergm_model(m, nw, if(a$label) ergm_mk_std_op_namewrap('Passthrough') else identity))
+  if(a$submodel){
+    m <- ergm_model(a$formula, nw, ..., offset.decorate=FALSE)
+
+    c(list(name="passthrough_term", submodel=m),
+      ergm_propagate_ext.encode(m),
+      wrap.ergm_model(m, nw, if(a$label) ergm_mk_std_op_namewrap('Passthrough') else identity))
+  }else{
+    m <- ergm_model(a$formula, nw, ..., offset.decorate=FALSE, terms.only=TRUE)
+
+    namewrap <- if(a$label) ergm_mk_std_op_namewrap('Passthrough') else identity
+    ergm_rename_terms(m, namewrap)
+  }
 }
 
 #' @templateVar name Label
@@ -289,8 +304,7 @@ InitErgmTerm..submodel_and_summary <- function(nw, arglist, ...){
 
 # Roxygen converts the name to FALSE-ergmTerm if the name is not specified. This generates a warning but is probably the best we can do
 
-#' @name F-ergmTerm
-#' @templateVar name F
+#' @templateVar name 'F
 #' @title Filtering on arbitrary one-term model
 #' @description Evaluates the given `formula` on a network constructed by
 #'   taking \eqn{y} and removing any edges for which
@@ -438,7 +452,7 @@ InitErgmTerm.Offset <- function(nw, arglist, ...){
 #'
 #' @note This was originally exported as a generic to overwrite
 #'   [sna::symmetrize()]. By developer's request, it has been renamed;
-#'   eventually, `sna` or `network` packages will export the generic
+#'   eventually, \CRANpkg{sna} or `network` packages will export the generic
 #'   instead.
 #' @export
 ergm_symmetrize <- function(x, rule=c("weak","strong","upper","lower"), ...){
@@ -623,7 +637,7 @@ InitErgmTerm.Symmetrize <- function(nw, arglist, ...){
                list(dependence=!is.dyad.independent(m) || rule%in%c("weak","strong"))))
 }
 
-#' @templateVar name Sum-operator
+#' @templateVar name Sum
 #' @title A sum (or an arbitrary linear combination) of one or more formulas
 #' @description This operator sums up the RHS statistics of the input formulas elementwise.
 #'   
@@ -652,11 +666,10 @@ InitErgmTerm.Symmetrize <- function(nw, arglist, ...){
 #'     - `"mean"` Network statistics of this formula will be averaged; equivalent to `matrix(1/p,1,p)` , where `p` is the length of the network statistic vector.
 #' @param label used to specify the names of the elements of the resulting term sum vector. If `label` is a character vector of length 1,
 #'   it will be recycled with indices appended. If a function is specified, `formulas` parameter names are extracted and their list of character vectors is passed `label`.
-#"   (For convenience, if only one formula is given, just a character vector is passed. Lastly, if `label` or result of its function call is an [`AsIs`] object, it is not wrapped in `Sum~...`.
+#"   (For convenience, if only one formula is given, just a character vector is passed. Lastly, if `label` or result of its function call is an [`AsIs`] object, it is not wrapped in `Sum~...`.)
 #'
 #' @template ergmTerm-general
 #'
-#' @aliases Sum-ergmTerm
 #' @concept operator
 InitErgmTerm.Sum <- function(nw, arglist,...){
   a <- check.ErgmTerm(nw, arglist,
@@ -863,7 +876,7 @@ InitErgmTerm.S <- function(nw, arglist, ...){
 #' @usage
 #' # binary: Curve(formula, params, map, gradient=NULL, minpar=-Inf, maxpar=+Inf, cov=NULL)
 #' @template ergmTerm-formula
-#' @param params a named list whos names are the curved parameter names, may also be a character vector with names.
+#' @param params a named list whose names are the curved parameter names, may also be a character vector with names.
 #' @param map the mapping from curved to canonical. May have the following forms:
 #' - a `function(x, n, ...)` treated as in the API: called with `x` set to the curved parameter vector, `n` to the length of output expected, and `cov` , if present, passed in `...` . The function must return a numeric vector of length `n` .
 #' - a numeric vector to fix the output coefficients, like in an offset.
@@ -958,14 +971,16 @@ InitErgmTerm.Curve <- function(nw, arglist,...){
     ergm_propagate_ext.encode(m))
 }
 
-#' @rdname Curve-ergmTerm
+#' @templateVar name Curve
+#' @template ergmTerm-rdname
 #' @aliases Parametrise-ergmTerm
 #' @usage
 #' # binary: Parametrise(formula, params, map, gradient=NULL, minpar=-Inf, maxpar=+Inf,
 #' #           cov=NULL)
 InitErgmTerm.Parametrise <- InitErgmTerm.Curve
 
-#' @rdname Curve-ergmTerm
+#' @templateVar name Curve
+#' @template ergmTerm-rdname
 #' @aliases Parametrize-ergmTerm
 #' @usage
 #' # binary: Parametrize(formula, params, map, gradient=NULL, minpar=-Inf, maxpar=+Inf,
@@ -1085,4 +1100,119 @@ InitErgmTerm.Prod <- function(nw, arglist, ..., env=baseenv()){
   a$formulas <- if(length(formulas)==1) formulas[[1]] else formulas
   cl <- call("Exp", as.formula(call("~",call("Sum", a$formulas, a$label)),env=env))
   call.ErgmTerm(cl, env, nw, ...)
+}
+
+
+#' @templateVar name For
+#' @title A [`for`] operator for terms
+#' @description This operator evaluates the formula given to it,
+#'   substituting the specified loop counter variable with each
+#'   element in a sequence.
+#'
+#' @usage
+#' # binary: For(...)
+#' @param ... in any order, \itemize{
+#'
+#'   \item one *unnamed* one-sided [ergm()]-style formula with the
+#'   terms to be evaluated, containing one or more placeholders
+#'   \var{VAR} *and*
+#'
+#'   \item one or more *named* expressions of the form \code{\var{VAR}
+#'   = \var{SEQ}} specifying the placeholder and its range. See
+#'   Details below.
+#'
+#' }
+#'
+#' @details Placeholders are specified in the style of
+#'   `foreach::foreach()`, as \code{\var{VAR} = \var{SEQ}}. \var{VAR}
+#'   can be any valid \R variable name, and \var{SEQ} can be a vector,
+#'   a list, a function of one argument, or a one-sided formula.  The
+#'   vector or list will be used directly, whereas a function will be
+#'   called with the network as its argument to produce the list, and
+#'   the formula will be used analogously to [purrr::as_mapper()], its
+#'   RHS evaluated in an environment in which the network itself will
+#'   be accessible as `.` or `.nw`.
+#'
+#'   If more than one named expression is given, they will be expanded
+#'   as one would expect in a nested [`for`] loop: earlier expressions
+#'   will form the outer loops and later expressions the inner loops.
+#'
+#' @template ergmTerm-general
+#'
+#' @examples
+#' #
+#' # The following are equivalent ways to compute differential
+#' # homophily.
+#' #
+#'
+#' data(sampson)
+#' (groups <- sort(unique(samplike%v%"group"))) # Sorted list of groups.
+#'
+#' # The "normal" way:
+#' summary(samplike ~ nodematch("group", diff=TRUE))
+#'
+#' # One element at a time, specifying a list:
+#' summary(samplike ~ For(~nodematch("group", levels=., diff=TRUE),
+#'                        . = groups))
+#'
+#' # One element at a time, specifying a function that returns a list:
+#' summary(samplike ~ For(~nodematch("group", levels=., diff=TRUE),
+#'                        . = function(nw) sort(unique(nw%v%"group"))))
+#'
+#' # One element at a time, specifying a formula whose RHS expression
+#' # returns a list:
+#' summary(samplike ~ For(~nodematch("group", levels=., diff=TRUE),
+#'                        . = ~sort(unique(.%v%"group"))))
+#'
+#' #
+#' # Multiple iterators are possible, in any order. Here, absdiff() is
+#' # being computed for each combination of attribute and power.
+#' #
+#'
+#' data(florentine)
+#'
+#' # The "normal" way:
+#' summary(flomarriage ~ absdiff("wealth", pow=1) + absdiff("priorates", pow=1) +
+#'                       absdiff("wealth", pow=2) + absdiff("priorates", pow=2) +
+#'                       absdiff("wealth", pow=3) + absdiff("priorates", pow=3))
+#'
+#' # With a loop; note that the attribute (a) is being iterated within
+#' # power (.):
+#' summary(flomarriage ~ For(. = 1:3, a = c("wealth", "priorates"), ~absdiff(a, pow=.)))
+#'
+#' @concept operator
+InitErgmTerm.For <- function(nw, arglist, ...){
+  counters <- names(arglist)
+  if(length(i <- which(counters=="")) != 1) ergm_Init_abort("Exactly one argument (the model formula) must be unnamed.")
+  if(length(loops <- arglist[-i]) < 1) ergm_Init_abort("At least one counter must be provided.")
+
+  loops <- map(loops,
+               function(l){
+                 if(is(l, "formula")){
+                   vlist <- lst(`.`=nw, `.nw`=nw)
+                   e <- ult(l)
+                   ergm_Init_try({eval(e, envir=vlist, enclos=environment(l))})
+                 }else if(is.function(l)){
+                   ergm_Init_try({l(nw)})
+                 }else l
+               })
+
+  valid <- loops %>% map_lgl(is.vector)
+  if(!all(valid)) ergm_Init_abort("Loop variable(s) ", paste.and(sQuote(names(loops)[!valid])), " does not contain a valid sequence.")
+
+  terms <- list_rhs.formula(arglist[[i]])
+
+  for(i in rev(seq_along(loops))){
+    counter <- names(loops)[i]
+    loop <- loops[[i]]
+    terms <- do.call(c,
+                     map(loop, function(.x){
+                       for(j in seq_along(terms)){
+                         terms[[j]] <- do.call(substitute, list(terms[[j]], structure(list(.x), names=counter)))
+                       }
+                       terms
+                     }))
+  }
+
+  ergm_model(terms, nw, ..., terms.only=TRUE)
 }

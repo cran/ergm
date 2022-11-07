@@ -7,102 +7,6 @@
 #
 #  Copyright 2003-2022 Statnet Commons
 ################################################################################
-###############################################################################
-# The <ergm> function fits ergms from a specified formula returning either
-# MPLEs or approximate MLE's based on MCMC estimation.
-#
-#
-# --PARAMETERS--
-#   formula       :  a formula of the form 'nw ~ model term(s)'
-#   init        :  a vector of starting values for estimation or offset values, or optionally
-#                    if these are to be estimated, NULL (the default);
-#   constraints   :  a one-sided formula of the constraint terms; options are
-#                         bd        degrees        nodegrees
-#                         edges     degreedist     idegreedist
-#                         observed  odegreedist
-#                    default="~ ."
-#   target.stats     :  a vector of the mean value parameters;
-#                    default=the observed statistic from the 'nw' in formula
-#   control       :  a list of control parameters returned from <control.ergm>;
-#                    default=control.ergm()
-#   verbose       :  whether ergm should be verbose (T or F); default=FALSE
-#
-#
-# --RETURNED--
-#   because a stergm object is the return type of several functions, and
-#   because this is a rather lengthy list, and because the returned items
-#   of this function borrow from the other stergm.* functions, this list
-#   provides the returned items for all funtions returning a stergm.
-#   The symbol preceding each component indicates which function returns it,
-#   but remember that, <stergm> will additionally return the items from
-#   one of the other stergm functions as well:                               
-#   because an ergm object is the return type of several functions, and
-#   because this is a rather lengthy list, this list represents the return
-#   type for all funtions returning an ergm. The symbol preceding each
-#   component indicates which function returns it:
-#       <ergm>             = $
-#       <ergm.mainfitloop> = *
-#       <ergm.mple>        = !
-#       <ergm.stepping>    = @
-#       <ergm.stocapprox>  = %
-#       <ergm.estimate>    = ^
-#       <ergm.robmon>      = &
-#
-#   the components include:
-#
-#    $*!@%^&#~+  coef            :  the vector of estimated model coefficients
-#    $* @%^&  +  sample          :  the row-binded matrix of network statistics from
-#                                   each sample; 'sample' will also have 2 attributes:
-#                   mcpar        : the following vector taken from control:
-#                                        c(burnin+1, endrun, interval)
-#                                  where 'endrun' is defined as
-#                                     burnin+interval*(samplesize-1)
-#                   class        : "mcmc"
-#    $*!@%^&#~+  iterations      :  the number of Newton-Raphson iterations required
-#                                   before convergence
-#    $*!@%^&#~+  MCMCtheta       :  the vector of natural parameters used to produce
-#                                   the MCMC sample
-#    $* @%^&  +  loglikelihood   :  the estimated change in log-likelihood in the last
-#                                   iteration
-#    $*!@%^&#~+  gradient        :  the value of the gradient of the approximated log-
-#                                   likelihood function at the maximizing value
-#    $*!@%^&#~+  covar           :  the approximated covariance matrix for the MLE
-#    $*!@%^&#~+  samplesize      :  the size of the MCMC sample
-#    $*!@%^&#~+  failure         :  whether estimation failed (T or F)
-#    $*!@%^&#~+  mc.se           :  the standard error estimates
-#    $* @% &# +  newnetwork      :  the final network sampled; in the ergm returned from
-#                                   <ergm.robmom>, this='network'
-#    $* @% &# +  network         :  the 'nw' inputted to <ergm> via the 'formula'
-#    $* @% &  +  theta.original  :  the theta values at the start of the MCMC sampling
-#    $* @        mplefit         :  the MPLE fit as a glm object, and returned by
-#                                   <ergm.mple>
-#    $*!@% &#~+  mle.lik         :  the approximate log-likelihood for the MLE, if computed
-#    $* @        etamap          :  the set of function mapping theta -> eta;
-#                                   see <etamap>? for the components of this list
-#    $      #    formula         :  the 'formula' value inputted to <ergm>
-#    $      #    constraints     :  the 'constraints' value inputted to <ergm>
-#           #    prop.args       :  the list of arguments that were passed onto the
-#                                   <InitErgmProposal> routines
-#    $      #    prop.weights    :  the MCMC proposal weights inputted to <ergm> via
-#                                  'control'
-#    $      #    offset          :  a vector of whether each model parameter was set at
-#                                  a fixed value (not estimated)
-#    $      #    drop            :  list of dropped terms
-#     * @%^&  +  sample.obs      :  the matrix of sample network statistics for observed
-#                                   data
-#     * @        parallel        :  the number of additional threads used when sampling
-#      !    #~   glm             :  the fit established by MPL estimation and returned
-#                                   by <ergm.logitreg>, <ergm.pen.glm> or <glm>
-#                                   depending on the 'MPLEtype';
-#      !    #~   glm.null        :  the null fit established by MPL estimation and
-#                                   returned by <ergm.logitreg>, <ergm.pen.glm> or <glm>
-#                                   depending on the 'MPLEtype';
-#         &      rm.coef         :  the robmon coefficients used as 'init' in the final
-#                                   estimation
-#      !   #~   loglikelihoodratio: the log-likelihood corresponding to
-#                                   'coef'
-#
-#####################################################################################    
 
 #' Exponential-Family Random Graph Models
 #'
@@ -140,62 +44,27 @@
 #'
 #' @template response
 #' @template reference
-#' @param constraints {A formula specifying one or more constraints
-#' on the support of the distribution of the networks being modeled,
-#' using syntax similar to the \code{formula} argument, on the
-#' right-hand side. Multiple constraints
-#' may be given, separated by \dQuote{+} and \dQuote{-} operators. (See
-#' [ERGM constraints][ergmConstraint] for the explanation of
-#' their semantics.)
-#' Together with the model terms in the formula and the reference measure, the constraints
-#' define the distribution of networks being modeled.
-#' 
-#' It is also possible to specify a proposal function directly
-#' either by passing a string with the function's name (in which case,
-#' arguments to the proposal should be specified through the
-#' \code{prop.args} argument to \code{\link{control.ergm}}) or by
-#' giving it on the LHS of the constraints formula, in which case it
-#' will override the one chosen automatically.
-#' 
-#' The default is \code{~.}, for an unconstrained model.
-#' 
-#' See the [ERGM constraints][ergmConstraint] documentation for
-#' the constraints implemented in the **[ergm][ergm-package]**
-#' package. Other packages may add their own constraints.
-#' 
-#' Note that not all possible combinations of constraints and reference
-#' measures are supported. However, for relatively simple constraints
-#' (i.e., those that simply permit or forbid specific dyads or sets of
-#' dyads from changing), arbitrary combinations should be possible.
-#' }
+#' @template constraints
 #'
-#' @param obs.constraints { A one-sided formula specifying one or more
+#' @param obs.constraints A one-sided formula specifying one or more
 #'   constraints or other modification \emph{in addition} to those
-#'   specified by \code{constraints} that had affected the observation
-#'   process for the network, using syntax similar to the
-#'   \code{formula} argument. Multiple constraints may be given,
-#'   separated by \dQuote{+} operators.
-#' 
+#'   specified by \code{constraints}, following the same syntax as the
+#'   `constraints` argument.
+#'
 #'   This allows the domain of the integral in the numerator of the
 #'   partially obseved network face-value likelihoods of Handcock and
 #'   Gile (2010) and Karwa et al. (2017) to be specified explicitly.
-#' 
-#'   The default is \code{~observed}, to constrain the integral to
-#'   only integrate over the missing dyads. (It is dropped
-#'   automatically if the network is completely observed.)
-#'     
+#'
+#'   The default is to constrain the integral to only integrate over
+#'   the missing dyads (if present), after incorporating constraints
+#'   provided through the [`ergmlhs`] API.
+#'
 #'   It is also possible to specify a proposal function directly by
-#'   passing a string with the function's name. In that case,
+#'   passing a string with the function's name of the `obs.MCMC.prop`
+#'   argument to the relevant control function. In that case,
 #'   arguments to the proposal should be specified through the
-#'   \code{obs.prop.args} argument to \code{\link{control.ergm}}.
+#'   \code{obs.prop.args} argument to the relevant control function.
 #' 
-#'   See the [ERGM constraints][ergmConstraint] documentation for
-#'   the constraints implemented in the **[ergm][ergm-package]**
-#'   package. Other packages may add their own constraints.
-#'     
-#'   Note that not all possible combinations of constraints and
-#'   reference measures are supported.
-#' } 
 #' @param offset.coef {A vector of coefficients for the offset terms.}
 #' @param target.stats {vector of "observed network statistics,"
 #' if these statistics are for some reason different than the 
@@ -316,14 +185,12 @@
 #' taken; instead, only the change in the number of triangles
 #' is recorded for each edge toggle.
 #' 
-#' In the implementation of \code{\link{ergm}}, the model is initialized
-#' in \R, then all the model information is passed to a C program
-#' that generates the sample of network statistics using MCMC.
-#' This sample is then returned to \R, which implements a
-#' simple Newton-Raphson algorithm to approximate the MLE.
-#' An alternative style of maximum likelihood estimation is to use a stochastic
-#' approximation algorithm. This can be chosen with the 
-#' \code{control.ergm(style="Robbins-Monro")} option.
+#' In the implementation of \code{\link{ergm}}, the model is
+#' initialized in \R, then all the model information is passed to a C
+#' program that generates the sample of network statistics using MCMC.
+#' This sample is then returned to \R, which then uses one of several
+#' algorithms, selected by `main.method=` [control.ergm()] parameter
+#' to update the estimate.
 #' 
 #' The mechanism for proposing new networks for the MCMC sampling
 #' scheme, which is a Metropolis-Hastings algorithm, depends on 
@@ -554,14 +421,14 @@ ergm <- function(formula, response=NULL,
     # Handle the observation process and other "automatic" constraints.
     tmp <- .handle.auto.constraints(nw, constraints, obs.constraints, target.stats)
     nw <- tmp$nw
-    constraints.obs <- tmp$constraints.obs
-    constraints <- tmp$constraints
+    conterms.obs <- tmp$conterms.obs
+    conterms <- tmp$conterms
   }else if(!is(obs.constraints, "ergm_proposal")){
-  # Handle the observation process and other "automatic" constraints.
+    # Handle the observation process and other "automatic" constraints.
     tmp <- .handle.auto.constraints(nw, trim_env(~.), obs.constraints, target.stats)
     nw <- tmp$nw
-    constraints.obs <- tmp$constraints.obs
-    constraints <- tmp$constraints
+    conterms.obs <- tmp$conterms.obs
+    conterms <- tmp$conterms
   }
   
   if(!is(constraints, "ergm_proposal")){
@@ -572,7 +439,7 @@ ergm <- function(formula, response=NULL,
     warn(paste0("The default Bernoulli reference distribution operates in the binary (",sQuote("response=NULL"),") mode only. Did you specify the ",sQuote("reference")," argument?"))
   }
     
-    proposal <- ergm_proposal(constraints, hints=control$MCMC.prop, weights=control$MCMC.prop.weights, control$MCMC.prop.args, nw, class=proposalclass,reference=reference, term.options=control$term.options)
+    proposal <- ergm_proposal(conterms, hints=control$MCMC.prop, weights=control$MCMC.prop.weights, control$MCMC.prop.args, nw, class=proposalclass,reference=reference, term.options=control$term.options)
   }else proposal <- constraints
   
   if (verbose) message(sQuote(paste0(proposal$pkgname,":MH_",proposal$name)),".")
@@ -583,9 +450,9 @@ ergm <- function(formula, response=NULL,
   if (verbose) message("Model initialized.")
   
   if(!is(obs.constraints, "ergm_proposal")){
-    if(!is.null(constraints.obs)){
+    if(!is.null(conterms.obs)){
       if (verbose) message("Initializing constrained Metropolis-Hastings proposal: ", appendLF=FALSE)
-      proposal.obs <- ergm_proposal(constraints.obs, hints=control$obs.MCMC.prop, weights=control$obs.MCMC.prop.weights, control$obs.MCMC.prop.args, nw, class=proposalclass, reference=reference, term.options=control$term.options)
+      proposal.obs <- ergm_proposal(conterms.obs, hints=control$obs.MCMC.prop, weights=control$obs.MCMC.prop.weights, control$obs.MCMC.prop.args, nw, class=proposalclass, reference=reference, term.options=control$term.options)
       if (verbose) message(sQuote(paste0(proposal.obs$pkgname,":MH_",proposal.obs$name)), appendLF=FALSE)
       
       if(!is.null(proposal.obs$auxiliaries)){
@@ -636,6 +503,7 @@ ergm <- function(formula, response=NULL,
     target.stats <- .align.target.stats.offset(model, target.stats)   
 
     nw <- TARGET_STATS <- as.network(TARGET_STATS)
+    #' @importFrom statnet.common nonsimp_update.formula
     formula<-nonsimp_update.formula(formula,TARGET_STATS~., from.new="TARGET_STATS")
   } else {
     if (network.edgecount(nw) == 0) warning("Network is empty and no target stats are specified.")
@@ -798,9 +666,7 @@ ergm <- function(formula, response=NULL,
                           MLE = paste0(if(MCMCflag) # If not, it's just MLE.
                                          switch(control$main.method,
                                                 MCMLE = "Monte Carlo ",
-                                                `Stochastic-Approximation`="Stochastic Approximation ",
-                                                `Robbins-Monro`="Robbins-Monro ",
-                                                `Stepping`="Hummel Stepping "),
+                                                `Stochastic-Approximation`="Stochastic Approximation "),
                                        "Maximum Likelihood"))
 
   if (!MCMCflag){ # Just return initial (non-MLE) fit and exit.
@@ -846,19 +712,11 @@ ergm <- function(formula, response=NULL,
   names(init) <- param_names(model, FALSE)
   
   mainfit <- switch(control$main.method,
-                    "Robbins-Monro" = ergm.robmon(init, nw, model, 
-                                                  proposal=proposal, verbose=verbose, control=control),
+
                     "Stochastic-Approximation" = ergm.stocapprox(init, nw, model,
                                                                  control=control, proposal=proposal,
                                                                  verbose=verbose),
-                    "Stepping" = ergm.stepping(init, nw, model, initialfit, constraints,
-                                               #nstats=nstats, 
-                                               #approx=lognormapprox, filename.prefix=NULL, 
-                                               #control=control.ergm(nsim1=100, nsim2=1000, gridsize=100),  # simulation parameters
-                                               #plots=FALSE,  # currently useless, but plots can be reimplemented
-                                               control=control, 
-                                               proposal=proposal, proposal.obs=proposal.obs, 
-                                               verbose=verbose,...),
+
                     "MCMLE" = ergm.MCMLE(init, nw,
                                          model, 
                                          # no need to pass initialfit to MCMLE
@@ -867,7 +725,6 @@ ergm <- function(formula, response=NULL,
                                          proposal.obs=proposal.obs,
                                          verbose=verbose,
                                          ...),
-                    
                     
                     stop("Method ", control$main.method, " is not implemented.")
   )

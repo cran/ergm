@@ -28,22 +28,6 @@ document.addEventListener('DOMContentLoaded', function(e) {
   }
 });
 </script>
-<script>// Hide empty <a> tag within highlighted CodeBlock for screen reader accessibility (see https://github.com/jgm/pandoc/issues/6352#issuecomment-626106786) -->
-// v0.0.1
-// Written by JooYoung Seo (jooyoung@psu.edu) and Atsushi Yasumoto on June 1st, 2020.
-
-document.addEventListener('DOMContentLoaded', function() {
-  const codeList = document.getElementsByClassName("sourceCode");
-  for (var i = 0; i < codeList.length; i++) {
-    var linkList = codeList[i].getElementsByTagName('a');
-    for (var j = 0; j < linkList.length; j++) {
-      if (linkList[j].innerHTML === "") {
-        linkList[j].setAttribute('aria-hidden', 'true');
-      }
-    }
-  }
-});
-</script>
 
 <style type="text/css">
   code{white-space: pre-wrap;}
@@ -259,60 +243,128 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 <div id="summary" class="section level1">
 <h1>Summary</h1>
-<p>This document describes the process by which <code>ergm</code> and related packages selects the MCMC proposal for a particular analysis. Note that it is not intended to be a tutorial as much as a description of what inputs and outputs different parts of the system expect. Nor does it cover the C API.</p>
+<p>This document describes the process by which <code>ergm</code> and
+related packages selects the MCMC proposal for a particular analysis.
+Note that it is not intended to be a tutorial as much as a description
+of what inputs and outputs different parts of the system expect. Nor
+does it cover the C API.</p>
 </div>
 <div id="description" class="section level1">
 <h1>Description</h1>
 <div id="inputs" class="section level2">
 <h2>Inputs</h2>
-<p>There is a number of factors that can affect MCMC sampling, some of them historical and some of them new:</p>
+<p>There is a number of factors that can affect MCMC sampling, some of
+them historical and some of them new:</p>
 <dl>
 <dt>Globals</dt>
-<dd><p>functions and other structures defined in an accessible namespace</p>
+<dd>
+<p>functions and other structures defined in an accessible namespace</p>
 <ul>
-<li><code>ergm_proposal_table()</code> a function that if called with no arguments returns a table of registered proposals and updates it otherwise. See <code>? ergm_proposal_table</code> for documentation and the meaning of its columns. Of particular interest is its <code>Constraints</code> column, which encodes which constraints the proposal <strong>does</strong> (always) enforce and which it <strong>can</strong> enforce.</li>
-<li><code>InitErgmReference.&lt;REFERENCE&gt;</code> a family of initializers for the reference distribution. For the purposes of the proposal selection, among its outputs should be <code>$name</code> specifying the name of the reference distribution.</li>
-<li><code>InitErgmConstraint.&lt;CONSTRAINT&gt;</code> a family of initializers for constraints, weightings, and other high-level specifiers of the proposal distribution. Hard constraints, probabilistic weights, and hints all use this API. For the purposes of the proposal selection, its outputs include
+<li><code>ergm_proposal_table()</code> a function that if called with no
+arguments returns a table of registered proposals and updates it
+otherwise. See <code>? ergm_proposal_table</code> for documentation and
+the meaning of its columns. Of particular interest is its
+<code>Constraints</code> column, which encodes which constraints the
+proposal <strong>does</strong> (always) enforce and which it
+<strong>can</strong> enforce.</li>
+<li><code>InitErgmReference.&lt;REFERENCE&gt;</code> a family of
+initializers for the reference distribution. For the purposes of the
+proposal selection, among its outputs should be <code>$name</code>
+specifying the name of the reference distribution.</li>
+<li><code>InitErgmConstraint.&lt;CONSTRAINT&gt;</code> a family of
+initializers for constraints, weightings, and other high-level
+specifiers of the proposal distribution. Hard constraints, probabilistic
+weights, and hints all use this API. For the purposes of the proposal
+selection, its outputs include
 <ul>
-<li><code>$constrain</code> (defaulting to <code>&lt;CONSTRAINT&gt;</code>) a character vector specifying which constraints are enforced, and can include several semantically nested elements;</li>
-<li><code>$dependence</code> (defaulting to <code>TRUE</code>) specifying whether the constraint is dyad-dependent;</li>
-<li><code>$priority</code> (defaulting to <code>Inf</code>) specifying how important it is that the constraint is met (with <code>Inf</code> meaning that it <em>must</em> be met); and</li>
-<li><code>$implies</code>/<code>$impliedby</code> specifying which other constraints this constraint enforces or is enforced by, and this can include itself for constraints, such as <code>edges</code> that can only be applied once.</li>
+<li><code>$constrain</code> (defaulting to
+<code>&lt;CONSTRAINT&gt;</code>) a character vector specifying which
+constraints are enforced, and can include several semantically nested
+elements;</li>
+<li><code>$dependence</code> (defaulting to <code>TRUE</code>)
+specifying whether the constraint is dyad-dependent;</li>
+<li><code>$priority</code> (defaulting to <code>Inf</code>) specifying
+how important it is that the constraint is met (with <code>Inf</code>
+meaning that it <em>must</em> be met); and</li>
+<li><code>$implies</code>/<code>$impliedby</code> specifying which other
+constraints this constraint enforces or is enforced by, and this can
+include itself for constraints, such as <code>edges</code> that can only
+be applied once.</li>
+<li><code>$free_dyads</code> either an RLEBDM or a function with no
+arguments that returns an RLEBDM specifying which dyads are not
+constrained by this constraint.</li>
 </ul></li>
 </ul>
 </dd>
 <dt>Arguments</dt>
-<dd><p>arguments and settings passed to the call or as control parameters.</p>
+<dd>
+<p>arguments and settings passed to the call or as control
+parameters.</p>
 <ul>
-<li><code>constraints=</code> argument (top-level): A one-sided formula containing a <code>+</code>- or <code>-</code>-separated list of constraints. <code>+</code> terms add additional constraints to the model whereas <code>-</code> constraints relax them. <code>-</code> constraints are primarily used internally observational process estimation and are not described in detail, except to note that 1) they must be dyad-independent and 2) they necessitate falling back to the RLEBDM sampling API.</li>
-<li><code>reference=</code> argument (top-level): A one-sided formula specifying the ERGM reference distribution, usually as a name with parameters if appropriate.</li>
-<li><code>control$MCMC.prop=</code> control parameter: A formula whose RHS containing <code>+</code>-separated “hints” to the sampler; an optional LHS may contain the proposal name directly.</li>
-<li><code>control$MCMC.prop.weights=</code> control parameter: A string selecting proposal weighting (probably deprecated)</li>
-<li><code>control$MCMC.prop.args=</code> control parameter: A list specifying information to be passed to the proposal</li>
+<li><code>constraints=</code> argument (top-level): A one-sided formula
+containing a <code>+</code>- or <code>-</code>-separated list of
+constraints. <code>+</code> terms add additional constraints to the
+model whereas <code>-</code> constraints relax them. <code>-</code>
+constraints are primarily used internally observational process
+estimation and are not described in detail, except to note that 1) they
+must be dyad-independent and 2) they necessitate falling back to the
+RLEBDM sampling API.</li>
+<li><code>reference=</code> argument (top-level): A one-sided formula
+specifying the ERGM reference distribution, usually as a name with
+parameters if appropriate.</li>
+<li><code>control$MCMC.prop=</code> control parameter: A formula whose
+RHS containing <code>+</code>-separated “hints” to the sampler; an
+optional LHS may contain the proposal name directly.</li>
+<li><code>control$MCMC.prop.weights=</code> control parameter: A string
+selecting proposal weighting (probably deprecated)</li>
+<li><code>control$MCMC.prop.args=</code> control parameter: A list
+specifying information to be passed to the proposal</li>
 </ul>
 </dd>
 </dl>
 </div>
 <div id="code-path" class="section level2">
 <h2>Code Path</h2>
-<p>Most of this is implemented in the <code>ergm_proposal.formula()</code> method:</p>
+<p>Most of this is implemented in the
+<code>ergm_proposal.formula()</code> method:</p>
 <ol style="list-style-type: decimal">
-<li><code>InitErgmReference.&lt;REFERENCE&gt;</code> is called with arguments of <code>reference=</code>’s LHS, obtaining the name of the reference.</li>
-<li>For each term in the following formula’s RHS, the corresponding <code>InitErgmConstraint.&lt;CONSTRAINT&gt;</code> function is called and their outputs are stored in a list of initialized constraints (an <code>ergm_conlist</code> object). <code>.dyads</code> pseudo-constraint is added to dyad-independent constraints (not to hints with <code>$priority &lt; Inf</code>).
+<li><code>InitErgmReference.&lt;REFERENCE&gt;</code> is called with
+arguments of <code>reference=</code>’s LHS, obtaining the name of the
+reference.</li>
+<li>For each term in the following formula’s RHS, the corresponding
+<code>InitErgmConstraint.&lt;CONSTRAINT&gt;</code> function is called
+and their outputs are stored in a list of initialized constraints (an
+<code>ergm_conlist</code> object). <code>.dyads</code> pseudo-constraint
+is added to dyad-independent constraints (not to hints with
+<code>$priority &lt; Inf</code>).
 <ol style="list-style-type: decimal">
 <li><code>constraints=</code></li>
 <li><code>MCMC.prop=</code></li>
 </ol></li>
-<li>Constraint lists from the previous two steps are concatenated, with redundant constraints removed based on their <code>$implies</code>/<code>$impliedby</code> settings.</li>
-<li>Proposal candidates returned by <code>ergm_proposal_table()</code> are filtered by <code>Class</code>, <code>Reference</code>, <code>Weights</code> (if <code>MCMC.prop.weights</code> differs from <code>&quot;default&quot;</code>), and <code>Proposal</code> (if the LHS of <code>MCMC.prop</code> is provided).</li>
+<li>Constraint lists from the previous two steps are concatenated, with
+redundant constraints removed based on their
+<code>$implies</code>/<code>$impliedby</code> settings.</li>
+<li>Proposal candidates returned by <code>ergm_proposal_table()</code>
+are filtered by <code>Class</code>, <code>Reference</code>,
+<code>Weights</code> (if <code>MCMC.prop.weights</code> differs from
+<code>&quot;default&quot;</code>), and <code>Proposal</code> (if the LHS of
+<code>MCMC.prop</code> is provided).</li>
 <li>Each candidate proposal is “scored” as follows:
 <ol style="list-style-type: decimal">
-<li>If a proposal <strong>does</strong> enforce a constraint that is not among the requested by the constraints list, it is discarded.</li>
-<li>If a proposal cannot enforce a constraint that is among the requested with <code>priority=Inf</code>, it is discarded.</li>
-<li>For each constraint that is among requested with <code>priority&lt;Inf</code> <em>and</em> that the proposal <strong>does</strong>n’t and <strong>can</strong>’t enforce, its (innate, specified in the column of the <code>ergm_proposal_table()</code>) <code>Priority</code> value is penalised by the <code>priority</code> of that constraint.</li>
+<li>If a proposal <strong>does</strong> enforce a constraint that is not
+among the requested by the constraints list, it is discarded.</li>
+<li>If a proposal cannot enforce a constraint that is among the
+requested with <code>priority==Inf</code>, it is discarded.</li>
+<li>For each constraint that is among requested with
+<code>priority&lt;Inf</code> <em>and</em> that the proposal
+<strong>does</strong>n’t and <strong>can</strong>’t enforce, its
+(innate, specified in the column of the
+<code>ergm_proposal_table()</code>) <code>Priority</code> value is
+penalised by the <code>priority</code> of that constraint.</li>
 </ol></li>
 <li>If there are no candidate proposals left, an error is raised.</li>
-<li>If more than one is left, the proposal with the highest priority (after being penalised for unmet constraints) is selected.</li>
+<li>If more than one is left, the proposal with the highest priority
+(after being penalised for unmet constraints) is selected.</li>
 </ol>
 </div>
 </div>

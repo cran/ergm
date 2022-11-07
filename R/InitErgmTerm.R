@@ -220,6 +220,150 @@ decay_vs_fixed <- function(a, name, no_curved_attrarg=TRUE){
   }
 }
 
+.degrange_impl <- function(deg, dir, bip, nw, arglist, ..., version){
+  termname <- paste0(deg, "degrange")
+  coefpre <- paste0(deg, "deg")
+
+  if(version <= as.package_version("3.9.4")){
+    a <- check.ErgmTerm(nw, arglist, directed=dir, bipartite=bip,
+                        varnames = c("from", "to", "by", "homophily", "levels"),
+                        vartypes = c("numeric", "numeric", "character", "logical", "character,numeric,logical"),
+                        defaultvalues = list(NULL, Inf, NULL, FALSE, NULL),
+                        required = c(TRUE, FALSE, FALSE, FALSE, FALSE))
+    levels <- if(!is.null(a$levels)) I(a$levels) else NULL
+  }else{
+    a <- check.ErgmTerm(nw, arglist, directed=dir, bipartite=bip,
+                        varnames = c("from", "to", "by", "homophily", "levels"),
+                        vartypes = c("numeric", "numeric", ERGM_VATTR_SPEC, "logical", ERGM_LEVELS_SPEC),
+                        defaultvalues = list(NULL, Inf, NULL, FALSE, NULL),
+                        required = c(TRUE, FALSE, FALSE, FALSE, FALSE))
+    levels <- a$levels
+  }
+  from<-a$from; to<-a$to; byarg <- a$by; homophily <- a$homophily
+
+  if(length(to)==1 && length(from)>1) to <- rep(to, length(from))
+  else if(length(from)==1 && length(to)>1) from <- rep(from, length(to))
+  else if(length(from)!=length(to)) ergm_Init_abort("The arguments of term ", sQuote(termname), " must have arguments either of the same length, or one of them must have length 1.")
+
+  to <- ifelse(to==Inf, pmax(from, network.size(nw)) + 1, to)
+  if(any(from>=to)) ergm_Init_abort("Term ", sQuote(termname), " must have ", sQuote("from"), "<", sQuote("to"), ".")
+
+  emptynwstats<-NULL
+  if(!is.null(byarg)) {
+    nodecov <- if(NVL(bip, FALSE)) ergm_get_vattr(byarg, nw, bip = if(homophily) "n" else deg) else ergm_get_vattr(byarg, nw)
+    attrname <- attr(nodecov, "name")
+    u <- ergm_attr_levels(levels, nodecov, nw, levels = sort(unique(nodecov)))
+    nodecov <- match(nodecov,u,nomatch=length(u)+1) # Recode to numeric
+  }
+  if(!is.null(byarg) && !homophily) {
+    # Combine degrange and u into 3xk matrix, where k=length(from)*length(u)
+    lu <- length(u)
+    du <- rbind(rep(from,lu), rep(to,lu), rep(1:lu, rep(length(from), lu)))
+    if (any(du[1,]==0)) {
+      emptynwstats <- rep(0, ncol(du))
+      tmp <- du[3,du[1,]==0]
+      for(i in seq_along(tmp)) tmp[i] <- sum(nodecov==tmp[i])
+        emptynwstats[du[1,]==0] <- tmp
+    }
+  } else {
+    if (any(from==0)) {
+      emptynwstats <- rep(0, length(from))
+      emptynwstats[from==0] <- network.size(nw)
+    }
+  }
+  if(is.null(byarg)) {
+    if(length(from)==0){return(NULL)}
+    coef.names <- ifelse(to>=network.size(nw)+1,
+                         paste(coefpre, from,"+",sep=""),
+                         paste(coefpre, from,"to",to,sep=""))
+    name <- paste0(deg, "degrange")
+    inputs <- c(rbind(from,to))
+  } else if (homophily) {
+    if(length(from)==0){return(NULL)}
+    # See comment in c_*degrange_w_homophily function
+    coef.names <- ifelse(to>=network.size(nw)+1,
+                         paste(coefpre, from,"+", ".homophily.",attrname,sep=""),
+                         paste(coefpre, from,"to",to, ".homophily.",attrname,sep=""))
+    name <- paste0(deg, "degrange_w_homophily")
+    inputs <- c(rbind(from,to), nodecov)
+  } else {
+    if(ncol(du)==0) {return(NULL)}
+    #  No covariates here, so "ParamsBeforeCov" unnecessary
+    # See comment in c_*degrange_by_attr function
+    coef.names <- ifelse(du[2,]>=network.size(nw)+1,
+                         paste(coefpre, du[1,],"+.", attrname, u[du[3,]],sep=""),
+                         paste(coefpre, du[1,],"to",du[2,],".",attrname, u[du[3,]],sep=""))
+    name <- paste0(deg, "degrange_by_attr")
+    inputs <- c(as.vector(du), nodecov)
+  }
+
+  list(name=name,coef.names=coef.names, inputs=inputs, dependence=TRUE, minval = 0, maxval=network.size(nw), conflicts.constraints=paste0(deg, "degreedist"), emptynwstats=emptynwstats)
+}
+
+
+.degree_impl <- function(deg, dir, bip, nw, arglist, ..., version){
+  if(version <= as.package_version("3.9.4")){
+    a <- check.ErgmTerm(nw, arglist, directed=dir, bipartite=bip,
+                        varnames = c("d", "by", "homophily", "levels"),
+                        vartypes = c("numeric", "character", "logical", "character,numeric,logical"),
+                        defaultvalues = list(NULL, NULL, FALSE, NULL),
+                        required = c(TRUE, FALSE, FALSE, FALSE))
+    levels <- if(!is.null(a$levels)) I(a$levels) else NULL
+  }else{
+    a <- check.ErgmTerm(nw, arglist, directed=dir, bipartite=bip,
+                        varnames = c("d", "by", "homophily", "levels"),
+                        vartypes = c("numeric", ERGM_VATTR_SPEC, "logical", ERGM_LEVELS_SPEC),
+                        defaultvalues = list(NULL, NULL, FALSE, NULL),
+                        required = c(TRUE, FALSE, FALSE, FALSE))
+    levels <- a$levels
+  }
+  d<-a$d; byarg <- a$by; homophily <- a$homophily
+  emptynwstats<-NULL
+  if(!is.null(byarg)) {
+    nodecov <- if(NVL(bip, FALSE)) ergm_get_vattr(byarg, nw, bip = if(homophily) "n" else deg) else ergm_get_vattr(byarg, nw)
+    attrname <- attr(nodecov, "name")
+    u <- ergm_attr_levels(levels, nodecov, nw, levels = sort(unique(nodecov)))
+    nodecov <- match(nodecov,u,nomatch=length(u)+1) # Recode to numeric
+  }
+  if(!is.null(byarg) && !homophily) {
+    # Combine degree and u into 2xk matrix, where k=length(d)*length(u)
+    lu <- length(u)
+    du <- rbind(rep(d,lu), rep(1:lu, rep(length(d), lu)))
+    if (any(du[1,]==0)) {
+      emptynwstats <- rep(0, ncol(du))
+      tmp <- du[2,du[1,]==0]
+      for(i in seq_along(tmp)) tmp[i] <- sum(nodecov==tmp[i])
+        emptynwstats[du[1,]==0] <- tmp
+    }
+  } else {
+    if (any(d==0)) {
+      emptynwstats <- rep(0, length(d))
+      emptynwstats[d==0] <- network.size(nw)
+    }
+  }
+  if(is.null(byarg)) {
+    if(length(d)==0){return(NULL)}
+    coef.names <- paste0(deg, "degree", d)
+    name <- paste0(deg, "degree")
+    inputs <- c(d)
+  } else if (homophily) {
+    if(length(d)==0){return(NULL)}
+    # See comment in d_degree_w_homophily function
+    coef.names <- paste0(deg, "deg", d, ".homophily.", attrname)
+    name <- paste0(deg, "degree_w_homophily")
+    inputs <- c(d, nodecov)
+  } else {
+    if(ncol(du)==0) {return(NULL)}
+    #  No covariates here, so "ParamsBeforeCov" unnecessary
+    # See comment in d_degree_by_attr function
+    coef.names <- paste0(deg, "deg", du[1,], ".", attrname,u[du[2,]])
+    name <- paste0(deg, "degree_by_attr")
+    inputs <- c(as.vector(du), nodecov)
+  }
+
+  list(name = name, coef.names = coef.names, inputs = inputs, emptynwstats = emptynwstats, minval=0, maxval=network.size(nw), dependence=TRUE,
+    minval = 0, maxval=network.size(nw), conflicts.constraints=paste0(deg, "degreedist"))
+}
 
 #=======================InitErgmTerm functions:  A============================#
 
@@ -676,89 +820,7 @@ InitErgmTerm.b1concurrent<-function(nw, arglist, ..., version=packageVersion("er
 #' @concept bipartite
 #' @concept undirected
 InitErgmTerm.b1degrange<-function(nw, arglist, ..., version=packageVersion("ergm")) {
-  if(version <= as.package_version("3.9.4")){
-    ### Check the network and arguments to make sure they are appropriate.
-    a <- check.ErgmTerm(nw, arglist, bipartite=TRUE,
-                        varnames = c("from", "to", "by", "homophily", "levels"),
-                        vartypes = c("numeric", "numeric", "character", "logical", "character,numeric,logical"),
-                        defaultvalues = list(NULL, Inf, NULL, FALSE, NULL),
-                        required = c(TRUE, FALSE, FALSE, FALSE, FALSE))
-    levels <- if(!is.null(a$levels)) I(a$levels) else NULL                        
-  }else{
-    ### Check the network and arguments to make sure they are appropriate.
-    a <- check.ErgmTerm(nw, arglist, bipartite=TRUE,
-                        varnames = c("from", "to", "by", "homophily", "levels"),
-                        vartypes = c("numeric", "numeric", ERGM_VATTR_SPEC, "logical", ERGM_LEVELS_SPEC),
-                        defaultvalues = list(NULL, Inf, NULL, FALSE, NULL),
-                        required = c(TRUE, FALSE, FALSE, FALSE, FALSE))
-    levels <- a$levels  
-  }
-
-  ### Process the arguments
-  from<-a$from; to<-a$to; byarg <- a$by; homophily <- a$homophily
-  to <- ifelse(to==Inf, network.size(nw)+1, to)
-
-  if(length(to)==1 && length(from)>1) to <- rep(to, length(from))
-  else if(length(from)==1 && length(to)>1) from <- rep(from, length(to))
-  else if(length(from)!=length(to)) ergm_Init_abort("The arguments of term odegrange must have arguments either of the same length, or one of them must have length 1.")
-  else if(any(from>=to)) ergm_Init_abort("Term odegrange must have from<to.")
-
-  nb1 <- get.network.attribute(nw, "bipartite")
-  emptynwstats<-NULL
-  if(!is.null(byarg)) {
-    nodecov <- ergm_get_vattr(byarg, nw, bip = if(homophily) "n" else "b1")
-    attrname <- attr(nodecov, "name")
-    u <- ergm_attr_levels(levels, nodecov, nw, levels = sort(unique(nodecov)))
-
-    nodecov <- match(nodecov,u,nomatch=length(u)+1) # Recode to numeric
-  }
-  if(!is.null(byarg) && !homophily) {
-    # Combine b1degrange and u into 3xk matrix, where k=length(from)*length(u)
-    lu <- length(u)
-    du <- rbind(rep(from,lu), rep(to,lu), rep(1:lu, rep(length(from), lu)))
-    if (any(du[1,]==0)) {
-      emptynwstats <- rep(0, ncol(du))
-      tmp <- du[3,du[1,]==0]
-      for(i in seq_along(tmp)) tmp[i] <- sum(nodecov==tmp[i])
-        emptynwstats[du[1,]==0] <- tmp
-    }
-  } else {
-    if (any(from==0)) {
-      emptynwstats <- rep(0, length(from))
-      emptynwstats[from==0] <- network.size(nw)
-    }
-  }
-  if(is.null(byarg)) {
-    if(length(from)==0){return(NULL)}
-    coef.names <- ifelse(to>=network.size(nw)+1,
-                         paste("b1deg",from,"+",sep=""),
-                         paste("b1deg",from,"to",to,sep=""))
-    name <- "b1degrange"
-    inputs <- c(rbind(from,to))
-  } else if (homophily) {
-    if(length(from)==0){return(NULL)}
-    # See comment in d_b1degrange_w_homophily function
-    coef.names <- ifelse(to>=network.size(nw)+1,
-                         paste("b1deg",from,"+", ".homophily.",attrname,sep=""),
-                         paste("b1deg",from,"to",to, ".homophily.",attrname,sep=""))
-    name <- "b1degrange_w_homophily"
-    inputs <- c(rbind(from,to), nodecov)
-  } else {
-    if(ncol(du)==0) {return(NULL)}
-    #  No covariates here, so "ParamsBeforeCov" unnecessary
-    # See comment in d_b1degrange_by_attr function
-    coef.names <- ifelse(du[2,]>=network.size(nw)+1,
-                         paste("b1deg",du[1,],"+.", attrname, u[du[3,]],sep=""),
-                         paste("b1deg",du[1,],"to",du[2,],".",attrname, u[du[3,]],sep=""))
-    name <- "b1degrange_by_attr"
-    inputs <- c(as.vector(du), nodecov)
-  }
-  if (!is.null(emptynwstats)){
-    list(name=name,coef.names=coef.names, inputs=inputs,
-         emptynwstats=emptynwstats, dependence=TRUE, minval = 0)
-  }else{
-    list(name=name,coef.names=coef.names, inputs=inputs, dependence=TRUE, minval = 0, maxval=network.size(nw), conflicts.constraints="b1degreedist")
-  }
+  .degrange_impl("b1", NULL, TRUE, nw, arglist, ..., version=version)
 }
 
 ################################################################################
@@ -846,57 +908,7 @@ InitErgmTerm.b1cov<-function (nw, arglist, ..., version=packageVersion("ergm")) 
 #' @concept categorical nodal attribute
 #' @concept frequently-used
 InitErgmTerm.b1degree <- function(nw, arglist, ..., version=packageVersion("ergm")) {
-  if(version <= as.package_version("3.9.4")){
-    ### Check the network and arguments to make sure they are appropriate.
-    a <- check.ErgmTerm (nw, arglist, directed=FALSE, bipartite=TRUE,
-                         varnames = c("d", "by", "levels"),
-                         vartypes = c("numeric", "character", "character,numeric,logical"),
-                         defaultvalues = list(NULL, NULL, NULL),
-                         required = c(TRUE, FALSE, FALSE))
-    levels <- if(!is.null(a$levels)) I(a$levels) else NULL
-  }else{
-    ### Check the network and arguments to make sure they are appropriate.
-    a <- check.ErgmTerm (nw, arglist, directed=FALSE, bipartite=TRUE,
-                         varnames = c("d", "by", "levels"),
-                         vartypes = c("numeric", ERGM_VATTR_SPEC, ERGM_LEVELS_SPEC),
-                         defaultvalues = list(NULL, NULL, NULL),
-                         required = c(TRUE, FALSE, FALSE))
-    levels <- a$levels    
-  }
-  
-  byarg <- a$by
-  ### Process the arguments
-  nb1 <- get.network.attribute(nw, "bipartite")
-  if (!is.null(byarg)) {  # CASE 1:  a$by GIVEN
-    nodecov <- ergm_get_vattr(byarg, nw, bip = "b1")
-    attrname <- attr(nodecov, "name")
-    u <- ergm_attr_levels(levels, nodecov, nw, levels = sort(unique(nodecov)))
-
-    nodecov <- match(nodecov,u,nomatch=length(u)+1) # Recode to numeric
-    # Combine degree and u into 2xk matrix, where k=length(a$d)*length(u)
-    lu <- length(u)
-    du <- rbind(rep(a$d,lu), rep(1:lu, rep(length(a$d), lu)))
-    emptynwstats <- rep(0, ncol(du))
-    if (any(du[1,]==0)) { # Alter emptynwstats
-      tmp <- du[2,du[1,]==0]
-      for(i in seq_along(tmp)) tmp[i] <- sum(nodecov==tmp[i])
-      emptynwstats[du[1,]==0] <- tmp
-    }
-    name <- "b1degree_by_attr"
-    coef.names <- paste("b1deg", du[1,], ".", attrname, u[du[2,]], sep="")
-    inputs <- c(as.vector(du), nodecov)
-  } else { # CASE 2:  a$by NOT GIVEN
-    name <- "b1degree"
-    coef.names <- paste("b1deg", a$d, sep="")
-    inputs <- a$d
-    emptynwstats <- rep(0, length(a$d))
-    if (any(a$d==0)) { # alter emptynwstats
-      emptynwstats[a$d==0] <- nb1
-    }
-  }
-
-  list(name = name, coef.names = coef.names, inputs = inputs, emptynwstats = emptynwstats, minval=0, maxval=network.size(nw), dependence=TRUE,
-    minval = 0, maxval=nb1, conflicts.constraints="odegreedist")
+  .degree_impl("b1", NULL, TRUE, nw, arglist, ..., version=version)
 }
 
 
@@ -915,6 +927,7 @@ InitErgmTerm.b1degree <- function(nw, arglist, ..., version=packageVersion("ergm
 #'
 #' @param d a vector of distinct integers. 
 #'
+#' @template ergmTerm-cache-sp
 #' @template ergmTerm-general
 #'
 #' @concept bipartite
@@ -1477,88 +1490,7 @@ InitErgmTerm.b2cov<-function (nw, arglist, ..., version=packageVersion("ergm")) 
 #' @concept bipartite
 #' @concept undirected
 InitErgmTerm.b2degrange<-function(nw, arglist, ..., version=packageVersion("ergm")) {
-  if(version <= as.package_version("3.9.4")){
-    ### Check the network and arguments to make sure they are appropriate.
-    a <- check.ErgmTerm(nw, arglist, bipartite=TRUE,
-                        varnames = c("from", "to", "by", "homophily", "levels"),
-                        vartypes = c("numeric", "numeric", "character", "logical", "character,numeric,logical"),
-                        defaultvalues = list(NULL, Inf, NULL, FALSE, NULL),
-                        required = c(TRUE, FALSE, FALSE, FALSE, FALSE))
-    levels <- if(!is.null(a$levels)) I(a$levels) else NULL                        
-  }else{
-    ### Check the network and arguments to make sure they are appropriate.
-    a <- check.ErgmTerm(nw, arglist, bipartite=TRUE,
-                        varnames = c("from", "to", "by", "homophily", "levels"),
-                        vartypes = c("numeric", "numeric", ERGM_VATTR_SPEC, "logical", ERGM_LEVELS_SPEC),
-                        defaultvalues = list(NULL, Inf, NULL, FALSE, NULL),
-                        required = c(TRUE, FALSE, FALSE, FALSE, FALSE))
-    levels <- a$levels  
-  }
-
-  ### Process the arguments  
-  from<-a$from; to<-a$to; byarg <- a$by; homophily <- a$homophily
-  to <- ifelse(to==Inf, network.size(nw)+1, to)
-
-  if(length(to)==1 && length(from)>1) to <- rep(to, length(from))
-  else if(length(from)==1 && length(to)>1) from <- rep(from, length(to))
-  else if(length(from)!=length(to)) ergm_Init_abort("The arguments of term odegrange must have arguments either of the same length, or one of them must have length 1.")
-  else if(any(from>=to)) ergm_Init_abort("Term odegrange must have from<to.")
-
-  nb1 <- get.network.attribute(nw, "bipartite")
-  emptynwstats<-NULL
-  if(!is.null(byarg)) {
-    nodecov <- ergm_get_vattr(byarg, nw, bip = if(homophily) "n" else "b2")
-    attrname <- attr(nodecov, "name")
-    u <- ergm_attr_levels(levels, nodecov, nw, levels = sort(unique(nodecov)))
-    nodecov <- match(nodecov,u,nomatch=length(u)+1) # Recode to numeric
-  }
-  if(!is.null(byarg) && !homophily) {
-    # Combine b2degrange and u into 3xk matrix, where k=length(from)*length(u)
-    lu <- length(u)
-    du <- rbind(rep(from,lu), rep(to,lu), rep(1:lu, rep(length(from), lu)))
-    if (any(du[1,]==0)) {
-      emptynwstats <- rep(0, ncol(du))
-      tmp <- du[3,du[1,]==0]
-      for(i in seq_along(tmp)) tmp[i] <- sum(nodecov==tmp[i])
-        emptynwstats[du[1,]==0] <- tmp
-    }
-  } else {
-    if (any(from==0)) {
-      emptynwstats <- rep(0, length(from))
-      emptynwstats[from==0] <- network.size(nw)
-    }
-  }
-  if(is.null(byarg)) {
-    if(length(from)==0){return(NULL)}
-    coef.names <- ifelse(to>=network.size(nw)+1,
-                         paste("b2deg",from,"+",sep=""),
-                         paste("b2deg",from,"to",to,sep=""))
-    name <- "b2degrange"
-    inputs <- c(rbind(from,to))
-  } else if (homophily) {
-    if(length(from)==0){return(NULL)}
-    # See comment in d_b2degrange_w_homophily function
-    coef.names <- ifelse(to>=network.size(nw)+1,
-                         paste("b2deg",from,"+", ".homophily.",attrname,sep=""),
-                         paste("b2deg",from,"to",to, ".homophily.",attrname,sep=""))
-    name <- "b2degrange_w_homophily"
-    inputs <- c(rbind(from,to), nodecov)
-  } else {
-    if(ncol(du)==0) {return(NULL)}
-    #  No covariates here, so "ParamsBeforeCov" unnecessary
-    # See comment in d_b2degrange_by_attr function
-    coef.names <- ifelse(du[2,]>=network.size(nw)+1,
-                         paste("b2deg",du[1,],"+.", attrname, u[du[3,]],sep=""),
-                         paste("b2deg",du[1,],"to",du[2,],".",attrname, u[du[3,]],sep=""))
-    name <- "b2degrange_by_attr"
-    inputs <- c(as.vector(du), nodecov)
-  }
-  if (!is.null(emptynwstats)){
-    list(name=name,coef.names=coef.names, inputs=inputs,
-         emptynwstats=emptynwstats, dependence=TRUE, minval = 0)
-  }else{
-    list(name=name,coef.names=coef.names, inputs=inputs, dependence=TRUE, minval = 0, maxval=network.size(nw), conflicts.constraints="b2degreedist")
-  }
+  .degrange_impl("b2", NULL, TRUE, nw, arglist, ..., version=version)
 }
 
 
@@ -1591,58 +1523,7 @@ InitErgmTerm.b2degrange<-function(nw, arglist, ..., version=packageVersion("ergm
 #' @concept categorical nodal attribute
 #' @concept frequently-used
 InitErgmTerm.b2degree <- function(nw, arglist, ..., version=packageVersion("ergm")) {
-  if(version <= as.package_version("3.9.4")){
-    ### Check the network and arguments to make sure they are appropriate.
-    a <- check.ErgmTerm (nw, arglist, directed=FALSE, bipartite=TRUE,
-                         varnames = c("d", "by", "levels"),
-                         vartypes = c("numeric", "character", "character,numeric,logical"),
-                         defaultvalues = list(NULL, NULL, NULL),
-                         required = c(TRUE, FALSE, FALSE))
-    levels <- if(!is.null(a$levels)) I(a$levels) else NULL
-  }else{
-    ### Check the network and arguments to make sure they are appropriate.
-    a <- check.ErgmTerm (nw, arglist, directed=FALSE, bipartite=TRUE,
-                         varnames = c("d", "by", "levels"),
-                         vartypes = c("numeric", ERGM_VATTR_SPEC, ERGM_LEVELS_SPEC),
-                         defaultvalues = list(NULL, NULL, NULL),
-                         required = c(TRUE, FALSE, FALSE))
-    levels <- a$levels    
-  }
-  
-  byarg <- a$by
-  ### Process the arguments
-  nb1 <- get.network.attribute(nw, "bipartite")
-  n <- network.size(nw)
-  if (!is.null(byarg)) {  # CASE 1:  a$by GIVEN
-    nodecov <- ergm_get_vattr(byarg, nw, bip = "b2")
-    attrname <- attr(nodecov, "name")
-    u <- ergm_attr_levels(levels, nodecov, nw, levels = sort(unique(nodecov)))
-
-    nodecov <- match(nodecov,u,nomatch=length(u)+1) # Recode to numeric
-    # Combine degree and u into 2xk matrix, where k=length(a$d)*length(u)
-    lu <- length(u)
-    du <- rbind(rep(a$d,lu), rep(1:lu, rep(length(a$d), lu)))
-    emptynwstats <- rep(0, ncol(du))
-    if (any(du[1,]==0)) { # Alter emptynwstats
-      tmp <- du[2,du[1,]==0]
-      for(i in seq_along(tmp)) tmp[i] <- sum(nodecov==tmp[i])
-      emptynwstats[du[1,]==0] <- tmp
-    }
-    name <- "b2degree_by_attr"
-    coef.names <- paste("b2deg", du[1,], ".", attrname, u[du[2,]], sep="")
-    inputs <- c(as.vector(du), nodecov)
-  } else { # CASE 2:  a$by NOT GIVEN
-    name <- "b2degree"
-    coef.names <- paste("b2deg", a$d, sep="")
-    inputs <- a$d
-    emptynwstats <- rep(0, length(a$d))
-    if (any(a$d==0)) { # alter emptynwstats
-      emptynwstats[a$d==0] <- n-nb1
-    }
-  }
-
-  list(name = name, coef.names = coef.names, inputs = inputs, emptynwstats = emptynwstats, minval=0, maxval=network.size(nw), dependence=TRUE,
-    minval = 0, maxval=network.size(nw)-nb1, conflicts.constraints="b2degreedist")
+  .degree_impl("b2", NULL, TRUE, nw, arglist, ..., version=version)
 }
 
 ################################################################################
@@ -1659,6 +1540,7 @@ InitErgmTerm.b2degree <- function(nw, arglist, ..., version=packageVersion("ergm
 #'
 #' @param d a vector of distinct integers
 #'
+#' @template ergmTerm-cache-sp
 #' @template ergmTerm-general
 #'
 #' @concept bipartite
@@ -2221,8 +2103,8 @@ InitErgmTerm.ctriple<-function (nw, arglist, ..., version=packageVersion("ergm")
   list(name="ctriple", coef.names=coef.names, inputs=inputs, minval = 0)
 }
 
-
-#' @rdname ctriple-ergmTerm
+#' @templateVar name ctriple
+#' @template ergmTerm-rdname
 #' @aliases ctriad-ergmTerm
 #' @usage
 #' # binary: ctriad
@@ -2360,6 +2242,7 @@ InitErgmTerm.degcrossprod<-function (nw, arglist, ...) {
 
 ################################################################################
 
+
 #' @templateVar name degrange
 #' @title Degree range
 #' @description This term adds one
@@ -2368,7 +2251,7 @@ InitErgmTerm.degcrossprod<-function (nw, arglist, ...) {
 #'   greater than or equal to
 #'   `from[i]` but strictly less than `to[i]` , i.e. with edges
 #'   in semiopen interval `[from,to)` .
-#'   
+#'
 #' @details This term can only be used with undirected networks; for directed networks
 #'   see `idegrange` and `odegrange` . This term can be used
 #'   with bipartite networks, and will count nodes of both first and second mode in
@@ -2390,83 +2273,7 @@ InitErgmTerm.degcrossprod<-function (nw, arglist, ...) {
 #' @concept undirected
 #' @concept categorical nodal attribute
 InitErgmTerm.degrange<-function(nw, arglist, ..., version=packageVersion("ergm")) {
-  if(version <= as.package_version("3.9.4")){
-    a <- check.ErgmTerm(nw, arglist, directed=FALSE,
-                        varnames = c("from", "to", "by", "homophily", "levels"),
-                        vartypes = c("numeric", "numeric", "character", "logical", "character,numeric,logical"),
-                        defaultvalues = list(NULL, Inf, NULL, FALSE, NULL),
-                        required = c(TRUE, FALSE, FALSE, FALSE, FALSE))
-    levels <- if(!is.null(a$levels)) I(a$levels) else NULL                        
-  }else{
-    a <- check.ErgmTerm(nw, arglist, directed=FALSE,
-                        varnames = c("from", "to", "by", "homophily", "levels"),
-                        vartypes = c("numeric", "numeric", ERGM_VATTR_SPEC, "logical", ERGM_LEVELS_SPEC),
-                        defaultvalues = list(NULL, Inf, NULL, FALSE, NULL),
-                        required = c(TRUE, FALSE, FALSE, FALSE, FALSE))
-    levels <- a$levels  
-  }
-  from<-a$from; to<-a$to; byarg <- a$by; homophily <- a$homophily
-  to <- ifelse(to==Inf, network.size(nw)+1, to)
-
-  if(length(to)==1 && length(from)>1) to <- rep(to, length(from))
-  else if(length(from)==1 && length(to)>1) from <- rep(from, length(to))
-  else if(length(from)!=length(to)) ergm_Init_abort("The arguments of term degrange must have arguments either of the same length, or one of them must have length 1.")
-  else if(any(from>=to)) ergm_Init_abort("Term degrange must have from<to.")
-
-  emptynwstats<-NULL
-  if(!is.null(byarg)) {
-    nodecov <- ergm_get_vattr(byarg, nw)
-    attrname <- attr(nodecov, "name")
-    u <- ergm_attr_levels(levels, nodecov, nw, levels = sort(unique(nodecov)))
-    nodecov <- match(nodecov,u,nomatch=length(u)+1) # Recode to numeric
-  }
-  if(!is.null(byarg) && !homophily) {
-    # Combine degrange and u into 3xk matrix, where k=length(from)*length(u)
-    lu <- length(u)
-    du <- rbind(rep(from,lu), rep(to,lu), rep(1:lu, rep(length(from), lu)))
-    if (any(du[1,]==0)) {
-      emptynwstats <- rep(0, ncol(du))
-      tmp <- du[3,du[1,]==0]
-      for(i in seq_along(tmp)) tmp[i] <- sum(nodecov==tmp[i])
-        emptynwstats[du[1,]==0] <- tmp
-    }
-  } else {
-    if (any(from==0)) {
-      emptynwstats <- rep(0, length(from))
-      emptynwstats[from==0] <- network.size(nw)
-    }
-  }
-  if(is.null(byarg)) {
-    if(length(from)==0){return(NULL)}
-    coef.names <- ifelse(to>=network.size(nw)+1,
-                         paste("deg",from,"+",sep=""),
-                         paste("deg",from,"to",to,sep=""))
-    name <- "degrange"
-    inputs <- c(rbind(from,to))
-  } else if (homophily) {
-    if(length(from)==0){return(NULL)}
-    # See comment in d_degrange_w_homophily function
-    coef.names <- ifelse(to>=network.size(nw)+1,
-                         paste("deg",from,"+", ".homophily.",attrname,sep=""),
-                         paste("deg",from,"to",to, ".homophily.",attrname,sep=""))
-    name <- "degrange_w_homophily"
-    inputs <- c(rbind(from,to), nodecov)
-  } else {
-    if(ncol(du)==0) {return(NULL)}
-    #  No covariates here, so "ParamsBeforeCov" unnecessary
-    # See comment in d_degrange_by_attr function
-    coef.names <- ifelse(du[2,]>=network.size(nw)+1,
-                         paste("deg",du[1,],"+.", attrname, u[du[3,]],sep=""),
-                         paste("deg",du[1,],"to",du[2,],".",attrname, u[du[3,]],sep=""))
-    name <- "degrange_by_attr"
-    inputs <- c(as.vector(du), nodecov)
-  }
-  if (!is.null(emptynwstats)){
-    list(name=name,coef.names=coef.names, inputs=inputs,
-         emptynwstats=emptynwstats, dependence=TRUE, minval = 0)
-  }else{
-    list(name=name,coef.names=coef.names, inputs=inputs, dependence=TRUE, minval = 0, maxval=network.size(nw), conflicts.constraints="degreedist")
-  }
+  .degrange_impl("", FALSE, NULL, nw, arglist, ..., version=version)
 }
 
 
@@ -2496,67 +2303,7 @@ InitErgmTerm.degrange<-function(nw, arglist, ..., version=packageVersion("ergm")
 #' @concept categorical nodal attribute
 #' @concept frequently-used
 InitErgmTerm.degree<-function(nw, arglist, ..., version=packageVersion("ergm")) {
-  if(version <= as.package_version("3.9.4")){
-    a <- check.ErgmTerm(nw, arglist, directed=FALSE,
-                        varnames = c("d", "by", "homophily", "levels"),
-                        vartypes = c("numeric", "character", "logical", "character,numeric,logical"),
-                        defaultvalues = list(NULL, NULL, FALSE, NULL),
-                        required = c(TRUE, FALSE, FALSE, FALSE))
-    levels <- if(!is.null(a$levels)) I(a$levels) else NULL                                                
-  }else{
-    a <- check.ErgmTerm(nw, arglist, directed=FALSE,
-                        varnames = c("d", "by", "homophily", "levels"),
-                        vartypes = c("numeric", ERGM_VATTR_SPEC, "logical", ERGM_LEVELS_SPEC),
-                        defaultvalues = list(NULL, NULL, FALSE, NULL),
-                        required = c(TRUE, FALSE, FALSE, FALSE))
-    levels <- a$levels  
-  }
-  d<-a$d; byarg <- a$by; homophily <- a$homophily
-  emptynwstats<-NULL
-  if(!is.null(byarg)) {
-    nodecov <- ergm_get_vattr(byarg, nw)
-    attrname <- attr(nodecov, "name")
-    u <- ergm_attr_levels(levels, nodecov, nw, levels = sort(unique(nodecov)))
-    nodecov <- match(nodecov,u,nomatch=length(u)+1) # Recode to numeric
-  }
-  if(!is.null(byarg) && !homophily) {
-    # Combine degree and u into 2xk matrix, where k=length(d)*length(u)
-    lu <- length(u)
-    du <- rbind(rep(d,lu), rep(1:lu, rep(length(d), lu)))
-    if (any(du[1,]==0)) {
-      emptynwstats <- rep(0, ncol(du))
-      tmp <- du[2,du[1,]==0]
-      for(i in seq_along(tmp)) tmp[i] <- sum(nodecov==tmp[i])
-        emptynwstats[du[1,]==0] <- tmp
-    }
-  } else {
-    if (any(d==0)) {
-      emptynwstats <- rep(0, length(d))
-      emptynwstats[d==0] <- network.size(nw)
-    }
-  }
-  if(is.null(byarg)) {
-    if(length(d)==0){return(NULL)}
-    coef.names <- paste("degree",d,sep="")
-    name <- "degree"
-    inputs <- c(d)
-  } else if (homophily) {
-    if(length(d)==0){return(NULL)}
-    # See comment in d_degree_w_homophily function
-    coef.names <- paste("deg", d, ".homophily.",attrname, sep="")
-    name <- "degree_w_homophily"
-    inputs <- c(d, nodecov)
-  } else {
-    if(ncol(du)==0) {return(NULL)}
-    #  No covariates here, so "ParamsBeforeCov" unnecessary
-    # See comment in d_degree_by_attr function
-    coef.names <- paste("deg", du[1,], ".", attrname,u[du[2,]], sep="")
-    name <- "degree_by_attr"
-    inputs <- c(as.vector(du), nodecov)
-  }
-
-  list(name = name, coef.names = coef.names, inputs = inputs, emptynwstats = emptynwstats, minval=0, maxval=network.size(nw), dependence=TRUE,
-    minval = 0, maxval=network.size(nw), conflicts.constraints="degreedist")
+  .degree_impl("", FALSE, NULL, nw, arglist, ..., version=version)
 }
 
 
@@ -2743,6 +2490,7 @@ InitErgmTerm.diff <- function(nw, arglist, ..., version=packageVersion("ergm")) 
 #'
 #' @param d a vector of distinct integers
 #'
+#' @template ergmTerm-cache-sp
 #' @template ergmTerm-general
 #'
 #' @templateVar fn dsp
@@ -2937,6 +2685,7 @@ InitErgmTerm.edges<-function(nw, arglist, ...) {
 #'
 #' @param d a vector of distinct integers
 #'
+#' @template ergmTerm-cache-sp
 #' @template ergmTerm-general
 #'
 #' @templateVar fn esp
@@ -3068,6 +2817,7 @@ InitErgmTerm.gwb1degree<-function(nw, arglist, gw.cutoff=30, ..., version=packag
 #' @templateVar underlying b1dsp
 #' @template ergmTerm-gw-cutoff
 #'
+#' @template ergmTerm-cache-sp
 #' @template ergmTerm-general
 #'
 #' @concept bipartite
@@ -3134,7 +2884,7 @@ InitErgmTerm.gwb1dsp<-function(nw, arglist, cache.sp=TRUE, gw.cutoff=30, ...) {
 #' @concept bipartite
 #' @concept undirected
 #' @concept curved
-InitErgmTerm.gwb2degree<-function(nw, arglist, cache.sp=TRUE, gw.cutoff=30, ..., version=packageVersion("ergm")) {
+InitErgmTerm.gwb2degree<-function(nw, arglist, gw.cutoff=30, ..., version=packageVersion("ergm")) {
   if(version <= as.package_version("3.9.4")){
     ### Check the network and arguments to make sure they are appropriate.
     a <- check.ErgmTerm(nw, arglist, directed=FALSE, bipartite=TRUE,
@@ -3210,6 +2960,7 @@ InitErgmTerm.gwb2degree<-function(nw, arglist, cache.sp=TRUE, gw.cutoff=30, ...,
 #' @templateVar underlying b2dsp
 #' @template ergmTerm-gw-cutoff
 #'
+#' @template ergmTerm-cache-sp
 #' @template ergmTerm-general
 #'
 #' @concept bipartite
@@ -3343,6 +3094,7 @@ InitErgmTerm.gwdegree<-function(nw, arglist, gw.cutoff=30, ..., version=packageV
 #' @templateVar underlying DSP
 #' @template ergmTerm-gw-cutoff
 #'
+#' @template ergmTerm-cache-sp
 #' @template ergmTerm-general
 #'
 #' @templateVar fn gwdsp
@@ -3403,6 +3155,7 @@ InitErgmTerm.gwdsp<-function(nw, arglist, cache.sp=TRUE, gw.cutoff=30, ...) {
 #' @templateVar underlying ESP
 #' @template ergmTerm-gw-cutoff
 #'
+#' @template ergmTerm-cache-sp
 #' @template ergmTerm-general
 #'
 #' @templateVar fn gwesp
@@ -3539,6 +3292,7 @@ InitErgmTerm.gwidegree<-function(nw, arglist, gw.cutoff=30, ..., version=package
 #' @templateVar underlying NSP
 #' @template ergmTerm-gw-cutoff
 #'
+#' @template ergmTerm-cache-sp
 #' @template ergmTerm-general
 #'
 #' @templateVar fn gwnsp
@@ -3901,83 +3655,7 @@ InitErgmTerm.hammingmix<-function (nw, arglist, ..., version=packageVersion("erg
 #' @concept directed
 #' @concept categorical nodal attribute
 InitErgmTerm.idegrange<-function(nw, arglist, ..., version=packageVersion("ergm")) {
-  if(version <= as.package_version("3.9.4")){
-    a <- check.ErgmTerm(nw, arglist, directed=TRUE,
-                        varnames = c("from", "to", "by", "homophily", "levels"),
-                        vartypes = c("numeric", "numeric", "character", "logical", "character,numeric,logical"),
-                        defaultvalues = list(NULL, Inf, NULL, FALSE, NULL),
-                        required = c(TRUE, FALSE, FALSE, FALSE, FALSE))
-    levels <- if(!is.null(a$levels)) I(a$levels) else NULL                        
-  }else{
-    a <- check.ErgmTerm(nw, arglist, directed=TRUE,
-                        varnames = c("from", "to", "by", "homophily", "levels"),
-                        vartypes = c("numeric", "numeric", ERGM_VATTR_SPEC, "logical", ERGM_LEVELS_SPEC),
-                        defaultvalues = list(NULL, Inf, NULL, FALSE, NULL),
-                        required = c(TRUE, FALSE, FALSE, FALSE, FALSE))
-    levels <- a$levels  
-  }
-  from<-a$from; to<-a$to; byarg <- a$by; homophily <- a$homophily
-  to <- ifelse(to==Inf, network.size(nw)+1, to)
-
-  if(length(to)==1 && length(from)>1) to <- rep(to, length(from))
-  else if(length(from)==1 && length(to)>1) from <- rep(from, length(to))
-  else if(length(from)!=length(to)) ergm_Init_abort("The arguments of term idegrange must have arguments either of the same length, or one of them must have length 1.")
-  else if(any(from>=to)) ergm_Init_abort("Term idegrange must have from<to.")
-
-  emptynwstats<-NULL
-  if(!is.null(byarg)) {
-    nodecov <- ergm_get_vattr(byarg, nw)
-    attrname <- attr(nodecov, "name")
-    u <- ergm_attr_levels(levels, nodecov, nw, levels = sort(unique(nodecov)))
-    nodecov <- match(nodecov,u,nomatch=length(u)+1) # Recode to numeric
-  }
-  if(!is.null(byarg) && !homophily) {
-    # Combine idegrange and u into 3xk matrix, where k=length(from)*length(u)
-    lu <- length(u)
-    du <- rbind(rep(from,lu), rep(to,lu), rep(1:lu, rep(length(from), lu)))
-    if (any(du[1,]==0)) {
-      emptynwstats <- rep(0, ncol(du))
-      tmp <- du[3,du[1,]==0]
-      for(i in seq_along(tmp)) tmp[i] <- sum(nodecov==tmp[i])
-        emptynwstats[du[1,]==0] <- tmp
-    }
-  } else {
-    if (any(from==0)) {
-      emptynwstats <- rep(0, length(from))
-      emptynwstats[from==0] <- network.size(nw)
-    }
-  }
-  if(is.null(byarg)) {
-    if(length(from)==0){return(NULL)}
-    coef.names <- ifelse(to>=network.size(nw)+1,
-                         paste("ideg",from,"+",sep=""),
-                         paste("ideg",from,"to",to,sep=""))
-    name <- "idegrange"
-    inputs <- c(rbind(from,to))
-  } else if (homophily) {
-    if(length(from)==0){return(NULL)}
-    # See comment in d_idegrange_w_homophily function
-    coef.names <- ifelse(to>=network.size(nw)+1,
-                         paste("ideg",from,"+", ".homophily.",attrname,sep=""),
-                         paste("ideg",from,"to",to, ".homophily.",attrname,sep=""))
-    name <- "idegrange_w_homophily"
-    inputs <- c(rbind(from,to), nodecov)
-  } else {
-    if(ncol(du)==0) {return(NULL)}
-    #  No covariates here, so "ParamsBeforeCov" unnecessary
-    # See comment in d_idegrange_by_attr function
-    coef.names <- ifelse(du[2,]>=network.size(nw)+1,
-                         paste("ideg",du[1,],"+.", attrname, u[du[3,]],sep=""),
-                         paste("ideg",du[1,],"to",du[2,],".",attrname, u[du[3,]],sep=""))
-    name <- "idegrange_by_attr"
-    inputs <- c(as.vector(du), nodecov)
-  }
-  if (!is.null(emptynwstats)){
-    list(name=name,coef.names=coef.names, inputs=inputs,
-         emptynwstats=emptynwstats, dependence=TRUE, minval = 0)
-  }else{
-    list(name=name,coef.names=coef.names, inputs=inputs, dependence=TRUE, minval = 0, maxval=network.size(nw), conflicts.constraints="idegreedist")
-  }
+  .degrange_impl("i", TRUE, NULL, nw, arglist, ..., version=version)
 }
 
 ################################################################################
@@ -4005,66 +3683,7 @@ InitErgmTerm.idegrange<-function(nw, arglist, ..., version=packageVersion("ergm"
 #' @concept categorical nodal attribute
 #' @concept frequently-used
 InitErgmTerm.idegree<-function(nw, arglist, ..., version=packageVersion("ergm")) {
-  if(version <= as.package_version("3.9.4")){
-    a <- check.ErgmTerm(nw, arglist, directed=TRUE,
-                        varnames = c("d", "by", "homophily", "levels"),
-                        vartypes = c("numeric", "character", "logical", "character,numeric,logical"),
-                        defaultvalues = list(NULL, NULL, FALSE, NULL),
-                        required = c(TRUE, FALSE, FALSE, FALSE))
-    levels <- if(!is.null(a$levels)) I(a$levels) else NULL                                                
-  }else{
-    a <- check.ErgmTerm(nw, arglist, directed=TRUE,
-                        varnames = c("d", "by", "homophily", "levels"),
-                        vartypes = c("numeric", ERGM_VATTR_SPEC, "logical", ERGM_LEVELS_SPEC),
-                        defaultvalues = list(NULL, NULL, FALSE, NULL),
-                        required = c(TRUE, FALSE, FALSE, FALSE))
-    levels <- a$levels  
-  }
-  d<-a$d; byarg <- a$by; homophily <- a$homophily
-  emptynwstats<-NULL
-  if(!is.null(byarg)) {
-    nodecov <- ergm_get_vattr(byarg, nw)
-    attrname <- attr(nodecov, "name")
-    u <- ergm_attr_levels(levels, nodecov, nw, levels = sort(unique(nodecov)))
-    nodecov <- match(nodecov,u,nomatch=length(u)+1) # Recode to numeric
-  }
-  if(!is.null(byarg) && !homophily) {
-    # Combine degree and u into 2xk matrix, where k=length(d)*length(u)
-    lu <- length(u)
-    du <- rbind(rep(d,lu), rep(1:lu, rep(length(d), lu)))
-    if (any(du[1,]==0)) {
-      emptynwstats <- rep(0, ncol(du))
-      tmp <- du[2,du[1,]==0]
-      for(i in seq_along(tmp)) tmp[i] <- sum(nodecov==tmp[i])
-        emptynwstats[du[1,]==0] <- tmp
-    }
-  } else {
-    if (any(d==0)) {
-      emptynwstats <- rep(0, length(d))
-      emptynwstats[d==0] <- network.size(nw)
-    }
-  }
-  if(is.null(byarg)) {
-    if(length(d)==0){return(NULL)}
-    name <- "idegree"
-    coef.names <- paste("idegree",d,sep="")
-    inputs <- c(d)
-  } else if (homophily) {
-    if(length(d)==0){return(NULL)}
-    name <- "idegree_w_homophily"
-    coef.names <- paste("ideg", d, ".homophily.",attrname, sep="")
-    inputs <- c(d, nodecov)
-  } else {
-    if(ncol(du)==0) {return(NULL)}
-    #  No covariates here, so "ParamsBeforeCov" unnecessary
-    name <- "idegree_by_attr"
-    # See comment in d_idegree_by_attr function
-    coef.names <- paste("ideg", du[1,], ".", attrname,u[du[2,]], sep="")
-    inputs <- c(as.vector(du), nodecov)
-  }
-
-  list(name = name, coef.names = coef.names, inputs = inputs, emptynwstats = emptynwstats, minval=0, maxval=network.size(nw), dependence=TRUE,
-    minval = 0, maxval=network.size(nw), conflicts.constraints="idegreedist")
+  .degree_impl("i", TRUE, NULL, nw, arglist, ..., version=version)
 }
 
 
@@ -4120,7 +3739,7 @@ InitErgmTerm.idegreepopularity<-function (nw, arglist, ...) {
 #'   `111D` , `201` , `111U` , `021C` , or `030C` in the
 #'   categorization of Davis and Leinhardt (1972). For details on the 16 possible
 #'   triad types, see `triad.classify` in the
-#'   `sna` package. Note the distinction from the `ctriple`
+#'   \CRANpkg{sna} package. Note the distinction from the `ctriple`
 #'   term.
 #'
 #' @usage
@@ -4814,7 +4433,8 @@ InitErgmTerm.nodecov<-function (nw, arglist, ..., version=packageVersion("ergm")
   list(name="nodecov", coef.names=coef.names, inputs=c(nodecov), dependence=FALSE)
 }
 
-#' @rdname nodecov-ergmTerm
+#' @templateVar name nodecov
+#' @template ergmTerm-rdname
 #' @aliases nodemain-ergmTerm
 #' @usage
 #' # binary: nodemain
@@ -5466,6 +5086,7 @@ InitErgmTerm.nodeofactor<-function (nw, arglist, ..., version=packageVersion("er
 #'
 #' @param d a vector of distinct integers
 #'
+#' @template ergmTerm-cache-sp
 #' @template ergmTerm-general
 #'
 #' @templateVar fn nsp
@@ -5545,83 +5166,7 @@ InitErgmTerm.nsp<-function(nw, arglist, cache.sp=TRUE, ...) {
 #' @concept directed
 #' @concept categorical nodal attribute
 InitErgmTerm.odegrange<-function(nw, arglist, ..., version=packageVersion("ergm")) {
-  if(version <= as.package_version("3.9.4")){
-    a <- check.ErgmTerm(nw, arglist, directed=TRUE,
-                        varnames = c("from", "to", "by", "homophily", "levels"),
-                        vartypes = c("numeric", "numeric", "character", "logical", "character,numeric,logical"),
-                        defaultvalues = list(NULL, Inf, NULL, FALSE, NULL),
-                        required = c(TRUE, FALSE, FALSE, FALSE, FALSE))
-    levels <- if(!is.null(a$levels)) I(a$levels) else NULL                        
-  }else{
-    a <- check.ErgmTerm(nw, arglist, directed=TRUE,
-                        varnames = c("from", "to", "by", "homophily", "levels"),
-                        vartypes = c("numeric", "numeric", ERGM_VATTR_SPEC, "logical", ERGM_LEVELS_SPEC),
-                        defaultvalues = list(NULL, Inf, NULL, FALSE, NULL),
-                        required = c(TRUE, FALSE, FALSE, FALSE, FALSE))
-    levels <- a$levels  
-  }
-  from<-a$from; to<-a$to; byarg <- a$by; homophily <- a$homophily
-  to <- ifelse(to==Inf, network.size(nw)+1, to)
-
-  if(length(to)==1 && length(from)>1) to <- rep(to, length(from))
-  else if(length(from)==1 && length(to)>1) from <- rep(from, length(to))
-  else if(length(from)!=length(to)) ergm_Init_abort("The arguments of term odegrange must have arguments either of the same length, or one of them must have length 1.")
-  else if(any(from>=to)) ergm_Init_abort("Term odegrange must have from<to.")
-
-  emptynwstats<-NULL
-  if(!is.null(byarg)) {
-    nodecov <- ergm_get_vattr(byarg, nw)
-    attrname <- attr(nodecov, "name")
-    u <- ergm_attr_levels(levels, nodecov, nw, levels = sort(unique(nodecov)))
-    nodecov <- match(nodecov,u,nomatch=length(u)+1) # Recode to numeric
-  }
-  if(!is.null(byarg) && !homophily) {
-    # Combine odegrange and u into 3xk matrix, where k=length(from)*length(u)
-    lu <- length(u)
-    du <- rbind(rep(from,lu), rep(to,lu), rep(1:lu, rep(length(from), lu)))
-    if (any(du[1,]==0)) {
-      emptynwstats <- rep(0, ncol(du))
-      tmp <- du[3,du[1,]==0]
-      for(i in seq_along(tmp)) tmp[i] <- sum(nodecov==tmp[i])
-        emptynwstats[du[1,]==0] <- tmp
-    }
-  } else {
-    if (any(from==0)) {
-      emptynwstats <- rep(0, length(from))
-      emptynwstats[from==0] <- network.size(nw)
-    }
-  }
-  if(is.null(byarg)) {
-    if(length(from)==0){return(NULL)}
-    coef.names <- ifelse(to>=network.size(nw)+1,
-                         paste("odeg",from,"+",sep=""),
-                         paste("odeg",from,"to",to,sep=""))
-    name <- "odegrange"
-    inputs <- c(rbind(from,to))
-  } else if (homophily) {
-    if(length(from)==0){return(NULL)}
-    # See comment in d_odegrange_w_homophily function
-    coef.names <- ifelse(to>=network.size(nw)+1,
-                         paste("odeg",from,"+", ".homophily.",attrname,sep=""),
-                         paste("odeg",from,"to",to, ".homophily.",attrname,sep=""))
-    name <- "odegrange_w_homophily"
-    inputs <- c(rbind(from,to), nodecov)
-  } else {
-    if(ncol(du)==0) {return(NULL)}
-    #  No covariates here, so "ParamsBeforeCov" unnecessary
-    # See comment in d_odegrange_by_attr function
-    coef.names <- ifelse(du[2,]>=network.size(nw)+1,
-                         paste("odeg",du[1,],"+.", attrname, u[du[3,]],sep=""),
-                         paste("odeg",du[1,],"to",du[2,],".",attrname, u[du[3,]],sep=""))
-    name <- "odegrange_by_attr"
-    inputs <- c(as.vector(du), nodecov)
-  }
-  if (!is.null(emptynwstats)){
-    list(name=name,coef.names=coef.names, inputs=inputs,
-         emptynwstats=emptynwstats, dependence=TRUE, minval = 0)
-  }else{
-    list(name=name,coef.names=coef.names, inputs=inputs, dependence=TRUE, minval = 0, maxval=network.size(nw), conflicts.constraints="odegreedist")
-  }
+  .degrange_impl("o", TRUE, NULL, nw, arglist, ..., version=version)
 }
 
 ################################################################################
@@ -5649,67 +5194,7 @@ InitErgmTerm.odegrange<-function(nw, arglist, ..., version=packageVersion("ergm"
 #' @concept categorical nodal attribute
 #' @concept frequently-used
 InitErgmTerm.odegree<-function(nw, arglist, ..., version=packageVersion("ergm")) {
-  if(version <= as.package_version("3.9.4")){
-    a <- check.ErgmTerm(nw, arglist, directed=TRUE,
-                        varnames = c("d", "by", "homophily", "levels"),
-                        vartypes = c("numeric", "character", "logical", "character,numeric,logical"),
-                        defaultvalues = list(NULL, NULL, FALSE, NULL),
-                        required = c(TRUE, FALSE, FALSE, FALSE))
-    levels <- if(!is.null(a$levels)) I(a$levels) else NULL                                                
-  }else{
-    a <- check.ErgmTerm(nw, arglist, directed=TRUE,
-                        varnames = c("d", "by", "homophily", "levels"),
-                        vartypes = c("numeric", ERGM_VATTR_SPEC, "logical", ERGM_LEVELS_SPEC),
-                        defaultvalues = list(NULL, NULL, FALSE, NULL),
-                        required = c(TRUE, FALSE, FALSE, FALSE))
-    levels <- a$levels  
-  }
-  d<-a$d; byarg <- a$by; homophily <- a$homophily
-  emptynwstats<-NULL
-  if(!is.null(byarg)) {
-    nodecov <- ergm_get_vattr(byarg, nw)
-    attrname <- attr(nodecov, "name")
-    u <- ergm_attr_levels(levels, nodecov, nw, levels = sort(unique(nodecov)))
-    nodecov <- match(nodecov,u,nomatch=length(u)+1) # Recode to numeric
-  }
-  if(!is.null(byarg) && !homophily) {
-    # Combine degree and u into 2xk matrix, where k=length(d)*length(u)
-    lu <- length(u)
-    du <- rbind(rep(d,lu), rep(1:lu, rep(length(d), lu)))
-    if (any(du[1,]==0)) {
-      emptynwstats <- rep(0, ncol(du))
-      tmp <- du[2,du[1,]==0]
-      for(i in seq_along(tmp)) tmp[i] <- sum(nodecov==tmp[i])
-        emptynwstats[du[1,]==0] <- tmp
-    }
-  } else {
-    if (any(d==0)) {
-      emptynwstats <- rep(0, length(d))
-      emptynwstats[d==0] <- network.size(nw)
-    }
-  }
-  if(is.null(byarg)) {
-    if(length(d)==0){return(NULL)}
-    name <- "odegree"
-    coef.names <- paste("odegree",d,sep="")
-    inputs <- c(d)
-  } else if (homophily) {
-    if(length(d)==0){return(NULL)}
-    name <- "odegree_w_homophily"
-    # See comment in d_odegree_w_homophily function
-    coef.names <- paste("odeg", d, ".homophily.",attrname, sep="")
-    inputs <- c(d, nodecov)
-  } else {
-    if(ncol(du)==0) {return(NULL)}
-    #  No covariates here, so "ParamsBeforeCov" unnecessary
-    name <- "odegree_by_attr"
-    # See comment in d_odegree_by_attr function
-    coef.names <- paste("odeg", du[1,], ".", attrname,u[du[2,]], sep="")
-    inputs <- c(as.vector(du), nodecov)
-  }
-
-  list(name = name, coef.names = coef.names, inputs = inputs, emptynwstats = emptynwstats, minval=0, maxval=network.size(nw), dependence=TRUE,
-    minval = 0, maxval=network.size(nw), conflicts.constraints="odegreedist")
+  .degree_impl("o", TRUE, NULL, nw, arglist, ..., version=version)
 }
 
 
@@ -6165,44 +5650,6 @@ InitErgmTerm.sociality<-function(nw, arglist, ..., version=packageVersion("ergm"
 
 ################################################################################
 
-#' @rdname threetrail-ergmTerm
-#' @aliases threepath-ergmTerm
-#' @usage
-#' # binary: threepath
-InitErgmTerm.threepath <- function(nw, arglist, ..., version=packageVersion("ergm")) {
-  ergm_Init_warn(paste("This term is inaccurately named and actually refers to a '3-trail' in that it counts repeated vertices: i-j-k-i is a 3-trail but not a 3-path. See", sQuote("ergmTerm?treepath"), "help for more information. This name has been deprecated and will be removed in a future version: if a 3-trail is what you want, use the term 'threetrail'."))
-  if(version <= as.package_version("3.9.4")){
-    ### Check the network and arguments to make sure they are appropriate.
-    a <- check.ErgmTerm (nw, arglist, 
-                         varnames = c("keep"),
-                         vartypes = c("numeric"),
-                         defaultvalues = list(NULL),
-                         required = c(FALSE),
-                         dep.inform = list("levels"))
-  }else{
-    a <- check.ErgmTerm (nw, arglist, 
-                         varnames = c("keep", "levels"),
-                         vartypes = c("numeric", ERGM_LEVELS_SPEC),
-                         defaultvalues = list(NULL, NULL),
-                         required = c(FALSE, FALSE),
-                         dep.inform = list("levels", FALSE))
-  }  
-  vals = c("RRR","RRL","LRR","LRL")
-  types <- ergm_attr_levels(a$levels, vals, nw, levels = vals)
-  if((!hasName(attr(a,"missing"), "levels") || attr(a,"missing")["levels"]) && !is.null(a$keep)) types <- types[a$keep]
-  indices = match(types, vals)  
-  if (is.directed(nw)) {
-    return(list(name = "threetrail", 
-                coef.names = paste("threetrail", types, sep="."),
-                inputs=indices, minval = 0))
-  }
-  else {
-    return(list(name = "threetrail", coef.names = "threetrail", minval = 0))
-  }
-}
-
-################################################################################
-
 #' @templateVar name threetrail
 #' @title Three-trails
 #' @description For an undirected network, this term adds one statistic equal to the number
@@ -6278,6 +5725,18 @@ InitErgmTerm.threetrail <- function(nw, arglist, ..., version=packageVersion("er
   }
 }
 
+#' @templateVar name threetrail
+#' @template ergmTerm-rdname
+#' @aliases threepath-ergmTerm
+#' @usage
+#' # binary: threepath(keep=NULL, levels=NULL)
+InitErgmTerm.threepath <- function(nw, arglist, ..., version=packageVersion("ergm")) {
+  ergm_Init_warn(paste("This term is inaccurately named and actually refers to a '3-trail' in that it counts repeated vertices: i-j-k-i is a 3-trail but not a 3-path. See", sQuote("ergmTerm?treepath"), "help for more information. This name has been deprecated and will be removed in a future version: if a 3-trail is what you want, use the term 'threetrail'."))
+
+  f <- InitErgmTerm.threetrail
+  f(nw, arglist, ..., version=version)
+}
+
 ################################################################################
 
 #' @templateVar name transitive
@@ -6286,7 +5745,7 @@ InitErgmTerm.threetrail <- function(nw, arglist, ..., version=packageVersion("er
 #'   the network that are transitive. The transitive triads are those of type
 #'   `120D` , `030T` , `120U` , or `300` in the categorization
 #'   of Davis and Leinhardt (1972). For details on the 16 possible triad types,
-#'   see `?triad.classify` in the `sna` package.
+#'   see `?triad.classify` in the \CRANpkg{sna} package.
 #'   Note the distinction from the `ttriple` term. This term can only be
 #'   used with directed networks.
 #'
@@ -6320,7 +5779,7 @@ InitErgmTerm.transitive<-function (nw, arglist, ...) {
 #'   of completely empty three-node sets, is dropped. This is considered category
 #'   zero, and the others are numbered 1 through 15 in the order given above. Each statistic is the count of the corresponding triad
 #'   type in the network. For details on the 16 types, see `?triad.classify`
-#'   in the `sna` package, on which this code is based. For an undirected
+#'   in the \CRANpkg{sna} package, on which this code is based. For an undirected
 #'   network, the triad census is over the four types defined by the number of
 #'   ties (i.e., 0, 1, 2, and 3).
 #'
@@ -6562,7 +6021,8 @@ InitErgmTerm.tripercent<-function (nw, arglist, ..., version=packageVersion("erg
 #' @usage
 #' # binary: ttriple(attr=NULL, diff=FALSE, levels=NULL)
 #'
-#' @param attr,diff quantitative attribute (see Specifying Vertex attributes and Levels (`?nodal_attributes`) for details.) If `attr` is specified and `diff` is `FALSE` ,
+#' @template ergmTerm-attr
+#' @param diff If `attr` is specified and `diff` is `FALSE` ,
 #'   then the count is over the number of transitive triples where all three nodes have the same value of
 #'   the attribute. If `attr` is specified and `diff` is `TRUE` ,
 #'   then one statistic is added for each value of `attr` ,
@@ -6573,8 +6033,6 @@ InitErgmTerm.tripercent<-function (nw, arglist, ..., version=packageVersion("erg
 #' @template ergmTerm-general
 #'
 #' @template ergmTerm-directed
-#'
-#' @template ergmTerm-attr
 #'
 #' @concept directed
 #' @concept triad-related
@@ -6619,7 +6077,8 @@ InitErgmTerm.ttriple<-function (nw, arglist, ..., version=packageVersion("ergm")
   list(name="ttriple", coef.names=coef.names, inputs=inputs, minval = 0)
 }
 
-#' @rdname ttriple-ergmTerm
+#' @templateVar name ttriple
+#' @template ergmTerm-rdname
 #' @aliases ttriad-ergmTerm
 #' @usage
 #' # binary: ttriad

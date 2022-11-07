@@ -12,6 +12,15 @@
 
 #include "ergm_nodelist.h"
 
+/*
+   This data structure represents a block whose margins are NodeLists, which may
+   be dynamic. It supports calculation of dyad count (including directedness and
+   diagonal information) and extraction of a dyad at a specified doubled index.
+   (Indices are doubled to keep things rectangular for diagonal, undirected blocks,
+   whose unique dyads form a triangle.)
+*/
+
+
 typedef struct {
   NodeList *tails;
   NodeList *heads;
@@ -35,7 +44,7 @@ static inline void BlockDestroy(Block *block) {
 static inline void BlockPut2Dyad(Vertex *tail, Vertex *head, Dyad dyadindex, Block *block) {
   int tailindex;
   int headindex;
-  
+
   if(block->diagonal) {
     if(block->directed) {
       dyadindex /= 2;
@@ -44,23 +53,23 @@ static inline void BlockPut2Dyad(Vertex *tail, Vertex *head, Dyad dyadindex, Blo
     headindex = dyadindex % (block->heads->length - 1);
     if(tailindex == headindex) {
       headindex = block->heads->length - 1;
-    }                  
+    }
   } else {
     dyadindex /= 2;
     tailindex = dyadindex / block->heads->length;
-    headindex = dyadindex % block->heads->length;        
+    headindex = dyadindex % block->heads->length;
   }
-  
-  // 1-based indexing in NLs
+
+  // 1-based indexing in NodeLists
   tailindex++;
   headindex++;
-  
+
   if(block->tails->nodes[tailindex] < block->heads->nodes[headindex] || block->directed) {
     *tail = block->tails->nodes[tailindex];
     *head = block->heads->nodes[headindex];
   } else {
     *tail = block->heads->nodes[headindex];
-    *head = block->tails->nodes[tailindex];      
+    *head = block->tails->nodes[tailindex];
   }
 }
 
@@ -69,7 +78,7 @@ static inline Dyad BlockDyadCount(Block *block) {
     if(block->directed) {
       return (Dyad)block->tails->length*(block->heads->length - 1);
     } else {
-      return (Dyad)block->tails->length*(block->heads->length - 1)/2;      
+      return (Dyad)block->tails->length*(block->heads->length - 1)/2;
     }
   } else {
     return (Dyad)block->tails->length*block->heads->length;
@@ -80,7 +89,7 @@ static inline int BlockDyadCountPositive(Block *block) {
   if(block->diagonal) {
     return block->tails->length > 1;
   } else {
-    return block->tails->length > 0 && block->heads->length > 0;      
+    return block->tails->length > 0 && block->heads->length > 0;
   }
 }
 

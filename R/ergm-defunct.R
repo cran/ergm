@@ -107,4 +107,13 @@ as.network.uncompressed<-function(...) .Defunct(msg="No longer used.")
 standardize.network <- function(...) .Defunct(msg=paste0("Obviated by improvements to ", sQuote("network"), " package."))
 
 #' @rdname ergm-defunct
-newnw.extract<-function(...) .Defunct('pending_network_update "API"')
+newnw.extract<-function(...) .Defunct('ergm_state "API"')
+
+# The following were defunct-ed 2022-06-21.
+
+#' @rdname ergm-defunct
+san.ergm <- function(...) .Defunct(msg="Removed due to no meaningful use case.")
+
+# The following were defunct-ed 2022-09-10.
+#' @rdname ergm-defunct
+is.inCH <- function(...) .Defunct("shrink_into_CH")

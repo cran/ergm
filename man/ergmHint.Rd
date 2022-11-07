@@ -11,7 +11,7 @@
 \title{MCMC Hints for Exponential-Family Random Graph Models}
 \description{
 This page describes how to provide to the
-\CRANpkg{ergm}'s MCMC algorithms information about the sample space.
+\CRANpkg{ergm}'s MCMC algorithms information about the sample space. Hints can also be searched via \code{\link{search.ergmHints}}, and help for an individual hint can be obtained with \verb{ergmHint?<hint>} or \code{help("<hint>-ergmHint")}.
 }
 \section{\dQuote{Hints} for MCMC}{
 
@@ -51,6 +51,8 @@ be substituted in its place.
 
 
 The following hints are known to \CRANpkg{ergm} at this time:
+
+\ergmCSS
 
 \if{latex}{\Sexpr[results=rd,stage=render]{ergm:::.formatIndexLatex(ergm:::.buildTermsDataframe("ergmHint"))}}
 \if{text}{\Sexpr[results=rd,stage=render]{ergm:::.formatIndexText(ergm:::.buildTermsDataframe("ergmHint"))}}

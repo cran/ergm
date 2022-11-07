@@ -8,7 +8,7 @@ control.ergm(
   drop = TRUE,
   init = NULL,
   init.method = NULL,
-  main.method = c("MCMLE", "Robbins-Monro", "Stochastic-Approximation", "Stepping"),
+  main.method = c("MCMLE", "Stochastic-Approximation"),
   force.main = FALSE,
   main.hessian = TRUE,
   checkpoint = NULL,
@@ -120,19 +120,6 @@ control.ergm(
   SA.interval = 1024,
   SA.burnin = SA.interval * 16,
   SA.samplesize = 1024,
-  RM.phase1n_base = 7,
-  RM.phase2n_base = 100,
-  RM.phase2sub = 7,
-  RM.init_gain = 0.5,
-  RM.phase3n = 500,
-  RM.interval = 1024,
-  RM.burnin = RM.interval * 16,
-  RM.samplesize = 1024,
-  Step.maxit = 50,
-  Step.gridsize = 100,
-  Step.interval = 1024,
-  Step.burnin = Step.interval * 16,
-  Step.samplesize = 1024,
   CD.samplesize.per_theta = 128,
   obs.CD.samplesize.per_theta = 128,
   CD.nsteps = 8,
@@ -205,23 +192,20 @@ appropriate length and \code{"CD"} for contrastive divergence. If
 passed explicitly, this setting overrides the reference's
 limitations.
 
-Valid initial methods for a given reference are set by the \verb{InitErgmReference.*} function.}
+Valid initial methods for a given reference are set by the
+\verb{InitErgmReference.*} function.}
 
-\item{main.method}{One of "MCMLE" (default),"Robbins-Monro",
-"Stochastic-Approximation", or "Stepping".  Chooses the estimation method
-used to find the MLE.  \code{MCMLE} attempts to maximize an approximation to
-the log-likelihood function.  \code{Robbins-Monro} and
-\code{Stochastic-Approximation} are both stochastic approximation algorithms
-that try to solve the method of moments equation that yields the MLE in the
-case of an exponential family model.  Another alternative is a partial
-stepping algorithm (\code{Stepping}) as in Hummel et al. (2012).  The direct
-use of the likelihood function has many theoretical advantages over
-stochastic approximation, but the choice will depend on the model and data
-being fit. See Handcock (2000) and Hunter and Handcock (2006) for details.
-
-Note that in recent versions of ERGM, the enhancements of \code{Stepping}
-have been folded into the default \code{MCMLE}, which is able to handle more
-modeling scenarios; and \code{Stepping} may be removed in a future version.}
+\item{main.method}{One of "MCMLE" (default) or
+"Stochastic-Approximation".  Chooses the estimation method used
+to find the MLE.  \code{MCMLE} attempts to maximize an
+approximation to the log-likelihood function.
+\code{Stochastic-Approximation} are both stochastic approximation
+algorithms that try to solve the method of moments equation that
+yields the MLE in the case of an exponential family model. The
+direct use of the likelihood function has many theoretical
+advantages over stochastic approximation, but the choice will
+depend on the model and data being fit. See Handcock (2000) and
+Hunter and Handcock (2006) for details.}
 
 \item{force.main}{Logical: If TRUE, then force MCMC-based estimation method,
 even if the exact MLE can be computed via maximum pseudolikelihood
@@ -617,21 +601,6 @@ stochastic approximation algorithm.  See Snijders (2002) for details.}
 
 \item{SA.burnin, SA.interval, SA.samplesize}{Sets the corresponding
 \verb{MCMC.*} parameters when \code{main.method="Stochastic-Approximation"}.}
-
-\item{RM.phase1n_base, RM.phase2n_base, RM.phase2sub, RM.init_gain, RM.phase3n}{The Robbins-Monro control parameters are not yet documented.}
-
-\item{RM.burnin, RM.interval, RM.samplesize}{Sets the corresponding
-\verb{MCMC.*} parameters when \code{main.method="Robbins-Monro"}.}
-
-\item{Step.maxit}{Maximum number of iterations (steps) allowed by the
-"Stepping" method.}
-
-\item{Step.gridsize}{Integer \eqn{N} such that the "Stepping" style of
-optimization chooses a step length equal to the largest possible multiple of
-\eqn{1/N}.  See Hummel et al. (2012) for details.}
-
-\item{Step.burnin, Step.interval, Step.samplesize}{Sets the corresponding
-\verb{MCMC.*} parameters when \code{main.method="Stepping"}.}
 
 \item{CD.samplesize.per_theta, obs.CD.samplesize.per_theta, CD.maxit, CD.conv.min.pval, CD.NR.maxit, CD.NR.reltol, CD.metric, CD.method, CD.dampening, CD.dampening.min.ess, CD.dampening.level, CD.steplength.margin, CD.steplength, CD.steplength.parallel, CD.adaptive.epsilon, CD.steplength.esteq, CD.steplength.miss.sample, CD.steplength.min, CD.steplength.solver}{Miscellaneous tuning parameters of the CD sampler and
 optimizer. These have the same meaning as their \verb{MCMLE.*} and

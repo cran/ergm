@@ -11,7 +11,7 @@
 \description{
 This page describes how to specify the reference measures (baseline distributions)
 (the set of possible networks \eqn{Y} and the baseline weights \eqn{h(y)} to functions in the \code{\link[=ergm-package]{ergm}}
-package. It also provides an indexed list of the references visible to the \CRANpkg{ergm}'s API.
+package. It also provides an indexed list of the references visible to the \CRANpkg{ergm}'s API. References can also be searched via \code{\link[=search.ergmReferences]{search.ergmReferences()}}, and help for an individual reference can be obtained with \verb{ergmReference?<reference>} or \code{help("<reference>-ergmReference")}.
 }
 \section{Specifying reference measures}{
 
@@ -22,6 +22,9 @@ typically as the \code{reference} argument.
 }
 
 \section{Reference measures visible to the package}{
+
+
+\ergmCSS
 
 \if{latex}{\Sexpr[results=rd,stage=render]{ergm:::.formatIndexLatex(ergm:::.buildTermsDataframe("ergmReference"))}}
 \if{text}{\Sexpr[results=rd,stage=render]{ergm:::.formatIndexText(ergm:::.buildTermsDataframe("ergmReference"))}}
@@ -53,6 +56,6 @@ Networks. \emph{Electronic Journal of Statistics}, 2012, 6, 1100-1128.
 }
 }
 \seealso{
-\code{\link[=ergm-package]{ergm}}, \code{\link{network}}, \code{sna}, \code{\link{summary.ergm}}, \code{\link{print.ergm}}, \verb{\\\%v\\\%}, \verb{\\\%n\\\%}
+\code{\link[=ergm-package]{ergm}}, \code{\link{network}}, \CRANpkg{sna}, \code{\link{summary.ergm}}, \code{\link{print.ergm}}, \verb{\\\%v\\\%}, \verb{\\\%n\\\%}
 }
 \keyword{models}

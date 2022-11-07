@@ -8,6 +8,22 @@
 #  Copyright 2003-2022 Statnet Commons
 ################################################################################
 
+# Meta-constraint for a dot placeholder
+InitErgmConstraint.. <- function(nw, arglist, ...){
+  a <- check.ErgmTerm(nw, arglist)
+  list(dependence = FALSE)
+}
+
+# Meta-constraint selecting a specific proposal.
+InitErgmConstraint..select <- function(nw, arglist, ...){
+  a <- check.ErgmTerm(nw, arglist,
+                      varnames = c("proposal"),
+                      vartypes = c("character"),
+                      defaultvalues = list(NULL),
+                      required = c(TRUE))
+  list(dependence = TRUE, proposal = a$proposal)
+}
+
 # Baseline constraint incorporating network attributes such as
 # directedness, bipartitedness, and self-loops.
 InitErgmConstraint..attributes <- function(nw, arglist, ...){
@@ -18,7 +34,7 @@ InitErgmConstraint..attributes <- function(nw, arglist, ...){
   dir <- is.directed(nw)
   loops <- has.loops(nw)
   bip <- EVL(as.integer(nw%n%"bipartite"), FALSE)
-  rm(nw) # All needed information has now been extracted from nw.
+  rm(nw, arglist, "...") # All needed information has now been extracted.
 
   list(
     free_dyads = function(){
@@ -102,7 +118,8 @@ InitErgmConstraint.degrees<-function(nw, arglist, ...){
   list(dependence = TRUE, constrain = "degrees", implies = c("degrees", "edges", "idegrees", "odegrees", "idegreedist", "odegreedist", "degreedist", "bd"))
 }
 
-#' @rdname degrees-ergmConstraint
+#' @templateVar name degrees
+#' @template ergmConstraint-rdname
 #' @aliases nodedegrees-ergmConstraint
 #' @usage
 #' # nodedegrees
@@ -255,15 +272,21 @@ InitErgmConstraint.bd<-function(nw, arglist, ...){
 }
 
 #' @templateVar name blocks
-#' @title Constrain "blocks" of dyads
-#' @description Any dyad whose toggle would produce a nonzero change statistic for a `nodemix` term with the same arguments will be fixed. Note that the `levels2` argument has a different default value for `blocks` than it does for `nodemix` .
+#' @title Constrain blocks of dyads defined by mixing type on a vertex attribute.
+#' @description Any dyad whose toggle would produce a nonzero change statistic
+#'              for a `nodemix` term with the same arguments will be fixed. Note
+#'              that the `levels2` argument has a different default value for
+#'              `blocks` than it does for `nodemix`.
 #'
 #' @usage
 #' # blocks(attr=NULL, levels=NULL, levels2=FALSE, b1levels=NULL, b2levels=NULL)
 #'
 #' @template ergmConstraint-general
 #' @template ergmTerm-attr
-#' @param b1levels,b2levels,levels,level2 control what statistics are included in the model and the order in which they appear. `levels2` apply to all networks; `levels` applies to unipartite networks; `b1levels` and `b2levels` apply to bipartite networks (see Specifying Vertex attributes and Levels (`?nodal_attributes`) for details)
+#' @param b1levels,b2levels,levels,level2 control what mixing types are fixed.
+#'        `levels2` applies to all networks; `levels` applies to unipartite networks;
+#'        `b1levels` and `b2levels` apply to bipartite networks (see Specifying Vertex
+#'        attributes and Levels (`?nodal_attributes`) for details)
 #'
 #' @concept dyad-independent
 #' @concept directed
@@ -271,120 +294,84 @@ InitErgmConstraint.bd<-function(nw, arglist, ...){
 InitErgmConstraint.blocks <- function(nw, arglist, ...) {
   a <- check.ErgmTerm(nw, arglist,
                       varnames = c("attr", "b1levels", "b2levels", "levels", "levels2"),
-                      vartypes = c(ERGM_VATTR_SPEC, ERGM_LEVELS_SPEC, ERGM_LEVELS_SPEC, ERGM_LEVELS_SPEC, ERGM_LEVELS_SPEC),
+                      vartypes = c(ERGM_VATTR_SPEC, ERGM_LEVELS_SPEC, ERGM_LEVELS_SPEC,
+                                   ERGM_LEVELS_SPEC, ERGM_LEVELS_SPEC),
                       defaultvalues = list(NULL, NULL, NULL, NULL, FALSE),
                       required = c(TRUE, FALSE, FALSE, FALSE, FALSE))
-  attr <- a$attr; b1levels <- a$b1levels; b2levels <- a$b2levels; levels <- a$levels; levels2 <- a$levels2
 
   if(is.bipartite(nw)) {
-    b1nodecov <- ergm_get_vattr(attr, nw, bip = "b1")
-    b2nodecov <- ergm_get_vattr(attr, nw, bip = "b2")
-    
-    b1namescov <- ergm_attr_levels(b1levels, b1nodecov, nw, sort(unique(b1nodecov)))
-    b2namescov <- ergm_attr_levels(b2levels, b2nodecov, nw, sort(unique(b2nodecov)))
-    
-    nr <- length(b1namescov)
-    nc <- length(b2namescov)
-    
-    levels2.list <- transpose(expand.grid(row = b1namescov, col = b2namescov, stringsAsFactors=FALSE))
-    indices2.grid <- expand.grid(row = 1:nr, col = nr + 1:nc)
-   
-    levels2.sel <- ergm_attr_levels(levels2, list(row = b1nodecov, col = b2nodecov), nw, levels2.list)
-    
-    rows2keep <- match(levels2.sel,levels2.list, NA)
-    rows2keep <- rows2keep[!is.na(rows2keep)]
-  
-    u <- indices2.grid[rows2keep,]
-  
-    b1nodecov <- match(b1nodecov, b1namescov, nomatch = length(b1namescov) + 1)
-    b2nodecov <- match(b2nodecov, b2namescov, nomatch = length(b2namescov) + 1)
-      
-    nodecov <- c(b1nodecov, b2nodecov)
-                                           
-    u[,2L] <- u[,2L] - nr
-    amat <- matrix(TRUE, nrow = nr + 1, ncol = nc + 1)
-    amat[as.matrix(u)] <- FALSE
-    
-    row_nodecov <- b1nodecov
-    col_nodecov <- b2nodecov
-    
+    row_nodecov <- ergm_get_vattr(a$attr, nw, bip = "b1")
+    col_nodecov <- ergm_get_vattr(a$attr, nw, bip = "b2")
+
+    row_levels <- ergm_attr_levels(a$b1levels, row_nodecov, nw, sort(unique(row_nodecov)))
+    col_levels <- ergm_attr_levels(a$b2levels, col_nodecov, nw, sort(unique(col_nodecov)))
+
+    offset <- length(row_levels) + 1L
   } else {
-    nodecov <- ergm_get_vattr(attr, nw)
-  
-    u <- ergm_attr_levels(levels, nodecov, nw, sort(unique(nodecov)))
-    namescov <- u 
-    
-    nr <- length(u)
-    nc <- length(u)
+    all_nodecov <- ergm_get_vattr(a$attr, nw)
+    row_nodecov <- col_nodecov <- all_nodecov
 
-    levels2.list <- transpose(expand.grid(row = u, col = u, stringsAsFactors=FALSE))
-    indices2.grid <- expand.grid(row = 1:nr, col = 1:nc)
-    uun <- as.vector(outer(u,u,paste,sep="."))
-    
-    if(!is.directed(nw)) {
-        rowleqcol <- indices2.grid$row <= indices2.grid$col
-        levels2.list <- levels2.list[rowleqcol]
-        indices2.grid <- indices2.grid[rowleqcol,]
-        uun <- uun[rowleqcol]
-    }    
-   
-    levels2.sel <- ergm_attr_levels(levels2, list(row = nodecov, col = nodecov), nw, levels2.list)
-    
-    rows2keep <- match(levels2.sel,levels2.list, NA)
-    rows2keep <- rows2keep[!is.na(rows2keep)]
-  
-    u <- indices2.grid[rows2keep,]
-    uun <- uun[rows2keep]
+    all_levels <- ergm_attr_levels(a$levels, all_nodecov, nw, sort(unique(all_nodecov)))
+    row_levels <- col_levels <- all_levels
 
-    nodecov <- match(nodecov, namescov, nomatch = length(namescov) + 1)
-    
-    amat <- matrix(TRUE, nrow = nr + 1, ncol = nc + 1)
-    amat[as.matrix(u)] <- FALSE
-    if(!is.directed(nw)) amat <- amat & t(amat)
-    
-    row_nodecov <- nodecov
-    col_nodecov <- nodecov
-    
-  }  
+    offset <- 0L
+  }
 
-  constrain <- "blocks"
-  
+  levels2_list <- transpose(expand.grid(row = row_levels,
+                                        col = col_levels, stringsAsFactors = FALSE))
+  indices2_grid <- expand.grid(row = seq_along(row_levels),
+                               col = offset + seq_along(col_levels))
+
+  if(!is.directed(nw) && !is.bipartite(nw)) {
+    rows_leq_cols <- indices2_grid$row <= indices2_grid$col
+    levels2_list <- levels2_list[rows_leq_cols]
+    indices2_grid <- indices2_grid[rows_leq_cols,]
+  }
+
+  levels2_selected <- ergm_attr_levels(a$levels2,
+                                       list(row = row_nodecov, col = col_nodecov),
+                                       nw,
+                                       levels2_list)
+
+  rows_to_keep <- match(levels2_selected, levels2_list, nomatch = NA)
+  rows_to_keep <- rows_to_keep[!is.na(rows_to_keep)]
+
+  pairs_to_fix <- indices2_grid[rows_to_keep,]
+
+  if(is.bipartite(nw)) {
+    row_nodecov <- match(row_nodecov, row_levels, nomatch = length(row_levels) + 1)
+    col_nodecov <- match(col_nodecov, col_levels, nomatch = length(col_levels) + 1)
+
+    nodecov <- c(row_nodecov, col_nodecov + offset)
+  } else {
+    nodecov <- match(all_nodecov, all_levels, nomatch = length(all_levels) + 1)
+  }
+
+  size <- length(col_levels) + 1 + offset
+  amat <- matrix(TRUE, nrow = size, ncol = size)
+  amat[as.matrix(pairs_to_fix)] <- FALSE
+
+  if(is.bipartite(nw)) {
+    amat[,seq_len(offset)] <- FALSE
+    amat[-seq_len(offset),] <- FALSE
+  } else if(!is.directed(nw)) {
+    amat <- amat & t(amat)
+  }
+
   n <- as.integer(network.size(nw))
 
-  if(is.bipartite(nw)) {
-    b1 <- as.integer(nw %n% "bipartite")
-    b2 <- n - b1
-  } else {
-    b1 <- 0L
-    b2 <- 0L
-  }
-  
-  rm(nw) # All needed information has now been extracted from nw.
+  rm(nw, arglist, "...") # All needed information has now been extracted.
 
   free_dyads <- function() {
-    rle_list <- vector(mode = "list", length = nc + 1)
-    for(i in seq_len(nc + 1)) {
-      rle_list[[i]] <- rle(c(amat[row_nodecov,i], logical(b2)))
-    }
-
-    lens <- vector(mode = "list", length = n)
-    vals <- vector(mode = "list", length = n)
-
-    for(i in seq_len(n)) {
-      if(i > b1) {
-        lens[[i]] <- rle_list[[col_nodecov[i - b1]]]$lengths
-        vals[[i]] <- rle_list[[col_nodecov[i - b1]]]$values
-      } else {
-        lens[[i]] <- n
-        vals[[i]] <- FALSE
-      }
-    }
-
-    rlebdm(compress(structure(list(lengths=unlist(lens), values=unlist(vals)), class="rle")), n)
+    rle_list <- lapply(seq_len(NCOL(amat)), function(i) rle(c(amat[nodecov,i])))
+    lens <- lapply(seq_len(n), function(i) rle_list[[nodecov[i]]]$lengths)
+    vals <- lapply(seq_len(n), function(i) rle_list[[nodecov[i]]]$values)
+    rlebdm(compress(structure(list(lengths = unlist(lens),
+                                   values = unlist(vals)), class = "rle")), n)
   }
 
-  list(constrain = constrain,
-       dependence = FALSE, 
+  list(constrain = "blocks",
+       dependence = FALSE,
        free_dyads = free_dyads,
        nodecov = nodecov,
        amat = amat)

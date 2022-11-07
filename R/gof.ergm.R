@@ -158,7 +158,8 @@ gof.ergm <- function (object, ...,
               verbose=verbose, ...)
 }
 
-
+GOF_VALID_VARS <- c('distance', 'espartners', 'dspartners', 'odegree', 'idegree',
+                    'degree', 'triadcensus', 'model', 'b1degree', 'b2degree')
 
 #' @describeIn gof Perform simulation to evaluate goodness-of-fit for
 #'   a model configuration specified by a [`formula`], coefficient,
@@ -200,26 +201,22 @@ gof.formula <- function(object, ...,
   if(is.null(GOF)){
     GOF <-
       if(is.directed(nw)) ~idegree + odegree + espartners + distance + model
-    else if(is.bipartite(nw)) ~b1degree + b2degree + espartners + distance + model
-    else ~degree + espartners + distance + model
+      else if(is.bipartite(nw)) ~b1degree + b2degree + espartners + distance + model
+      else ~degree + espartners + distance + model
   }
+
   # Add a model term, unless it is explicitly excluded
   GOFtrms <- list_rhs.formula(GOF)
   if(sum(attr(GOFtrms,"sign")[as.character(GOFtrms)=="model"])==0){ # either no "model"s or "-model"s don't outnumber "model"s
-    #' @importFrom statnet.common nonsimp_update.formula
-      GOF <- nonsimp_update.formula(GOF, ~ . + model)
+    GOFtrms <- c(GOFtrms[as.character(GOFtrms)!="model"], list(as.name("model")))
   }
-  
-  all.gof.vars <- as.character(list_rhs.formula(GOF))
 
   # match variables
-  all.gof.vars <- sapply(all.gof.vars, match.arg,
-                         c('distance', 'espartners', 'dspartners', 'odegree', 'idegree',
-                           'degree', 'triadcensus', 'model', 'b1degree', 'b2degree')
-                         )
+  all.gof.vars <- as.character(GOFtrms[attr(GOFtrms,"sign")>0]) %>%
+    sapply(match.arg, GOF_VALID_VARS)
 
-  GOF <- as.formula(paste("~",paste(all.gof.vars,collapse="+")))
-  
+  GOF <- as.formula(paste("~",paste(all.gof.vars,collapse="+")), baseenv())
+
   m <- ergm_model(object, nw, term.options=control$term.options)
 
   proposal <- if(inherits(constraints, "ergm_proposal")) constraints
@@ -463,27 +460,14 @@ plot.gof <- function(x, ...,
          verbose=FALSE) {
 
  color <- "gray75"
-#par(oma=c(0.5,2,1,0.5))
 
-#statsno <- (sum(stats=='deg')>0) + (sum(stats=='espart')>0) + (sum(stats=='d
- all.gof.vars <- as.character(list_rhs.formula(x$GOF))
- statsno <- length(all.gof.vars)
+  # match variables
+  all.gof.vars <- as.character(list_rhs.formula(x$GOF)) %>%
+    sapply(match.arg, GOF_VALID_VARS)
 
-# match variables
+  if(length(all.gof.vars) == 0) stop("The gof object does not contain any statistics!")
 
- for(i in seq(along=all.gof.vars)){
-   all.gof.vars[i] <- match.arg(all.gof.vars[i],
-    c('distance', 'triadcensus', 'espartners', 'dspartners', 'odegree', 'idegree', 
-      'degree', 'model'
-     )
-                               )
- }
- GOF <- as.formula(paste("~",paste(all.gof.vars,collapse="+")))
-
- if(statsno==0){
-  stop("The gof object does not contain any statistics!\n")
- }
- n <- x$network.size
+  GOF <- as.formula(paste("~",paste(all.gof.vars,collapse="+")))
 
   gofcomp <- function(tag, unit, idx=c("finite","infinite","nominal")){
     idx <- match.arg(idx)
@@ -499,20 +483,17 @@ plot.gof <- function(x, ...,
       ngs <- nrow(pval)
       i <- seq_len(ngs)
     }else{
-      ngs <- min(n-1, nrow(pval))
+      ngs <- nrow(pval) - (idx == "infinite")
       
-      if( min(pval[,"MC p-value"]) <1) {
-        pval.max <- max((1:ngs)[pval[1:ngs, "MC p-value"] < 1]) + 3
-      }
-      else {
-        pval.max <- max((1:ngs)[obs[1:ngs] > 0]) + 3
-      }
-      
-      i <- seq_len(if(is.finite(pval.max) & pval.max < n) pval.max
-                   else ngs+1)
+      pval.max <- 3 + # padding
+        if(min(pval[,"MC p-value"]) < 1) max(which(pval[1:ngs, "MC p-value"] < 1))
+        else max(which(obs[1:ngs] > 0))
+
+      i <- seq_len(if(is.finite(pval.max) && pval.max <= ngs) pval.max
+                   else ngs)
     }
     if(idx == "infinite"){
-      i <- c(i, NA, n)
+      i <- c(i, NA, ngs+1)
     }
 
     if (plotlogodds) {
@@ -544,7 +525,7 @@ plot.gof <- function(x, ...,
       out.bds <- bds
       ylab <- paste0("proportion of ", unit, "s")
     }
-    pnames <- NVL(colnames(sim), i-1)[i]
+    pnames <- colnames(sim)[i]
 
     list(out=out, pnames=pnames, out.obs=out.obs, out.bds=out.bds, i=i, ylab=ylab)
   }
@@ -589,7 +570,7 @@ plot.gof <- function(x, ...,
                   if(normalize.reachability){
                     gc <- within(gc,
                     {
-                      mi <- max(i,na.rm=TRUE)
+                      mi <- max(gc$i,na.rm=TRUE)
                       totrange <- range(out.bds[1,][out.bds[1,] > out.bds[1,mi]],
                                         out.bds[2,][out.bds[2,] < out.bds[2,mi]])
                       out[,mi] <- (out[,mi]-out.bds[1,mi]) *
@@ -602,7 +583,6 @@ plot.gof <- function(x, ...,
                   }
                   gc
                 }))
-
 
   GVMAP <- GVMAP[names(GVMAP)%in%all.gof.vars]
   for(gv in GVMAP)

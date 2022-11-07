@@ -85,7 +85,7 @@ prune.ergm_conlist <- function(conlist){
     }
   }
 
-  structure(conlist, class = "ergm_conlist", lhs = attr(conlist, "lhs"))
+  structure(conlist, class = "ergm_conlist")
 }
 
 
@@ -108,7 +108,19 @@ prune.ergm_conlist <- function(conlist){
 #
 ########################################################################################
 
+# If the constraints formula is two-sided, add a term .select(LHS) and remove LHS.
+.embed_constraint_lhs <- function(formula){
+  if(length(formula) > 2){
+    lhs <- try(eval_lhs.formula(formula), silent = TRUE)
+    if (is(lhs, "try-error") || !is.character(lhs)) stop("Constraint formula must be either one-sided or have a string expression as its LHS.")
+    nonsimp_update.formula(formula, substitute(~. + .select(..), list(..=lhs)))
+  }else formula
+}
 
+.delete_term <- function(tl, terms) discard(tl, ~any(as.character(.)[1] %in% terms))
+.keep_term <- function(tl, terms) keep(tl, ~any(as.character(.)[1] %in% terms))
+.delete_constraint <- function(cl, constraints) discard(cl, ~any(.$constrain %in% constraints))
+.keep_constraint <- function(cl, constraints) keep(cl, ~any(.$constrain %in% constraints))
 
 #' Functions to initialize the ergm_proposal object
 #' 
@@ -237,19 +249,21 @@ ergm_conlist <- function(object, ...) UseMethod("ergm_conlist")
 ergm_conlist.ergm_conlist <- function(object, ...) object
 ergm_conlist.NULL <- function(object, ...) NULL
 
-ergm_conlist.formula <- function(object, nw, ..., term.options=list()){
-  env <- environment(object)
+
+ergm_conlist.formula <- function(object, nw, ..., term.options=list())
+  object %>% .embed_constraint_lhs() %>% list_rhs.formula() %>%
+    ergm_conlist(nw, ..., term.options=term.options)
+
+ergm_conlist.term_list <- function(object, nw, ..., term.options=list()){
+  object<-c(object, list(call(".attributes")))
+  consigns <- attr(object, "sign")
+  conenvs <- attr(object, "env")
+
   conlist<-list()
-  constraints<-list_rhs.formula(object)
-  consigns <- c(attr(constraints, "sign"), +1)
-  constraints<-c(constraints, list(call(".attributes")))
-  for(i in seq_along(constraints)){
-    constraint <- constraints[[i]]
+  for(i in seq_along(object)){
+    constraint <- object[[i]]
     consign <- consigns[[i]]
-    
-    ## The . in the default formula means no constraints.
-    ## There may be other constraints in the formula, however.
-    if(constraint==".") next
+    conenv <- conenvs[[i]]
 
     f <- locate_prefixed_function(constraint, "InitErgmConstraint", "Sample space constraint")
 
@@ -264,10 +278,10 @@ ergm_conlist.formula <- function(object, nw, ..., term.options=list()){
       }
     }else{
       conname <- as.character(if(is.name(constraint)) constraint else constraint[[1]])
-      init.call <- termCall(f, constraint, nw, term.options, ..., env=env)
+      init.call <- termCall(f, constraint, nw, term.options, ..., env=conenv)
     }
 
-    con <- eval(as.call(init.call), env)
+    con <- eval(as.call(init.call), conenv)
     NVL(con$dependence) <- TRUE
     if(con$dependence && consign < 0) stop("Only dyad-independent costraints can have negative signs.")
     con$sign <- consign
@@ -284,33 +298,25 @@ ergm_conlist.formula <- function(object, nw, ..., term.options=list()){
     names(conlist)[length(conlist)] <- conname
   }
 
-  if (length(object) == 3) {
-    lhs <- try(eval_lhs.formula(object), silent = TRUE)
-    if (is(lhs, "try-error") || !is.character(lhs)) stop("Constraints formula must be either one-sided or have a string expression as its LHS.")
-
-    attr(conlist, "lhs") <- lhs
-  }
-
   prune.ergm_conlist(conlist)
 }
 
-c.ergm_conlist <- function(...){
-  o <- NextMethod() %>% prune.ergm_conlist()
-
-  lhss <- lapply(list(...), attr, "lhs") %>% compact()
-  if(length(lhss)) attr(o, "lhs") <- ult(lhss)
-
-  o
-}
+c.ergm_conlist <- function(...) NextMethod() %>% prune.ergm_conlist()
 
 `[.ergm_conlist` <- function(x, ...){
-  structure(NextMethod(), class = "ergm_conlist", lhs = attr(x, "lhs"))
+  structure(NextMethod(), class = "ergm_conlist")
 }
 
-select_ergm_proposal <- function(conlist, class, ref, name, weights){
+select_ergm_proposal <- function(conlist, class, ref, weights){
+  # Extract directly selected proposal, if given, check that it's unique, and discard its constraint and other placeholders.
+  name <- conlist %>% .keep_constraint(".select") %>% map_chr("proposal") %>% unique()
+  if(length(name) > 1) stop("Error in direct proposal selection: two distinct proposals selected: ", paste.and(sQuote(name)), ".", call.=FALSE)
+  conlist <- conlist %>% .delete_constraint(c(".", ".select"))
+
+  # Initial narrowing down of the proposal table.
   candidates <- ergm_proposal_table()
   candidates <- candidates[candidates$Class==class & candidates$Reference==ref$name & if(is.null(weights) || weights=="default") TRUE else candidates$Weights==weights, , drop=FALSE]
-  if(!is.null(name)) candidates <- candidates[candidates$Proposal==name, , drop=FALSE]
+  if(length(name)) candidates <- candidates[candidates$Proposal==name, , drop=FALSE]
 
   decode_constraints <- function(s){
     # Convert old-style specification to the new-style
@@ -397,7 +403,7 @@ ergm_reference.formula <- function(object, nw, ..., term.options=list()) {
 #' @param constraints A one-sided formula specifying one or more constraints on
 #' the support of the distribution of the networks being simulated. See the
 #' documentation for a similar argument for \code{\link{ergm}} and see
-#' [list of implemented constraints][ergmConstraint] for more information.
+#' [`ergmConstraint`] for more information.
 #' @export
 ergm_proposal.formula <- function(object, arguments, nw, hints=trim_env(~sparse), ..., term.options=list()) {
   NVL(hints) <- trim_env(~sparse)
@@ -410,6 +416,11 @@ ergm_proposal.formula <- function(object, arguments, nw, hints=trim_env(~sparse)
   ## Hand it off to the class ergm_conlist method.
   ergm_proposal(conlist, arguments, nw, ..., term.options = term.options)
 }
+
+#' @describeIn ergm_proposal `object` argument is a [`term_list`];
+#'   same implementation as the `formula` method.
+#' @export
+ergm_proposal.term_list <- ergm_proposal.formula
 
 #' @describeIn ergm_proposal `object` argument is an ERGM constraint
 #'   list; constructs the internal `ergm_reference` object, looks up the
@@ -424,7 +435,7 @@ ergm_proposal.formula <- function(object, arguments, nw, hints=trim_env(~sparse)
 #' @export
 ergm_proposal.ergm_conlist <- function(object, arguments, nw, weights="default", class="c", reference=trim_env(~Bernoulli), ..., term.options=list()) {
   reference <- ergm_reference(reference, nw, term.options=term.options, ...)
-  proposal <- select_ergm_proposal(object, class = class, ref = reference, name = attr(object, "lhs"), weights = weights)
+  proposal <- select_ergm_proposal(object, class = class, ref = reference, weights = weights)
   name <- proposal$Proposal
   arguments$constraints <- object
   ## Hand it off to the class character method.

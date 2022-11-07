@@ -11,6 +11,11 @@
 #define STUBFILE
 #include <stddef.h>
 #include <R_ext/Rdynload.h>
+#include "ergm_BDNodeLists.h"
+
+#define STUBFILE
+#include <stddef.h>
+#include <R_ext/Rdynload.h>
 #include "ergm_BDStratBlocks.h"
 
 #define STUBFILE
@@ -377,9 +382,9 @@ static void (*fun)(ErgmState *) = NULL;
 if(fun==NULL) fun = (void (*)(ErgmState *)) R_FindSymbol("ErgmStateDestroy", "ergm", NULL);
 fun(s);
 }
-SEXP ErgmStateArrayClear(){
-static SEXP (*fun)() = NULL;
-if(fun==NULL) fun = (SEXP (*)()) R_FindSymbol("ErgmStateArrayClear", "ergm", NULL);
+SEXP ErgmStateArrayClear(void){
+static SEXP (*fun)(void) = NULL;
+if(fun==NULL) fun = (SEXP (*)(void)) R_FindSymbol("ErgmStateArrayClear", "ergm", NULL);
 return fun();
 }
 
@@ -582,8 +587,8 @@ static void (*fun)(WtErgmState *) = NULL;
 if(fun==NULL) fun = (void (*)(WtErgmState *)) R_FindSymbol("WtErgmStateDestroy", "ergm", NULL);
 fun(s);
 }
-SEXP WtErgmStateArrayClear(){
-static SEXP (*fun)() = NULL;
-if(fun==NULL) fun = (SEXP (*)()) R_FindSymbol("WtErgmStateArrayClear", "ergm", NULL);
+SEXP WtErgmStateArrayClear(void){
+static SEXP (*fun)(void) = NULL;
+if(fun==NULL) fun = (SEXP (*)(void)) R_FindSymbol("WtErgmStateArrayClear", "ergm", NULL);
 return fun();
 }

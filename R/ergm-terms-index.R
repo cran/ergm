@@ -9,7 +9,7 @@
 ################################################################################
 
 SUPPORTED_TERM_TYPES <- c('Term', 'Constraint', 'Reference', 'Hint', 'Proposal')
-SUPPORTED_TERM_TYPE_REGEX <- sprintf('-ergm(%s)(.Rd)?', paste(SUPPORTED_TERM_TYPES, collapse='|'))
+SUPPORTED_TERM_TYPE_REGEX <- sprintf('-ergm(%s)(-[0-9a-f]{8})?(.Rd)?', paste(SUPPORTED_TERM_TYPES, collapse='|'))
 
 DISPLAY_TEXT_INDEX_MAX_WIDTHS <- list('Term'=25, 'Pkg'=5, 'Description'=33, 'Concepts'=12)
 DISPLAY_TEXT_MAX_WIDTH <- sum(unlist(DISPLAY_TEXT_INDEX_MAX_WIDTHS)) + length(DISPLAY_TEXT_INDEX_MAX_WIDTHS) - 1
@@ -19,10 +19,11 @@ DISPLAY_LATEX_TOC_PCT_WIDTHS <- function(n_concepts) c(2.4, rep(.7, n_concepts))
 .fsub <- function(x, pattern, replacement, fixed = TRUE, ...) gsub(pattern, replacement, x, fixed = fixed, ...)
 
 # Return the index entry for a single term in the new format
-.parseTerm <- function(name, pkg, pkg_name) {
-  doc <- pkg[[name]]
-  name <- substr(name, 1, nchar(name) - 3)
+.parseTerm <- function(rdname, pkg, pkg_name) {
+  doc <- pkg[[rdname]]
+  rdname <- substr(rdname, 1, nchar(rdname) - 3)
   tags <- sapply(doc, attr, 'Rd_tag')
+  name <- doc[tags == '\\name'] %>% unlist
   comps <- strsplit(name, '-')[[1]]
   type <- comps[length(comps)]
 
@@ -51,7 +52,7 @@ DISPLAY_LATEX_TOC_PCT_WIDTHS <- function(n_concepts) c(2.4, rep(.7, n_concepts))
     }
 
     return(list(
-      link=name,
+      link=rdname,
       name=comps[1],
       type=type,
       alias=doc[tags == '\\alias'] %>% unlist,
@@ -88,7 +89,7 @@ DISPLAY_LATEX_TOC_PCT_WIDTHS <- function(n_concepts) c(2.4, rep(.7, n_concepts))
       )
     }
     return(list(
-      link=name,
+      link=rdname,
       name=comps[1],
       type=type,
       alias=doc[tags == '\\alias'] %>% unlist,
@@ -102,12 +103,14 @@ DISPLAY_LATEX_TOC_PCT_WIDTHS <- function(n_concepts) c(2.4, rep(.7, n_concepts))
 
 #' A simple dictionary to cache loaded terms
 #'
-#' @param the name of the term
-#' @param env the environment name for the function; if `NULL`, look
-#'   up in cache, otherwise insert or overwrite.
+#' @usage ergmTermCache(term_type)
 #'
-#' @return A character string giving the name of the environment
-#'   containing the function, or `NULL` if not in cache.
+#' @param term_type a type of term, e.g., `"ergmTerm"`, `"ergmConstraint"`, etc.
+#'
+#' @return
+#'
+#' A named list of terms of the specified type containing the information returned by `.parseTerm()`.
+#'
 #' @noRd
 ergmTermCache <- local({
   cache <- lapply(SUPPORTED_TERM_TYPES, function(x) list())
@@ -135,7 +138,7 @@ ergmTermCache <- local({
 
     for (term in lapply(converted, .parseTerm, pkg, pkg_name)) {
       if (!is.null(term)) {
-        cache[[term$type]][[term$link]] <<- term
+        cache[[term$type]][[term$name]] <<- term
       }
     }
   }
@@ -349,8 +352,7 @@ PROPOSAL_NOT_IN_TABLE <- "This proposal is not referenced in the lookup table."
     df <- df[,colnames(df)!="Proposal"]
   }
 
-  css <- '<style>th,td {padding:3px 10px}</style>'
-  sprintf("\\out{%s%s}", css, knitr::kable(df, 'html', escape=FALSE, row.names=FALSE))
+  sprintf("\\out{%s}", knitr::kable(df, 'html', escape=FALSE, row.names=FALSE, table.attr='class="proptable"'))
 }
 
 .formatProposalsLatex <- function(df, keepProposal=FALSE) {
@@ -521,8 +523,7 @@ PROPOSAL_NOT_IN_TABLE <- "This proposal is not referenced in the lookup table."
     sprintf('<div id="%s">%s</div>', df$Link, .)
   df$Link <- NULL
 
-  css <- '<style>.striped th,.striped td {padding:3px 10px} .striped tbody tr:nth-child(odd) {background: #eee} .striped .code {font-family: monospace} .matrix td {align: center} .matrix th,.matrix td {padding-right:5px; width: 75px}</style>'
-  sprintf('\\out{%s%s}', css, knitr::kable(df, 'html', escape=FALSE, row.names=FALSE, table.attr='class="striped"'))
+  sprintf('\\out{%s}', knitr::kable(df, 'html', escape=FALSE, row.names=FALSE, table.attr='class="termtable"'))
 }
 
 .formatMatrixHtml <- function(df, wrapRdTags=TRUE) {
@@ -534,7 +535,7 @@ PROPOSAL_NOT_IN_TABLE <- "This proposal is not referenced in the lookup table."
     df[[c]] <- ifelse(df[[c]], '&#10004;', '')
   }
 
-  out <- knitr::kable(df, 'html', escape=FALSE, row.names=FALSE, table.attr='class="matrix"')
+  out <- knitr::kable(df, 'html', escape=FALSE, row.names=FALSE, table.attr='class="termmatrix"')
   if(wrapRdTags) {
     out <- sprintf('\\out{%s}', out)
   }
@@ -555,6 +556,27 @@ PROPOSAL_NOT_IN_TABLE <- "This proposal is not referenced in the lookup table."
   }
 
   out
+}
+
+.formatTermKeywords <- function(term.type, term.name, sec.format = c("describe", "section", "subsection"), ifnone = "None") {
+  sec.format <- match.arg(sec.format)
+  keywords <- ergmTermCache(term.type)[[term.name]]$concepts
+  keywords <-
+    if(length(keywords) == 0){
+      if(length(ifnone)==0 || isFALSE(ifnone)) return("")
+      else ifnone
+    }else{
+      paste(keywords, collapse=", ")
+    }
+
+  switch(sec.format,
+         describe = paste0("\\describe{\\item{Keywords:}{", keywords, "}}"),
+         section = paste0("\\section{Keywords}{", keywords, "}"),
+         subsection = paste0("\\subsection{Keywords}{", keywords, "}"))
+}
+
+.term.rdname <- function(term.type, term.name) {
+  gsub(".", "", paste(term.name, term.type, substr(rlang::hash(term.name), 1, 8), sep = "-"), fixed=TRUE)
 }
 
 search.ergmTermType <-function(term.type, search, net, keywords, name, packages) {
@@ -666,11 +688,13 @@ search.ergmTermType <-function(term.type, search, net, keywords, name, packages)
 
 # function to look up the set of terms applicable for a specific network
 
-#' Search the ERGM terms
+#' Search ERGM terms, constraints, references, hints, and proposals
 #' 
-#' Searches through the \code{\link{ergm.terms}} help page and prints out a
-#' list of terms appropriate for the specified network's structural
-#' constraints, optionally restricting by additional keywords and search term
+#' Searches through the database of [`ergmTerm`]s,
+#' [`ergmConstraint`]s, [`ergmReference`]s, [`ergmHint`]s, and
+#' [`ergmProposal`]s and prints out a list of terms and term-alikes
+#' appropriate for the specified network's structural constraints,
+#' optionally restricting by additional keywords and search term
 #' matches.
 #' 
 #' Uses \code{\link{grep}} internally to match the search terms against the term
@@ -686,12 +710,15 @@ search.ergmTermType <-function(term.type, search, net, keywords, name, packages)
 #' @param keywords optional character vector of keyword tags to use to
 #' restrict the results (i.e. 'curved', 'triad-related')
 #' @param name optional character name of a specific term to return
+#' @param reference,constraints optional names of references and constraints to narrow down the proposal
 #' @param packages optional character vector indicating the subset of packages in which to search
 #' @return prints out the name and short description of matching terms, and
 #' invisibly returns them as a list.  If \code{name} is specified, prints out
 #' the full definition for the named term.
 #' @author skyebend@uw.edu
-#' @seealso See also \code{\link{ergm.terms}} for the complete documentation
+#' @seealso See also [`ergmTerm`],
+#' [`ergmConstraint`], [`ergmReference`], [`ergmHint`], and
+#' [`ergmProposal`], for lists of terms and term-alikes visible to \pkg{ergm}.
 #' @examples
 #' \donttest{
 #' # find all of the terms that mention triangles
@@ -720,78 +747,14 @@ search.ergmTermType <-function(term.type, search, net, keywords, name, packages)
 search.ergmTerms <- function(search, net, keywords, name, packages) {
   search.ergmTermType("ergmTerm", search, net, keywords, name, packages)
 }
-
-#' Search the ERGM References
-#'
-#' Searches through the \code{\link{ergm.references}} help page and prints out a
-#' list of terms appropriate for the specified network's structural
-#' constraints, optionally restricting by additional keywords and search term
-#' matches.
-#'
-#' Uses \code{\link{grep}} internally to match the search terms against the term
-#' description, so \code{search} is currently matched as a single phrase.
-#' Keyword tags will only return a match if all of the specified tags are
-#' included in the term.
-#'
-#' @param search optional character search term to search for in the text of the
-#' term descriptions. Only matching terms will be returned. Matching is case
-#' insensitive.
-#' @param keywords optional character vector of keyword tags to use to
-#' restrict the results (i.e. 'curved', 'triad-related')
-#' @param name optional character name of a specific term to return
-#' @param packages optional character vector indicating the subset of packages in which to search
-#' @return prints out the name and short description of matching terms, and
-#' invisibly returns them as a list.  If \code{name} is specified, prints out
-#' the full definition for the named term.
-#' @author skyebend@uw.edu
-#' @seealso See also \code{\link{ergm.references}} for the complete documentation
-#' @examples
-#' \donttest{
-#' # find all of the references that mention dyad
-#' search.ergmReferences('dyad')
-#'
-#' # search on multiple keywords
-#' search.ergmReferences(keywords=c('binary','discrete'))
-#'
-#' # print out the content for a specific reference
-#' search.ergmReferences(name='Bernoulli')
-#'
-#' # request the bipartite keyword in the ergm package
-#' search.ergmReferences(keywords='binary', packages='ergm')
-#' }
-#' @importFrom utils capture.output
-#' @export search.ergmReferences
-search.ergmReferences <- function(search, keywords, name, packages)
-  search.ergmTermType("ergmReference", search=search, keywords=keywords, name=name, packages=packages)
-
-#' Search the ERGM Constraint
-#'
-#' Searches through the \code{\link{ergm.constraints}} help page and prints out a
-#' list of constraints appropriate for the specified network's structural
-#' constraints, optionally restricting by additional keywords and search term
-#' matches.
-#'
-#' Uses \code{\link{grep}} internally to match the search terms against the constraint
-#' description, so \code{search} is currently matched as a single phrase.
-#' Keyword tags will only return a match if all of the specified tags are
-#' included in the constraint
-#'
-#' @param search optional character search term to search for in the text of the
-#' constraint descriptions. Only matching constraints will be returned. Matching is case
-#' insensitive.
-#' @param keywords optional character vector of keyword tags to use to
-#' restrict the results (i.e. 'curved', 'triad-related')
-#' @param name optional character name of a specific constraint to return
-#' @param packages optional character vector indicating the subset of packages in which to search
-#' @return prints out the name and short description of matching constraints, and
-#' invisibly returns them as a list.  If \code{name} is specified, prints out
-#' the full definition for the named constraint.
-#' @author skyebend@uw.edu
-#' @seealso See also \code{\link{ergm.constraints}} for the complete documentation
+#' @rdname search.ergmTerms
 #' @examples
 #' \donttest{
 #' # find all of the constraint that mention degrees
 #' search.ergmConstraints('degree')
+#'
+#' # search for hints only
+#' search.ergmConstraints(keywords='hint')
 #'
 #' # search on multiple keywords
 #' search.ergmConstraints(keywords=c('directed','dyad-independent'))
@@ -807,29 +770,27 @@ search.ergmReferences <- function(search, keywords, name, packages)
 search.ergmConstraints <- function(search, keywords, name, packages)
   search.ergmTermType("ergmConstraint", search=search, keywords=keywords, name=name, packages=packages)
 
-#' Search the ERGM Proposals
-#'
-#' Searches through the \code{\link{ergm.proposals}} help page and prints out a
-#' list of proposals appropriate for the specified network's structural
-#' constraints, optionally restricting by additional keywords and search term
-#' matches.
-#'
-#' Uses \code{\link{grep}} internally to match the search terms against the proposal
-#' description, so \code{search} is currently matched as a single phrase.
-#' Keyword tags will only return a match if all of the specified tags are
-#' included in the proposal
-#'
-#' @param search optional character search term to search for in the text of the
-#' term descriptions. Only matching terms will be returned. Matching is case
-#' insensitive.
-#' @param name optional character name of a specific proposal to return
-#' @param reference optional character to limit proposals to only those with a matching reference
-#' @param constraints optional character vector to limit proposals to only those with matching hard or soft constraints
-#' @param packages optional character vector indicating the subset of packages in which to search
-#' @return prints out the name and short description of matching terms, and
-#' invisibly returns them as a list.  If \code{name} is specified, prints out
-#' the full definition for the named term.
-#' @seealso See also \code{\link{ergm.proposals}} for the complete documentation
+#' @rdname search.ergmTerms
+#' @examples
+#' \donttest{
+#' # find all discrete references
+#' search.ergmReferences(keywords='discrete')
+#' }
+#' @export search.ergmReferences
+search.ergmReferences <- function(search, keywords, name, packages)
+  search.ergmTermType("ergmReference", search=search, keywords=keywords, name=name, packages=packages)
+
+#' @rdname search.ergmTerms
+#' @examples
+#' \donttest{
+#' # find all of the hints
+#' search.ergmHints('degree')
+#' }
+#' @export search.ergmHints
+search.ergmHints <- function(search, keywords, name, packages)
+  search.ergmTermType("ergmHint", search=search, keywords=keywords, name=name, packages=packages)
+
+#' @rdname search.ergmTerms
 #' @examples
 #' \donttest{
 #' # find all of the proposals that mention triangles

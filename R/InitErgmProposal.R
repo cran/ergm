@@ -68,158 +68,127 @@ InitErgmProposal.TNT <- function(nw, arguments, ...){
 
 #' @templateVar name BDStratTNT
 #' @aliases InitErgmProposal.BDStratTNT
-#' @title TNT proposal with degree bounds
+#' @title TNT proposal with degree bounds, stratification, and a blocks constraint
 #' @description Implements a TNT proposal with any subset of the following features:
-#'   1. upper on degree, specified via the [`bd`][bd-ergmConstraint] constraint's `maxout`, `maxin`, and `attribs` arguments
-#'   2. stratification of proposals according to mixing type on a vertex attribute, specified via the [`strat`][strat-ergmHint] hint;
-#'   3. fixation of specified mixing types on a(nother) vertex attribute, specified via the [`blocks`][blocks-ergmConstraint] constraint.
+#'   1. upper bounds on degree, specified via the [`bd`][bd-ergmConstraint]
+#'      constraint's `maxout`, `maxin`, and `attribs` arguments;
+#'   2. stratification of proposals according to mixing type on a vertex attribute,
+#'      specified via the [`strat`][strat-ergmHint] hint;
+#'   3. fixation of specified mixing types on a(nother) vertex attribute, specified
+#'      via the [`blocks`][blocks-ergmConstraint] constraint.
 #' @template ergmProposal-general
 NULL
 InitErgmProposal.BDStratTNT <- function(arguments, nw) {
-  # if bd has not already been initialized, or if related arguments are passed directly to the proposal, (re)initialize it now
-  if(any(!unlist(lapply(arguments[c("attribs", "maxout", "maxin")], is.null)))) {
-    arguments$constraints$bd <- InitErgmConstraint.bd(nw, list(attribs = arguments[["attribs"]], maxout = arguments[["maxout"]], maxin = arguments[["maxin"]]))
-  }
-
+  ## constraints are dyad-independent if bd is not being used
   dyad_indep <- is.null(arguments$constraints$bd)
-  
-  if(is.null(arguments$constraints$bd)) {
-    arguments$constraints$bd <- InitErgmConstraint.bd(nw, list())
-  }
 
-  attribs <- NVL(arguments$constraints$bd$attribs, matrix(TRUE, ncol = 1L, nrow = network.size(nw)))
-  
+  ## handle defaults for hints
+  NVL(arguments$constraints$bd) <- InitErgmConstraint.bd(nw, list())
+  NVL(arguments$constraints$blocks) <- InitErgmConstraint.blocks(nw, list(attr = trim_env(~0)))
+  NVL(arguments$constraints$strat) <- InitErgmConstraint.strat(nw, list(attr = trim_env(~0)))
+
+  attribs <- NVL(arguments$constraints$bd$attribs,
+                 matrix(TRUE, ncol = 1L, nrow = network.size(nw)))
+
   maxout <- NVL(arguments$constraints$bd$maxout, network.size(nw))
   maxout[is.na(maxout)] <- network.size(nw)
   maxout <- matrix(rep(maxout, length.out = length(attribs)), ncol = ncol(attribs))
-  
+
   maxin <- NVL(arguments$constraints$bd$maxin, network.size(nw))
   maxin[is.na(maxin)] <- network.size(nw)
   maxin <- matrix(rep(maxin, length.out = length(attribs)), ncol = ncol(attribs))
 
   bd_vattr <- which(attribs, arr.ind = TRUE)
-  bd_vattr <- bd_vattr[order(bd_vattr[,1L]), 2L]
-    
-  ## which attribute pairings are allowed by bd? only consider maxin if directed
-  bd_mixmat <- matrix(FALSE, nrow = NCOL(attribs), ncol = NCOL(attribs))
-  
-  maxout_pairs <- which(maxout > 0, arr.ind = TRUE)
-  maxout_pairs[,1L] <- bd_vattr[maxout_pairs[,1L]]
-  bd_mixmat[maxout_pairs] <- TRUE
-  if(is.directed(nw)) {
-    maxin_pairs <- which(maxin > 0, arr.ind = TRUE)
-    maxin_pairs[,1L] <- bd_vattr[maxin_pairs[,1L]]
-    bd_mixmat[maxin_pairs[,c(2L,1L)]] <- TRUE
-  } else {
-    bd_mixmat <- bd_mixmat | t(bd_mixmat)
+  bd_vattr <- bd_vattr[order(bd_vattr[, 1L]), 2L]
+  bd_nlevels <- NCOL(attribs)
+
+  ## allowed bd pairings
+  bd_mixmat <- matrix(TRUE, nrow = NCOL(attribs), ncol = NCOL(attribs))
+  if(!is.directed(nw)) {
     bd_mixmat[lower.tri(bd_mixmat, diag = FALSE)] <- FALSE
   }
 
   bd_pairs <- which(bd_mixmat, arr.ind = TRUE)
-  bd_tails <- bd_pairs[,1L]
-  bd_heads <- bd_pairs[,2L]
-  bd_nlevels <- NCOL(attribs)
+  bd_tails <- bd_pairs[, 1L]
+  bd_heads <- bd_pairs[, 2L]
 
   ## need to handle undirected case as for blocks, but bipartite along with unip for now
-  bd_offdiag_pairs <- which(bd_tails != bd_heads)  
-  
+  bd_offdiag_pairs <- which(bd_tails != bd_heads)
+
   bd_allowed_tails <- c(bd_tails, if(!is.directed(nw)) bd_heads[bd_offdiag_pairs])
   bd_allowed_heads <- c(bd_heads, if(!is.directed(nw)) bd_tails[bd_offdiag_pairs])
 
-  ## number of bd mixtypes that need to be considered when strat and blocks mixing types are off-diag and on-diag, respectively
+  ## number of bd mixtypes that need to be considered when strat and blocks
+  ## mixing types are off-diag and on-diag, respectively
   bd_nmixtypes <- c(length(bd_allowed_tails), length(bd_tails))
-  
-  
-  # if blocks has not already been initialized, or if related arguments are passed directly to the proposal, (re)initialize it now
-  if(length(intersect(names(arguments), c("blocks_attr", "levels", "levels2", "b1levels", "b2levels"))) > 0) {
-    arglist <- arguments[intersect(names(arguments), c("blocks_attr", "levels", "levels2", "b1levels", "b2levels"))]
-    names(arglist)[names(arglist) == "blocks_attr"] <- "attr"
-    arguments$constraints$blocks <- InitErgmConstraint.blocks(nw, arglist)
-  }
-  if(is.null(arguments$constraints$blocks)) {
-    arguments$constraints$blocks <- InitErgmConstraint.blocks(nw, list(attr = trim_env(~0)))
-  }
 
-  # check for old name
-  if(is.null(arguments$constraints$strat) && !is.null(arguments$constraints$Strat)) {
-    arguments$constraints$strat <- arguments$constraints$Strat
-  }
-
-  # if strat has not already been initialized, or if related arguments are passed directly to the proposal, (re)initialize it now
-  if(length(intersect(names(arguments), c("strat_attr", "pmat", "empirical"))) > 0) {
-    arglist <- arguments[intersect(names(arguments), c("strat_attr", "pmat", "empirical"))]
-    names(arglist)[names(arglist) == "strat_attr"] <- "attr"
-    arguments$constraints$strat <- InitErgmConstraint.strat(nw, arglist)
-  }
-  if(is.null(arguments$constraints$strat)) {
-    arguments$constraints$strat <- InitErgmConstraint.strat(nw, list(attr = trim_env(~0)))
-  }
-
-  nodecov <- arguments$constraints$blocks$nodecov
+  blocks_vattr <- arguments$constraints$blocks$nodecov
   amat <- arguments$constraints$blocks$amat
 
-  if(is.bipartite(nw)) {
-    nodecov[-seq_len(nw %n% "bipartite")] <- nodecov[-seq_len(nw %n% "bipartite")] + NROW(amat)
-    pairs_mat <- matrix(FALSE, nrow = NROW(amat) + NCOL(amat), ncol = NROW(amat) + NCOL(amat))
-    pairs_mat[seq_len(NROW(amat)), -seq_len(NROW(amat))] <- amat
-  } else if(!is.directed(nw)) {
-    pairs_mat <- amat
-    pairs_mat[lower.tri(pairs_mat, diag = FALSE)] <- FALSE
-  } else {
-    pairs_mat <- amat
-  }
-  
-  allowed.attrs <- which(pairs_mat, arr.ind = TRUE)
-  allowed.tails <- allowed.attrs[,1]
-  allowed.heads <- allowed.attrs[,2]  
-
-  nlevels <- NROW(pairs_mat)
-  nodecountsbycode <- tabulate(nodecov, nbins = nlevels)
-  
+  blocks_pairs <- which(amat, arr.ind = TRUE)
   if(!is.directed(nw) && !is.bipartite(nw)) {
-    pairs_mat <- pairs_mat | t(pairs_mat)
+    blocks_pairs <- blocks_pairs[blocks_pairs[, 1L] <= blocks_pairs[, 2L], , drop = FALSE]
   }
-  
-  pairs_to_keep <- (allowed.tails != allowed.heads & nodecountsbycode[allowed.tails] > 0 & nodecountsbycode[allowed.heads] > 0) | (allowed.tails == allowed.heads & nodecountsbycode[allowed.tails] > 1)
-  allowed.tails <- allowed.tails[pairs_to_keep]
-  allowed.heads <- allowed.heads[pairs_to_keep]
-  
-  
-  blocks_offdiag_pairs <- which(allowed.tails != allowed.heads)  
-  
-  blocks_tails <- c(allowed.tails, if(!is.bipartite(nw) && !is.directed(nw)) allowed.heads[blocks_offdiag_pairs])
-  blocks_heads <- c(allowed.heads, if(!is.bipartite(nw) && !is.directed(nw)) allowed.tails[blocks_offdiag_pairs])
+  blocks_tails <- blocks_pairs[, 1L]
+  blocks_heads <- blocks_pairs[, 2L]
 
-  ## number of blocks mixtypes that need to be considered when strat mixing type is off-diag and on-diag, respectively
-  blocks_mixtypes <- c(length(blocks_tails), length(allowed.tails))
-    
-  # for economy of C space, best to count # of nodes of each bd-strat pairing
-  nodecountsbyjointcode <- as.integer(table(factor(bd_vattr, levels=seq_len(bd_nlevels)),
-                                            factor(nodecov, levels=seq_len(nlevels)), 
-                                            factor(arguments$constraints$strat$nodecov, levels=seq_len(arguments$constraints$strat$nlevels))))
-  
+  blocks_nlevels <- NROW(amat)
+  blocks_node_counts <- tabulate(blocks_vattr, nbins = blocks_nlevels)
+
+  pairs_to_keep <- (blocks_tails != blocks_heads
+                    & blocks_node_counts[blocks_tails] > 0
+                    & blocks_node_counts[blocks_heads] > 0) |
+                   (blocks_tails == blocks_heads
+                    & blocks_node_counts[blocks_tails] > 1)
+  blocks_tails <- blocks_tails[pairs_to_keep]
+  blocks_heads <- blocks_heads[pairs_to_keep]
+
+  blocks_offdiag_pairs <- which(blocks_tails != blocks_heads)
+
+  blocks_allowed_tails <- c(blocks_tails,
+                            if(!is.bipartite(nw) && !is.directed(nw)) blocks_heads[blocks_offdiag_pairs])
+  blocks_allowed_heads <- c(blocks_heads,
+                            if(!is.bipartite(nw) && !is.directed(nw)) blocks_tails[blocks_offdiag_pairs])
+
+  ## number of blocks mixtypes that need to be considered
+  ## when strat mixing type is off-diag and on-diag, respectively
+  blocks_nmixtypes <- c(length(blocks_allowed_tails), length(blocks_tails))
+
+  strat_vattr <- arguments$constraints$strat$nodecov
+  strat_nlevels <- arguments$constraints$strat$nlevels
+
+  strat_vattr <- strat_vattr - 1L
+  blocks_vattr <- blocks_vattr - 1L
+  bd_vattr <- bd_vattr - 1L
+
+  combined_vattr <- strat_vattr*blocks_nlevels*bd_nlevels + blocks_vattr*bd_nlevels + bd_vattr
+  combined_nlevels <- strat_nlevels*blocks_nlevels*bd_nlevels
+  combined_vattr_counts <- tabulate(combined_vattr + 1L, nbins = combined_nlevels)  
+
   proposal <- list(name = "BDStratTNT",
                    inputs = NULL, # passed by name below
-                   strattailattrs = as.integer(arguments$constraints$strat$tailattrs - 1L),
-                   stratheadattrs = as.integer(arguments$constraints$strat$headattrs - 1L),
-                   probvec = as.double(arguments$constraints$strat$probvec),
-                   nattrcodes = as.integer(arguments$constraints$strat$nlevels),
-                   strat_vattr = as.integer(arguments$constraints$strat$nodecov - 1L),
-                   nodecountsbyjointcode = as.integer(nodecountsbyjointcode),
-                   maxout = as.integer(maxout),
-                   maxin = as.integer(maxin),
-                   bd_vattr = as.integer(bd_vattr - 1L),
+                   strat_vattr = as.integer(strat_vattr),
+                   strat_nlevels = as.integer(strat_nlevels),
+                   strat_tails = as.integer(arguments$constraints$strat$tailattrs - 1L),
+                   strat_heads = as.integer(arguments$constraints$strat$headattrs - 1L),
+                   blocks_vattr = as.integer(blocks_vattr),
+                   blocks_nlevels = as.integer(blocks_nlevels),
+                   blocks_tails = as.integer(blocks_allowed_tails - 1L),
+                   blocks_heads = as.integer(blocks_allowed_heads - 1L),
+                   blocks_nmixtypes = as.integer(blocks_nmixtypes),
+                   bd_vattr = as.integer(bd_vattr),
+                   bd_nlevels = as.integer(bd_nlevels),
                    bd_tails = as.integer(bd_allowed_tails - 1L),
                    bd_heads = as.integer(bd_allowed_heads - 1L),
-                   bd_nlevels = as.integer(bd_nlevels),
                    bd_nmixtypes = as.integer(bd_nmixtypes),
-                   blocks_levels = as.integer(nlevels),
-                   blocks_vattr = as.integer(nodecov - 1L),
-                   blocks_tails = as.integer(blocks_tails - 1L),
-                   blocks_heads = as.integer(blocks_heads - 1L),
-                   blocks_mixtypes = as.integer(blocks_mixtypes),
+                   combined_vattr = as.integer(combined_vattr),
+                   combined_nlevels = as.integer(combined_nlevels),
+                   combined_vattr_counts = as.integer(combined_vattr_counts),
+                   maxout = as.integer(maxout),
+                   maxin = as.integer(maxin),
+                   probvec = as.double(arguments$constraints$strat$probvec),
                    empirical_flag = as.integer(arguments$constraints$strat$empirical),
-                   amat = as.integer(t(pairs_mat)),
+                   amat = as.integer(t(amat)),
                    dyad_indep = as.integer(dyad_indep))
 
   proposal

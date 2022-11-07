@@ -145,8 +145,9 @@
 #' # binary: desp(d, type="OTP")
 #'
 #' @param d a vector of distinct integers
-#' @param type one of `c("OTP", "ITP", "RTP", "OSP", "ISP")`.
+#' @template ergmTerm-sp-type
 #'
+#' @template ergmTerm-cache-sp
 #' @template ergmTerm-general
 #'
 #' @template ergmTerm-directed
@@ -214,7 +215,9 @@ InitErgmTerm.desp<-function(nw, arglist, cache.sp=TRUE, ...) {
 #' @template ergmTerm-gw-decay-fixed
 #' @templateVar underlying ESP
 #' @template ergmTerm-gw-cutoff
-#' @param type one of `c("OTP", "ITP", "RTP", "OSP", "ISP")`.
+#' @template ergmTerm-sp-type
+#'
+#' @template ergmTerm-cache-sp
 #' @template ergmTerm-general
 #'
 #' @template ergmTerm-sp-types
@@ -298,8 +301,9 @@ InitErgmTerm.dgwesp<-function(nw, arglist, cache.sp=TRUE, gw.cutoff=30, ...) {
 #' # binary: ddsp(d, type="OTP")
 #'
 #' @param d a vector of distinct integers
-#' @param type one of `c("OTP", "ITP", "RTP", "OSP", "ISP")`
+#' @template ergmTerm-sp-type
 #'
+#' @template ergmTerm-cache-sp
 #' @template ergmTerm-general
 #'
 #' @template ergmTerm-directed
@@ -363,8 +367,9 @@ InitErgmTerm.ddsp<-function(nw, arglist, cache.sp=TRUE, ...) {
 #' @template ergmTerm-gw-decay-fixed
 #' @templateVar underlying DSP
 #' @template ergmTerm-gw-cutoff
-#' @param type one of `c("OTP", "ITP", "RTP", "OSP", "ISP")`
+#' @template ergmTerm-sp-type
 #'
+#' @template ergmTerm-cache-sp
 #' @template ergmTerm-general
 #'
 #' @template ergmTerm-sp-types
@@ -453,8 +458,9 @@ InitErgmTerm.dgwdsp<-function(nw, arglist, cache.sp=TRUE, gw.cutoff=30, ...) {
 #' # binary: dnsp(d, type="OTP")
 #'
 #' @param d a vector of distinct integers
-#' @param type one of `c("OTP", "ITP", "RTP", "OSP", "ISP")`.
+#' @template ergmTerm-sp-type
 #'
+#' @template ergmTerm-cache-sp
 #' @template ergmTerm-general
 #'
 #' @template ergmTerm-directed
@@ -517,11 +523,11 @@ InitErgmTerm.dnsp<-function(nw, arglist, cache.sp=TRUE, ...) {
 #' @template ergmTerm-gw-decay-fixed
 #' @templateVar underlying NSP
 #' @template ergmTerm-gw-cutoff
-#' @param type one of `c("OTP", "ITP", "RTP", "OSP", "ISP")`
-#'
-#' @template ergmTerm-general
+#' @template ergmTerm-sp-type
 #'
 #' @template ergmTerm-sp-types
+#' @template ergmTerm-cache-sp
+#' @template ergmTerm-general
 #'
 #' @template ergmTerm-gw-alpha-to-decay
 #'

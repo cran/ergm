@@ -65,6 +65,110 @@
 %% }
 
 
+\section{Changes in version 4.3.1}{
+
+  \subsection{NEW FEATURES}{
+    \itemize{
+      \item{
+        New functions \code{\link{search.ergmHints}()} and \code{\link{search.ergmReferences}()} can now be used to search available \code{\link{ergmHints}} and \code{\link{ergmReferences}}, respectively.
+      }
+      \item{
+        A new \code{\link[=For-ergmTerm]{For}()} term operator to construct a list of terms with some varying parameter.
+      }
+      \item{
+        Term API vignette is now more complete, and includes all API elements, not just the post-4.0 ones.
+      }
+      \item{
+        Termalike documentation templates now also list the keywords/concepts in the termalike's documentation file. More generally, termalike documentation has been revamped to be more consistent.
+      }
+      \item{
+        \code{\link{ergm}()} can now take a formula with an arbitrary LHS, provided \code{basis=} argument is supplied and is a network.
+      }
+    }
+  }
+
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item{
+        In C, prototypes of functions with no arguments now use the \code{(void)} placeholder.
+      }
+      \item{
+        \code{\link{gof}(..., GOF=~... - model)} now correctly removes the model from the set of goodness-of-fit terms.
+      }
+      \item{
+        Fixes to \code{\link{plot.gof}()} for bipartite networks.
+      }
+      \item{
+        Fixes to \code{\link{plot.gof}()} for dense networks.
+      }
+      \item{
+        Package manual now passes \code{tidy} HTML tests. (Thanks to Elin Waring for suggesting a workaround.)
+      }
+      \item{
+        The default description for the \code{attr=} term argument is now more accurate.
+      }
+    }
+  }
+
+  \subsection{OTHER USER-VISIBLE CHANGES}{
+    \itemize{
+      \item{
+        Constraints and model construction code now uses the \code{\link[statnet.common:term_list]{term_list}} API from \CRANpkg{statnet.common} 4.7 and avoid formula manipulation, making it more robust to formulas with varying environments.
+      }
+      \item{
+        \code{\link{\%ergmlhs\%}} constraints are now inherited by default, unless the \code{constraints=} formula includes a \code{-.} (minus dot) term. The former behaviour was to inherit only if \code{constraints=} argument had a \code{.}.
+      }
+      \item{
+        Some constraints' implementations are now much more memory-efficient.
+      }
+      \item{
+        Improvements to the API documentation in the Terms API vignette.
+      }
+      \item{
+        The Stepping estimation method has been removed, since all of its improvements have been incorporated into MCMLE.
+      }
+      \item{
+        The Robbins-Monro estimation algorithm has been removed, since it is currently broken and everything it does Stochastic Approximation does better.
+      }
+      \item{
+        Function \code{is.inCH()} has been removed, having been deprecated in favour of \code{\link{shrink_to_CH}()}.
+      }
+      \item{
+        \code{san.ergm()} has been removed, having been deprecated for having no known use case.
+      }
+      \item{
+        Improvements to \code{\link[=blockdiag-ergmConstraint]{blockdiag()}} constraint, \code{gw*sp()}, and other documentation.
+      }
+      \item{
+        An \code{Init*ErgmTerm.*} function can now return an \code{\link{ergm_model}}, in which case its terms will be \dQuote{pasted} into the model.
+      }
+      \item{
+        Documentation for \code{\link{san}()} algorithm is now much more detailed.
+      }
+      \item{
+        Some improvements to the \code{\link[BDStratTNT-ergmProposal]{BDStratTNT}} proposals.
+      }
+    }
+  }
+
+  \subsection{C-LEVEL FACILITIES}{
+    \itemize{
+      \item{
+        Some useful dynamic node and edge list data structures added and exported.
+      }
+    }
+  }
+
+  \subsection{INSTALLATION}{
+    \itemize{
+      \item{
+        Packages \CRANpkg{tergm}, \CRANpkg{networkDynamic}, and \CRANpkg{latentnet} are no longer Suggested to simplify testing.
+      }
+    }
+  }
+}
+
+
 \section{Changes in version 4.2.3}{
 
   \subsection{NEW FEATURES}{
@@ -253,7 +357,7 @@
         Adaptive bridge sampling for likelihood calculation now shifts the bridge locations by an offset generated from a low-discrepancy sequence after each attempt in order to reduce bias due to finite number of bridges.
       }
 
-      \item{Hummel (2012) step length calculation now uses an improved algorithm (Krivitsky, Kuvelkar, and Hunter 2022) and uses \pkg{Rglpk} where available for better performance. \code{\link{is.inCH}} and the \code{Stepping} algorithms have been deprecated (the latter in favour of \code{MCMLE}).
+      \item{Hummel (2012) step length calculation now uses an improved algorithm (Krivitsky, Kuvelkar, and Hunter 2022) and uses \CRANpkg{Rglpk} where available for better performance. \code{\link{is.inCH}} and the \code{Stepping} algorithms have been deprecated (the latter in favour of \code{MCMLE}).
       }
 
       \item{
@@ -309,7 +413,7 @@
   \subsection{PACKAGE INSTALLATION}{
     \itemize{
       \item{
-        Package \pkg{Rglpk} is not strictly required and has additional external library requirements on some platforms, but it is strongly recommended, as it outperforms \pkg{lpSolve} in most situations.
+        Package \CRANpkg{Rglpk} is not strictly required and has additional external library requirements on some platforms, but it is strongly recommended, as it outperforms \CRANpkg{lpSolve} in most situations.
       }
     }
   }
@@ -385,7 +489,7 @@
   \subsection{OTHER USER-VISIBLE CHANGES}{
     \itemize{
       \item{
-        Per request of the \pkg{sna} maintainer, \code{\link[=ergm_symmetrize]{symmetrize}()} generic and methods have been renamed to \code{\link{ergm_symmetrize}}.
+        Per request of the \CRANpkg{sna} maintainer, \code{\link[=ergm_symmetrize]{symmetrize}()} generic and methods have been renamed to \code{\link{ergm_symmetrize}}.
       }
       \item{
         Metadata set by \code{\link{\%ergmlhs\%}} is now pretty-printed.
@@ -567,7 +671,7 @@
       }
 
       \item{
-        The \pkg{\link[sna:sna-package]{sna}} function \code{\link{symmetrize}} is made into a generic and a method for \code{\link{network}} objects is implemented.
+        The \CRANpkg{sna} function \code{\link{symmetrize}} is made into a generic and a method for \code{\link{network}} objects is implemented.
       }
 
       \item{
@@ -689,7 +793,7 @@
       }
 
       \item{
-        In the \code{InitErgmConstraint} API, \code{free_dyads} can now be a function with 0 arguments, that is only evaluated if needed and is memoized (using the \pkg{\link[=memoise:memoise-package]{memoise}} package).
+        In the \code{InitErgmConstraint} API, \code{free_dyads} can now be a function with 0 arguments, that is only evaluated if needed and is memoized (using the \CRANpkg{memoise} package).
       }
 
       \item{
@@ -725,7 +829,7 @@
       }
 
       \item{
-        The \code{lasttoggle} API created for the \pkg{\link[tergm:tergm-packag]{tergm}} package has been removed in favour of the \dQuote{extended state} API that allows client packages to implement their own states. Similarly, \code{is.durational} family of methods has been removed.
+        The \code{lasttoggle} API created for the \CRANpkg{tergm} package has been removed in favour of the \dQuote{extended state} API that allows client packages to implement their own states. Similarly, \code{is.durational} family of methods has been removed.
       }
 
       \item{
