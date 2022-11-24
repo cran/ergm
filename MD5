@@ -1,5 +1,5 @@
 8973473679623f1a4e044bf2ca7ecb56 *BUGS
-3bb8420ffe12ac70bcedd922c0476a4f *DESCRIPTION
+a3c1246fe4c25e8cbd26147346edd75e *DESCRIPTION
 f30f2b1d5e2e73ab09a2807a3b969951 *LICENSE
 794250d3127d18126de643ecf8a71c1e *LICENSE.note
 2f77a5677425ba47cb861cf94557b806 *NAMESPACE
@@ -9,7 +9,7 @@ f30f2b1d5e2e73ab09a2807a3b969951 *LICENSE
 4a8d10be745a721128aa32ec3b3c3f9a *R/InitErgmProposal.R
 5a86528128028327f09c96771da6bede *R/InitErgmProposal.dyadnoise.R
 f517c6ab88f80f2d4f071df3d624020b *R/InitErgmReference.R
-634844425d17534e4337845692b8be56 *R/InitErgmTerm.R
+83c6c9c5638b1e75859f1d6b4d408070 *R/InitErgmTerm.R
 0832d383393a5b773ec6e26960960c36 *R/InitErgmTerm.auxnet.R
 f1a3ae616c5c93e73a2c5e0bc5bfd019 *R/InitErgmTerm.bipartite.R
 3e69c841ee2d2097e8bcb3ae71c4ce25 *R/InitErgmTerm.bipartite.degree.R
@@ -45,7 +45,7 @@ eaf783e9cd2ff9e0b4562152d6430ef4 *R/ergm-defunct.R
 a3b8e71de74ef2ba072e0fe9b61f8a84 *R/ergm-internal.R
 76aaec7f7f31fc119890ae591dfa38db *R/ergm-options.R
 873d84d52d2d0ce5cf851f014eb9a277 *R/ergm-package.R
-b6736adce809b64df90c773d9c185baa *R/ergm-terms-index.R
+0644c9d76c398e56acbf3012224153dd *R/ergm-terms-index.R
 fa4058054b97dab14b5c22494f36a05e *R/ergm.CD.fixed.R
 c267f8f5c8cd4ea41404d2fca9dbb201 *R/ergm.Cprepare.R
 41ae57f7d1f2415dd96a73aef72922d3 *R/ergm.MCMCse.R
@@ -83,7 +83,7 @@ f94434d20d04433eb33f9e38633752ab *R/ergmMPLE.R
 22d05c332622485b0d9474c4d9f1bdf5 *R/ergm_keyword.R
 7f964e9234a6462cc24b2da78862f78f *R/ergm_model.R
 207ec490296f12c471f0ba7585c3f6a6 *R/ergm_model.utils.R
-53a8ea3c558fb63d669cd731c8b365ea *R/ergm_proposal.R
+b981d06fe691d2c3aea26b73ee524d77 *R/ergm_proposal.R
 0fb2d835190c74d84509275c5b361333 *R/ergm_response.R
 c7dfc08235c516fd0c4b6588c55b324e *R/ergm_state.R
 166eeabc60047aeaa7a7cb7ca2b612f5 *R/ergmlhs.R
@@ -120,8 +120,8 @@ dde354b2ed6ebdc62b79368765f42f67 *R/summary.ergm_model.R
 2c22448ce6c949e408c020275fdc52ad *R/vcov.ergm.R
 07149e2ef9a6d094777196df50f05496 *R/wtd.median.R
 a06047aa25012db078d417f01ed247c8 *R/zzz.R
-9f368406bd1e6a25fbfb71071bc7ab7c *build/ergm.pdf
-d9235fc8285523245c0bdaefe7c494b0 *build/vignette.rds
+80ab348d2d7031089e89a0abffcef640 *build/ergm.pdf
+754225991e6cc5148cbbea98f0c1f982 *build/vignette.rds
 9363ab81094cfb8a88bc674779464fca *data/cohab.RData
 6a4ab5855a420f3fe9f373bd691f56e3 *data/datalist
 95785d09e7b4356b61cf6811e67c325b *data/ecoli.RData
@@ -135,8 +135,8 @@ f04b56d2b35e0d6bf1a17f01b296dba0 *data/kapferer.RData
 03143f3a6d65a364380ce962e9397366 *data/molecule.RData
 2fda5dade3d3e5544779b2b026384238 *data/samplk.RData
 e236150a2d5789219fb1df262b542d33 *data/sampson.RData
-3618bac884e9bb2e045cd46d43940aaa *inst/CITATION
-565da5790d737b18418246e60baf4bce *inst/NEWS.Rd
+b4315bbdb78e7ffd0c210095e252158f *inst/CITATION
+3514616fa200447f737ec9959c429562 *inst/NEWS.Rd
 aebe77e5b8247666fff6ff511541fb29 *inst/doc/Network-Callback-API.Rmd
 abb0e903d67b642e87028fed7ca94b81 *inst/doc/Network-Callback-API.html
 cc7a6f32f307541b46b2eb94798a9fb4 *inst/doc/Proposal-Lookup-API.Rmd
@@ -146,14 +146,14 @@ b967a67c4cc2693a96c1ae47c243c3ef *inst/doc/Proposal-Lookup-API.html
 bf8ab333c04ec83962539972963b2b9e *inst/doc/Terms-API.html
 ad15af666f57d03ac9cfb5c357a685d3 *inst/doc/ergm-term-crossRef.R
 12a91264bc29e306ee568a2f53c2a06e *inst/doc/ergm-term-crossRef.Rmd
-ba30ba71d66ea0c29fe3accf70aa5a45 *inst/doc/ergm-term-crossRef.html
+9598bdf7a7bcfef34410990b4cbaf0b0 *inst/doc/ergm-term-crossRef.html
 68c8910d290c61abc64a5bc7545e7e9b *inst/doc/ergm.R
 9741cd975ab1ffacc03d80682c62b56f *inst/doc/ergm.Rmd
 39c4330d7f9093a3c4adea5a88184717 *inst/doc/ergm.css
-7403e90b92b5f8a1cb1f8c67a28edcb7 *inst/doc/ergm.pdf
+bbe2c691db954503aa13e541f6d35e3b *inst/doc/ergm.pdf
 6813ce5e26e1c0bcbbefb3ff2faf05f1 *inst/doc/nodal_attributes.R
 5157382273813fbd71988c65581466da *inst/doc/nodal_attributes.Rmd
-3d07ff7fe651e3d5f4a7dd5f8a668338 *inst/doc/nodal_attributes.html
+3acf519b11d956255f170e9b6003fe49 *inst/doc/nodal_attributes.html
 ab02056c2a42e08840a21630eb1ba6fe *inst/include/MHproposal.h
 e65660d7a0693c6889179d7fd54453e3 *inst/include/README
 32e43cbfd5bda0045976da4dd6bd41dd *inst/include/changestat.h
@@ -372,7 +372,7 @@ fc7ce7fe7327194590b5f0f2b03bb0b6 *man/ergm_keyword.Rd
 c9d8a11c3082b4844ef6896824e255b9 *man/ergm_preprocess_response.Rd
 7a2fa34546667d7c034feda312f406a1 *man/ergm_propagate_ext.encode.Rd
 112dbccd71b13986d3f2a6addad0a1d7 *man/ergm_proposal.Rd
-0debe0a4b00722435bfbacf9a3f4ec42 *man/ergm_proposal_table.Rd
+fbadfa18b7b10eb148c9c3ef332e048c *man/ergm_proposal_table.Rd
 5c76f58c525efa7953d1353fb4cdb86b *man/ergm_state.Rd
 ece964b51de9804b44d2cb468f24457a *man/ergm_state_cache.Rd
 9b2b09e1720c0b6611aa1223cde0fdf5 *man/ergm_symmetrize.Rd
@@ -593,8 +593,9 @@ dcce0672e40e95633430aeed064105df *tests/testthat/test-constrain-dind.R
 cbcb3c438a319adcfb6254320cf38d86 *tests/testthat/test-constraints.R
 f1258c397809b8ca74bf0ac1ed7ae028 *tests/testthat/test-drop.R
 42404364d3fb41ca91215c57b73987f4 *tests/testthat/test-ergm-godfather.R
+54f71d9af297cc63e0bba93f4c3e1638 *tests/testthat/test-ergm-proposal-unload.R
 cabf4ebfbbbfa0853df618fa0465b7ba *tests/testthat/test-ergm-san.R
-e9471bd1b8a6fb644b6f27c741849a52 *tests/testthat/test-ergm-term-doc.R
+e760700ae8b1b7b2e8748a862df85b60 *tests/testthat/test-ergm-term-doc.R
 340af0791faf537a56fc8c6db55df459 *tests/testthat/test-ergm.bridge.llr.R
 dc7674f49b5fbfe8f14616c2d91c2cf8 *tests/testthat/test-ergmMPLE.R
 d4040ebeb54a3131986cc72d8489d993 *tests/testthat/test-fix.curved.R
@@ -632,7 +633,7 @@ d56ebacbbbadcdf313e2527a389a844b *tests/testthat/test-term-attrcov.R
 53e6807d7c94d81eb31a1f282d0ede46 *tests/testthat/test-term-b12nodematch.R
 5c6d8d2342afa8dbd9282d20ca761ab8 *tests/testthat/test-term-bipartite.R
 d52d96bd26ea327664148248e2815670 *tests/testthat/test-term-directed.R
-ac13e114829c76c96c0536b55b9d386a *tests/testthat/test-term-edgecov.R
+cf2f6384f53b89f193058c8b5a3fccf7 *tests/testthat/test-term-edgecov.R
 d8733452a901ea7543eb5898075a2915 *tests/testthat/test-term-errors.R
 08e167b2da198fc546010094a0f0dac2 *tests/testthat/test-term-flexible.R
 be64579ae4f02b684f3b7351361df6a7 *tests/testthat/test-term-hamming.R
