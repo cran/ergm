@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2022 Statnet Commons
+#  Copyright 2003-2023 Statnet Commons
 ################################################################################
 
 
@@ -16,7 +16,7 @@
 #'
 #' @order 1
 #'
-#' @param object an object of class "ergm", usually, a result of a call to
+#' @param object an object of class `ergm`, usually, a result of a call to
 #'   [ergm()].
 #' @param correlation logical; if `TRUE`, the correlation matrix of the
 #'   estimated parameters is returned and printed.
@@ -78,7 +78,7 @@ summary.ergm <- function (object, ...,
     warn(paste0("This object was fit with ", sQuote("ergm"), " version ", objver, " or earlier. Summarizing it with version ", nextver, " or later may return incorrect results or fail."))
   }
 
-  if("digits" %in% names(list(...))) warn("summary.ergm() no lnger takes a digits= argument.")
+  if("digits" %in% ...names()) warn("summary.ergm() no lnger takes a digits= argument.")
   control <- object$control
   pseudolikelihood <- object$estimate=="MPLE"
   independence <- NVL(object$MPLE_is_MLE, is.dyad.independent(object))
@@ -144,7 +144,7 @@ summary.ergm <- function (object, ...,
     ans$null.lik.0 <- is.na(null.lik)
 
     df <- length(coef)
-    dyads<- sum(as.rlebdm(object$constrained, object$constrained.obs, which="informative"))
+    dyads <- nobs(object)
     rdf <- dyads - df
     ans$devtable <- matrix(c(if(is.na(null.lik)) 0 else -2*null.lik, -2*mle.lik,
                              c(dyads, rdf)), 2,2, dimnames=list(c("Null","Residual"),

@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2022 Statnet Commons
+#  Copyright 2003-2023 Statnet Commons
 ################################################################################
 
 #' Conduct Goodness-of-Fit Diagnostics on a Exponential Family Random Graph
@@ -129,6 +129,7 @@ gof.ergm <- function (object, ...,
                       constraints = object$constraints,
                       control = control.gof.ergm(),
                       verbose = FALSE) {
+  check_dots_used(error = unused_dots_warning)
   check.control.class(c("gof.ergm","gof.formula"), "gof.ergm")
   handle.control.toplevel("gof.ergm", ...)
 
@@ -174,7 +175,7 @@ gof.formula <- function(object, ...,
                         control=NULL,
                         unconditional=TRUE,
                         verbose=FALSE) {
-  if("response" %in% names(list(...))) stop("GoF for valued ERGMs is not implemented at this time.")
+  if("response" %in% ...names()) stop("GoF for valued ERGMs is not implemented at this time.")
 
   if(!is.null(control$seed)){
     set.seed(as.integer(control$seed))
@@ -194,6 +195,7 @@ gof.formula <- function(object, ...,
   nw <- ensure_network(basis)
   NVL(control) <- control.gof.formula()
 
+  check_dots_used(error = unused_dots_warning)
   check.control.class(c("gof.formula","gof.ergm"), "ERGM gof.formula")
   handle.control.toplevel("gof.formula", ...)
 

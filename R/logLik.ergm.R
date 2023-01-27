@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2022 Statnet Commons
+#  Copyright 2003-2023 Statnet Commons
 ################################################################################
 ## A function to compute and return the log-likelihood of an ERGM MLE.
 
@@ -30,6 +30,7 @@
 #'
 #' @templateVar mycontrol control.logLik.ergm
 #' @template control
+#' @template verbose
 #'
 #' @param \dots Other arguments to the likelihood functions.
 #' @return The form of the output of \code{logLik.ergm} depends on
@@ -77,12 +78,13 @@
 #' }
 #' 
 #' @export
-logLik.ergm<-function(object, add=FALSE, force.reeval=FALSE, eval.loglik=add || force.reeval, control=control.logLik.ergm(), ...){
+logLik.ergm<-function(object, add=FALSE, force.reeval=FALSE, eval.loglik=add || force.reeval, control=control.logLik.ergm(), ..., verbose=FALSE){
 
   if(!force.reeval && !is.null(object$mle.lik)) return(object$mle.lik)
 
   # Then, we need to recalculate...
-  
+#' @importFrom rlang check_dots_used
+  check_dots_used(error = unused_dots_warning)
   check.control.class("logLik.ergm", "logLik.ergm")
   handle.control.toplevel("logLik.ergm", ...)
 
@@ -107,17 +109,17 @@ logLik.ergm<-function(object, add=FALSE, force.reeval=FALSE, eval.loglik=add || 
          && !is.valued(object)))
       structure(mple.lik, vcov = 0)
     ## If dyad-dependent but not valued and has a dyad-independent constraint, bridge from a dyad-independent model.
-    else if(is.dyad.independent(object$constrained, object$constrained.obs)
-                   && !is.valued(object))
-      ergm.bridge.dindstart.llk(formula,reference=reference,constraints=constraints,obs.constraints=obs.constraints,coef=coef(object),target.stats=object$target.stats,control=control.bridge,llkonly=FALSE,...)
+    else if(is.dyad.independent(object, "space")
+            && !is.valued(object))
+      ergm.bridge.dindstart.llk(formula,reference=reference,constraints=constraints,obs.constraints=obs.constraints,coef=coef(object),target.stats=object$target.stats,control=control.bridge,llkonly=FALSE,...,verbose=verbose)
     ## If valued or has dyad-dependent constraint, bridge from the null model (reference measure).
     else
-      ergm.bridge.0.llk(formula,reference=reference,constraints=constraints,obs.constraints=obs.constraints,coef=coef(object),target.stats=object$target.stats,control=control.bridge,llkonly=FALSE,basis=object$network,...)
+      ergm.bridge.0.llk(formula,reference=reference,constraints=constraints,obs.constraints=obs.constraints,coef=coef(object),target.stats=object$target.stats,control=control.bridge,llkonly=FALSE,basis=object$network,...,verbose=verbose)
   }
   )
 
   # Add the null likelihood. This incidentally means that the nobs() calls below is short-circuited to reuse the result here.
-  if(add) object$null.lik <- logLikNull(object, control=control.null, ...)
+  if(add) object$null.lik <- logLikNull(object, control=control.null, ..., verbose=verbose)
 
   if(is.numeric(out)){
     llk<-out
@@ -129,7 +131,7 @@ logLik.ergm<-function(object, add=FALSE, force.reeval=FALSE, eval.loglik=add || 
   if(!inherits(llk,"logLik")){
     class(llk)<-"logLik"
     attr(llk,"df")<-nparam(object, offset=FALSE)
-    attr(llk,"nobs")<- nobs(object, ...)
+    attr(llk,"nobs")<- nobs(object, ..., verbose=verbose)
   }
   
   if(add){
@@ -174,7 +176,7 @@ logLikNull.ergm <- function(object, control=control.logLik.ergm(), ...){
     if(is.valued(object)){
       message(paste(strwrap(paste("Note: Null model likelihood calculation is not implemented for valued ERGMs at this time. ", NO_NULL_IMPLICATION)), collapse="\n"))
       NA
-    }else if(!is.dyad.independent(object$constrained, object$constrained.obs)){
+    }else if(!is.dyad.independent(object, "space")){
       message(paste(strwrap(paste("Note: The constraint on the sample space is not dyad-independent. Null model likelihood is only implemented for dyad-independent constraints at this time. Number of observations is similarly poorly defined. ", NO_NULL_IMPLICATION)), collapse="\n"))
       NA
     }else nobs * log(1/2)
@@ -194,14 +196,15 @@ nobs.ergm <- function(object, ...){
   # and partially observed network "degrees of freedom". PROGRESS: We
   # can handle dyad-independent ones fine, now.
   
-  if(!is.dyad.independent(object$constrained, object$constrained.obs)
+  if(!is.dyad.independent(object, "space")
      && getOption("ergm.loglik.warn_dyads")){
     warning("The number of observed dyads in this network is ill-defined due to complex constraints on the sample space. Disable this warning with ",sQuote("options(ergm.loglik.warn_dyads=FALSE)"),".")
   }
-  
+
+  # TODO: Remove the as.rlebdm() approach at the same time as as.rlebdm.ergm().
   NVL3(NVL(object$mple.null.lik, object$mple.lik, object$null.lik, object$mle.lik),
        attr(.,"nobs"),
-       sum(as.rlebdm(object, which="informative")))
+       NVL(object$info$n_info_dyads, sum(as.rlebdm(object, which="informative"))))
 }
 
 NO_NULL_IMPLICATION <- "This means that all likelihood-based inference (LRT, Analysis of Deviance, AIC, BIC, etc.) is only valid between models with the same reference distribution and constraints."

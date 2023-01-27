@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2022 Statnet Commons
+#  Copyright 2003-2023 Statnet Commons
 ################################################################################
 
 attach(MLE.tools)
@@ -42,6 +42,12 @@ run.miss.test<-function(y){
 
   cat("MCMCMLE estimate =", coef(mcmcfit),"with log-likelihood",logLik(mcmcfit), if(mcmc.theta.OK<tolerance&&mcmc.llk.OK<tolerance) "OK.","\n")
 
+  expect_true(is.na(mplefit))
+  expect_true(is.na(mcmcfit))
+  expect_true(anyNA(mplefit))
+  expect_true(anyNA(mcmcfit))
+  expect_true(is.dyad.independent(mplefit))
+  expect_true(is.dyad.independent(mcmcfit))
   expect_true(isTRUE(mple.theta.OK))
   expect_lt(mcmc.theta.OK, tolerance)
   expect_true(isTRUE(mple.llk.OK))

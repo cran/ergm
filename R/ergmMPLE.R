@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2022 Statnet Commons
+#  Copyright 2003-2023 Statnet Commons
 ################################################################################
 
 #' ERGM Predictors and response for logistic regression calculation of MPLE
@@ -128,6 +128,7 @@
 #' @export ergmMPLE
 ergmMPLE <- function(formula, constraints=~., obs.constraints=~-observed, output=c("matrix", "array", "dyadlist", "fit"), expand.bipartite=FALSE, control=control.ergm(),
                      verbose=FALSE, ..., basis=ergm.getnetwork(formula)){
+  check_dots_used(error = unused_dots_warning)
   check.control.class("ergm", "ergmMPLE")
   handle.control.toplevel("ergm", ...)
 

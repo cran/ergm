@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2022 Statnet Commons
+#  Copyright 2003-2023 Statnet Commons
 ################################################################################
 
 #' Generate networks with a given set of network statistics
@@ -189,6 +189,7 @@ san.formula <- function(object, response=NULL, reference=~Bernoulli, constraints
                         verbose=FALSE, 
                         offset.coef=NULL,
                         ...) {
+  check_dots_used(error = unused_dots_warning)
   check.control.class("san", "san")
   handle.control.toplevel("san", ...)
 

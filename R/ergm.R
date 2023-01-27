@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2022 Statnet Commons
+#  Copyright 2003-2023 Statnet Commons
 ################################################################################
 
 #' Exponential-Family Random Graph Models
@@ -24,7 +24,7 @@
 #' estimate, an approximate maximum likelihood estimate based on a Monte
 #' Carlo scheme, or an approximate contrastive divergence estimate based
 #' on a similar scheme.
-#' (For an overview of the package, see \code{\link{ergm-package}}.)
+#' (For an overview of the package \insertCite{HuHa08e,KrHu23e}{ergm}, see \code{\link{ergm-package}}.)
 #' 
 #' @param formula An \R \code{\link{formula}} object, of the form
 #'   \code{y ~ <model terms>}, where \code{y} is a
@@ -100,6 +100,13 @@
 #' arguments, to be passed to lower-level functions.
 #'
 #' @template basis
+#'
+#' @param newnetwork One of `"one"` (the default), `"all"`, or
+#'   `"none"` (or, equivalently, `FALSE`), specifying whether the
+#'   network(s) from the last iteration of the MCMC sampling should be
+#'   returned as a part of the fit as a elements `newnetwork` and
+#'   `newnetworks`. (See their entries in section Value below for
+#'   details.) Partial matching is supported.
 #' 
 #' @return
 #' \code{\link{ergm}} returns an object of class \code{\link{ergm}} that is a list
@@ -131,9 +138,9 @@
 #' Hessian of the approximated loglikelihood evaluated at the maximizer.}
 #' \item{failure}{Logical:  Did the MCMC estimation fail?}
 #' \item{network}{Network passed on the left-hand side of `formula`. If `target.stats` are passed, it is replaced by the network returned by [san()].}
-#' \item{newnetworks}{A list of the final networks at the end of the MCMC
+#' \item{newnetworks}{If argument `newnetwork` is `"all"`, a list of the final networks at the end of the MCMC
 #' simulation, one for each thread.}
-#' \item{newnetwork}{The first (possibly only) element of \code{newnetworks}.}
+#' \item{newnetwork}{If argument `newnetwork` is `"one"` or `"all"`, the first (possibly only) element of \code{newnetworks}.}
 #' \item{coef.init}{The initial value of \eqn{\theta}.}
 #' \item{est.cov}{The covariance matrix of the model statistics in the final MCMC sample.}
 #' \item{coef.hist, steplen.hist, stats.hist, stats.obs.hist}{
@@ -146,7 +153,6 @@
 #' \item{formula}{The original \code{\link{formula}} entered into the \code{\link{ergm}} function.}
 #' \item{target.stats}{The target.stats used during estimation (passed through from the Arguments)}
 #' \item{target.esteq}{Used for curved models to preserve the target mean values of the curved terms. It is identical to target.stats for non-curved models.}
-#' \item{constrained}{The list of constraints implied by the constraints used by original \code{ergm} call}
 #' \item{constraints}{Constraints used during estimation (passed through from the Arguments)}
 #' \item{reference}{The reference measure used during estimation (passed through from the Arguments)}
 #' \item{estimate}{The estimation method used (passed through from the Arguments).}
@@ -168,6 +174,20 @@
 #' estimated due to a \code{constraints} constraint fixing that term at a
 #' constant value.
 #' }
+#'
+#' \item{info}{A list with miscellaneous information that would typically be accessed by the user via methods; in general, it should not be accessed directly. Current elements include: \describe{
+#'
+#' \item{`terms_dind`}{Logical indicator of whether the model terms are all dyad-independent.}
+#'
+#' \item{`space_dind`}{Logical indicator of whether the sample space (constraints) are all dyad-independent.}
+#'
+#' \item{`n_info_dyads`}{Number of \dQuote{informative} dyads: those that are observed (not missing) *and* not constrained by sample space constraints; one of the measures of sample size.}
+#'
+#' \item{`obs`}{Logical indicator of whether an observational (missing data) process was involved in estimation.}
+#'
+#' \item{`valued`}{Logical indicator of whether the model is valued.}
+#'
+#' }}
 #' 
 #' \item{null.lik}{Log-likelihood of the null model. Valid only for
 #' unconstrained models.}
@@ -205,7 +225,8 @@
 #' The package is designed so that the user could conceivably add additional 
 #' proposal types. 
 #' 
-#' @references
+#' @references \insertAllCited{}
+#'
 #' Admiraal R, Handcock MS (2007).
 #' \pkg{networksis}: Simulate bipartite graphs with fixed
 #' marginals through sequential importance sampling.
@@ -388,7 +409,11 @@ ergm <- function(formula, response=NULL,
                  eval.loglik=getOption("ergm.eval.loglik"),
                  estimate=c("MLE", "MPLE", "CD"),
                  control=control.ergm(),
-                 verbose=FALSE,..., basis=ergm.getnetwork(formula)) {
+                 verbose=FALSE,
+                 ...,
+                 basis=ergm.getnetwork(formula),
+                 newnetwork=c("one", "all", "none")) {
+  check_dots_used(error = unused_dots_warning)
   check.control.class("ergm", "ergm")
   handle.control.toplevel("ergm", ...)
 
@@ -399,6 +424,9 @@ ergm <- function(formula, response=NULL,
   obs.constraints <- trim_env_const_formula(obs.constraints)
   
   estimate <- match.arg(estimate)
+  newnetwork <-
+    if(isFALSE(newnetwork)) "none"
+    else if(is.character(newnetwork)) match.arg(newnetwork)
 
   if(estimate=="CD"){
     control$init.method <- "CD"
@@ -463,6 +491,14 @@ ergm <- function(formula, response=NULL,
       }else if(verbose) message(".")
     }else proposal.obs <- NULL
   }else proposal.obs <- obs.constraints
+
+  info <- list(
+    terms_dind = is.dyad.independent(model),
+    space_dind = is.dyad.independent(proposal$arguments$constraints, proposal.obs$arguments$constraints),
+    n_info_dyads = if(!control$MPLE.constraints.ignore) sum(as.rlebdm(proposal$arguments$constraints, proposal.obs$arguments$constraints, which="informative")) else NA,
+    obs = !is.null(proposal.obs),
+    valued = is.valued(nw)
+  )
   
   ## Construct approximate response network if target.stats are given.
   if(!is.null(target.stats)){
@@ -523,8 +559,7 @@ ergm <- function(formula, response=NULL,
   # TODO: Create a flexible and general framework to manage methods
   # for obtaining initial values.
   init.candidates <- proposal$reference$init_methods
-  if("MPLE" %in% init.candidates && !is.dyad.independent(proposal$arguments$constraints,
-                                                         proposal.obs$arguments$constraints)){
+  if("MPLE" %in% init.candidates && !info$space_dind){
     init.candidates <- init.candidates[init.candidates!="MPLE"]
     if(verbose) message("MPLE cannot be used for this constraint structure.")
   }
@@ -587,10 +622,9 @@ ergm <- function(formula, response=NULL,
   if (verbose) { message("Fitting initial model.") }
   
   MPLE.is.MLE <- (proposal$reference$name=="Bernoulli"
-                  && is.dyad.independent(model)
+                  && info$terms_dind
                   && !control$force.main
-                  && is.dyad.independent(proposal$arguments$constraints,
-                                         proposal.obs$arguments$constraints))
+                  && info$space_dind)
   
   # If all other criteria for MPLE=MLE are met, _and_ SAN network matches target.stats directly, we can get away with MPLE.
   if (!is.null(target.stats) && !isTRUE(all.equal(target.stats[!is.na(target.stats)],nw.stats[!is.na(target.stats)]))) message("Unable to match target stats. Using MCMLE estimation.")
@@ -615,10 +649,9 @@ ergm <- function(formula, response=NULL,
                           estimable=constrcheck$estimable,
                           network=nw,
                           reference=reference,
-                          newnetwork=nw,
+                          newnetwork = if(newnetwork != "none") nw,
                           formula=formula,
-                          constrained=proposal$arguments$constraints,
-                          constrained.obs=proposal.obs$arguments$constraints,
+                          info=info,
                           constraints=constraints,
                           target.stats=target.stats,
                           target.esteq=if(!is.null(target.stats)) ergm.estfun(rbind(target.stats), control$init, model),
@@ -674,15 +707,14 @@ ergm <- function(formula, response=NULL,
     initialfit$call <- ergm_call
     initialfit$ergm_version <- packageVersion("ergm")
     initialfit$offset <- model$etamap$offsettheta
+    initialfit$info <- info
     initialfit$MPLE_is_MLE <- MPLE.is.MLE
     initialfit$drop <- if(control$drop) extremecheck$extremeval.theta
     initialfit$estimable <- constrcheck$estimable
     initialfit$network <- nw
     initialfit$reference <- reference
-    initialfit$newnetwork <- nw
+    initialfit$newnetwork <- if(newnetwork != "none") nw
     initialfit$formula <- formula
-    initialfit$constrained <- proposal$arguments$constraints
-    initialfit$constrained.obs <- proposal.obs$arguments$constraints
     initialfit$constraints <- constraints
     initialfit$obs.constraints <- obs.constraints 
     initialfit$target.stats <- suppressWarnings(na.omit(model$target.stats))
@@ -735,6 +767,7 @@ ergm <- function(formula, response=NULL,
   
   mainfit$call <- ergm_call
   mainfit$ergm_version <- packageVersion("ergm")
+  mainfit$info <- info
   mainfit$MPLE_is_MLE <- MPLE.is.MLE
   
   mainfit$formula <- formula
@@ -742,8 +775,6 @@ ergm <- function(formula, response=NULL,
   mainfit$nw.stats <- model$nw.stats
   mainfit$target.esteq <- suppressWarnings(na.omit(if(!is.null(model$target.stats)) ergm.estfun(rbind(model$target.stats), coef(mainfit), model)))
   
-  mainfit$constrained <- proposal$arguments$constraints
-  mainfit$constrained.obs <- proposal.obs$arguments$constraints
   mainfit$constraints <- constraints
   mainfit$obs.constraints <- obs.constraints
   
@@ -759,13 +790,25 @@ ergm <- function(formula, response=NULL,
   mainfit$estimable <- constrcheck$estimable
   mainfit$etamap <- model$etamap
 
-  if (!control$MCMC.return.stats)
-    mainfit$sample <- NULL
+  if(control$MCMC.return.stats == 0) mainfit$sample <- mainfit$sample.obs <- NULL
+  else{ # Thin the chains.
+    mainfit$sample <- NVL3(mainfit$sample, {
+      w <- window(., thin = thin(.) * (et <- max(ceiling(niter(.) / control$MCMC.return.stats), 1)))
+      structure(w, extra_thin = et)
+    })
+    mainfit$sample.obs <- NVL3(mainfit$sample.obs, {
+      w <- window(., thin = thin(.) * (et <- max(ceiling(niter(.) / control$MCMC.return.stats), 1)))
+      structure(w, extra_thin = et)
+    })
+  }
 
   if(eval.loglik){
     message("Evaluating log-likelihood at the estimate. ", appendLF=FALSE)
     mainfit<-logLik(mainfit, add=TRUE, control=control$loglik, verbose=verbose)
   }
+
+  if(newnetwork == "none") mainfit$newnetwork <- NULL
+  if(newnetwork != "all") mainfit$newnetworks <- NULL
     
   if (MCMCflag) {
     message(paste(strwrap("This model was fit using MCMC.  To examine model diagnostics and check for degeneracy, use the mcmc.diagnostics() function."),collapse="\n"))

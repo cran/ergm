@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2022 Statnet Commons
+#  Copyright 2003-2023 Statnet Commons
 ################################################################################
 
 ## FIXME: There is almost certainly a better way to do this.
@@ -69,7 +69,7 @@
 #' @concept undirected
 #' @import rle
 InitErgmConstraint.blockdiag<-function(lhs.nw, attr=NULL, ...){
-  if(length(list(...)))
+  if(...length())
     stop(paste("Block diagonal constraint takes one argument at this time."), call.=FALSE)
   list(attr=attr,
        free_dyads = {

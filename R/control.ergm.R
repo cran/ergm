@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2022 Statnet Commons
+#  Copyright 2003-2023 Statnet Commons
 ################################################################################
 #' Auxiliary for Controlling ERGM Fitting
 #' 
@@ -154,10 +154,12 @@
 #' @param SA.burnin,SA.interval,SA.samplesize Sets the corresponding
 #'   `MCMC.*` parameters when `main.method="Stochastic-Approximation"`.
 #'
-#' @param MCMC.return.stats Logical: If TRUE, return the matrix of MCMC-sampled
-#' network statistics.  This matrix should have \code{MCMC.samplesize} rows.
-#' This matrix can be used directly by the \code{coda} package to assess MCMC
-#' convergence.
+#' @param MCMC.return.stats Numeric: If positive, include an
+#'   [`mcmc.list`] (two, if observational process was involved) of
+#'   MCMC network statistics from the last iteration of network of the
+#'   estimation. They will be thinned to have length of at most
+#'   `MCMC.return.stats`. They are used for MCMC diagnostics.
+#'
 #' @param MCMC.runtime.traceplot Logical: If `TRUE`, plot traceplots of the MCMC
 #' sample after every MCMC MLE iteration.
 #' @template control_MCMC_maxedges
@@ -479,7 +481,7 @@ control.ergm<-function(drop=TRUE,
                        MCMC.effectiveSize.burnin.PC=FALSE,
                        MCMC.effectiveSize.burnin.scl=32,
                        MCMC.effectiveSize.order.max=NULL,
-                       MCMC.return.stats=TRUE,
+                       MCMC.return.stats=2^12,
                        MCMC.runtime.traceplot=FALSE,
                        MCMC.maxedges=Inf,
                        MCMC.addto.se=TRUE,
@@ -633,7 +635,7 @@ control.ergm<-function(drop=TRUE,
 
   control <- handle.controls("control.ergm", ...)
 
-  if((MCMLE.steplength!=1 || is.null(MCMLE.steplength.margin)) && MCMLE.termination %in% c("Hummel", "precision"))
+  if((control$MCMLE.steplength!=1 || is.null(control$MCMLE.steplength.margin)) && control$MCMLE.termination %in% c("Hummel", "precision"))
     stop("Hummel and precision-based termination require non-null MCMLE.steplength.margin and MCMLE.steplength = 1.")
 
   if(!is.null(control$checkpoint) && control$main.method!="MCMLE") stop("Only MCMLE supports checkpointing and resuming at this time.")
@@ -644,7 +646,7 @@ control.ergm<-function(drop=TRUE,
 
 handle.control.toplevel<-function(myname, ...){
   myctrlname <- paste0("control.",myname)
-  control.names <- names(list(...))[names(list(...)) %in% names(formals(get(myctrlname, mode="function")))]
+  control.names <- ...names()[...names() %in% names(formals(get(myctrlname, mode="function")))]
   if(length(control.names)) stop("Argument(s) ", paste.and(sQuote(control.names)), " should be passed via control.",myname,"().")
 }
 

@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2022 Statnet Commons
+#  Copyright 2003-2023 Statnet Commons
 ################################################################################
 #========================================================================
 # This file contains the following 2 functions for simulating ergms
@@ -286,6 +286,7 @@ simulate_formula <- function(object, ..., basis=eval_lhs.formula(object)) {
     return(c(as.list(environment()), list(...)))
 
   #' @importFrom statnet.common check.control.class
+  if(has_new_tergm()) check_dots_used(error = unused_dots_warning)
   check.control.class("simulate.formula", myname="ERGM simulate.formula")
   handle.control.toplevel("simulate.formula", ...)
 
@@ -395,12 +396,10 @@ simulate.ergm_model <- function(object, nsim=1, seed=NULL,
     output <- "function"
   }
 
-  # Backwards-compatibility code:
-  if("theta0" %in% names(list(...))){
-    warning("Passing the parameter vector as theta0= is deprecated. Use coef= instead.")
-    coef<-list(...)$theta0
-  }
-  
+  # TODO: Remove this in the next release.
+  if(theta0pos <- "theta0" %in% ...names())
+    stop("Passing the parameter vector as theta0= is deprecated. Use coef= instead.")
+
   if(!is.null(seed)) {set.seed(as.integer(seed))}
   
   # define nw as either the basis argument or (if NULL) the LHS of the formula
@@ -600,8 +599,9 @@ simulate.ergm_state_full <- function(object, nsim=1, seed=NULL,
 #'   the coefficients, the response attribute, the reference, the
 #'   constraints, and most simulation parameters from the model fit,
 #'   unless overridden by passing them explicitly. Unless overridden,
-#'   the simulation is initialized with a random draw from the fitted
-#'   model, saved by [ergm()].
+#'   the simulation is initialized with either a random draw from near
+#'   the fitted model saved by [ergm()] or, if unavailable, the
+#'   network to which the ERGM was fit.
 #' 
 #' @export
 simulate.ergm <- function(object, nsim=1, seed=NULL, 
@@ -611,7 +611,7 @@ simulate.ergm <- function(object, nsim=1, seed=NULL,
                           constraints=list(object$constraints, object$obs.constraints),
                           observational=FALSE,
                           monitor=NULL,
-                          basis=object$newnetwork,
+                          basis=NVL(object$newnetwork, object$network),
                           statsonly=FALSE,
                           esteq=FALSE,
                           output=c("network","stats","edgelist","ergm_state"),
@@ -619,6 +619,7 @@ simulate.ergm <- function(object, nsim=1, seed=NULL,
                           sequential=TRUE,
                           control=control.simulate.ergm(),
                           verbose=FALSE, ...) {
+  if(has_new_tergm()) check_dots_used(error = unused_dots_warning)
   check.control.class(c("simulate.ergm","simulate.formula"), "simulate.ergm")
   handle.control.toplevel("simulate.ergm", ...)
 
