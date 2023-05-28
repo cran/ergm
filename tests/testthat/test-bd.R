@@ -38,3 +38,41 @@ test_that("Bounded degree (bd()) constraints for directed networks", {
   expect_warning(expect_gt(approx.hotelling.diff.test(constr,degr[,-(2:4)])$p.value, 0.01), ".*do not vary but equal mu0.*")
   expect_true(all(compvary(constr,degr[,-(2:4)])))
 })
+
+test_that("Bounded degree (bd()) maximum constraint for undirected networks with vector arguments", {
+  nw0 <- network.initialize(8, directed=FALSE)
+  expect_equal(simulate(nw0 ~ edges, monitor = ~ sociality(nodes=TRUE), coef = Inf, constraints = ~bd(maxout=rep(1:2, 4)), output="stats", seed=1)[-1],
+               rep(1:2, 4))
+})
+
+test_that("Bounded degree (bd()) minimum constraint for undirected networks with vector arguments", {
+  nw1 <- network.initialize(8, directed=FALSE)
+  nw1[,] <- TRUE
+  expect_equal(simulate(nw1 ~ edges, monitor = ~ sociality(nodes=TRUE), coef = -Inf, constraints = ~bd(minout=rep(6:7,4)), output="stats", seed=0)[-1],
+               rep(6:7, 4))
+})
+
+test_that("Bounded degree (bd()) maximum constraint for undirected networks with vector arguments", {
+  nw0 <- network.initialize(8, directed=FALSE)
+  expect_equal(simulate(nw0 ~ edges, monitor = ~ sociality(nodes=TRUE), coef = Inf, constraints = ~bd(maxout=rep(1:2, 4)), output="stats", seed=1)[-1],
+               rep(1:2, 4))
+})
+
+test_that("Bounded degree (bd()) minimum out-constraint for directed networks with vector arguments", {
+  nw1 <- network.initialize(8, directed=TRUE)
+  nw1[,] <- TRUE
+  expect_equal(simulate(nw1 ~ edges, monitor = ~ sender(nodes=TRUE), coef = -Inf, constraints = ~bd(minout=rep(6:7,4)), output="stats", seed=0)[-1],
+               rep(6:7, 4))
+})
+
+test_that("Bounded degree (bd()) minimum in-constraint for directed networks with vector arguments", {
+  nw1 <- network.initialize(8, directed=TRUE)
+  nw1[,] <- TRUE
+  expect_equal(simulate(nw1 ~ edges, monitor = ~ receiver(nodes=TRUE), coef = -Inf, constraints = ~bd(minin=rep(6:7,4)), output="stats", seed=0)[-1],
+               rep(6:7, 4))
+})
+
+test_that("Bounded degree (bd()) constraint raises an error if minin or maxin are used for an undirected network", {
+  nw0 <- network.initialize(8, directed=FALSE)
+  expect_error(simulate(nw0 ~ edges, coef = 0, constraints = ~bd(maxin=rep(1:2, 4))), ".*.minin. and .maxin. cannot be used with undirected networks.*")
+})

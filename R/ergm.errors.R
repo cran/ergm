@@ -25,7 +25,7 @@
 #' @keywords internal
 #' @export
 ergm_Init_abort <- function(..., default.loc=NULL){
-  loc <- traceback.Initializers() %>% format.traceback()
+  loc <- traceback.Initializers() %>% format_traceback()
   abort(paste0('In ', NVL(loc, default.loc, "unknown function"), ': ', ...))
 }
 
@@ -34,7 +34,7 @@ ergm_Init_abort <- function(..., default.loc=NULL){
 #' @importFrom rlang warn
 #' @export
 ergm_Init_warn <- function(..., default.loc=NULL){
-  loc <- traceback.Initializers() %>% format.traceback()
+  loc <- traceback.Initializers() %>% format_traceback()
   warn(paste0('In ', NVL(loc, default.loc, "unknown function"), ': ', ...))
 }
 
@@ -43,7 +43,7 @@ ergm_Init_warn <- function(..., default.loc=NULL){
 #' @importFrom rlang inform
 #' @export
 ergm_Init_inform <- function(..., default.loc=NULL){
-  loc <- traceback.Initializers() %>% format.traceback()
+  loc <- traceback.Initializers() %>% format_traceback()
   inform(paste0('In ', NVL(loc, default.loc, "unknown function"), ': ', ...))
 }
 
@@ -60,7 +60,7 @@ ergm_Init_try <- function(expr){
            error = function(e) ergm_Init_abort(e$message))
 }
 
-format.traceback <- function(x){
+format_traceback <- function(x){
   if(EVL(nrow(x)==0,TRUE)) return(NULL)
   x <- as.data.frame(x)[nrow(x):1,,drop=FALSE]
   x <- paste0(ifelse(x$valued,"valued ", ""),
@@ -92,5 +92,5 @@ traceback.search <- function(pattern, ...) {
 
 regexpr_list <- function(x, pat){
   m <- attributes(regexpr(pat, x, perl=TRUE))
-  mapply(function(s, l, n){substr(x, s, s+l-1)}, c(m$capture.start)[-1], c(m$capture.length)[-1], SIMPLIFY=FALSE) %>% set_names(m$capture.names[-1]) %>% within({valued<-(valued=="Wt"); type<-tolower(type)})
+  Map(function(s, l, n){substr(x, s, s+l-1)}, c(m$capture.start)[-1], c(m$capture.length)[-1]) %>% set_names(m$capture.names[-1]) %>% within({valued<-(valued=="Wt"); type<-tolower(type)})
 }

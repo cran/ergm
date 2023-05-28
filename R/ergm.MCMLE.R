@@ -38,9 +38,6 @@
 #                    as returned by <proposal>
 #   verbose        : whether the MCMC sampling should be verbose (T or F);
 #                    default=FALSE
-#   sequential     : whether to update the network returned in
-#                    'v$newnetwork'; if the network has missing edges,
-#                    this is ignored; default=control$MCMLE.sequential
 #   estimate       : whether to optimize the init coefficients via
 #                    <ergm.estimate>; default=TRUE
 #   ...            : additional parameters that may be passed from within;
@@ -55,23 +52,20 @@
 #
 #############################################################################
 
-ergm.MCMLE <- function(init, nw, model,
-                             initialfit, 
+ergm.MCMLE <- function(init, s, s.obs,
                              control, 
-                             proposal, proposal.obs,
                              verbose=FALSE,
-                             sequential=control$MCMLE.sequential,
                              estimate=TRUE, ...) {
   message("Starting Monte Carlo maximum likelihood estimation (MCMLE):")
   # Is there observational structure?
-  obs <- ! is.null(proposal.obs)
+  obs <- ! is.null(s.obs)
+  model <- s$model
   # Initialize the history of parameters and statistics.
   coef.hist <- rbind(init)
-  stats.hist <- matrix(NA, 0, length(model$nw.stats))
-  stats.obs.hist <- matrix(NA, 0, length(model$nw.stats))
+  stats.hist <- matrix(NA, 0, nparam(model, canonical=TRUE))
+  stats.obs.hist <- matrix(NA, 0, nparam(model, canonical=TRUE))
   steplen.hist <- c()
   steplen <- control$MCMLE.steplength
-  if(control$MCMLE.steplength=="adaptive") steplen <- 1
 
   if(is.null(control$MCMLE.samplesize)) control$MCMLE.samplesize <- max(control$MCMLE.samplesize.min,control$MCMLE.samplesize.per_theta*nparam(model,canonical=FALSE, offset=FALSE))
   if(obs && is.null(control$obs.MCMLE.samplesize)) control$obs.MCMLE.samplesize <- max(control$obs.MCMLE.samplesize.min,control$obs.MCMLE.samplesize.per_theta*nparam(model,canonical=FALSE, offset=FALSE))
@@ -88,20 +82,6 @@ ergm.MCMLE <- function(init, nw, model,
 
   # Start cluster if required (just in case we haven't already).
   ergm.getCluster(control, max(verbose-1,0))
-  
-  # Store information about original network, which will be returned at end
-  nw.orig <- nw
-
-  # Impute missing dyads.
-  #
-  # Note: We do not need to update nw.stats, because if we are in a
-  # situation where we are imputing dyads, the optimization is in the
-  # observational mode, and since both the constrained and the
-  # unconstrained samplers start from the same place, the initial
-  # stat shifts will be 0. target.stats and missing dyads are mutually
-  # exclusive, so model$target.stats will be set equal to
-  # model$nw.stats, causing this to happen.
-  s <- single.impute.dyads(nw, constraints=proposal$arguments$constraints, constraints.obs=proposal.obs$arguments$constraints, min_informative = control$obs.MCMC.impute.min_informative, default_density = control$obs.MCMC.impute.default_density, output="ergm_state", verbose=verbose)
 
   if(control$MCMLE.density.guard>1){
     # Calculate the density guard threshold.
@@ -112,17 +92,6 @@ ergm.MCMLE <- function(init, nw, model,
     if(verbose) message("Density guard set to ",control$MCMC.maxedges," from an initial count of ",ec," edges.")
   }  
 
-  # statshift is the difference between the target.stats (if
-  # specified) and the statistics of the networks in the LHS of the
-  # formula or produced by SAN. If target.stats is not speficied
-  # explicitly, they are computed from this network, so
-  # statshift==0. To make target.stats play nicely with offsets, we
-  # set stat shifts to 0 where target.stats is NA (due to offset).
-  model$nw.stats <- summary(model, s)
-  statshift <- model$nw.stats - NVL(model$target.stats,model$nw.stats)
-  statshift[is.na(statshift)] <- 0
-  s <- update(s, model=model, proposal=proposal, stats=statshift)
-
   s <- rep(list(s),nthreads(control)) # s is now a list of states.
   
   # Initialize control.obs and other *.obs if there is observation structure
@@ -131,7 +100,7 @@ ergm.MCMLE <- function(init, nw, model,
     for(name in OBS_MCMC_CONTROLS) control.obs[[name]] <- control[[paste0("obs.", name)]]
     control0.obs <- control.obs
 
-    s.obs <- lapply(s, update, model=NVL(model$obs.model,model), proposal=proposal.obs)
+    s.obs <- rep(list(s.obs),nthreads(control))
   }
 
   # A helper function to increase the MCMC sample size and target effective size by the specified factor.
@@ -277,7 +246,7 @@ ergm.MCMLE <- function(init, nw, model,
       z.obs <- NULL
     }
     
-    if(sequential) {
+    if(control$MCMLE.sequential) {
       s <- s.returned
       
       if(obs){
@@ -337,7 +306,7 @@ ergm.MCMLE <- function(init, nw, model,
                 samplesize=control$MCMC.samplesize, failure=TRUE,
                 newnetwork = s.returned[[1]],
                 newnetworks = s.returned)
-      return(structure (l, class="ergm"))
+      return(l)
     } 
 
     # Need to compute MCMC SE for "confidence" termination criterion
@@ -482,13 +451,13 @@ ergm.MCMLE <- function(init, nw, model,
           d2e <- xTAx(estdiff, iVm[!hotel$novar, !hotel$novar])
           if(d2e<1){ # Update ends within tolerance ellipsoid.
             T2 <- try(.ellipsoid_mahalanobis(estdiff, estcov, iVm[!hotel$novar, !hotel$novar]), silent=TRUE) # Distance to the nearest point on the tolerance region boundary.
-            T2nullity <- attr(T2,"nullity")
-            T2param <- hotel$parameter["param"] - T2nullity
-            if(T2nullity && verbose) message("Estimated covariance matrix of the statistics has nullity ", format(T2nullity), ". Effective parameter number adjusted to ", format(T2param), ".")
             if(inherits(T2, "try-error")){ # Within tolerance ellipsoid, but cannot be tested.
               message("Unable to test for convergence; increasing sample size.")
               .boost_samplesize(control$MCMLE.confidence.boost)
             }else{ # Within tolerance ellipsoid, can be tested.
+              T2nullity <- attr(T2,"nullity")
+              T2param <- hotel$parameter["param"] - T2nullity
+              if(T2nullity && verbose) message("Estimated covariance matrix of the statistics has nullity ", format(T2nullity), ". Effective parameter number adjusted to ", format(T2param), ".")
               nonconv.pval <- .ptsq(T2, T2param, hotel$parameter["df"], lower.tail=FALSE)
               if(verbose) message("Test statistic: T^2 = ", format(T2),", with ",
                                   format(T2param), " free parameters and ", format(hotel$parameter["df"]), " degrees of freedom.")
@@ -600,11 +569,9 @@ ergm.MCMLE <- function(init, nw, model,
   v$sample <- statsmatrices
   if(obs) v$sample.obs <- statsmatrices.obs
   nws.returned <- lapply(s.returned, as.network)
-  v$network <- nw.orig
   v$newnetworks <- nws.returned
   v$newnetwork <- nws.returned[[1]]
   v$coef.init <- init
-  #v$initialfit <- initialfit
   v$est.cov <- v$mc.cov
   v$mc.cov <- NULL
 
@@ -619,6 +586,7 @@ ergm.MCMLE <- function(init, nw, model,
   v$control <- control
   
   v$etamap <- model$etamap
+  v$MCMCflag <- TRUE
   v
 }
 
@@ -644,5 +612,5 @@ ergm.MCMLE <- function(init, nw, model,
   l <- uniroot(zerofn, lower=lmin, upper=0, tol=sqrt(.Machine$double.xmin))$root
   x <- x(l)
 
-  xTAx_qrsolve(y-x, W)
+  xTAx_qrssolve(y-x, W)
 }

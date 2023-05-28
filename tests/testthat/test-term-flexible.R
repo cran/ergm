@@ -8,11 +8,6 @@
 #  Copyright 2003-2023 Statnet Commons
 ################################################################################
 
-expect_summary <- function(s, e, value, coefficients, tolerance=0.001) {
-  expect_equal(s, value, tolerance=tolerance, ignore_attr=TRUE)
-  expect_equal(coef(e)[1:length(coefficients)], coefficients, tolerance=tolerance, ignore_attr=TRUE)
-}
-
 # a bipartite nw
 set.seed(143)
 b1 <- floor(runif(60, 1,100))
@@ -137,7 +132,8 @@ test_that("dyadcov, either", {
   s.x <- summary(samplike~dyadcov(cov))
   e.x <- ergm(samplike ~ dyadcov(cov))
   s.xa <- summary(fmh~dyadcov(fmh, "GradeMet"))
-  e.xa <- ergm(fmh ~ dyadcov(fmh, "GradeMet"))
+  (e.xa <- ergm(fmh ~ dyadcov(fmh, "GradeMet"))) |>
+    expect_warning("The MPLE does not exist!")
   expect_summary(s.x, e.x, c(31,21,14), -+c(.8546, 1.0732, 1.3467))
   expect_summary(s.xa, e.xa, 641, 12.31787)
 })
@@ -149,12 +145,11 @@ test_that("edgecov, either", {
   e.x <- ergm(samplike ~ edgecov(cov))
   s.xa <- summary(samplike~edgecov(samplike, "YearsTrusted"))
   e.xa <- ergm(samplike ~ edgecov(samplike, "YearsTrusted"))
-  n.x <- try(summary(samplike~edgecov('dummy')),silent=TRUE)
+  expect_error(summary(samplike~edgecov('dummy')), "In term .edgecov. in package .ergm.: There is no network attribute named .dummy. or it is not a matrix.")
   set.network.attribute(samplike,'dummy',cov)
   n2.x <- summary(samplike~edgecov('dummy'))
   expect_summary(s.x, e.x, 134, -.5022)
   expect_summary(s.xa, e.xa, 183, Inf)
-  expect_true(is(n.x, 'try-error'))
   expect_equal(n2.x, 134, ignore_attr=TRUE)
 })
 
@@ -163,70 +158,6 @@ test_that("edges, either", {
   e.0 <- ergm(samplike~edges, estimate="MPLE")
   expect_summary(s.0, e.0, 203, -.9072)
 })
-
-run.sp.tests <- function(cache.sp) {
-  test_that(paste0("dsp, either, shared partner cache ", if(cache.sp) "enabled" else "disabled"), {
-    s.d <- summary(fmh~dsp(2:3), cache.sp=cache.sp)
-    e.d <- ergm(samplike~dsp(4), estimate="MPLE", control=control.ergm(term.options=list(cache.sp=cache.sp)))
-    expect_summary(s.d, e.d, c(75, 23), -.04275)
-  })
-
-  test_that(paste0("esp, either, shared partner cache ", if(cache.sp) "enabled" else "disabled"), {
-    s.d <- summary(fmh~esp(2:3), cache.sp=cache.sp)
-    e.d <- ergm(samplike~esp(4), estimate="MPLE", control=control.ergm(term.options=list(cache.sp=cache.sp)))
-    expect_summary(s.d, e.d, c(36,13), .3093)
-  })
-
-  test_that(paste0("nsp, either, shared partner cache ", if(cache.sp) "enabled" else "disabled"), {
-    s.d <- summary(fmh~nsp(2:3), cache.sp=cache.sp)
-    e.d <- ergm(samplike~nsp(4), estimate="MPLE", control=control.ergm(term.options=list(cache.sp=cache.sp)))
-    expect_summary(s.d, e.d, c(39, 10), -+ 1.1096)
-  })
-
-  test_that(paste0("gwdsp, either, shared partner cache ", if(cache.sp) "enabled" else "disabled"), {
-    s.0 <- summary(fmh~gwdsp, cache.sp=cache.sp)
-    e.0 <- ergm(samplike~gwdsp(0, fixed=TRUE), estimate="MPLE", control=control.ergm(term.options=list(cache.sp=cache.sp)))
-    e.a <- ergm(samplike~gwdsp(.8, fixed=TRUE), estimate="MPLE", control=control.ergm(term.options=list(cache.sp=cache.sp)))
-    s.f <- summary(fmh~gwdsp(0, fixed=TRUE), cache.sp=cache.sp)
-    s.af <- summary(fmh~gwdsp(.3, fixed=TRUE), cache.sp=cache.sp)
-    e.af <- ergm(samplike~gwdsp(.2, fixed=TRUE), estimate="MPLE", control=control.ergm(term.options=list(cache.sp=cache.sp)))
-    expect_summary(head(s.0), e.0, c(431, 75, 23, 1, 1, 0), -.3309974)
-    expect_equal(coef(e.a), -.1875983, tolerance=0.001, ignore_attr=TRUE)
-    expect_equal(s.f, 531, ignore_attr=TRUE)
-    expect_summary(s.af, e.af, 558.6369, -.2829672)
-  })
-
-  test_that(paste0("gwesp, either, shared partner cache ", if(cache.sp) "enabled" else "disabled"), {
-    s.0 <- summary(fmh~gwesp, cache.sp=cache.sp)
-    e.0 <- ergm(samplike~gwesp(0, fixed=TRUE), estimate="MPLE", control=control.ergm(term.options=list(cache.sp=cache.sp)))
-    e.a <- ergm(samplike~gwesp(.8, fixed=TRUE), estimate="MPLE", control=control.ergm(term.options=list(cache.sp=cache.sp)))
-    s.f <- summary(fmh~gwesp(0, fixed=TRUE), cache.sp=cache.sp)
-    s.af <- summary(fmh~gwesp(.3, fixed=TRUE), cache.sp=cache.sp)
-    e.af <- ergm(samplike~gwesp(.2, fixed=TRUE), estimate="MPLE", control=control.ergm(term.options=list(cache.sp=cache.sp)))
-
-    expect_summary(head(s.0), e.0, c(70,36,13,0,1,0), -.4115515)
-    expect_equal(coef(e.a), -.1898684, tolerance=0.001, ignore_attr=TRUE)
-    expect_equal(s.f, 120, ignore_attr=TRUE)
-    expect_summary(s.af, e.af, 133.9215, -.3371385)
-  })
-
-  test_that(paste0("gwnsp, either, shared partner cache ", if(cache.sp) "enabled" else "disabled"), {
-    s.0 <- summary(fmh~gwnsp, cache.sp=cache.sp)
-    e.0 <- ergm(samplike~gwnsp(0, fixed=TRUE), estimate="MPLE", control=control.ergm(term.options=list(cache.sp=cache.sp)))
-    e.a <- ergm(samplike~gwnsp(.8, fixed=TRUE), estimate="MPLE", control=control.ergm(term.options=list(cache.sp=cache.sp)))
-    s.f <- summary(fmh~gwnsp(0, fixed=TRUE), cache.sp=cache.sp)
-    s.af <- summary(fmh~gwnsp(.3, fixed=TRUE), cache.sp=cache.sp)
-    e.af <- ergm(samplike~gwnsp(.2, fixed=TRUE), estimate="MPLE", control=control.ergm(term.options=list(cache.sp=cache.sp)))
-
-    expect_summary(head(s.0), e.0, c(361,39,10,1,0,0), -.4189)
-    expect_equal(coef(e.a), -.3123, tolerance=0.001, ignore_attr=TRUE)
-    expect_equal(s.f, 411, ignore_attr=TRUE)
-    expect_summary(s.af, e.af, 424.7154, -.3934841)
-  })
-}
-
-run.sp.tests(TRUE)
-run.sp.tests(FALSE)
 
 #test_that("hamming, any", {
 #  mat.d <- matrix(0,18,18)

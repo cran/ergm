@@ -11,7 +11,7 @@
 #' @rdname ergm.mple
 #' @description \code{ergm.pl} is an even more internal workhorse
 #'   function that prepares many of the components needed by
-#'   \code{ergm.mple} for the regression rountines that are used to
+#'   \code{ergm.mple} for the regression routines that are used to
 #'   find the MPLE estimated ergm. It should not be called directly by
 #'   the user.
 #'
@@ -25,6 +25,8 @@
 #'   them by their corresponding coefficients (which are fixed, by
 #'   virtue of being offsets) and the results stored in a separate
 #'   column.
+#' @param dummy A dummy parameter for backwards compatibility. It will
+#'   be removed in a future version.
 #'
 #' @return \code{ergm.pl} returns a list containing:
 #'
@@ -42,13 +44,21 @@
 #'
 #' @keywords internal
 #' @export
-ergm.pl<-function(nw, fd, m, theta.offset=NULL,
+ergm.pl<-function(state, state.obs, dummy, theta.offset=NULL,
                     control, ignore.offset=FALSE,
                     verbose=FALSE) {
   on.exit(ergm_Cstate_clear())
   on.exit(PL_workspace_clear(), add=TRUE)
 
-  state <- ergm_state(nw, model=m)
+  ## TODO: Remove compatibility code (including the 'dummy' argument) after the next release.
+  if(is.network(state) && !missing(dummy) && is(dummy, "ergm_model")){ # Backwards compatibility mode:
+    statnet.common::.Deprecate_once(msg = "The argument list for ergm.pl() has changed. Please see the documentation for the new API.")
+    state <- ergm_state(state, model = dummy)
+  }
+
+  m <- state$model
+  fd <- if(is(state.obs, "rlebdm")) state.obs
+        else as.rlebdm(state$proposal$arguments$constraints, state.obs$proposal$arguments$constraints, which="informative")
   d <- sum(fd)
   el <- as.edgelist(state)
   elfd <- as.rlebdm(el) & fd

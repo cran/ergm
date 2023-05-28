@@ -119,6 +119,20 @@
 #'   similar diagnostic for the unconstrained MCMC sample's estimating
 #'   functions.
 #'
+#' @param
+#'   MPLE.covariance.method,MPLE.covariance.samplesize,MPLE.covariance.sim.burnin,MPLE.covariance.sim.interval
+#'   Controls for estimating the MPLE covariance
+#'   matrix. `MPLE.covariance method` determines the method, with
+#'   `invHess` (the default) returning the covariance estimate
+#'   obtained from the [glm()]. `Godambe` estimates the covariance
+#'   matrix using the Godambe-matrix \insertCite{ScHu23c}{ergm}. This
+#'   method is recommended for dyad-dependent models. Alternatively,
+#'   `bootstrap` estimates standard deviations using a parametric
+#'   bootstrapping approach \insertCite{@see @ScDe17e}{ergm}. The
+#'   other parameters control, respectively, the number of networks to
+#'   simulate, the MCMC burn-in, and the MCMC interval for `Godambe`
+#'   and `bootstrap` methods.
+#'
 #' @param MPLE.constraints.ignore If `TRUE`, MPLE will ignore all
 #'   dyad-independent constraints except for those due to attributes
 #'   missingness. This can be used to avert evaluating and storing the
@@ -362,36 +376,51 @@
 #'   `MCMLE.save_intermediates="step_%03d.RData"` will save to
 #'   `step_001.RData`, `step_002.RData`, etc.)
 #'
-#' @param SA.phase1_n Number of MCMC samples to draw in Phase 1 of the
-#' stochastic approximation algorithm.  Defaults to 7 plus 3 times the number
-#' of terms in the model.  See Snijders (2002) for details.
+#' @param SA.phase1_n A constant or a function of number of free
+#'   parameters `q`, number of free canonical statistic `p`, and
+#'   network size `n`, giving the number of MCMC samples to draw in
+#'   Phase 1 of the stochastic approximation algorithm.  Defaults to
+#'   \eqn{\max(200, 7+3p)}.  See Snijders (2002) for details.
+#'
 #' @param SA.initial_gain Initial gain to Phase 2 of the stochastic
-#' approximation algorithm.  See Snijders (2002) for details.
-#' @param SA.nsubphases Number of sub-phases in Phase 2 of the stochastic
-#' approximation algorithm.  Defaults to \code{MCMLE.maxit}.  See Snijders
-#' (2002) for details.
-#' @param SA.niterations Number of MCMC samples to draw in Phase 2 of the
-#' stochastic approximation algorithm.  Defaults to 7 plus the number of terms
-#' in the model.  See Snijders (2002) for details.
-#' @param SA.phase3_n Sample size for the MCMC sample in Phase 3 of the
-#' stochastic approximation algorithm.  See Snijders (2002) for details.
-#' @param CD.nsteps,CD.multiplicity Main settings for contrastive divergence to
-#' obtain initial values for the estimation: respectively, the number of
-#' Metropolis--Hastings steps to take before reverting to the starting value
-#' and the number of tentative proposals per step. Computational experiments
-#' indicate that increasing \code{CD.multiplicity} improves the estimate faster
-#' than increasing \code{CD.nsteps} --- up to a point --- but it also samples
-#' from the wrong distribution, in the sense that while as
-#' \code{CD.nsteps}\eqn{\rightarrow\infty}, the CD estimate approaches the MLE,
-#' this is not the case for \code{CD.multiplicity}.
+#'   approximation algorithm. Defaults to 0.1. See Snijders (2002) for
+#'   details.
+#' @param SA.nsubphases Number of sub-phases in Phase 2 of the
+#'   stochastic approximation algorithm.  Defaults to
+#'   \code{MCMLE.maxit}.  See Snijders (2002) for details.
+#'
+#' @param SA.min_iterations,SA.max_iterations A constant or a function
+#'   of number of free parameters `q`, number of free canonical
+#'   statistic `p`, and network size `n`, giving the baseline numbers
+#'   of iterations within each subphase of Phase 2 of the stochastic
+#'   approximation algorithm. Default to \eqn{7+p} and \eqn{207+p},
+#'   respectively.  See Snijders (2002) for details.
+#'
+#' @param SA.phase3_n Sample size for the MCMC sample in Phase 3 of
+#'   the stochastic approximation algorithm.  See Snijders (2002) for
+#'   details.
+#'
+#' @param CD.nsteps,CD.multiplicity Main settings for contrastive
+#'   divergence to obtain initial values for the estimation:
+#'   respectively, the number of Metropolis--Hastings steps to take
+#'   before reverting to the starting value and the number of
+#'   tentative proposals per step. Computational experiments indicate
+#'   that increasing \code{CD.multiplicity} improves the estimate
+#'   faster than increasing \code{CD.nsteps} --- up to a point --- but
+#'   it also samples from the wrong distribution, in the sense that
+#'   while as \code{CD.nsteps}\eqn{\rightarrow\infty}, the CD estimate
+#'   approaches the MLE, this is not the case for
+#'   \code{CD.multiplicity}.
 #' 
-#' In practice, MPLE, when available, usually outperforms CD for even a very
-#' high \code{CD.nsteps} (which is, in turn, not very stable), so CD is useful
-#' primarily when MPLE is not available. This feature is to be considered
-#' experimental and in flux.
+#'   In practice, MPLE, when available, usually outperforms CD for
+#'   even a very high \code{CD.nsteps} (which is, in turn, not very
+#'   stable), so CD is useful primarily when MPLE is not
+#'   available. This feature is to be considered experimental and in
+#'   flux.
 #' 
-#' The default values have been set experimentally, providing a reasonably
-#' stable, if not great, starting values.
+#'   The default values have been set experimentally, providing a
+#'   reasonably stable, if not great, starting values.
+#'
 #' @param CD.nsteps.obs,CD.multiplicity.obs When there are missing dyads,
 #' \code{CD.nsteps} and \code{CD.multiplicity} must be set to a relatively high
 #' value, as the network passed is not necessarily a good start for CD.
@@ -416,7 +445,8 @@
 #' @seealso [ergm()]. The \code{\link{control.simulate}} function
 #' performs a similar function for \code{\link{simulate.ergm}};
 #' \code{\link{control.gof}} performs a similar function for \code{\link{gof}}.
-#' @references \itemize{ 
+#' @references \insertAllCited{}
+#'
 #' * Snijders, T.A.B. (2002), Markov Chain Monte
 #' Carlo Estimation of Exponential Random Graph Models.  Journal of Social
 #' Structure.  Available from
@@ -440,8 +470,7 @@
 #' * Kristoffer Sahlin. Estimating convergence of Markov chain Monte Carlo
 #' simulations. Master's Thesis. Stockholm University, 2011.
 #' \url{https://www2.math.su.se/matstat/reports/master/2011/rep2/report.pdf}
-#' 
-#' }
+#'
 #' @keywords models
 #' @export control.ergm
 control.ergm<-function(drop=TRUE,
@@ -463,6 +492,10 @@ control.ergm<-function(drop=TRUE,
                        MPLE.nonvar=c("warning","message","error"),
                        MPLE.nonident=c("warning","message","error"),
                        MPLE.nonident.tol=1e-10,
+                       MPLE.covariance.samplesize =500,
+                       MPLE.covariance.method ="invHess",
+                       MPLE.covariance.sim.burnin = 1024,
+                       MPLE.covariance.sim.interval = 1024,
                        MPLE.constraints.ignore=FALSE,
 
                        MCMC.prop=trim_env(~sparse),
@@ -566,10 +599,12 @@ control.ergm<-function(drop=TRUE,
                        MCMLE.nonident=c("warning","message","error"),
                        MCMLE.nonident.tol=1e-10,
 
-                       SA.phase1_n=NULL, SA.initial_gain=NULL, 
+                       SA.phase1_n=function(q, ...) max(200, 7 + 3*q),
+                       SA.initial_gain=0.1,
                        SA.nsubphases=4,
-                       SA.niterations=NULL, 
-                       SA.phase3_n=NULL,
+                       SA.min_iterations=function(q, ...) (7 + q),
+                       SA.max_iterations=function(q, ...) (207 + q),
+                       SA.phase3_n=1000,
                        SA.interval=1024,
                        SA.burnin=SA.interval*16,
                        SA.samplesize=1024,

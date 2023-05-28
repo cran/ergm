@@ -36,12 +36,8 @@
 #' MPLE values are used even in the case of dyadic dependence models as
 #' starting points for the MCMC algorithm.
 #' 
-#' @param nw response [`network`] or [`ergm_state`].
-#' @param fd An \code{\link{rlebdm}} with informative dyads.
-#' @param m the model, as returned by \code{\link{ergm_model}}
-#' @param init a vector a vector of initial theta coefficients
-#' @param MPLEtype the method for MPL estimation as "penalized", "glm"
-#'   or "logitreg"; default="glm"
+#' @param state,state.obs [`ergm_state`] objects.
+#' @param init a vector of initial theta coefficients
 #' @param family the family to use in the R native routine
 #'   \code{\link{glm}}; only applicable if "glm" is the 'MPLEtype';
 #'   default="binomial"
@@ -59,26 +55,27 @@
 #' @seealso \code{\link{ergmMPLE}},
 #' \code{\link{ergm}},\code{\link{control.ergm}}
 #' @references \insertAllCited{}
-ergm.mple<-function(nw, fd, m, init=NULL,
-                    MPLEtype="glm", family="binomial",
-                    save.xmat=TRUE,
+ergm.mple<-function(s, s.obs, init=NULL,
+                    family="binomial",
                     control=NULL,
                     verbose=FALSE,
                     ...) {
+  m <- s$model
   message("Starting maximum pseudolikelihood estimation (MPLE):")
+  message("Obtaining the responsible dyads.")
   message("Evaluating the predictor and response matrix.")
-  pl <- ergm.pl(nw=nw, fd=fd, m=m,
+  pl <- ergm.pl(s, s.obs,
                 theta.offset=init,
 		control=control,
-                ignore.offset=MPLEtype=="logitreg",
+                ignore.offset=control$MPLE.type=="logitreg",
                 verbose=verbose)
 
   # test whether the MPLE actually exists
   # FIXME: Figure out how to test for MPLE's existence in penalised and curved MPLEs.
-  if(! MPLEtype%in%c("penalized","logitreg"))  mple.existence(pl)
+  if(! control$MPLE.type%in%c("penalized","logitreg"))  mple.existence(pl)
 
   message("Maximizing the pseudolikelihood.")
-  if(MPLEtype=="penalized"){
+  if(control$MPLE.type=="penalized"){
    if(verbose) message("Using penalized MPLE.")
    mplefit <- ergm.pen.glm(
                   pl$zy ~ pl$xmat -1 + offset(pl$foffset),
@@ -87,7 +84,7 @@ ergm.mple<-function(nw, fd, m, init=NULL,
    mplefit$cov.unscaled <- mplefit$var
    mplefit.summary <- mplefit
   }else{
-   if(MPLEtype=="logitreg"){
+   if(control$MPLE.type=="logitreg"){
     mplefit <- model.matrix(terms(pl$zy ~ .-1,data=data.frame(pl$xmat)),
                            data=data.frame(pl$xmat))
     mplefit <- ergm.logitreg(x=mplefit, y=pl$zy, m=m, wt=pl$wend,
@@ -100,39 +97,47 @@ ergm.mple<-function(nw, fd, m, init=NULL,
 # # Note:  It appears that specifying a starting vector can lead to problems!
 # #               start=init[!m$etamap$offsettheta]),
 #                     silent = TRUE))
-    glm.result <- .catchToList(glm(pl$zy ~ .-1 + offset(pl$foffset), 
-                                  data=data.frame(pl$xmat),
-                                  weights=pl$wend, family=family))
+     glm.result <- quietly(function() glm(pl$zy ~ .-1 + offset(pl$foffset),
+                                          data=data.frame(pl$xmat), weights=pl$wend, family=family))()
+
+   # estimate variability matrix V for Godambe covariance matrix or via bootstrapping, only for dyad dependent models and
+   #  init.method="MPLE"
+     if(!is.dyad.independent(s$model) && control$MPLE.covariance.method=="Godambe" ||
+        control$MPLE.covariance.method=="bootstrap"){
+       invHess <- summary(glm.result$result)$cov.unscaled
+       mple.cov <- ergm_mplecov(pl=pl, s=s, init=init, theta.mple=coef(glm.result$result), invHess=invHess,
+                                verbose=verbose, control=control)
+     }
     
     # error handling for glm results
-    if (!is.null(glm.result$error)) {
-      stop(glm.result$error)
-    } else if (!is.null(glm.result$warnings)) {
-      # if the glm results are crazy, redo it with 0 starting values
-      if (max(abs(coef(glm.result$value)), na.rm=T) > 1e6) {
-        warning("GLM model may be separable; restarting glm with zeros.\n")
-        mplefit <- glm(pl$zy ~ .-1 + offset(pl$foffset), 
+     if (length(glm.result$warnings)) {
+       glm.result$warnings <- setdiff(glm.result$warnings, "glm.fit: fitted probabilities numerically 0 or 1 occurred")
+       # if the glm results are crazy, redo it with 0 starting values
+       if (max(abs(coef(glm.result$result)), na.rm=T) > 1e6) {
+         warning("GLM may be separable; restarting glm with zeros.\n")
+         glm.result <- list(
+           result = glm(pl$zy ~ .-1 + offset(pl$foffset),
                        data=data.frame(pl$xmat),
                        weights=pl$wend, family=family, 
                        start=rep.int(0, length(init[!m$etamap$offsettheta])))
-        mplefit.summary <- summary(mplefit)
-      } else {
-        # unknown warning, just report it
-        warning(glm.result$warnings)
-        mplefit <- glm.result$value
-        mplefit.summary <- summary(mplefit)
-      }
-    } else {
-      # no errors or warnings
-      mplefit <- glm.result$value
-      mplefit.summary <- summary(mplefit)
-    }
-    
+         )
+       } else if(length(glm.result$warnings)) {
+         # unknown warning, just report it
+         for(w in glm.result$warnings) warning(w)
+       }
+     }
 
+     mplefit <- glm.result$result
+     mplefit.summary <- summary(mplefit)
    }
   }
   real.coef <- coef(mplefit)
-  real.cov <- mplefit.summary$cov.unscaled
+  if(!is.dyad.independent(s$model) && control$MPLE.covariance.method=="Godambe" ||
+     control$MPLE.covariance.method=="bootstrap" ){
+    real.cov <- mple.cov
+  }else{
+    real.cov <- mplefit.summary$cov.unscaled
+  }
 
   theta <- NVL(init, real.coef)
   theta[!m$etamap$offsettheta] <- real.coef
@@ -159,11 +164,11 @@ ergm.mple<-function(nw, fd, m, init=NULL,
 #
   iteration <-  mplefit$iter 
 
-# mplefit <- call(MPLEtype, pl$zy ~ 1, family=binomial)
+# mplefit <- call(control$MPLE.type, pl$zy ~ 1, family=binomial)
 #
-  if(MPLEtype=="penalized"){
+  if(control$MPLE.type=="penalized"){
     mplefit.null <- ergm.pen.glm(pl$zy ~ -1 + offset(pl$foffset), weights=pl$wend)
-  }else if(MPLEtype=="logitreg"){
+  }else if(control$MPLE.type=="logitreg"){
     mplefit.null <- ergm.logitreg(x=matrix(0,ncol=1,nrow=length(pl$zy)),
                                   y=pl$zy, offset=pl$foffset, wt=pl$wend, verbose=max(verbose-2,0))
   }else{
@@ -179,6 +184,12 @@ ergm.mple<-function(nw, fd, m, init=NULL,
   df <- nparam(m, offset=FALSE)
 
   message("Finished MPLE.")
+
+  check_nonidentifiability(pl$xmat.full, theta, m,
+                           tol = control$MPLE.nonident.tol, type="covariates",
+                           nonident_action = control$MPLE.nonident,
+                           nonvar_action = control$MPLE.nonvar)
+
   # Output results as ergm-class object
   structure(list(coefficients=theta,
       iterations=iteration, 
@@ -189,8 +200,7 @@ ergm.mple<-function(nw, fd, m, init=NULL,
         nobs = nobs, df = df, class="logLik"),
       mple.lik.null = structure(
         ERRVL(try(logLik(mplefit.null), silent=TRUE), -mplefit.null$deviance/2),
-        nobs = nobs, df = df, class="logLik"),
-      xmat.full = if(save.xmat) pl$xmat.full
+        nobs = nobs, df = df, class="logLik")
       ),
       class="ergm")
 }

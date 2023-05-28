@@ -20,6 +20,10 @@ control.ergm(
   MPLE.nonvar = c("warning", "message", "error"),
   MPLE.nonident = c("warning", "message", "error"),
   MPLE.nonident.tol = 1e-10,
+  MPLE.covariance.samplesize = 500,
+  MPLE.covariance.method = "invHess",
+  MPLE.covariance.sim.burnin = 1024,
+  MPLE.covariance.sim.interval = 1024,
   MPLE.constraints.ignore = FALSE,
   MCMC.prop = trim_env(~sparse),
   MCMC.prop.weights = "default",
@@ -112,11 +116,12 @@ control.ergm(
   MCMLE.nonvar = c("message", "warning", "error"),
   MCMLE.nonident = c("warning", "message", "error"),
   MCMLE.nonident.tol = 1e-10,
-  SA.phase1_n = NULL,
-  SA.initial_gain = NULL,
+  SA.phase1_n = function(q, ...) max(200, 7 + 3 * q),
+  SA.initial_gain = 0.1,
   SA.nsubphases = 4,
-  SA.niterations = NULL,
-  SA.phase3_n = NULL,
+  SA.min_iterations = function(q, ...) (7 + q),
+  SA.max_iterations = function(q, ...) (207 + q),
+  SA.phase3_n = 1000,
   SA.interval = 1024,
   SA.burnin = SA.interval * 16,
   SA.samplesize = 1024,
@@ -270,6 +275,18 @@ all-zero columns) are dropped, with their handling controlled by
 \code{MPLE.nonvar}. The corresponding \verb{MCMLE.*} arguments provide a
 similar diagnostic for the unconstrained MCMC sample's estimating
 functions.}
+
+\item{MPLE.covariance.method, MPLE.covariance.samplesize, MPLE.covariance.sim.burnin, MPLE.covariance.sim.interval}{Controls for estimating the MPLE covariance
+matrix. \verb{MPLE.covariance method} determines the method, with
+\code{invHess} (the default) returning the covariance estimate
+obtained from the \code{\link[=glm]{glm()}}. \code{Godambe} estimates the covariance
+matrix using the Godambe-matrix \insertCite{ScHu23c}{ergm}. This
+method is recommended for dyad-dependent models. Alternatively,
+\code{bootstrap} estimates standard deviations using a parametric
+bootstrapping approach \insertCite{@see @ScDe17e}{ergm}. The
+other parameters control, respectively, the number of networks to
+simulate, the MCMC burn-in, and the MCMC interval for \code{Godambe}
+and \code{bootstrap} methods.}
 
 \item{MPLE.constraints.ignore}{If \code{TRUE}, MPLE will ignore all
 dyad-independent constraints except for those due to attributes
@@ -582,23 +599,30 @@ iteration number as the second argument. (For example,
 \code{MCMLE.save_intermediates="step_\%03d.RData"} will save to
 \code{step_001.RData}, \code{step_002.RData}, etc.)}
 
-\item{SA.phase1_n}{Number of MCMC samples to draw in Phase 1 of the
-stochastic approximation algorithm.  Defaults to 7 plus 3 times the number
-of terms in the model.  See Snijders (2002) for details.}
+\item{SA.phase1_n}{A constant or a function of number of free
+parameters \code{q}, number of free canonical statistic \code{p}, and
+network size \code{n}, giving the number of MCMC samples to draw in
+Phase 1 of the stochastic approximation algorithm.  Defaults to
+\eqn{\max(200, 7+3p)}.  See Snijders (2002) for details.}
 
 \item{SA.initial_gain}{Initial gain to Phase 2 of the stochastic
-approximation algorithm.  See Snijders (2002) for details.}
+approximation algorithm. Defaults to 0.1. See Snijders (2002) for
+details.}
 
-\item{SA.nsubphases}{Number of sub-phases in Phase 2 of the stochastic
-approximation algorithm.  Defaults to \code{MCMLE.maxit}.  See Snijders
-(2002) for details.}
+\item{SA.nsubphases}{Number of sub-phases in Phase 2 of the
+stochastic approximation algorithm.  Defaults to
+\code{MCMLE.maxit}.  See Snijders (2002) for details.}
 
-\item{SA.niterations}{Number of MCMC samples to draw in Phase 2 of the
-stochastic approximation algorithm.  Defaults to 7 plus the number of terms
-in the model.  See Snijders (2002) for details.}
+\item{SA.min_iterations, SA.max_iterations}{A constant or a function
+of number of free parameters \code{q}, number of free canonical
+statistic \code{p}, and network size \code{n}, giving the baseline numbers
+of iterations within each subphase of Phase 2 of the stochastic
+approximation algorithm. Default to \eqn{7+p} and \eqn{207+p},
+respectively.  See Snijders (2002) for details.}
 
-\item{SA.phase3_n}{Sample size for the MCMC sample in Phase 3 of the
-stochastic approximation algorithm.  See Snijders (2002) for details.}
+\item{SA.phase3_n}{Sample size for the MCMC sample in Phase 3 of
+the stochastic approximation algorithm.  See Snijders (2002) for
+details.}
 
 \item{SA.burnin, SA.interval, SA.samplesize}{Sets the corresponding
 \verb{MCMC.*} parameters when \code{main.method="Stochastic-Approximation"}.}
@@ -610,23 +634,26 @@ optimizer. These have the same meaning as their \verb{MCMLE.*} and
 Note that only the Hotelling's stopping criterion is implemented
 for CD.}
 
-\item{CD.nsteps, CD.multiplicity}{Main settings for contrastive divergence to
-obtain initial values for the estimation: respectively, the number of
-Metropolis--Hastings steps to take before reverting to the starting value
-and the number of tentative proposals per step. Computational experiments
-indicate that increasing \code{CD.multiplicity} improves the estimate faster
-than increasing \code{CD.nsteps} --- up to a point --- but it also samples
-from the wrong distribution, in the sense that while as
-\code{CD.nsteps}\eqn{\rightarrow\infty}, the CD estimate approaches the MLE,
-this is not the case for \code{CD.multiplicity}.
+\item{CD.nsteps, CD.multiplicity}{Main settings for contrastive
+divergence to obtain initial values for the estimation:
+respectively, the number of Metropolis--Hastings steps to take
+before reverting to the starting value and the number of
+tentative proposals per step. Computational experiments indicate
+that increasing \code{CD.multiplicity} improves the estimate
+faster than increasing \code{CD.nsteps} --- up to a point --- but
+it also samples from the wrong distribution, in the sense that
+while as \code{CD.nsteps}\eqn{\rightarrow\infty}, the CD estimate
+approaches the MLE, this is not the case for
+\code{CD.multiplicity}.
 
-In practice, MPLE, when available, usually outperforms CD for even a very
-high \code{CD.nsteps} (which is, in turn, not very stable), so CD is useful
-primarily when MPLE is not available. This feature is to be considered
-experimental and in flux.
+In practice, MPLE, when available, usually outperforms CD for
+even a very high \code{CD.nsteps} (which is, in turn, not very
+stable), so CD is useful primarily when MPLE is not
+available. This feature is to be considered experimental and in
+flux.
 
-The default values have been set experimentally, providing a reasonably
-stable, if not great, starting values.}
+The default values have been set experimentally, providing a
+reasonably stable, if not great, starting values.}
 
 \item{CD.nsteps.obs, CD.multiplicity.obs}{When there are missing dyads,
 \code{CD.nsteps} and \code{CD.multiplicity} must be set to a relatively high
@@ -669,7 +696,7 @@ This function is only used within a call to the \code{\link[=ergm]{ergm()}} func
 See the \code{usage} section in \code{\link[=ergm]{ergm()}} for details.
 }
 \references{
-\itemize{
+\insertAllCited{}
 \itemize{
 \item Snijders, T.A.B. (2002), Markov Chain Monte
 Carlo Estimation of Exponential Random Graph Models.  Journal of Social
@@ -686,8 +713,6 @@ Graphical Statistics, 21: 920-939.
 \item Kristoffer Sahlin. Estimating convergence of Markov chain Monte Carlo
 simulations. Master's Thesis. Stockholm University, 2011.
 \url{https://www2.math.su.se/matstat/reports/master/2011/rep2/report.pdf}
-}
-
 }
 }
 \seealso{

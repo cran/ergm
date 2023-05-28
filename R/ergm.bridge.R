@@ -312,7 +312,6 @@ ergm.bridge.dindstart.llk<-function(object, response=NULL, constraints=~., coef,
   ## By default, take dyad-independent terms in the formula, fit a
   ## model with these terms and "edges". Terms that are redundant (NA)
   ## get their coefficients zeroed out below.
-  ## FIXME: What to do about dyad-independent curved terms?
   offset.dind <- c()
   if(!is.null(target.stats)) ts.dind <- c()
   dindmap <- logical(0)
@@ -367,7 +366,7 @@ ergm.bridge.dindstart.llk<-function(object, response=NULL, constraints=~., coef,
   coef.dind[dindmap] <- replace(coef(ergm.dind), is.na(coef(ergm.dind)), 0)
   coef.aug <- c(coef, 0)
 
-  form.aug <- append_rhs.formula(object, list(as.name("edges")))
+  form.aug <- append_rhs.formula(object, list(as.name("edges")), keep.onesided = TRUE)
 
   ## From this point on, target.stats has NAs corresponding to offset
   ## terms.

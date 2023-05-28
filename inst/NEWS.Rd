@@ -64,6 +64,87 @@
 
 %% }
 
+
+\section{Changes in version 4.5.0}{
+
+  \subsection{NEW FEATURES}{
+    \itemize{
+      \item{
+        \code{\link{as.network.numeric}()} no longer constructs \eqn{n\times n}{n*n} matrices in doing so, allowing it to scale to large, sparse networks.
+      }
+      \item{
+        Additional arguments to \code{\link{mcmc.diagnostic}()} are now passed to helper functions, including plotting functions, allowing better customization. (Thanks to Fabio A. Correa.)
+      }
+      \item{
+        Stochastic Approximation MLE method now uses adaptive subphase lengths from Snijders (2002). (Thanks Arya Karami.)
+      }
+      \item{
+        \CRANpkg{ergm} can now use \CRANpkg{networkLite}'s \code{\link{networkLite}} objects in place of full \code{network} objects.
+      }
+      \item{
+        MPLE estimation can now provide improved standard errors via bootstrap or Godambe estimation. (Thanks to Christian Schmid.)
+      }
+    }
+  }
+
+
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item{
+        Geometrically weighted ("\code{gw*degree}" and "\code{gw*sp}") terms now detect when they encounter a network whose statistic of interest exceeds the cutoff and stop with an informative error, rather than sometimes silently returning incorrect results.
+      }
+      \item{
+        Fixes in final likelihood calculation when \code{basis=} argument is passed to the \code{\link{ergm}()} call.
+      }
+      \item{
+        \dQuote{Confidence} stopping criterion is now more robust to scale of sufficient statistics.
+      }
+      \item{
+        Better handling of invalid inputs in \code{\link{predict.ergm}()}.
+      }
+      \item{
+        \code{\link[=bd-ergmConstraint]{bd}()} now checks validity of its arguments and appropriateness for the network being modeled.
+      }
+    }
+  }
+
+
+  \subsection{OTHER USER-VISIBLE CHANGES}{
+    \itemize{
+      \item{
+        Optimizations to various directed shared partner calculations.
+      }
+      \item{
+        \code{gw*sp()} and \code{dgw*sp()} terms are now just aliases of each other.
+      }
+      \item{
+        In \code{dgw*sp()} terms, \code{cutoff=} argument is not meaningful when \code{fixed==TRUE} and produces a warning.
+      }
+      \item{
+        \code{\link{ergm.pl}()}'s API has changed (though the old calling convention is still supported for now).
+      }
+      \item{
+        Some control parameters for Stochastic Approximation have been renamed, removed, or better documented.
+      }
+      \item{
+        Some improvements in term name formatting.
+      }
+      \item{
+        Documentation improvements for some terms.
+      }
+    }
+  }
+
+  \subsection{C-LEVEL FACILITIES}{
+    \itemize{
+      \item{
+        Some helper functions for printing vectors and matrices in \code{ergm_util.c} have been improved.
+      }
+    }
+  }
+}
+
+
 \section{Changes in version 4.4.0}{
 
   \subsection{NEW FEATURES}{
