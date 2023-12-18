@@ -64,6 +64,64 @@
 
 %% }
 
+\section{Changes in version 4.6.0}{
+
+  \subsection{NEW FEATURES}{
+    \itemize{
+      \item{
+        \code{\link[=edges-ergmConstraint]{edges}} constraint can now be combined with arbitrary dyadic constraints.
+      }
+    }
+  }
+
+
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item{
+        Syntactic fixes in documentation.
+      }
+      \item{
+        The bounded degree support in the dyad noise proposal (see \code{\link{dyadnoise-ergmConstraint}}) has been fixed.
+      }
+      \item{
+        Fixed a bug in the DyadGen API implementation that would sometimes cause a crash when sampling non-edges with RLEBDM (such as when combining the \code{\link[edges-ergmConstraint]{edges}} with some dyadic constraint). (Thanks to  Benjamin Rosche (Cornell University) for the bug report.)
+      }
+      \item{
+        A number of potential errors and vulnerabilities in C code flagged by CRAN have been fixed.
+      }
+      \item{
+        In some models, with high degree of multicollinearity among the sufficient statistics, detection thresholds were too sensitive, ultimately resulting in some standard errors being severely underestimated.
+      }
+    }
+  }
+
+
+  \subsection{OTHER USER-VISIBLE CHANGES}{
+    \itemize{
+      \item{
+        The proposal lookup API is now more flexible: instead of selecting one proposal, it returns a list ordered by priority and suitability. Each proposal on the list is tried in turn and can \dQuote{reject} a sampling scenario at initialization, in which case the next proposal is tried. This means that \dQuote{special case} proposals can offer themselves up and then pass on if it is not their special case.
+      }
+      \item{
+        In \code{\link{simulate.ergm}()} with \code{observational=TRUE}, the basis (initial network) defaults to \code{object$network}, not \code{object$newnetwork}, since the latter often has missing edges and other metadata missing.
+      }
+      \item{
+        Documentation for defunct functions (in \code{\link{ergm-defunct}}) no longer includes function prototypes as they triggered CRAN warnings.
+      }
+      \item{
+        Some changes to minimize matrix inversions and improve numerical stability.
+      }
+    }
+  }
+
+  \subsection{C-LEVEL FACILITIES}{
+    \itemize{
+      \item{
+        New C macros to simplify initialization of the standard dyad generator and bounded degree sampler.
+      }
+    }
+  }
+}
+
 
 \section{Changes in version 4.5.0}{
 
@@ -160,12 +218,12 @@
         \itemize{
           \item{
             \code{\link{ergm}} objects no longer include \code{$constrained} and \code{$constrained.obs} elements by default, making the fit objects substantially more compact. Information useful for post-processing and diagnostics that was previously extracted from them is now stored in the \code{$info} element.
-            \item{
-              \code{\link{ergm}()} now takes a \code{newnetwork=} argument, specifying if the networks generated at the end of the estimation should be saved. The previous behaviour was to save one network per parallel chain. The new default behaviour is to save only one.
-            }
-            \item{
-              \code{\link{control.ergm}()}'s \code{MCMC.return.stats=} now controls the maximum number of iterations to be stored in \code{$sample} and \code{$sample.obs} for diagnostics; actual MCMC samples are thinned to at most that length. \code{\link{mcmc.diagnostics}()} code prints the information from the full and the thinned samples.
-            }
+          }
+          \item{
+            \code{\link{ergm}()} now takes a \code{newnetwork=} argument, specifying if the networks generated at the end of the estimation should be saved. The previous behaviour was to save one network per parallel chain. The new default behaviour is to save only one.
+          }
+          \item{
+            \code{\link{control.ergm}()}'s \code{MCMC.return.stats=} now controls the maximum number of iterations to be stored in \code{$sample} and \code{$sample.obs} for diagnostics; actual MCMC samples are thinned to at most that length. \code{\link{mcmc.diagnostics}()} code prints the information from the full and the thinned samples.
           }
         }
       }

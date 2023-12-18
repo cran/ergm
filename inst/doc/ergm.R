@@ -18,22 +18,22 @@ library(ergm)
 ## ------------------------------------------------------------------------
 set.seed(0)
 
-## ---- eval=FALSE---------------------------------------------------------
+## ----eval=FALSE----------------------------------------------------------
 #  ergmTerm
 
-## ---- eval=FALSE---------------------------------------------------------
+## ----eval=FALSE----------------------------------------------------------
 #  ergmTerm?edges
 
 ## ------------------------------------------------------------------------
 search.ergmTerms(keyword='homophily')
 
-## ---- eval=FALSE---------------------------------------------------------
+## ----eval=FALSE----------------------------------------------------------
 #  vignette('ergm-term-crossRef')
 
-## ---- eval=FALSE---------------------------------------------------------
+## ----eval=FALSE----------------------------------------------------------
 #  vignette("networkVignette")
 
-## ---- eval=FALSE---------------------------------------------------------
+## ----eval=FALSE----------------------------------------------------------
 #  data(package='ergm') # tells us the datasets in our packages
 
 ## ------------------------------------------------------------------------
@@ -55,7 +55,7 @@ summary(flomarriage ~ edges) # Look at the $g(y)$ statistic for this model
 flomodel.01 <- ergm(flomarriage ~ edges) # Estimate the model 
 summary(flomodel.01) # Look at the fitted model object
 
-## ---- message = FALSE----------------------------------------------------
+## ----message = FALSE-----------------------------------------------------
 summary(flomarriage~edges+triangle) # Look at the g(y) stats for this model
 flomodel.02 <- ergm(flomarriage~edges+triangle) 
 summary(flomodel.02)
@@ -111,7 +111,7 @@ samplk3
 plot(samplk3)
 summary(samplk3~edges+mutual)
 
-## ---- message = F--------------------------------------------------------
+## ----message = F---------------------------------------------------------
 sampmodel.01 <- ergm(samplk3~edges+mutual)
 summary(sampmodel.01)
 
@@ -141,7 +141,7 @@ missnet_bad[4,6] <- missnet_bad[4,9] <- missnet_bad[5,6] <- 0
 summary(missnet_bad)
 summary(ergm(missnet_bad~edges))
 
-## ---- message = F--------------------------------------------------------
+## ----message = F---------------------------------------------------------
 summary(flobusiness~edges+degree(1))
 fit <- ergm(flobusiness~edges+degree(1))
 summary(fit)

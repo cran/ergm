@@ -363,8 +363,13 @@ requested with <code>priority==Inf</code>, it is discarded.</li>
 penalised by the <code>priority</code> of that constraint.</li>
 </ol></li>
 <li>If there are no candidate proposals left, an error is raised.</li>
-<li>If more than one is left, the proposal with the highest priority
-(after being penalised for unmet constraints) is selected.</li>
+<li>If more than one is left,
+<ol style="list-style-type: decimal">
+<li>Calls to <code>InitErgmProposal.*</code> functions are attempted. If
+a call returns <code>NULL</code>, next proposal is attempted. (This can
+be useful if a proposal handles a particular special case that is not
+accounted for by constraints.)</li>
+</ol></li>
 </ol>
 </div>
 </div>

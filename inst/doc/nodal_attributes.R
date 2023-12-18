@@ -1,30 +1,30 @@
-## ---- node-attr-spec, message=FALSE--------------------------------------
+## ----node-attr-spec, message=FALSE---------------------------------------
 library(ergm)
 data(faux.mesa.high)
 summary(faux.mesa.high~nodecov("Grade")) # String
 summary(faux.mesa.high~nodecov(~Grade)) # Formula
 summary(faux.mesa.high~nodecov(function(nw) nw%v%"Grade")) # Function
 
-## ---- node-attr-cbind----------------------------------------------------
+## ----node-attr-cbind-----------------------------------------------------
 summary(faux.mesa.high~nodecov(~cbind(Grade,Grade^2)))
 
-## ---- cbind-colnames-1---------------------------------------------------
+## ----cbind-colnames-1----------------------------------------------------
 x <- 1:2
 cbind(x,x^2)
 cbind(x,x2=x^2)
 cbind(x,`x^2`=x^2) # Backticks for arbitrary names.
 
-## ---- node-attr-cbind-name-----------------------------------------------
+## ----node-attr-cbind-name------------------------------------------------
 summary(faux.mesa.high~nodecov(~cbind(Grade,Grade2=Grade^2)))
 
-## ---- node-attr-poly-----------------------------------------------------
+## ----node-attr-poly------------------------------------------------------
 summary(faux.mesa.high~nodecov(~poly(Grade,2)))
 
-## ---- node-attr-rand-----------------------------------------------------
+## ----node-attr-rand------------------------------------------------------
 randomcov <- structure(I(rbinom(network.size(faux.mesa.high),1,0.5)), name="random")
 summary(faux.mesa.high~nodefactor(I(randomcov)))
 
-## ---- node-attr-cats-----------------------------------------------------
+## ----node-attr-cats------------------------------------------------------
 # Activity by grade with a baseline grade excluded:
 summary(faux.mesa.high~nodefactor(~Grade))
 # Retain all levels:
@@ -48,7 +48,7 @@ summary(faux.mesa.high~mm("Grade",
                         function(l)
                           l[[1]]%in%c(7,8) && l[[2]]%in%c(7,8))))
 
-## ---- node-attr-levels2--------------------------------------------------
+## ----node-attr-levels2---------------------------------------------------
 # Here is the full list of combinations of sexes in an undirected network:
 summary(faux.mesa.high~mm("Sex", levels2=TRUE))
 # Select only the second combination:
@@ -68,7 +68,7 @@ summary(faux.mesa.high~mm("Sex", levels2=M)+mm("Sex", levels2=t(M)))
 idx <- cbind(1,2)
 summary(faux.mesa.high~mm("Sex", levels2=idx))
 
-## ---- mm-2sided----------------------------------------------------------
+## ----mm-2sided-----------------------------------------------------------
 summary(faux.mesa.high~mm(Grade~Race, levels2=TRUE))
 # It is possible to have collapsing functions in the formula; note
 # the parentheses around "~Race": this is because a formula
