@@ -5,8 +5,10 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2023 Statnet Commons
+#  Copyright 2003-2024 Statnet Commons
 ################################################################################
+
+### TODO: Run some very long simulations to get more accurate reference values.
 
 set.seed(14392)
 N <- 50
@@ -21,7 +23,19 @@ test_that("Godambe covariance method for MPLE", {
   m1 <- ergm(init.sim ~ edges + triangles, estimate = "MPLE",
               control=control.ergm(MPLE.covariance.method = "Godambe"))
   StdErr1 <- sqrt(diag(vcov(m1)))
-  expect_equal(StdErr1, c(0.255, 0.059), ignore_attr = TRUE, tolerance=.01)
+  expect_equal(StdErr1, c(0.255, 0.059), ignore_attr = TRUE, tolerance=.05)
+})
+
+test_that("Godambe covariance method for MPLE with offset", {
+  set.seed(111)
+  fit <- ergm(
+    init.sim ~ edges + triangles + offset(edges), 
+    offset.coef = 0,
+    estimate = "MPLE",
+    control=control.ergm(MPLE.covariance.method = "Godambe")
+  )
+  StdErr <- sqrt(diag(vcov(fit)))
+  expect_equal(StdErr, c(0.255, 0.059, 0), ignore_attr = TRUE, tolerance=.05)
 })
 
 test_that("Inverse Hessian from logistic regression model", {
@@ -29,7 +43,7 @@ test_that("Inverse Hessian from logistic regression model", {
   m2 <- ergm(init.sim ~ edges+triangles, estimate = "MPLE",
                 control=control.ergm(MPLE.covariance.method = "invHess"))
   StdErr2 <- sqrt(diag(vcov(m2)))
-  expect_equal(StdErr2, c(0.155, 0.034), ignore_attr = TRUE, tolerance=.01)
+  expect_equal(StdErr2, c(0.155, 0.034), ignore_attr = TRUE, tolerance=.05)
 })
 
 test_that("Bootstrap covariance method for MPLE", {
@@ -37,7 +51,7 @@ test_that("Bootstrap covariance method for MPLE", {
   m3 <- ergm(init.sim ~ edges + triangles, estimate = "MPLE",
              control=control.ergm(MPLE.covariance.method = "bootstrap"))
   StdErr3 <- sqrt(diag(vcov(m3)))
-  expect_equal(StdErr3, c(0.257, 0.060), ignore_attr = TRUE, tolerance=.01)
+  expect_equal(StdErr3, c(0.257, 0.060), ignore_attr = TRUE, tolerance=.05)
 })
 
 test_that("Bootstrap covariance method for MPLE with offsets", {
@@ -46,5 +60,7 @@ test_that("Bootstrap covariance method for MPLE with offsets", {
              estimate = "MPLE",
              control=control.ergm(MPLE.covariance.method = "InvHess"))
   StdErr4 <- sqrt(diag(vcov(m4)))
-  expect_equal(StdErr4, c(0.155, 0.034, 0), ignore_attr = TRUE, tolerance=.01)
+  expect_equal(StdErr4, c(0.155, 0.034, 0), ignore_attr = TRUE, tolerance=.05)
 })
+
+

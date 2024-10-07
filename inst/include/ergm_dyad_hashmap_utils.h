@@ -5,7 +5,7 @@
  *  open source, and has the attribution requirements (GPL Section 7) at
  *  https://statnet.org/attribution .
  *
- *  Copyright 2003-2023 Statnet Commons
+ *  Copyright 2003-2024 Statnet Commons
  */
 #ifndef _ERGM_DYAD_HASHMAP_UTILS_H_
 #define _ERGM_DYAD_HASHMAP_UTILS_H_
@@ -15,7 +15,10 @@
 
 /* Utility function declarations. */
 void PrintDyadMapUInt(StoreDyadMapUInt *h);
+void PrintStrictDyadMapUInt(StoreStrictDyadMapUInt *h);
 void PrintDyadSet(StoreDyadSet *h);
+void PrintStrictDyadSet(StoreStrictDyadSet *h);
 StoreDyadSet *NetworkToDyadSet(Network *nwp);
+StoreStrictDyadSet *NetworkToStrictDyadSet(Network *nwp);
 
 #endif // _ERGM_DYAD_HASHMAP_H_

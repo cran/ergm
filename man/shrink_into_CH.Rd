@@ -9,6 +9,7 @@ shrink_into_CH(
   M,
   m = NULL,
   verbose = FALSE,
+  max_run = nrow(M),
   ...,
   solver = c("glpk", "lpsolve")
 )
@@ -30,16 +31,16 @@ produces minimal output, with higher values producing more
 detail. Note that very high values (5+) may significantly slow
 down processing.}
 
+\item{max_run}{if there are no decreases in step length in this
+many consecutive test points, conclude that diminishing returns
+have been reached and finish.}
+
 \item{\dots}{arguments passed directly to linear program solver.}
 
 \item{solver}{a character string selecting which solver to use; by
 default, tries \code{Rglpk}'s but falls back to \code{lpSolveAPI}'s.}
 }
 \value{
-Logical, telling whether \code{p} is (or all rows of
-\code{p} are) in the closed convex hull of the points in
-\code{M}.
-
 The scaling factor described above is
 returned. \code{shrink_into_CH() >= 1} indicates that all points in
 \code{p} are in the convex hull of \code{M}.
@@ -52,22 +53,15 @@ order for \code{p} to be on the boundary of the convex hull of rows of
 the convex hull of \code{M} is found.
 }
 \note{
-This is a successor to the deprecated function \code{is.inCH()}, which
-was originally written for the "stepping" algorithm of Hummel et al
-(2012). See Krivitsky, Kuvelkar, and Hunter (2022) for detailed
-discussion of algorithms used in \code{is.inCH()} and
-\code{shrink_into_CH()}.
+This is a successor to the deprecated function \code{is.inCH()},
+which was originally written for the "stepping" algorithm of
+\insertCite{HuHu12i;textual}{ergm}. See the updated of
+\insertCite{KrKu23l;textual}{ergm} for detailed discussion of algorithms
+used in \code{is.inCH()} and \code{shrink_into_CH()}.
 }
 \references{
+\insertAllCited{}
+
 \url{https://www.cs.mcgill.ca/~fukuda/soft/polyfaq/node22.html}
-
-Hummel, R. M., Hunter, D. R., and Handcock, M. S. (2012), Improving
-Simulation-Based Algorithms for Fitting ERGMs, \emph{Journal of
-Computational and Graphical Statistics}, 21: 920-939.
-
-Krivitsky, P. N., Kuvelkar, A. R., and Hunter,
-D. R. (2022). Likelihood-based Inference for Exponential-Family
-Random Graph Models via Linear Programming. \emph{arXiv preprint}
-arXiv:2202.03572. \url{https://arxiv.org/abs/2202.03572}
 }
 \keyword{internal}

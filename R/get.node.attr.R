@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2023 Statnet Commons
+#  Copyright 2003-2024 Statnet Commons
 ################################################################################
 ###############################################################################
 # The <get.node.attr> function returns the vector of covariates for the given
@@ -41,7 +41,7 @@
 #' attribute data into an ergm term.
 #' 
 #' 
-#' @param nw a \code{\link{network}} object
+#' @param nw a [`network`] object
 #' @param attrname the name of a nodal attribute, as a character string
 #' @param functionname the name of the calling function a character string;
 #' this is only used for the warning messages that accompany a halt
@@ -49,7 +49,7 @@
 #' not numeric; default=FALSE
 #' @return returns the vector of 'attrname' covariates for the vertices in the
 #' network
-#' @seealso \code{\link[network]{get.vertex.attribute}} for a version without
+#' @seealso [get.vertex.attribute()] for a version without
 #' the checking functionality
 #' @examples
 #' 
@@ -116,7 +116,8 @@ get.node.attr <- function(nw, attrname, functionname=NULL, numeric=FALSE) {
 #' transform the attribute by collapsing the smallest `n` categories
 #' into one, naming it `into`. Note that `into` must be of the same
 #' type (numeric, character, etc.) as the vertex attribute in
-#' question.
+#' question. If there are ties for `n`th smallest category, they will
+#' be broken in lexicographic order, and a warning will be issued.
 #'
 #' The name the nodal attribute receives in the statistic can be
 #' overridden by setting a an [attr()]-style attribute `"name"`.
@@ -140,9 +141,10 @@ get.node.attr <- function(nw, attrname, functionname=NULL, numeric=FALSE) {
 #' is `LARGEST`, which will refer to the most frequent category, so,
 #' say, to set such a category as the baseline, pass
 #' `levels=-LARGEST`. In addition, `LARGEST(n)` will refer to the `n`
-#' largest categories. `SMALLEST` works analogously. Note that if there
-#' are ties in frequencies, they will be broken arbitrarily. To
-#' specify numeric or logical levels literally, wrap in [I()].}
+#' largest categories. `SMALLEST` works analogously. If there are ties
+#' in frequencies, they will be broken in lexicographic order, and a
+#' warning will be issued. To specify numeric or logical levels
+#' literally, wrap in [I()].}
 #'
 #'\item{[`NULL`]}{Retain all possible levels; usually equivalent to
 #' passing `TRUE`.}
@@ -192,6 +194,11 @@ get.node.attr <- function(nw, attrname, functionname=NULL, numeric=FALSE) {
 #' table(faux.mesa.high %v% "Grade")
 #' summary(faux.mesa.high~nodefactor((~Grade) %>% COLLAPSE_SMALLEST(2, 0),
 #'                                   levels=TRUE))
+#'
+#' # Handling of tied frequencies
+#' faux.mesa.high %v% "Plans" <-
+#'     sample(rep(c("College", "Trade School", "Apprenticeship", "Undecided"), c(80,80,20,25)))
+#' summary(faux.mesa.high ~ nodefactor("Plans", levels = -LARGEST))
 #' 
 #' # Mixing between lower and upper grades:
 #' summary(faux.mesa.high~mm(~Grade>=10))
@@ -224,6 +231,12 @@ get.node.attr <- function(nw, attrname, functionname=NULL, numeric=FALSE) {
 #' # Select via an index of a cell:
 #' idx <- cbind(1,2)
 #' summary(faux.mesa.high~mm("Sex", levels2=idx))
+#' # Or, select by specific attribute value combinations, though note
+#' # the names 'row' and 'col' and the order for undirected networks:
+#' summary(faux.mesa.high~mm("Sex",
+#'                           levels2 = I(list(list(row="M",col="M"),
+#'                                            list(row="M",col="F"),
+#'                                            list(row="F",col="M")))))
 #'
 #' # mm() term allows two-sided attribute formulas with different attributes:
 #' summary(faux.mesa.high~mm(Grade~Race, levels2=TRUE))
@@ -374,7 +387,7 @@ ergm_get_vattr <- function(object, nw, accept="character", bip=c("n","b1","b2","
       switch(multiple,
              paste =  apply(a, 1, paste, collapse="."),
              matrix = a,
-             stop = ergm_Init_abort("This term does not accept multiple vertex attributes or matrix vertex attribute functions."))
+             stop = ergm_Init_stop("This term does not accept multiple vertex attributes or matrix vertex attribute functions."))
     else c(a),
     name = name)
 }
@@ -390,19 +403,19 @@ ergm_get_vattr <- function(object, nw, accept="character", bip=c("n","b1","b2","
     a <- a[a!=0]
     if(all(a>0)) return(a)
 
-    if(!is.null(nrow(a))) ergm_Init_abort("Subtractive (negative) index matrices are not supported at this time.")
+    if(!is.null(nrow(a))) ergm_Init_stop("Subtractive (negative) index matrices are not supported at this time.")
     # Now it's negative indices.
     l <- switch(bip,
                 n=seq_len(network.size(nw)),
                 b1=seq_len(nw%n%"bipartite"),
                 b2=seq_len(network.size(nw)-nw%n%"bipartite")+nw%n%"bipartite")
     if(bip=="b2" && any(-a > nw%n%"bipartite")) a <- a + nw%n%"bipartite"
-    if(!all(-a%in%seq_along(l))) ergm_Init_warn("Vertex index is out of bound.")
+    if(!all(-a%in%seq_along(l))) ergm_Init_warning("Vertex index is out of bound.")
 
     structure(l[a], name=name)
   }else{
     rep_len_warn <- function(x, length.out){
-      if(length.out%%NVL(nrow(x), length(x))) ergm_Init_warn("Network size or bipartite group size is not a multiple of the length of vertex attributes.")
+      if(length.out%%NVL(nrow(x), length(x))) ergm_Init_warning("Network size or bipartite group size is not a multiple of the length of vertex attributes.")
       if(is.null(nrow(x))) rep_len(x, length.out) else apply(x, 2, rep_len, length.out)
     }
 
@@ -445,11 +458,11 @@ ergm_get_vattr <- function(object, nw, accept="character", bip=c("n","b1","b2","
                 positive = x>0,
                 index = is.logical(x) || (all(round(x)==x) && (all(x>0) || all(x<0))))
 
-  if(!OK) ergm_Init_abort("Attribute ", NVL3(xspec, paste0(sQuote(paste(deparse(.),collapse="\n")), " ")), "is not ", ACCNAME[[accept]], " vector as required.")
-  if(any(is.na(x))) ergm_Init_abort("Attribute ", NVL3(xspec, paste0(sQuote(paste(deparse(.),collapse="\n")), " ")), "has missing data, which is not currently supported by ergm.")
+  if(!OK) ergm_Init_stop("Attribute ", NVL3(xspec, paste0(sQuote(paste(deparse(.),collapse="\n")), " ")), "is not ", ACCNAME[[accept]], " vector as required.")
+  if(any(is.na(x))) ergm_Init_stop("Attribute ", NVL3(xspec, paste0(sQuote(paste(deparse(.),collapse="\n")), " ")), "has missing data, which is not currently supported by ergm.")
   if(is.matrix(x) && !is.null(cn <- colnames(x))){
     if(any(cn=="")){
-      ergm_Init_warn("Attribute specification ", NVL3(xspec, paste0(sQuote(paste(deparse(.),collapse="\n")), " ")), "is a matrix with some column names set and others not; you may need to set them manually. See example(nodal_attributes) for more information.")
+      ergm_Init_warning("Attribute specification ", NVL3(xspec, paste0(sQuote(paste(deparse(.),collapse="\n")), " ")), "is a matrix with some column names set and others not; you may need to set them manually. See example(nodal_attributes) for more information.")
       colnames(x) <- NULL
     }
   }
@@ -480,7 +493,7 @@ ergm_get_vattr.character <- function(object, nw, accept="character", bip=c("n","
 
   missing_attr <- setdiff(object, list.vertex.attributes(nw))
   if(length(missing_attr)){
-    ergm_Init_abort(paste.and(sQuote(missing_attr)), " is/are not valid nodal attribute(s).")
+    ergm_Init_stop(paste.and(sQuote(missing_attr)), " is/are not valid nodal attribute(s).")
   }
 
   object %>% map(~nw%v%.) %>% set_names(object) %>% .handle_multiple(multiple=multiple) %>%
@@ -604,16 +617,16 @@ ergm_attr_levels.matrix <- function(object, attr, nw, levels=sort(unique(attr)),
 
   sel <- switch(mode(object),
                 logical = { # Binary matrix
-                  if(any(dim(object)!=c(nol,nil))) ergm_Init_abort("Level combination selection binary matrix should have dimension ", nol, " by ", nil, " but has dimension ", nrow(object), " by ", ncol(object), ".") # Check dimension.
+                  if(any(dim(object)!=c(nol,nil))) ergm_Init_stop("Level combination selection binary matrix should have dimension ", nol, " by ", nil, " but has dimension ", nrow(object), " by ", ncol(object), ".") # Check dimension.
                   if(!is.directed(nw) && !is.bipartite(nw) && identical(ol,il)) object <- object | t(object) # Symmetrize, if appropriate.
                   object
                 },
                 numeric = { # Two-column index matrix
-                  if(ncol(object)!=2) ergm_Init_abort("Level combination selection two-column index matrix should have two columns but has ", ncol(object), ".")
+                  if(ncol(object)!=2) ergm_Init_stop("Level combination selection two-column index matrix should have two columns but has ", ncol(object), ".")
                   if(!is.directed(nw) && !is.bipartite(nw) && identical(ol,il)) object <- rbind(object, object[,2:1,drop=FALSE]) # Symmetrize, if appropriate.
                   object
                 },
-                ergm_Init_abort("Level combination selection matrix must be either numeric or logical.")
+                ergm_Init_stop("Level combination selection matrix must be either numeric or logical.")
                 )
 
   sel <- m[sel] %>% keep(`!=`,0L) %>% sort %>% unique
@@ -652,14 +665,38 @@ ERGM_VATTR_SPEC_NULL <- "function,formula,character,AsIs,NULL"
 #' @export
 ERGM_LEVELS_SPEC <- "function,formula,character,numeric,logical,AsIs,NULL,matrix"
 
+rank_cut <- function(x, n, tie_action = c("warning", "error"), top = FALSE){    
+  ordrank <- if(top) function(r) length(x) + 1 - r else identity
+  s1 <- ordrank(rank(x, ties.method="min")) <= n
+  s2 <- ordrank(rank(x, ties.method="max")) <= n
+
+  if(identical(s1, s2)) which(s1)
+  else{
+    tie_action <- match.arg(tie_action)
+    msg <- paste0("Levels ", paste.and(sQuote(names(x)[s1!=s2])), " are tied.")
+    switch(tie_action,
+           error = ergm_Init_stop(msg, " Specify explicitly."),
+           warning = {
+             ergm_Init_warning(msg, " Using the order given.")
+             which(ordrank(rank(x, ties.method="first")) <= n)
+           })
+  }
+}
+
+levels_cut <- function(x, n, lvls = sort(unique(x)), top = FALSE, ...){
+  f <- setNames(tabulate(match(x, lvls)), lvls)
+  sel <- rank_cut(f, n, top=top, ...)
+  if(missing(lvls)) lvls[sel] else sel
+}
+
 #' @rdname nodal_attributes
 #' @export
 LARGEST <- structure(function(l, a){
-  if(!missing(a)) which.max(tabulate(match(a, l))) # passed as levels=LARGEST
+  if(!missing(a)) levels_cut(a, 1, l, top=TRUE) # passed as levels=LARGEST
   else{ # passed as levels=LARGEST(n): return a function
     n <- l
     structure(function(l, a){
-      which(order(tabulate(match(a,l)), decreasing=TRUE)<=n)
+      levels_cut(a, n, l, top=TRUE)
     }, class = c("ergm_levels_spec_function", "function"))
   }
 }, class = c("ergm_levels_spec_function", "function"))
@@ -667,11 +704,11 @@ LARGEST <- structure(function(l, a){
 #' @rdname nodal_attributes
 #' @export
 SMALLEST <- structure(function(l, a){
-  if(!missing(a)) which.min(tabulate(match(a, l))) # passed as levels=SMALLEST
+  if(!missing(a)) levels_cut(a, 1, l) # passed as levels=SMALLEST
   else{ # passed as levels=SMALLEST(n): return a function
     n <- l
     structure(function(l, a){
-      which(order(tabulate(match(a,l)), decreasing=FALSE)<=n)
+      levels_cut(a, n, l)
     }, class = c("ergm_levels_spec_function", "function"))
   }
 }, class = c("ergm_levels_spec_function", "function"))
@@ -698,10 +735,8 @@ COLLAPSE_SMALLEST <- function(object, n, into){
   attr <- object
   function(...){
     vattr <- ergm_get_vattr(attr, ...)
-    lvls <- unique(vattr)
-    vattr.codes <- match(vattr,lvls)
-    smallest <- which(order(tabulate(vattr.codes), decreasing=FALSE)<=n)
-    vattr[vattr.codes %in% smallest] <- into
+    smallest <- levels_cut(vattr, n)
+    vattr[vattr %in% smallest] <- into
     vattr
   }
 }

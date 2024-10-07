@@ -12,7 +12,7 @@ control.san(
   SAN.nsteps.alloc = function(nsim) 2^seq_len(nsim),
   SAN.nsteps = 2^19,
   SAN.samplesize = 2^12,
-  SAN.prop = trim_env(~sparse),
+  SAN.prop = trim_env(~sparse + .triadic),
   SAN.prop.weights = "default",
   SAN.prop.args = list(),
   SAN.packagenames = c(),
@@ -81,7 +81,7 @@ not be needed outside of very strange setups.}
 \item{term.options}{A list of additional arguments to be passed to term initializers. See \code{\link[=term.options]{? term.options}}.}
 
 \item{seed}{Seed value (integer) for the random number generator.  See
-\code{\link[base]{set.seed}}.}
+\code{\link[=set.seed]{set.seed()}}.}
 
 \item{parallel}{Number of threads in which to run the sampling. Defaults to
 0 (no parallelism). See the entry on \link[=ergm-parallel]{parallel processing}
@@ -92,7 +92,7 @@ are \code{"MPI"} and \code{"PSOCK"}. Defaults to using the \code{parallel}
 package with PSOCK clusters. See \code{\link{ergm-parallel}}}
 
 \item{parallel.version.check}{Logical: If TRUE, check that the version of
-\code{\link[=ergm-package]{ergm}} running on the slave nodes is the same as
+\pkg{ergm} running on the slave nodes is the same as
 that running on the master node.}
 
 \item{parallel.inherit.MT}{Logical: If TRUE, slave nodes and
@@ -106,10 +106,10 @@ Auxiliary function as user interface for fine-tuning simulated annealing
 algorithm.
 }
 \details{
-This function is only used within a call to the \code{\link{san}} function.
-See the \code{usage} section in \code{\link{san}} for details.
+This function is only used within a call to the \code{\link[=san]{san()}} function.
+See the Usage section in \code{\link[=san]{san()}} for details.
 }
 \seealso{
-\code{\link{san}}
+\code{\link[=san]{san()}}
 }
 \keyword{models}

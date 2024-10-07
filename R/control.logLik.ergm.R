@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2023 Statnet Commons
+#  Copyright 2003-2024 Statnet Commons
 ################################################################################
 
 
@@ -18,11 +18,13 @@
 #' @details `control.logLik.ergm()` is only used within a call to the
 #'   [logLik.ergm()].
 #'
-#' @seealso \code{\link{logLik.ergm}}
+#' @seealso [logLik.ergm()]
 #' @export control.logLik.ergm
 control.logLik.ergm<-function(bridge.nsteps=16,
                               bridge.target.se=NULL,
                               bridge.bidirectional = TRUE,
+
+                              drop = NULL,
 
                               MCMC.burnin=NULL,
                               MCMC.interval=NULL,

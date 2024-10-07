@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2023 Statnet Commons
+#  Copyright 2003-2024 Statnet Commons
 ################################################################################
 #' Approximate MPLE standard errors in dyad-dependent models
 #'
@@ -13,7 +13,7 @@
 #' using the Godambe matrix as described in Schmid and Hunter (2020) or by parametric bootstrap
 #' as described by Schmid and Desmarais (2017).
 #'
-#' @param pl An \code{\link{ergm.pl}} object.
+#' @param pl An [`ergm.pl`] object.
 #' @param init a vector a vector of initial theta coefficients
 #' @param theta.mple the MPLE of a given model
 #' @param invHess the inverse Hessian matrix obtained from glm()
@@ -83,8 +83,6 @@ ergm_mplecov <- function(pl,
     message("Estimating Godambe Matrix using ", R, " simulated networks.")
 
     # calculation of V(theta) = Var(u(theta,y)) using the sim.num networks
-    net.stat <- attr(sim.mple, "stats")
-    colnames(net.stat) <- colnames(pl$xmat)
     u.data <- matrix(0,nrow=length(sim.mple), ncol=num.variables)
 
     for(i in 1:length(sim.mple)){

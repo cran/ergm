@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2023 Statnet Commons
+#  Copyright 2003-2024 Statnet Commons
 ################################################################################
 
 ergm_Init_inform_once <- once(ergm_Init_inform)
@@ -13,10 +13,10 @@ ergm_Init_warn_once <- once(ergm_Init_warn)
 
 #' Ensures an Ergm Term and its Arguments Meet Appropriate Conditions
 #'
-#' Helper functions for implementing \code{\link[=ergm]{ergm()}}
+#' Helper functions for implementing [ergm()]
 #' terms, to check whether the term can be used with the specified
 #' network.  For information on ergm terms, see
-#' \link{ergmTerm}. \code{ergm.checkargs},
+#' [`ergmTerm`]. \code{ergm.checkargs},
 #' \code{ergm.checkbipartite}, and \code{ergm.checkderected} are
 #' helper functions for an old API and are deprecated. Use
 #' \code{check.ErgmTerm}.
@@ -110,7 +110,7 @@ check.ErgmTerm <- function(nw, arglist, directed=NULL, bipartite=NULL, nonnegati
     message <- "networks with negative dyad weights"
   }
   if (!is.null(message)) {
-    ergm_Init_abort("Term may not be used with ",message,".")
+    ergm_Init_stop("Term may not be used with ",message,".")
   }
 
   # Construct a dummy function that copies all its arguments into a
@@ -149,7 +149,7 @@ check.ErgmTerm <- function(nw, arglist, directed=NULL, bipartite=NULL, nonnegati
     if(!is.na(vartypes[m]) && nchar(vartypes[m]) &&
        !(is.null(val) && !required[[m]] && is.null(defaultvalues[[m]])) &&
        all(sapply(types, function(vartype) !is(val, vartype))))
-      ergm_Init_abort(sQuote(name), " argument is not of any of the expected types: ", paste.and(sQuote(types), con="or"), ".")
+      ergm_Init_stop(sQuote(name), " argument is not of any of the expected types: ", paste.and(sQuote(types), con="or"), ".")
 
     # Check deprecation (but only if passed explicitly)
     if(!miss){

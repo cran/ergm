@@ -5,7 +5,7 @@
  *  open source, and has the attribution requirements (GPL Section 7) at
  *  https://statnet.org/attribution .
  *
- *  Copyright 2003-2023 Statnet Commons
+ *  Copyright 2003-2024 Statnet Commons
  */
 #ifndef _ERGM_CHANGESTATS_AUXNET_H_
 #define _ERGM_CHANGESTATS_AUXNET_H_
@@ -13,7 +13,7 @@
 #include "ergm_changestat_auxnet.h"
 #include "ergm_dyad_hashmap.h"
 
-typedef struct{StoreDyadSet *nwp; int *ref_el;} StoreDyadSetAndRefEL;
+typedef struct{StoreStrictDyadSet *nwp; int *ref_el;} StoreStrictDyadSetAndRefEL;
 
 #define map_toggle_maxtoggles__discord_net_Network 1
 MAP_TOGGLE_FN(map_toggle__discord_net_Network){

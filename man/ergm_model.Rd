@@ -11,6 +11,7 @@
 \alias{is.dyad.independent.ergm_model}
 \alias{nparam.ergm_model}
 \alias{param_names.ergm_model}
+\alias{param_names<-.ergm_model}
 \title{Internal representation of an \code{ergm} network model}
 \usage{
 ergm_model(
@@ -35,16 +36,18 @@ as.ergm_model(x, ...)
 
 \method{is.curved}{ergm_model}(object, ...)
 
-\method{is.dyad.independent}{ergm_model}(object, ...)
+\method{is.dyad.independent}{ergm_model}(object, ..., ignore_aux = TRUE)
 
 \method{nparam}{ergm_model}(object, canonical = FALSE, offset = NA, byterm = FALSE, ...)
 
 \method{param_names}{ergm_model}(object, canonical = FALSE, offset = NA, ...)
+
+\method{param_names}{ergm_model}(object, canonical = FALSE, ...) <- value
 }
 \arguments{
 \item{formula}{An \code{\link[=ergm]{ergm()}}
 formula of the form \code{network ~ model.term(s)} or \code{~
-model.term(s)} or a \code{\link{term_list}} object, typically constructed from a formula's LHS.}
+model.term(s)} or a \code{\link[statnet.common:term_list]{term_list}} object, typically constructed from a formula's LHS.}
 
 \item{nw}{The network of interest, optionally instrumented with \code{\link[=ergm_preprocess_response]{ergm_preprocess_response()}} to have a response attribute specification; if passed, the LHS of \code{formula} is ignored. This is the recommended usage.}
 
@@ -67,6 +70,10 @@ initialization of each model term.}
 
 \item{object}{An \code{ergm_model} object.}
 
+\item{ignore_aux}{A flag to specify whether a dyad-dependent
+auxiliary should make the model dyad-dependent or should be
+ignored.}
+
 \item{canonical}{Whether the canonical (eta) parameters or the curved (theta) parameters are used.}
 
 \item{offset}{If \code{NA} (the default), all model terms are counted;
@@ -75,6 +82,13 @@ if \code{TRUE}, only offset terms are counted; and if
 
 \item{byterm}{Whether to return a vector of the numbers of
 coefficients for each term.}
+
+\item{value}{For \code{\link[=param_names<-]{param_names<-()}}, either a character vector equal
+in length to the number of parameters of the specified type
+(though recycled as needed), or a \code{\link{list}} of two character
+vectors, one for non-canonical, the other for canonical, in which
+case \verb{canonical=} will be ignored. \code{NA} elements preserve
+existing name.}
 }
 \value{
 \code{ergm_model} returns an  \code{ergm_model} object as a list
@@ -103,6 +117,8 @@ initialized via the \code{InitErgmTerm} functions to create a
 \item \code{nparam(ergm_model)}: Number of parameters of the model.
 
 \item \code{param_names(ergm_model)}: Parameter names of the model.
+
+\item \code{param_names(ergm_model) <- value}: Rename the parameters.
 
 }}
 \note{

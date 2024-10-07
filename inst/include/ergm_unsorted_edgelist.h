@@ -5,7 +5,7 @@
  *  open source, and has the attribution requirements (GPL Section 7) at
  *  https://statnet.org/attribution .
  *
- *  Copyright 2003-2023 Statnet Commons
+ *  Copyright 2003-2024 Statnet Commons
  */
 #ifndef _ERGM_UNSORTED_EDGELIST_H_
 #define _ERGM_UNSORTED_EDGELIST_H_
@@ -32,19 +32,22 @@ typedef struct {
   unsigned int lindex;
   unsigned int nedges;
   unsigned int maxedges;
+  unsigned int linsearch;
 } UnsrtEL;
 
+#define UnsrtELSize(el) ((el)->nedges)
+
 static inline UnsrtEL *UnsrtELInitialize(unsigned int nedges, Vertex *tails, Vertex *heads, Rboolean copy) {
-  UnsrtEL *el = Calloc(1, UnsrtEL);
+  UnsrtEL *el = R_Calloc(1, UnsrtEL);
 
   if(nedges == 0) {
     el->tails = NULL;
     el->heads = NULL;
   } else {
     if(copy) {
-      el->tails = Calloc(nedges, Vertex);
+      el->tails = R_Calloc(nedges, Vertex);
       memcpy(el->tails, tails, nedges*sizeof(Vertex));
-      el->heads = Calloc(nedges, Vertex);
+      el->heads = R_Calloc(nedges, Vertex);
       memcpy(el->heads, heads, nedges*sizeof(Vertex));
     } else {
       el->tails = tails;
@@ -56,6 +59,7 @@ static inline UnsrtEL *UnsrtELInitialize(unsigned int nedges, Vertex *tails, Ver
   el->lindex = 0;
   el->nedges = nedges;
   el->maxedges = nedges;
+  el->linsearch = 0;
 
   return el;
 }
@@ -64,10 +68,10 @@ static inline void UnsrtELDestroy(UnsrtEL *el) {
   if(el->tails) {
     el->tails++;
     el->heads++;
-    Free(el->tails);
-    Free(el->heads);
+    R_Free(el->tails);
+    R_Free(el->heads);
   }
-  Free(el);
+  R_Free(el);
 }
 
 static inline void UnsrtELClear(UnsrtEL *el) {
@@ -92,10 +96,10 @@ static inline unsigned int UnsrtELSearch(Vertex tail, Vertex head, UnsrtEL *el) 
    return el->lindex;
   } else {
     // linear search
-
+    el->linsearch++;
 #ifdef DEBUG_UnsrtEL
     /* To stop on an inefficient search, have the debugger break on the next line. */
-    Rprintf("UnsrtELSearch() called for an edge other than the last one inserted or selected, resulting in a linear search. This is O(E) slow and should be avoided whenever possible.\n");
+    Rprintf("UnsrtELSearch() called for an edge other than the last one inserted or selected, resulting in a linear search. This is O(E) slow and should be avoided whenever possible. (So far: %u times.)\n", el->linsearch);
 #endif
 
     unsigned int i = el->nedges;
@@ -139,8 +143,8 @@ static inline void UnsrtELInsert(Vertex tail, Vertex head, UnsrtEL *el) {
       el->tails++;
       el->heads++;
     }
-    el->tails = Realloc(el->tails, el->maxedges, Vertex) - 1;
-    el->heads = Realloc(el->heads, el->maxedges, Vertex) - 1;
+    el->tails = R_Realloc(el->tails, el->maxedges, Vertex) - 1;
+    el->heads = R_Realloc(el->heads, el->maxedges, Vertex) - 1;
   }
 
 #ifdef DEBUG_UnsrtEL
@@ -148,8 +152,8 @@ static inline void UnsrtELInsert(Vertex tail, Vertex head, UnsrtEL *el) {
   while(i != 0 && (tail != el->tails[i] || head != el->heads[i])) {
     i--;
   }
-  if(i) { /* To stop on an invariant violation, have the debugger break on the next line. */
-    Rprintf("UnsrtELInsert() called for an edge already present in the list. This should never happen.\n");
+  if(i) {
+    error("UnsrtELInsert() called for an edge already present in the list. This should never happen.");
   }
 #endif
 

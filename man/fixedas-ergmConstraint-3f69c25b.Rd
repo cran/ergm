@@ -3,15 +3,20 @@
 \name{fixedas-ergmConstraint}
 \alias{fixedas-ergmConstraint}
 \alias{InitErgmConstraint.fixedas}
-\title{Preserve and preclude edges}
+\title{Fix specific dyads}
 \usage{
-# fixedas(present, absent)
+# fixedas(fixed.dyads, present, absent)
 }
 \arguments{
-\item{present, absent}{edgelist or network}
+\item{fixed.dyads, present, absent}{a two-column edge list or a \code{\link[network:network]{network}}}
 }
 \description{
-Preserve the edges in 'present' and preclude the edges in 'absent'.
+Fix the dyads in \code{fixed.dyads} at their current value, preserve the edges in \code{present}, and preclude the edges in \code{absent}.
+}
+\details{
+\code{present} and \code{absent} differ from \code{fixed.dyads} in that
+they check that the specified edges are in fact present and/or
+absent and stop with an error if not.
 }
 \seealso{
 \code{\link{ergmConstraint}} for index of constraints and hints currently visible to the package.

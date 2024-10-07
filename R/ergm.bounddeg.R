@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2023 Statnet Commons
+#  Copyright 2003-2024 Statnet Commons
 ################################################################################
 
 
@@ -54,7 +54,7 @@
 #' \item{maxin}{ as defined above}
 #' \item{minout}{ as defined above}
 #' \item{minin}{ as defined above}
-#' @seealso \code{\link{ergm-proposals}}
+#' @seealso [`ergmProposal`]
 #' @keywords internal
 #' @export
 ergm_bd_init <- function(arguments,nw){

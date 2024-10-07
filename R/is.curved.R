@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2023 Statnet Commons
+#  Copyright 2003-2024 Statnet Commons
 ################################################################################
 ###################################################################
 ## This file has utilities whose primary purpose is examining or ##
@@ -21,7 +21,7 @@
 #' 
 #' Curvature is checked by testing if all model parameters are canonical.
 #' 
-#' @param object An \code{\link{ergm}} object or an ERGM formula.
+#' @param object An [`ergm`] object or an ERGM formula.
 #' @param \dots Arguments passed on to lower-level functions.
 #' @return \code{TRUE} if the object represents a
 #' curved exponential family; \code{FALSE} otherwise.
@@ -38,7 +38,8 @@ is.curved.NULL <- function(object, ...) FALSE # By convention.
 #' @describeIn ergm_model Tests whether the model is curved.
 #' @export
 is.curved.ergm_model <- function(object, ...){
-  length(object$etamap$curved)>0
+  NVL3(object$etamap$curved, length(.) > 0,
+       map(object$terms, "map") %>% map_lgl(is.null) %>% all() %>% `!`)
 }
 
 #' @rdname is.curved 

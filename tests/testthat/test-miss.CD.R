@@ -5,14 +5,11 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2023 Statnet Commons
+#  Copyright 2003-2024 Statnet Commons
 ################################################################################
 
 attach(MLE.tools)
 
-library(statnet.common)
-opttest({
-library(ergm)
 theta0err<--1 # Perturbation in the initial values
 maxit<-60 # Maximum number of iterations
 tolerance<-0.01 # Result must be within 1% of truth.
@@ -78,7 +75,5 @@ test_that("curved+missing", {
   summary(cdfit)
   expect_lt(abs(coef(cdfit)[1]-truth)/sqrt(cdfit$covar[1]), 2)
 })
-
-}, "CD missing data")
 
 detach(MLE.tools)

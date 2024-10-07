@@ -5,7 +5,7 @@
  *  open source, and has the attribution requirements (GPL Section 7) at
  *  https://statnet.org/attribution .
  *
- *  Copyright 2003-2023 Statnet Commons
+ *  Copyright 2003-2024 Statnet Commons
  */
 #ifndef MHPROPOSALS_H
 #define MHPROPOSALS_H
@@ -25,5 +25,11 @@ typedef struct{DyadGen *gen; DegreeBound *bd;} StoreDyadGenAndDegreeBound;
   GET_STORAGE(StoreDyadGenAndDegreeBound, storage);     \
   DyadGenDestroy(storage->gen);                         \
   DegreeBoundDestroy(storage->bd);
+
+// Declared here so other routines can use it as a subroutine.
+MH_I_FN(Mi_TNT);
+MH_P_FN(Mp_TNT);
+MH_F_FN(Mf_TNT);
+
 
 #endif 

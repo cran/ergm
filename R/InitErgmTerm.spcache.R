@@ -5,8 +5,13 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2023 Statnet Commons
+#  Copyright 2003-2024 Statnet Commons
 ################################################################################
+
+.spcache.aux <- function(type){
+  type <- toupper(type)
+  trim_env(as.formula(as.call(list(as.name('~'), as.call(list(as.name('.spcache.net'),type=if(type=='ITP')'OTP' else type))))))
+}
 
 InitErgmTerm..spcache.net<-function(nw, arglist, ...){
   a <- check.ErgmTerm(nw, arglist,

@@ -19,7 +19,7 @@ dissertation, Department of Sociology, Cornell University.
 data(samplk)
 }
 \description{
-Three \code{\link{network}} objects containing the "liking" nominations of
+Three \code{\link[network:network]{network}} objects containing the "liking" nominations of
 Sampson's (1969) monks at the three time points.
 }
 \details{
@@ -54,7 +54,7 @@ graph \code{samplike}.
 
 \code{samplk3} is a data set of Hoff, Raftery and Handcock (2002).
 
-The data sets are stored as \code{\link[network]{network}} objects with
+The data sets are stored as \code{\link[network:network]{network}} objects with
 three vertex attributes:
 
 \describe{ \item{group}{Groups of novices as classified by Sampson, that is,

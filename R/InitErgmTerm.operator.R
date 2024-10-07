@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2023 Statnet Commons
+#  Copyright 2003-2024 Statnet Commons
 ################################################################################
 #' Wrap a submodel's curved, empty network statistics, and extended
 #' state (read-only) specification (if present) for output from an
@@ -16,6 +16,11 @@
 #' `ergm.etagrad()` into `map()` and `gradient()` functions, similarly
 #' with the `params` element; wrap empty network statistics; wrap
 #' indicator of dyadic independence; and wrap offset indicators.
+#'
+#' `namewrap` also controls how dyadic dependence flag is propagated
+#' for auxiliaries. If `NULL`, it is propagated; if not, the
+#' auxiliaries are ignored and only terms's dyadic dependence is
+#' propagated.
 #'
 #' @param m An `ergm_model` object.
 #' @param nw A `network` object.
@@ -53,19 +58,14 @@ wrap.ergm_model <- function(m, nw, namewrap = identity){
       names(params) <- namewrap(param_names(m, canonical=FALSE))
       ## names(params)[offsettheta] <- paste0("offset(", names(params)[offsettheta], ")")
     }else map <- gradient <- params <- NULL
+
+    dependence <- !is.dyad.independent(m, ignore_aux=TRUE)
   }else{
     minpar <- maxpar <- offsettheta <- coef.names <- emptynwstats <- map <- gradient <- params <- NULL
+    dependence <- !is.dyad.independent(m, ignore_aux=FALSE)
   }
 
-  list(map=map, gradient=gradient, params=params, minpar=minpar, maxpar=maxpar, coef.names=coef.names, emptynwstats=emptynwstats, dependence=!is.dyad.independent(m), offset=offsettheta)
-}
-
-ergm_rename_terms <- function(model, namewrap){
-  for(i in seq_along(model$terms)){
-    model$terms[[i]]$coef.names <- namewrap(model$terms[[i]]$coef.names)
-    if(!is.null(model$terms[[i]]$params)) names(model$terms[[i]]$params) <- namewrap(names(model$terms[[i]]$params))
-  }
-  model
+  list(map=map, gradient=gradient, params=params, minpar=minpar, maxpar=maxpar, coef.names=coef.names, emptynwstats=emptynwstats, dependence=dependence, offset=offsettheta)
 }
 
 #' Combine an operator term's and a subterm's name in a standard fashion.
@@ -135,7 +135,7 @@ ergm_propagate_ext.encode <- function(submodel) {
 ergm_no_ext.encode <- function(submodel) {
   has_ext <- !sapply(lapply(submodel$terms, `[[`, "ext.encode"), is.null)
   ext_names <- sapply(lapply(submodel$terms[has_ext], `[[`, "call"), deparse, width.cutoff=500)
-  if (any(has_ext)) ergm_Init_abort(paste0("This operator term is incompatible with subterms ", paste.and(sQuote(ext_names)), " due to their use of the extended state API. This limitation may be removed in the future."))
+  if (any(has_ext)) ergm_Init_stop("This operator term is incompatible with subterms ", paste.and(sQuote(ext_names)), " due to their use of the extended state API. This limitation may be removed in the future.")
 }
 
 ## Creates a submodel that does exactly what the model terms passed to
@@ -158,7 +158,8 @@ InitErgmTerm.Passthrough <- function(nw, arglist, ...){
     m <- ergm_model(a$formula, nw, ..., offset.decorate=FALSE, terms.only=TRUE)
 
     namewrap <- if(a$label) ergm_mk_std_op_namewrap('Passthrough') else identity
-    ergm_rename_terms(m, namewrap)
+    param_names(m) <- list(namewrap(param_names(m, canonical = FALSE)), namewrap(param_names(m, canonical = TRUE)))
+    m
   }
 }
 
@@ -169,8 +170,17 @@ InitErgmTerm.Passthrough <- function(nw, arglist, ...){
 #' @usage
 #' # binary: Label(formula, label, pos)
 #' @template ergmTerm-formula
-#' @param label either a character vector specifying the label for the terms or a function through which term names are mapped (or a `as_mapper` -style formula).
+#' @param label a character vector specifying the label for the terms, a [`list`] of two character vectors (see Details), or a function through which term names are mapped (or a [`as_mapper`] -style formula).
 #' @param pos controls how `label` modifies the term names: one of `"prepend"` , `"replace"` , `"append"` , or `"("` , with the latter wrapping the term names in parentheses like a function call with name specified by `label` .
+#'
+#' @details If `pos == "replace"`:
+#'
+#' * Elements for which `is.na(label) == TRUE` are preserved.
+#'
+#' * If the model is curved, `label=` can be a either function/mapper
+#'   or a [`list`] with two elements, the first element giving the
+#'   curved (model) parameter names and second giving the canonical
+#'   parameter names. `NULL` leaves the respective name unchanged.
 #'
 #' @template ergmTerm-general
 #'
@@ -182,38 +192,31 @@ InitErgmTerm.Label <- function(nw, arglist, ...){
                       defaultvalues = list(NULL, NULL, "("),
                       required = c(TRUE, TRUE, FALSE))
 
+  m <- ergm_model(a$formula, nw, ..., offset.decorate = FALSE, terms.only = TRUE)
+  cu <- param_names(m, canonical = FALSE)
+  ca <- param_names(m, canonical = TRUE)
 
-  m <- ergm_model(a$formula, nw, ..., offset.decorate=FALSE)
-
-  if(is.character(a$label)){
+  if(is.character(a$label) || is.list(a$label)){
     pos <- match.arg(a$pos, c("prepend","replace", "(" ,"append"))
     
-    renamer <- switch(pos,
-                      prepend=function(x) paste0(a$label,x),
-                      replace={
-                        if(is.curved(m)){
-                          if(!is.list(a$label) || length(a$label)!=2) ergm_Init_abort("For a curved ERGM, replacement label must be a list of length 2, giving the canonical and the curved names, respectively, with NULL to leave alone.")
-                          ll <- NVL(a$label[[1]], param_names(m, canonical=TRUE))
-                          lc <- NVL(a$label[[1]], param_names(m, canonical=FALSE))
-                        }else{
-                          ll <- NVL(a$label, param_names(m))
-                        }
-                        function(x){
-                          if(length(x)==nparam(m,canonical=TRUE)) ll
-                          else if(length(x)==nparam(m,canonical=FALSE)) lc
-                          else ergm_Init_abort("Incorrect length for replacement label vector(s).")
-                        }
-                      },
-                      `(`=function(x) paste0(a$label,"(",x,")"),
-                      append=function(x) paste0(x,a$label))
+    new <- switch(pos,
+                  prepend = list(paste0(a$label, cu), paste0(a$label, ca)),
+                  replace =
+                    if(is.curved(m)){
+                      if(!is.list(a$label) || length(a$label)!=2) ergm_Init_stop("For a curved ERGM, replacement label must be a list of length 2, giving the curved and the canonical names, respectively, with NULL to leave alone.")
+                      list(NVL(a$label[[1]], NA), NVL(a$label[[2]], NA))
+                    }else rep(list(NVL(a$label, cu)), 2),
+                  `(` = list(paste0(a$label,"(",cu,")"), paste0(a$label,"(",ca,")")),
+                  append = list(paste0(cu, a$label), paste0(ca, a$label))
+                  )
   }else{
     #' @importFrom purrr as_mapper
     renamer <- as_mapper(a$label)
+    new <- list(cu,ca) %>% map(renamer)
   }
 
-  c(list(name="passthrough_term", submodel=m),
-    ergm_propagate_ext.encode(m),
-    wrap.ergm_model(m, nw, renamer))
+  param_names(m) <- new
+  m
 }
 
 
@@ -369,11 +372,11 @@ InitErgmTerm..filter.formula.net <- function(nw, arglist, ...){
   m <- ergm_model(a$formula, nw, ..., offset.decorate=FALSE)
   ergm_no_ext.encode(m)
 
-  if(!is.dyad.independent(m) || nparam(m)!=1) ergm_Init_abort("The filter test formula must be dyad-independent and have exactly one statistc.")
+  if(!is.dyad.independent(m) || nparam(m)!=1) ergm_Init_stop("The filter test formula must be dyad-independent and have exactly one statistic.")
 
   nw[,] <- FALSE
   gs <- summary(m, nw)
-  if(gs!=0) ergm_Init_abort("At this time, the filter test term must have the property that its dyadwise components are 0 for 0-valued relations. This limitation may be removed in the future.")
+  if(gs!=0) ergm_Init_stop("At this time, the filter test term must have the property that its dyadwise components are 0 for 0-valued relations. This limitation may be removed in the future.")
   
   c(list(name="_filter_formula_net", submodel=m, iinputs=iinputs, inputs=inputs),
     wrap.ergm_model(m, nw, NULL))
@@ -674,7 +677,7 @@ InitErgmTerm.Symmetrize <- function(nw, arglist, ...){
 InitErgmTerm.Sum <- function(nw, arglist,...){
   a <- check.ErgmTerm(nw, arglist,
                       varnames = c("formulas", "label"),
-                      vartypes = c("list,formula", "character,function"),
+                      vartypes = c("list,formula", "character,function,AsIs"),
                       defaultvalues = list(NULL, NULL),
                       required = c(TRUE, TRUE))
 
@@ -687,7 +690,7 @@ InitErgmTerm.Sum <- function(nw, arglist,...){
   curved <- ms[[1]]$etamap$curved
   for(i in seq_len(nf-1L)+1L){
     m <- ms[[i]]
-    if(!identical(curved, m$etamap$curved)) ergm_Init_inform("Model ", i, " in the list appears to be curved, and its mapping differs from that of the first model; the first model's mapping will be used.")
+    if(!identical(curved, m$etamap$curved)) ergm_Init_message("Model ", i, " in the list appears to be curved, and its mapping differs from that of the first model; the first model's mapping will be used.")
   }
 
   nstats <-  ms %>% map_int(nparam, canonical=TRUE)
@@ -706,9 +709,9 @@ InitErgmTerm.Sum <- function(nw, arglist,...){
 
   nparams <- wl %>% map_int(nrow)
 
-  if(length(curved) && !all(nparams==nstats[1])) ergm_Init_abort("Specified weights produce different number of output statistics different from those expected by the curved effects in Model 1.")
+  if(length(curved) && !all(nparams==nstats[1])) ergm_Init_stop("Specified weights produce different number of output statistics different from those expected by the curved effects in Model 1.")
 
-  if(!all_identical(nparams)) ergm_Init_abort("Specified models and weights appear to differ in lengths of output statistics.")
+  if(!all_identical(nparams)) ergm_Init_stop("Specified models and weights appear to differ in lengths of output statistics.")
   nparam <- nparams[1]
 
   inputs <- unlist(wl%>%map(t))
@@ -723,7 +726,7 @@ InitErgmTerm.Sum <- function(nw, arglist,...){
   cn.asis <- inherits(cn, "AsIs")
 
   cn <- if(length(cn)==1L && nparam>1L) paste0(cn, seq_len(nparam)) else cn
-  if(length(cn) != nparam) ergm_Init_abort(paste0(sQuote("label="), " argument for statistics has or results in length ", length(cn), ", should be ", nparam, "."))
+  if(length(cn) != nparam) ergm_Init_stop(sQuote("label="), " argument for statistics has or results in length ", length(cn), ", should be ", nparam, ".")
   coef.names <- if(cn.asis) cn else ergm_mk_std_op_namewrap("Sum")(cn)
 
   wms <- lapply(ms, wrap.ergm_model, nw)
@@ -738,7 +741,7 @@ InitErgmTerm.Sum <- function(nw, arglist,...){
     pn.asis <- inherits(pn, "AsIs")
 
     pn <- if(length(pn)==1L && ncparam>1L) paste0(pn, seq_len(ncparam)) else pn
-    if(length(pn) != ncparam) ergm_Init_abort(paste0(sQuote("label="), " argument for curved parameters has or results in length ", length(pn), ", should be ", ncparam, "."))
+    if(length(pn) != ncparam) ergm_Init_stop(sQuote("label="), " argument for curved parameters has or results in length ", length(pn), ", should be ", ncparam, ".")
     names(wms[[1L]]$params) <- if(pn.asis) pn else ergm_mk_std_op_namewrap("Sum")(pn)
   }
 
@@ -763,7 +766,7 @@ InitErgmTerm.Sum <- function(nw, arglist,...){
       offset <- wms[[1L]]$offset # then offsets are safe to propagate.
     else{
       offset <- FALSE
-      ergm_Init_warn(paste0("Sum operator does not propagate offset() decorators unless there is only one formula and its statistics are simply scaled."))
+      ergm_Init_warning("Sum operator does not propagate offset() decorators unless there is only one formula and its statistics are simply scaled.")
     }
   }else offset <- FALSE
   
@@ -831,16 +834,16 @@ InitErgmTerm.S <- function(nw, arglist, ...){
   headsel <- as.integer(headsel)
   
   # TODO: Check if 1-node graphs cause crashes.
-  if(length(tailsel)==0 || length(headsel)==0) ergm_Init_abort("Empty subgraph selected.")
+  if(length(tailsel)==0 || length(headsel)==0) ergm_Init_stop("Empty subgraph selected.")
 
   type <- if(is.directed(nw)) "directed" else "undirected"
   if(bip){
     if(max(tailsel)>bip || min(headsel)<=bip)
-      ergm_Init_abort("Invalid vertex subsets selected for a bipartite graph.")
+      ergm_Init_stop("Invalid vertex subsets selected for a bipartite graph.")
     type <- "bipartite"
   }else{
     if(!identical(tailsel,headsel)){ # Rectangular selection: output bipartite.
-      if(length(intersect(tailsel,headsel))) ergm_Init_abort("Vertex subsets constructing a bipartite subgraph must have disjoint ranges.")
+      if(length(intersect(tailsel,headsel))) ergm_Init_stop("Vertex subsets constructing a bipartite subgraph must have disjoint ranges.")
       type <- "bipartite"
     }
   }
@@ -921,7 +924,7 @@ InitErgmTerm.Curve <- function(nw, arglist,...){
              })
     }else a$map
 
-  if(is.null(a$gradient)) ergm_Init_abort(paste0("The ", sQuote("gradient"), " argument must be supplied unless ", sQuote("map"), " is of a special type."))
+  if(is.null(a$gradient)) ergm_Init_stop("The ", sQuote("gradient"), " argument must be supplied unless ", sQuote("map"), " is of a special type.")
 
   gradient <-
     if(is.matrix(a$gradient)) function(...) a$gradient
@@ -945,13 +948,13 @@ InitErgmTerm.Curve <- function(nw, arglist,...){
   # Make sure the output dimensions are correct.
   test.param <- (deInf(minpar) + deInf(maxpar))/2
   test.map <- emap(test.param, p, a$cov)
-  if(length(test.map)!=p) ergm_Init_abort(paste0("Model expects ", p, " parameters, but the map function returned a vector of length ", length(test.map), "."))
+  if(length(test.map)!=p) ergm_Init_stop("Model expects ", p, " parameters, but the map function returned a vector of length ", length(test.map), ".")
   test.gradient <- gradient(test.param, p, a$cov)
-  if(!identical(dim(test.gradient),c(q,p))) ergm_Init_abort(paste0("Mapping of ", q, " to ", p, " parameters expected, but the gradient function returned an object with dimension (", paste0(dim(test.gradient), collapse=","), ")."))
+  if(!identical(dim(test.gradient),c(q,p))) ergm_Init_stop("Mapping of ", q, " to ", p, " parameters expected, but the gradient function returned an object with dimension (", paste0(dim(test.gradient), collapse=","), ").")
 
   wm <- wrap.ergm_model(m, nw)
 
-  if(any(unlist(map(wm, "offsettheta"))) || any(unlist(map(wm, "offsetmap")))) ergm_Init_warn(paste0("Curve operator does not propagate offset() decorators."))
+  if(any(unlist(map(wm, "offsettheta"))) || any(unlist(map(wm, "offsetmap")))) ergm_Init_warning("Curve operator does not propagate ", sQuote("offset()"), " decorators.")
 
   if(is.curved(m)){
     wm$map <- function(x, n, ...) wm$map(emap(x, n, ...)) # Composition.
@@ -1085,7 +1088,7 @@ InitErgmTerm.Exp <- function(nw, arglist, ...){
 InitErgmTerm.Prod <- function(nw, arglist, ..., env=baseenv()){
   a <- check.ErgmTerm(nw, arglist,
                       varnames = c("formulas", "label"),
-                      vartypes = c("list,formula", "character,function"),
+                      vartypes = c("list,formula", "character,function,AsIs"),
                       defaultvalues = list(NULL, NULL),
                       required = c(TRUE, TRUE))
   formulas <- if(is(a$formulas, "formula")) list(a$formulas) else a$formulas
@@ -1099,7 +1102,15 @@ InitErgmTerm.Prod <- function(nw, arglist, ..., env=baseenv()){
   })
   a$formulas <- if(length(formulas)==1) formulas[[1]] else formulas
   cl <- call("Exp", as.formula(call("~",call("Sum", a$formulas, a$label)),env=env))
-  call.ErgmTerm(cl, env, nw, ...)
+  trm <- call.ErgmTerm(cl, env, nw, ...)
+  renamer <-
+    if(inherits(a$label, "AsIs")) function(x) sub("^Exp~", "", x)
+    else function(x) sub("^Exp~Sum~", "Prod~", x)
+
+  trm$coef.names %<>% renamer()
+  if(!is.null(trm$params)) names(trm$params) %<>% renamer()
+
+  trm
 }
 
 
@@ -1183,8 +1194,8 @@ InitErgmTerm.Prod <- function(nw, arglist, ..., env=baseenv()){
 #' @concept operator
 InitErgmTerm.For <- function(nw, arglist, ...){
   counters <- names(arglist)
-  if(length(i <- which(counters=="")) != 1) ergm_Init_abort("Exactly one argument (the model formula) must be unnamed.")
-  if(length(loops <- arglist[-i]) < 1) ergm_Init_abort("At least one counter must be provided.")
+  if(length(i <- which(counters=="")) != 1) ergm_Init_stop("Exactly one argument (the model formula) must be unnamed.")
+  if(length(loops <- arglist[-i]) < 1) ergm_Init_stop("At least one counter must be provided.")
 
   loops <- map(loops,
                function(l){
@@ -1198,7 +1209,7 @@ InitErgmTerm.For <- function(nw, arglist, ...){
                })
 
   valid <- loops %>% map_lgl(is.vector)
-  if(!all(valid)) ergm_Init_abort("Loop variable(s) ", paste.and(sQuote(names(loops)[!valid])), " does not contain a valid sequence.")
+  if(!all(valid)) ergm_Init_stop("Loop variable(s) ", paste.and(sQuote(names(loops)[!valid])), " does not contain a valid sequence.")
 
   terms <- list_rhs.formula(arglist[[i]])
 

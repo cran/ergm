@@ -5,7 +5,7 @@
  *  open source, and has the attribution requirements (GPL Section 7) at
  *  https://statnet.org/attribution .
  *
- *  Copyright 2003-2023 Statnet Commons
+ *  Copyright 2003-2024 Statnet Commons
  */
 #ifndef _ERGM_NODELIST_H_
 #define _ERGM_NODELIST_H_
@@ -30,15 +30,15 @@ typedef struct {
 } NodeList;
 
 static inline NodeList *NodeListInitialize(int nnodes, int *nodepos) {
-  NodeList *nodelist = Calloc(1, NodeList);
-  nodelist->nodes = Calloc(nnodes + 1, Vertex);
+  NodeList *nodelist = R_Calloc(1, NodeList);
+  nodelist->nodes = R_Calloc(nnodes + 1, Vertex);
   nodelist->nodepos = nodepos;
   return nodelist;
 }
 
 static inline void NodeListDestroy(NodeList *nodelist) {
-  Free(nodelist->nodes);
-  Free(nodelist);
+  R_Free(nodelist->nodes);
+  R_Free(nodelist);
 }
 
 static inline void NodeListInsert(NodeList *nodelist, Vertex node) {

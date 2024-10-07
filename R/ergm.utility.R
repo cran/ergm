@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2023 Statnet Commons
+#  Copyright 2003-2024 Statnet Commons
 ################################################################################
 
 #' @rdname ergm
@@ -110,20 +110,20 @@ degreedist.network <- function(object, print=TRUE, ...)
 #' Copy network- and vertex-level attributes between two network objects
 #' 
 #' An internal ergm utility function to copy the network-level attributes and
-#' vertex-level attributes from one \code{\link{network}} object to another,
+#' vertex-level attributes from one [`network`] object to another,
 #' ignoring some standard properties by default.
 #' 
 #' 
-#' @param to the \code{\link{network}} that attributes should be copied to
-#' @param from the \code{\link{network}} that attributes should be copied to
+#' @param to the [`network`] that attributes should be copied to
+#' @param from the [`network`] that attributes should be copied to
 #' @param ignore vector of charcter names of network attributes that should not
 #' be copied. Default is the standard list of network properties created by
-#' \code{\link{network.initialize}}
+#' [network.initialize()]
 #' @return returns the \code{to} network, with attributes copied from
 #' \code{from}
 #' @note does not check that networks are of the same size, etc
-#' @seealso \code{\link{set.vertex.attribute}},
-#' \code{\link{set.network.attribute}}
+#' @seealso [set.vertex.attribute()],
+#' [set.network.attribute()]
 #' @keywords internal
 #' @export nvattr.copy.network
 nvattr.copy.network <- function(to, from, ignore=c("bipartite","directed","hyper","loops","mnext","multiple","n")){
@@ -143,6 +143,12 @@ single.impute.dyads <- function(nw, constraints=NULL, constraints.obs=NULL, min_
   output <- match.arg(output)
   response <- nw %ergmlhs% "response"
   stopifnot(!is.null(constraints)||is.null(constraints.obs))
+
+  if(!is.dyad.independent(constraints) || !is.dyad.independent(constraints.obs)){
+    message("Model and/or observational constraints are not dyad-independent. Dyad imputation cannot be used. Please ensure your LHS network satisfies all constraints.")
+    if(output=="network") return(nw)
+    else return(ergm_state(nw))
+  }
 
   if(!is.null(constraints)){
     imputable <- as.rlebdm(constraints, constraints.obs, "missing")
@@ -265,58 +271,7 @@ trim_env_const_formula <- function(x, keep=NULL){
   if(needs_env) x else trim_env(x, keep)
 }
 
-### A patched version of statnet.common::sginv() that uses
-### eigendecomposition rather than the SVD for the case when symmetric
-### non-negative-definite (snnd) is TRUE.
-###
-### TODO: Delete after incorporation into statnet.common.
-sginv <- function(X, tol = sqrt(.Machine$double.eps), ..., snnd = TRUE){
-  if(!snnd) statnet.common::sginv(X, ..., snnd)
-
-  d <- diag(as.matrix(X))
-  d <- ifelse(d==0, 1, 1/d)
-
-  d <- sqrt(d)
-  if(anyNA(d)) stop("Matrix a has negative elements on the diagonal, and snnd=TRUE.")
-  dd <- rep(d, each = length(d)) * d
-  X <- X * dd
-
-  ## Perform inverse via eigendecomposition, removing too-small eigenvalues.
-  e <- eigen(X, symmetric=TRUE)
-  keep <- e$values > max(tol * e$values[1L], 0)
-  e$vectors[, keep, drop=FALSE] %*% ((1/e$values[keep]) * t(e$vectors[, keep, drop=FALSE])) * dd
-}
-
-#' Evaluate a quadratic form with a possibly singular matrix using
-#' eigendecomposition after scaling to correlation.
-#'
-#' Let \eqn{A} be the matrix of interest, and let \eqn{D} is a
-#' diagonal matrix whose diagonal is same as that of \eqn{A}.
-#'
-#' Let \eqn{R = D^{-1/2} A D^{-1/2}}. Then \eqn{A = D^{1/2} R D^{1/2}} and
-#' \eqn{A^{-1} = D^{-1/2} R^{-1} D^{-1/2}}.
-#'
-#' Decompose \eqn{R = P L P'} for \eqn{L} diagonal matrix of eigenvalues
-#' and \eqn{P} orthogonal. Then \eqn{R^{-1} = P L^{-1} P'}.
-#'
-#' Substituting,
-#' \deqn{x' A^{-1} x  = x' D^{-1/2} P L^{-1} P' D^{-1/2} x = h' L^{-1} h}
-#' for \eqn{h = P' D^{-1/2} x}.
-#'
-#' @noRd
-xTAx_seigen <- function(x, A, tol=sqrt(.Machine$double.eps), ...) {
-  d <- diag(as.matrix(A))
-  d <- ifelse(d<=0, 0, 1/d)
-
-  d <- sqrt(d)
-  dd <- rep(d, each = length(d)) * d
-  A <- A * dd
-
-  e <- eigen(A)
-
-  keep <- e$values > max(tol * e$values[1L], 0)
-
-  h <- drop(crossprod(x*d, e$vectors[,keep,drop=FALSE]))
-
-  structure(sum(h*h/e$values[keep]), rank = sum(keep), nullity = sum(!keep))
+is.const.sample <- function(x){
+  if(is.mcmc.list(x)) x <- as.matrix(x)
+  isTRUE(all.equal(apply(x,2,stats::sd), rep(0,ncol(x)), check.names=FALSE))
 }

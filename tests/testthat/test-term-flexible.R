@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2023 Statnet Commons
+#  Copyright 2003-2024 Statnet Commons
 ################################################################################
 
 # a bipartite nw
@@ -157,6 +157,16 @@ test_that("edges, either", {
   s.0 <- summary(fmh~edges)
   e.0 <- ergm(samplike~edges, estimate="MPLE")
   expect_summary(s.0, e.0, 203, -.9072)
+})
+
+test_that("edgecov, dimension check, unipartite", {
+  cov <- matrix(0, 18, 19)
+  expect_error(summary(samplike~edgecov(cov)), '.*Dyadic covariate matrix has dimension 18x19, 18x18 expected.*')
+})
+
+test_that("edgecov, dimension check, bipartite", {
+  cov <- matrix(0, 129, 129)
+  expect_error(summary(bipnw~edgecov(cov)), '.*Dyadic covariate matrix has dimension 129x129, 100x29 expected.*')
 })
 
 #test_that("hamming, any", {

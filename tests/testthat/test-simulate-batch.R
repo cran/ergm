@@ -5,12 +5,12 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2023 Statnet Commons
+#  Copyright 2003-2024 Statnet Commons
 ################################################################################
 test_that("simulate.formula() returns the same number of networks and stats regardless of batch size and they are (on average) similar", {
   nw0 <- network.initialize(10)
 
-  set.seed(0)
+  set.seed(1)
 
   unbatched <- simulate(nw0 ~ edges, nsim = 100, coef = -1, control = snctrl(), simplify = FALSE)
   batched1 <- simulate(nw0 ~ edges, nsim = 100, coef = -1, control = snctrl(MCMC.batch = 1), simplify = FALSE)

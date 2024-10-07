@@ -5,14 +5,14 @@
  *  open source, and has the attribution requirements (GPL Section 7) at
  *  https://statnet.org/attribution .
  *
- *  Copyright 2003-2023 Statnet Commons
+ *  Copyright 2003-2024 Statnet Commons
  */
 #ifndef _ERGM_CONSTANTS_H_
 #define _ERGM_CONSTANTS_H_
 
 // Macros indicating the version of the C API.
 #define ERGM_API_MAJOR 4
-#define ERGM_API_MINOR 6
+#define ERGM_API_MINOR 7
 
 typedef enum MCMCStatus_enum {
   MCMC_OK = 0,

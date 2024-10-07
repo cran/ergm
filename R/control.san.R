@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2023 Statnet Commons
+#  Copyright 2003-2024 Statnet Commons
 ################################################################################
 
 
@@ -14,8 +14,8 @@
 #' Auxiliary function as user interface for fine-tuning simulated annealing
 #' algorithm.
 #' 
-#' This function is only used within a call to the \code{\link{san}} function.
-#' See the \code{usage} section in \code{\link{san}} for details.
+#' This function is only used within a call to the [san()] function.
+#' See the Usage section in [san()] for details.
 #'
 #' @templateVar MCMCType SAN
 #'
@@ -51,7 +51,7 @@
 #' @template control_MCMC_parallel
 #' @template seed
 #' @return A list with arguments as components.
-#' @seealso \code{\link{san}}
+#' @seealso [san()]
 #' @keywords models
 #' @export control.san
 control.san<-function(SAN.maxit=4,
@@ -62,7 +62,7 @@ control.san<-function(SAN.maxit=4,
                       SAN.nsteps=2^19,
                       SAN.samplesize=2^12,
                       
-                      SAN.prop=trim_env(~sparse),
+                      SAN.prop=trim_env(~sparse + .triadic),
                       SAN.prop.weights="default",
                       SAN.prop.args=list(),
                       SAN.packagenames=c(),

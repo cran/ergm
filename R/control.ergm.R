@@ -5,15 +5,47 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2023 Statnet Commons
+#  Copyright 2003-2024 Statnet Commons
 ################################################################################
-#' Auxiliary for Controlling ERGM Fitting
-#' 
-#' Auxiliary function as user interface for fine-tuning 'ergm' fitting.
+#' Auxiliary function for fine-tuning ERGM fitting.
 #' 
 #' This function is only used within a call to the [ergm()] function.
-#' See the \code{usage} section in [ergm()] for details.
-#' 
+#' See the Usage section in [ergm()] for details. Also see the
+#' Details section about some of the interactions between its
+#' arguments.
+#'
+#' Different estimation methods or components of estimation have
+#' different efficient tuning parameters; and we generally want to use
+#' the estimation controls to inform the simulation controls in
+#' [control.simulate.ergm()]. To accomplish this, `control.ergm()` uses
+#' method-specific controls, with the method identified by the prefix:
+#' \describe{
+#'
+#' \item{`CD`}{Contrastive Divergence estimation \insertCite{Kr17u}{ergm}}
+#'
+#' \item{`MPLE`}{Maximum Pseudo-Likelihood Estimation \insertCite{StIk90p}{ergm}}
+#'
+#' \item{`MCMLE`}{Monte-Carlo MLE \insertCite{HuHa06i,HuHu12i}{ergm}}
+#'
+#' \item{`SA`}{Stochastic Approximation via Robbins--Monro \insertCite{RoMo51s,Sn02m}{ergm}}
+#'
+#' \item{`SAN`}{Simulated Annealing used when `target.stats` are specified for [ergm()]}
+#'
+#' \item{`obs`}{Missing data MLE \insertCite{HaGi10m}{ergm}}
+#'
+#' \item{`init`}{Affecting how initial parameter guesses are obtained}
+#'
+#' \item{`parallel`}{Affecting parallel processing}
+#'
+#' \item{`MCMC`}{Low-level MCMC simulation controls}
+#'
+#' }
+#'
+#' Corresponding `MCMC` controls will usually be overwritten by the
+#' method-specific ones. After the estimation finishes, they will
+#' contain the last MCMC parameters used.
+#'
+#'
 #' @templateVar MCMCType MCMC
 #'
 #' @param drop Logical: If TRUE, terms whose observed statistic values are at
@@ -93,7 +125,7 @@
 #'
 #' @param MPLE.type One of `"glm"`, `"penalized"`, or
 #' `"logitreg"`.  Chooses method of calculating MPLE.  `"glm"` is the
-#' usual formal logistic regression called via \code{\link{glm}}, whereas
+#' usual formal logistic regression called via [glm()], whereas
 #' `"penalized"` uses the bias-reduced method of Firth (1993) as
 #' originally implemented by Meinhard Ploner, Daniela Dunkler, Harry
 #' Southworth, and Georg Heinze in the "logistf" package. `"logitreg"` is
@@ -132,6 +164,9 @@
 #'   other parameters control, respectively, the number of networks to
 #'   simulate, the MCMC burn-in, and the MCMC interval for `Godambe`
 #'   and `bootstrap` methods.
+#'
+#' @param MPLE.check If `TRUE` (the default), perform the MPLE
+#'   existence check described by \insertCite{ScHu23c;textual}{ergm}.
 #'
 #' @param MPLE.constraints.ignore If `TRUE`, MPLE will ignore all
 #'   dyad-independent constraints except for those due to attributes
@@ -180,14 +215,14 @@
 #' @param MCMC.addto.se Whether to add the standard errors induced by the MCMC
 #' algorithm to the estimates' standard errors.
 #' @param SAN.maxit When \code{target.stats} argument is passed to
-#' [ergm()], the maximum number of attempts to use \code{\link{san}}
+#' [ergm()], the maximum number of attempts to use [san()]
 #' to obtain a network with statistics close to those specified.
 #' @param SAN.nsteps.times Multiplier for \code{SAN.nsteps} relative to
 #' \code{MCMC.burnin}. This lets one control the amount of SAN burn-in
 #' (arguably, the most important of SAN parameters) without overriding the
 #' other `SAN` defaults.
-#' @param SAN Control arguments to \code{\link{san}}.  See
-#' \code{\link{control.san}} for details.
+#' @param SAN Control arguments to [san()].  See
+#' [control.san()] for details.
 #' @param MCMLE.termination The criterion used for terminating MCMLE
 #' estimation:  
 #' * `"Hummel"` Terminate when the Hummel step length is
@@ -261,6 +296,12 @@
 #'   `MCMC.effectiveSize` or `MCMLE.effectiveSize` are given, their
 #'   corresponding `obs` parameters are set to them multiplied by
 #'   `obs.MCMC.mul`.
+#'
+#'   Lastly, if `MCMLE.effectiveSize` is not NULL but
+#'   `obs.MCMLE.effectiveSize` is, the constrained sample's target
+#'   effective size is set adaptively to achieve a similar precision
+#'   for the estimating functions as that achieved for the
+#'   unconstrained.
 #'
 #' @param
 #'   obs.MCMC.impute.min_informative,obs.MCMC.impute.default_density
@@ -352,7 +393,11 @@
 #'   procedure, a sample is taken of the points most likely to be
 #'   outside it.  This parameter specifies the sample size or a
 #'   function of the unconstrained sample matrix to determine the
-#'   sample size.
+#'   sample size. If the parameter or the return value of the function
+#'   has a length of 2, the first element is used as the sample size,
+#'   and the second element is used in an early-termination heuristic,
+#'   only continuing the tests until this many test points in a row
+#'   did not yield a change in the step length.
 #'
 #' @param checkpoint At the start of every iteration, save the state
 #'   of the optimizer in a way that will allow it to be resumed. The
@@ -435,36 +480,21 @@
 #'   Note that only the Hotelling's stopping criterion is implemented
 #'   for CD.
 #' 
-#' @param loglik See \code{\link{control.ergm.bridge}}
+#' @param loglik See [control.ergm.bridge()]
 #' @template term_options
 #' @template control_MCMC_parallel
 #' @template seed
 #' @template control_MCMC_packagenames
 #' @template control_dots
+#'
 #' @return A list with arguments as components.
-#' @seealso [ergm()]. The \code{\link{control.simulate}} function
-#' performs a similar function for \code{\link{simulate.ergm}};
-#' \code{\link{control.gof}} performs a similar function for \code{\link{gof}}.
+#' @seealso [ergm()]. The [control.simulate()] function
+#' performs a similar function for [simulate.ergm()];
+#' [control.gof()] performs a similar function for [gof()].
 #' @references \insertAllCited{}
 #'
-#' * Snijders, T.A.B. (2002), Markov Chain Monte
-#' Carlo Estimation of Exponential Random Graph Models.  Journal of Social
-#' Structure.  Available from
-#' \url{https://www.cmu.edu/joss/content/articles/volume3/Snijders.pdf}.
-#' 
-#' 
 #' * Firth (1993), Bias Reduction in Maximum Likelihood Estimates.
 #' Biometrika, 80: 27-38.
-#' 
-#' 
-#' * Hunter, D. R. and M. S. Handcock (2006), Inference in curved
-#' exponential family models for networks. Journal of Computational and
-#' Graphical Statistics, 15: 565-583.
-#' 
-#' 
-#' * Hummel, R. M., Hunter, D. R., and Handcock, M. S. (2012), Improving
-#' Simulation-Based Algorithms for Fitting ERGMs, Journal of Computational and
-#' Graphical Statistics, 21: 920-939.
 #' 
 #' 
 #' * Kristoffer Sahlin. Estimating convergence of Markov chain Monte Carlo
@@ -496,9 +526,10 @@ control.ergm<-function(drop=TRUE,
                        MPLE.covariance.method ="invHess",
                        MPLE.covariance.sim.burnin = 1024,
                        MPLE.covariance.sim.interval = 1024,
-                       MPLE.constraints.ignore=FALSE,
+                       MPLE.check = TRUE,
+                       MPLE.constraints.ignore = FALSE,
 
-                       MCMC.prop=trim_env(~sparse),
+                       MCMC.prop=trim_env(~sparse + .triadic),
                        MCMC.prop.weights="default", MCMC.prop.args=list(),
                        MCMC.interval=NULL,
                        MCMC.burnin=EVL(MCMC.interval*16),
@@ -525,6 +556,7 @@ control.ergm<-function(drop=TRUE,
                        SAN=control.san(
                          term.options=term.options,
                          SAN.maxit=SAN.maxit,
+                         SAN.prop=MCMC.prop,
                          SAN.prop.weights=MCMC.prop.weights,
                          SAN.prop.args=MCMC.prop.args,
                          
@@ -576,7 +608,7 @@ control.ergm<-function(drop=TRUE,
                        MCMLE.density.guard.min=10000,
                        MCMLE.density.guard=exp(3),
                        MCMLE.effectiveSize=64,
-                       obs.MCMLE.effectiveSize=NVL3(MCMLE.effectiveSize, .*obs.MCMC.mul),
+                       obs.MCMLE.effectiveSize=NULL,
                        MCMLE.interval=1024,
                        MCMLE.burnin=MCMLE.interval*16,
                        MCMLE.samplesize.per_theta=32,
@@ -591,7 +623,7 @@ control.ergm<-function(drop=TRUE,
                        
                        MCMLE.last.boost=4,
                        MCMLE.steplength.esteq=TRUE, 
-                       MCMLE.steplength.miss.sample=function(x1) ceiling(sqrt(ncol(rbind(x1)))),
+                       MCMLE.steplength.miss.sample=function(x1) c(max(ncol(rbind(x1))*2, 30), 10),
                        MCMLE.steplength.min=0.0001,
                        MCMLE.effectiveSize.interval_drop=2,
                        MCMLE.save_intermediates=NULL,
@@ -690,7 +722,7 @@ STATIC_MCMC_CONTROLS <- c("MCMC.samplesize", "MCMC.prop", "MCMC.prop.weights", "
 ADAPTIVE_MCMC_CONTROLS <- c("MCMC.effectiveSize", "MCMC.effectiveSize.damp", "MCMC.effectiveSize.maxruns", "MCMC.effectiveSize.burnin.pval", "MCMC.effectiveSize.burnin.min", "MCMC.effectiveSize.burnin.max", "MCMC.effectiveSize.burnin.nmin", "MCMC.effectiveSize.burnin.nmax", "MCMC.effectiveSize.burnin.PC", "MCMC.effectiveSize.burnin.scl", "obs.MCMC.effectiveSize")
 PARALLEL_MCMC_CONTROLS <- c("parallel","parallel.type","parallel.version.check")
 OBS_MCMC_CONTROLS <- c("MCMC.base.samplesize", "MCMC.base.effectiveSize", "MCMC.samplesize", "MCMC.effectiveSize", "MCMC.interval", "MCMC.burnin")
-MPLE_CONTROLS <- c("MPLE.samplesize","MPLE.type","MPLE.maxit")
+MPLE_CONTROLS <- c("MPLE.samplesize", "MPLE.type", "MPLE.maxit", "drop")
 
 remap_algorithm_MCMC_controls <- function(control, algorithm){
   CTRLS <- c(SCALABLE_MCMC_CONTROLS, STATIC_MCMC_CONTROLS, ADAPTIVE_MCMC_CONTROLS) %>% keep(startsWith,"MCMC.") %>% substr(6, 10000L)

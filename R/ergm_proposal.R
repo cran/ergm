@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2023 Statnet Commons
+#  Copyright 2003-2024 Statnet Commons
 ################################################################################
 
 #=======================================================================================
@@ -33,10 +33,10 @@
 #' 
 #' @param Class default to "c"
 #' @param Reference The reference measure used in the model. For the list of
-#' reference measures, see \code{\link{ergmReference}}
+#' reference measures, see [`ergmReference`]
 #'
 #' @param Constraints The constraints used in the model. For the list
-#'   of constraints, see \code{\link{ergmConstraint}}. They are
+#'   of constraints, see [`ergmConstraint`]. They are
 #'   specified as a single string of text, with each contrast prefixed
 #'   by either `&` for constraints that the proposal *always* enforces
 #'   or `|` for constraints that the proposal *can* enforce if needed.
@@ -146,13 +146,13 @@ prune.ergm_conlist <- function(conlist){
 #' S3 Functions that initialize the Metropolis-Hastings Proposal (ergm_proposal)
 #' object using the `InitErgmProposal.*` function that corresponds to the name given in
 #' 'object'.  These functions are not generally called directly by the user.
-#' See \link{ergm-proposals} for general explanation and lists of available
+#' See [`ergmProposal`] for general explanation and lists of available
 #' Metropolis-Hastings proposal types.
 #' 
 #' 
 #' @aliases ergm_proposal.NULL ergm_proposal.ergm_proposal
-#' @param object Either a character, a \code{\link{formula}} or an
-#' \code{\link{ergm}} object.  The \code{\link{formula}} should be of the format documented in the `constraints` argument of [ergm()] and in the [ERGM constraints][ergmConstraint] documentation.
+#' @param object Either a character, a [`formula`] or an
+#' [`ergm`] object.  The [`formula`] should be of the format documented in the `constraints` argument of [ergm()] and in the [ERGM constraints][ergmConstraint] documentation.
 #' @param \dots Further arguments passed to other functions.
 #' @return Returns an ergm_proposal object: a list with class `ergm_proposal`
 #' containing the following named elements:
@@ -168,7 +168,7 @@ prune.ergm_conlist <- function(conlist){
 #' \item{uid}{a string generated with the proposal, \UIDalgo; different proposals are, generally, guaranteed to have different strings, but identical proposals are not guaranteed to have the same string}
 #' }
 #' }
-#' @seealso \code{\link{InitErgmProposal}}
+#' @seealso [`InitErgmProposal`]
 #' @keywords models internal
 #' @export
 ergm_proposal<-function(object, ...) UseMethod("ergm_proposal")
@@ -201,7 +201,7 @@ ergm_proposal.ergm_proposal<-function(object,...) return(object)
 
 #' @describeIn ergm_proposal `object` argument is a character string
 #'   giving the \R name of the proposal.
-#' @param nw The network object originally given to \code{\link{ergm}}
+#' @param nw The network object originally given to [ergm()]
 #'   via 'formula'
 #' @param arguments A list of parameters used by the InitErgmProposal routines
 #' @template term_options
@@ -221,7 +221,7 @@ ergm_proposal.character <- function(object, arguments, nw, ..., reference=ergm_r
     }else as.call(list(f, arguments, nw))
 
   proposal <- eval(prop.call)
-  if(is.null(proposal)) return(NULL)
+  if(is.null(proposal) || is.character(proposal)) return(proposal)
 
   storage.mode(proposal$inputs) <- "double"
   storage.mode(proposal$iinputs) <- "integer"
@@ -265,15 +265,24 @@ ergm_proposal.character <- function(object, arguments, nw, ..., reference=ergm_r
 #
 ########################################################################################
 
+#' @noRd
+#' @exportS3method NULL
 ergm_conlist <- function(object, ...) UseMethod("ergm_conlist")
+#' @noRd
+#' @exportS3method NULL
 ergm_conlist.ergm_conlist <- function(object, ...) object
+#' @noRd
+#' @exportS3method NULL
 ergm_conlist.NULL <- function(object, ...) NULL
 
-
+#' @noRd
+#' @exportS3method NULL
 ergm_conlist.formula <- function(object, nw, ..., term.options=list())
   object %>% .embed_constraint_lhs() %>% list_rhs.formula() %>%
     ergm_conlist(nw, ..., term.options=term.options)
 
+#' @noRd
+#' @exportS3method NULL
 ergm_conlist.term_list <- function(object, nw, ..., term.options=list()){
   object<-c(object, list(call(".attributes")))
   consigns <- attr(object, "sign")
@@ -302,11 +311,15 @@ ergm_conlist.term_list <- function(object, nw, ..., term.options=list()){
     }
 
     con <- eval(as.call(init.call), conenv)
-    NVL(con$dependence) <- TRUE
-    if(con$dependence && consign < 0) stop("Only dyad-independent costraints can have negative signs.")
+    if(is.null(con)) next
+
+    NVL(con$priority) <- Inf # Default priority
+    if(con$priority < Inf) con$dependence <- FALSE # Hints do not induce dependence in the sample space.
+    NVL(con$dependence) <- TRUE # Default dependence
+    if(con$dependence && consign < 0) stop("Only dyad-independent constraints can have negative signs.")
     con$sign <- consign
-    NVL(con$priority) <- Inf
     NVL(con$constrain) <- conname
+    conname <- con$constrain[1] # If constraint provides a name, use it.
     if(!con$dependence && con$priority==Inf){
       con$constrain <- if(con$sign < 0) ".dyads" # If disjunctive, override specific in favour of general.
                        else unique(c(con$constrain,".dyads")) # FIXME: should .dyads go first?
@@ -321,8 +334,12 @@ ergm_conlist.term_list <- function(object, nw, ..., term.options=list()){
   prune.ergm_conlist(conlist)
 }
 
+#' @noRd
+#' @exportS3method NULL
 c.ergm_conlist <- function(...) NextMethod() %>% prune.ergm_conlist()
 
+#' @noRd
+#' @exportS3method NULL
 `[.ergm_conlist` <- function(x, ...){
   structure(NextMethod(), class = "ergm_conlist")
 }
@@ -398,6 +415,8 @@ select_ergm_proposals <- function(conlist, class, ref, weights){
 ergm_reference <- function(object, ...) UseMethod("ergm_reference")
 ergm_reference.ergm_reference <- function(object, ...) object
 
+#' @noRd
+#' @exportS3method NULL
 ergm_reference.formula <- function(object, nw, ..., term.options=list()) {
     env <- environment(object)
 
@@ -420,7 +439,7 @@ ergm_reference.formula <- function(object, nw, ..., term.options=list()) {
 #' @describeIn ergm_proposal `object` argument is an ERGM constraint formula; constructs the [`ergm_conlist`] object and hands off to `ergm_proposal.ergm_conlist()`.
 #' @param constraints A one-sided formula specifying one or more constraints on
 #' the support of the distribution of the networks being simulated. See the
-#' documentation for a similar argument for \code{\link{ergm}} and see
+#' documentation for a similar argument for [ergm()] and see
 #' [`ergmConstraint`] for more information.
 #' @export
 ergm_proposal.formula <- function(object, arguments, nw, hints=trim_env(~sparse), ..., term.options=list()) {
@@ -463,7 +482,8 @@ ergm_proposal.ergm_conlist <- function(object, arguments, nw, weights="default",
     proposal <- ergm_proposal(name, arguments, nw, reference = reference, ..., term.options = term.options)
 
     ## Keep trying until some proposal function accepts.
-    if(!is.null(proposal)) break
+    if(!is.null(proposal) && !is.character(proposal)) break
+    if(is.character(proposal)) message(proposal," Falling back.")
   }
 
   if(proposals[i,]$Unmet!="") message("Best valid proposal ", sQuote(proposals[i,]$Proposal), " cannot take into account hint(s) ", proposals[i,]$Unmet, ".")

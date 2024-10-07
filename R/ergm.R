@@ -5,12 +5,12 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2023 Statnet Commons
+#  Copyright 2003-2024 Statnet Commons
 ################################################################################
 
 #' Exponential-Family Random Graph Models
 #'
-#' \code{\link{ergm}} is used to fit exponential-family random graph
+#' [ergm()] is used to fit exponential-family random graph
 #' models (ERGMs), in which
 #' the probability of a given network, \eqn{y}, on a set of nodes is 
 #' \eqn{h(y) \exp\{\eta(\theta) \cdot
@@ -20,21 +20,21 @@
 #' \eqn{\eta(\theta)} is a natural parameter vector of the same 
 #' length (with \eqn{\eta(\theta)=\theta} for most terms), and \eqn{c(\theta)} is the
 #' normalizing constant for the distribution.
-#' \code{\link{ergm}} can return a maximum pseudo-likelihood
+#' [ergm()] can return a maximum pseudo-likelihood
 #' estimate, an approximate maximum likelihood estimate based on a Monte
 #' Carlo scheme, or an approximate contrastive divergence estimate based
 #' on a similar scheme.
-#' (For an overview of the package \insertCite{HuHa08e,KrHu23e}{ergm}, see \code{\link{ergm-package}}.)
+#' (For an overview of the package \insertCite{HuHa08e,KrHu23e}{ergm}, see \CRANpkg{ergm}.)
 #' 
-#' @param formula An \R \code{\link{formula}} object, of the form
+#' @param formula An \R [`formula`], of the form
 #'   \code{y ~ <model terms>}, where \code{y} is a
-#'   \code{\link[network]{network}} object or a matrix that can be
-#'   coerced to a \code{\link[network]{network}} object.  For the
+#'   [`network`] object or a matrix that can be
+#'   coerced to a [`network`] object.  For the
 #'   details on the possible \code{<model terms>}, see
-#'   \code{\link{ergmTerm}} and Morris, Handcock and Hunter (2008)
+#'   [`ergmTerm`] and Morris, Handcock and Hunter (2008)
 #'   for binary ERGM terms and Krivitsky (2012) for valued ERGM terms
 #'   (terms for weighted edges).  To create a
-#'   \code{\link[network]{network}} object in \R, use the
+#'   [`network`] object in \R, use the
 #'   \code{network()} function, then add nodal attributes to it using
 #'   the \code{\%v\%} operator if necessary. Enclosing a model term in
 #'   \code{offset()} fixes its value to one specified in
@@ -88,7 +88,7 @@
 #' estimator is returned.  For certain models, the MPLE and MLE are equivalent,
 #' in which case this argument is ignored.  (To force MCMC-based approximate
 #' likelihood calculation even when the MLE and MPLE are the same, see the
-#' \code{force.main} argument of \code{\link{control.ergm}}. If "CD" (\emph{EXPERIMENTAL}),
+#' \code{force.main} argument of [control.ergm()]. If "CD" (\emph{EXPERIMENTAL}),
 #' the Monte-Carlo contrastive divergence estimate is returned. )
 #' }
 #'
@@ -109,7 +109,7 @@
 #'   details.) Partial matching is supported.
 #' 
 #' @return
-#' \code{\link{ergm}} returns an object of class \code{\link{ergm}} that is a list
+#' [ergm()] returns an object of [`ergm`] that is a list
 #' consisting of the following elements:
 #' \item{coef}{The Monte Carlo maximum likelihood estimate
 #' of \eqn{\theta}, the vector of coefficients for the model
@@ -150,7 +150,7 @@
 #' \item{etamap}{The set of functions mapping the true parameter theta
 #' to the canonical parameter eta (irrelevant except in a curved exponential
 #' family model)}
-#' \item{formula}{The original \code{\link{formula}} entered into the \code{\link{ergm}} function.}
+#' \item{formula}{The original [`formula`] passed to [ergm()].}
 #' \item{target.stats}{The target.stats used during estimation (passed through from the Arguments)}
 #' \item{target.esteq}{Used for curved models to preserve the target mean values of the curved terms. It is identical to target.stats for non-curved models.}
 #' \item{constraints}{Constraints used during estimation (passed through from the Arguments)}
@@ -205,7 +205,7 @@
 #' taken; instead, only the change in the number of triangles
 #' is recorded for each edge toggle.
 #' 
-#' In the implementation of \code{\link{ergm}}, the model is
+#' In the implementation of [ergm()], the model is
 #' initialized in \R, then all the model information is passed to a C
 #' program that generates the sample of network statistics using MCMC.
 #' This sample is then returned to \R, which then uses one of several
@@ -220,7 +220,7 @@
 #' proposal distribution.  The former may be controlled using the
 #' \code{constraints} argument described above.  The latter may
 #' be controlled using the \code{prop.weights} argument to the
-#' \code{\link{control.ergm}} function.
+#' [control.ergm()] function.
 #' 
 #' The package is designed so that the user could conceivably add additional 
 #' proposal types. 
@@ -228,7 +228,7 @@
 #' @references \insertAllCited{}
 #'
 #' Admiraal R, Handcock MS (2007).
-#' \pkg{networksis}: Simulate bipartite graphs with fixed
+#' \CRANpkg{networksis}: Simulate bipartite graphs with fixed
 #' marginals through sequential importance sampling.
 #' Statnet Project, Seattle, WA.
 #' Version 1. \url{https://statnet.org}.
@@ -241,19 +241,19 @@
 #' 
 #' 
 #' Butts CT (2007).
-#' \pkg{sna}: Tools for Social Network Analysis.
+#' \CRANpkg{sna}: Tools for Social Network Analysis.
 #' R package version 2.3-2. \url{https://cran.r-project.org/package=sna}.
 #' 
 #' Butts CT (2008).
-#' \pkg{network}: A Package for Managing Relational Data in \R.
+#' \CRANpkg{network}: A Package for Managing Relational Data in \R.
 #' \emph{Journal of Statistical Software}, 24(2).
 #' \doi{10.18637/jss.v024.i02}
 #' 
 #' Butts C (2015).
-#' \pkg{network}: The Statnet Project (https://statnet.org). R package version 1.12.0, \url{https://cran.r-project.org/package=network}.
+#' \CRANpkg{network}: The Statnet Project (https://statnet.org). R package version 1.12.0, \url{https://cran.r-project.org/package=network}.
 #' 
 #' Goodreau SM, Handcock MS, Hunter DR, Butts CT, Morris M (2008a).
-#' A \pkg{statnet} Tutorial.
+#' A \CRANpkg{statnet} Tutorial.
 #' \emph{Journal of Statistical Software}, 24(8).
 #' \doi{10.18637/jss.v024.i08}
 #' 
@@ -270,7 +270,7 @@
 #' \url{https://csss.uw.edu/research/working-papers/assessing-degeneracy-statistical-models-social-networks}
 #' 
 #' Handcock MS (2003b).
-#' \pkg{degreenet}: Models for Skewed Count Distributions Relevant
+#' \CRANpkg{degreenet}: Models for Skewed Count Distributions Relevant
 #' to Networks.
 #' Statnet Project, Seattle, WA.
 #' Version 1.0, \url{https://statnet.org}.
@@ -278,13 +278,13 @@
 #' Handcock MS and Gile KJ (2010). Modeling Social Networks from Sampled Data. \emph{Annals of Applied Statistics}, 4(1), 5-25. \doi{10.1214/08-AOAS221}
 #' 
 #' Handcock MS, Hunter DR, Butts CT, Goodreau SM, Morris M (2003a).
-#' \pkg{ergm}: A Package to Fit, Simulate and Diagnose
+#' \CRANpkg{ergm}: A Package to Fit, Simulate and Diagnose
 #' Exponential-Family Models for Networks.
 #' Statnet Project, Seattle, WA.
 #' Version 2, \url{https://statnet.org}.
 #' 
 #' Handcock MS, Hunter DR, Butts CT, Goodreau SM, Morris M (2003b).
-#' \pkg{statnet}: Software Tools for the Statistical Modeling of
+#' \CRANpkg{statnet}: Software Tools for the Statistical Modeling of
 #' Network Data.
 #' Statnet Project, Seattle, WA.
 #' Version 2, \url{https://statnet.org}.
@@ -294,7 +294,7 @@
 #' Journal of Computational and Graphical Statistics.
 #' 
 #' Hunter DR, Handcock MS, Butts CT, Goodreau SM, Morris M (2008b).
-#' \pkg{ergm}: A Package to Fit, Simulate and Diagnose
+#' \CRANpkg{ergm}: A Package to Fit, Simulate and Diagnose
 #' Exponential-Family Models for Networks.
 #' \emph{Journal of Statistical Software}, 24(3).
 #' \doi{10.18637/jss.v024.i03}
@@ -473,26 +473,31 @@ ergm <- function(formula, response=NULL,
   }else proposal <- constraints
   
   if (verbose) message(sQuote(paste0(proposal$pkgname,":MH_",proposal$name)),".")
-  
-  if (verbose) message("Initializing model...")
-  model <- ergm_model(formula, nw, extra.aux=NVL3(proposal$auxiliaries,list(proposal=.)), term.options=control$term.options)
-  proposal$aux.slots <- model$slots.extra.aux$proposal
-  if (verbose) message("Model initialized.")
-  
+
   if(!is(obs.constraints, "ergm_proposal")){
     if(!is.null(conterms.obs)){
       if (verbose) message("Initializing constrained Metropolis-Hastings proposal: ", appendLF=FALSE)
       proposal.obs <- ergm_proposal(conterms.obs, hints=control$obs.MCMC.prop, weights=control$obs.MCMC.prop.weights, control$obs.MCMC.prop.args, nw, class=proposalclass, reference=reference, term.options=control$term.options)
-      if (verbose) message(sQuote(paste0(proposal.obs$pkgname,":MH_",proposal.obs$name)), appendLF=FALSE)
-      
-      if(!is.null(proposal.obs$auxiliaries)){
-        if(verbose) message(" (requests auxiliaries: updating model).")
-        model$obs.model <- c(model, ergm_model(trim_env(~.), nw, extra.aux=list(proposal=proposal.obs$auxiliaries), term.options=control$term.options))
-        proposal.obs$slots.extra.aux <- model$model.obs$slots.extra.aux$proposal
-        if(verbose) message("Model reinitialized.")
-      }else if(verbose) message(".")
     }else proposal.obs <- NULL
   }else proposal.obs <- obs.constraints
+
+  if (verbose && !is.null(proposal.obs)) message(sQuote(paste0(proposal.obs$pkgname,":MH_",proposal.obs$name)),".")
+
+  if (verbose) message("Initializing model...")
+  model <- ergm_model(formula, nw, extra.aux = NVL3(proposal$auxiliaries,list(proposal=.)), term.options=control$term.options)
+  proposal$aux.slots <- model$slots.extra.aux$proposal
+  if (verbose) message("Model initialized.")
+
+  model.obs <- NULL
+  if(identical(proposal$auxiliaries, proposal.obs$auxiliaries)){
+    ## Reuse auxiliaries from the unconstrained proposal if identical.
+    proposal.obs$slots.extra.aux <- model$slots.extra.aux$proposal
+  }else if(!is.null(proposal.obs$auxiliaries)){
+    if (verbose) message("Constrained proposal requires different auxiliaries: reinitializing model...")
+    model.obs <- ergm_model(formula, nw, extra.aux = NVL3(proposal.obs$auxiliaries,list(proposal=.)), term.options=control$term.options)
+    proposal.obs$aux.slots <- model.obs$slots.extra.aux$proposal
+    if (verbose) message("Model reinitialized.")
+  }
 
   info <- list(
     terms_dind = is.dyad.independent(model),
@@ -618,7 +623,7 @@ ergm <- function(formula, response=NULL,
   }
   
   ## Run the fit.
-  fit <- ergm.fit(nw, target.stats, model, proposal, proposal.obs, info, control, verbose, ...)
+  fit <- ergm.fit(nw, target.stats, model, model.obs, proposal, proposal.obs, info, control, verbose, ...)
 
   ## Process MCMC sample results.
   if(control$MCMC.return.stats == 0) fit$sample <- fit$sample.obs <- NULL
@@ -682,7 +687,7 @@ ergm <- function(formula, response=NULL,
   fit
 }
 
-ergm.fit <- function(nw, target.stats, model, proposal, proposal.obs, info, control, verbose, ...){
+ergm.fit <- function(nw, target.stats, model, model.obs, proposal, proposal.obs, info, control, verbose, ...){
   ## Short-circuit the optimization if all terms are either offsets or dropped.
   if(all(model$etamap$offsettheta)){
     ## Note that this cannot be overridden with control$force.main.
@@ -719,7 +724,7 @@ ergm.fit <- function(nw, target.stats, model, proposal, proposal.obs, info, cont
   statshift[is.na(statshift)] <- 0
 
   s <- update(s, model=model, proposal=proposal, stats=statshift)
-  s.obs <- if(!is.null(proposal.obs)) update(s, model=NVL(model$obs.model,model), proposal=proposal.obs)
+  s.obs <- NVL3(proposal.obs, update(s, model=NVL(model.obs,model), proposal=.))
 
   ## If all other criteria for MPLE=MLE are met, _and_ SAN network matches target.stats exactly, we can get away with MPLE.
   if (!is.null(target.stats) && !isTRUE(all.equal(target.stats[!is.na(target.stats)],nw.stats[!is.na(target.stats)])))

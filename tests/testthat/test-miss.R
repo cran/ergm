@@ -5,16 +5,13 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2023 Statnet Commons
+#  Copyright 2003-2024 Statnet Commons
 ################################################################################
 
 attach(MLE.tools)
 
-library(statnet.common)
-opttest({
-library(ergm)
 theta0err<- 1 # Perturbation in the initial values
-tolerance<-4 # Result must be within 5*MCMCSE of truth.
+tolerance <- 4 # Result must be within 4*MCMCSE of truth.
 bridge.target.se <- 0.005 # Log-likelihood MCMC standard error must be within this.
 
 n<-20 # Number of nodes
@@ -94,6 +91,5 @@ test_that("curved+missing", {
   summary(mcmcfit)
   expect_lt(abs(coef(mcmcfit)[1]-truth)/sqrt(mcmcfit$covar[1]), tolerance)
 })
-}, "missing data")
 
 detach(MLE.tools)

@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2023 Statnet Commons
+#  Copyright 2003-2024 Statnet Commons
 ################################################################################
 
 #' Generate networks with a given set of network statistics
@@ -84,8 +84,8 @@
 #'   [`formula`] should be of the form \code{y ~ <model terms>}, where
 #'   \code{y} is a network object or a matrix that can be coerced to a
 #'   [`network`] object.  For the details on the possible \code{<model
-#'   terms>}, see \code{\link{ergmTerm}}.  To create a
-#'   \code{\link[network]{network}} object in , use the
+#'   terms>}, see [`ergmTerm`].  To create a
+#'   [`network`] object in , use the
 #'   \code{network()} function, then add nodal attributes to it using
 #'   the \code{\%v\%} operator if necessary.
 #' 
@@ -259,8 +259,9 @@ san.ergm_model <- function(object, reference=~Bernoulli, constraints=~., target.
   out.list <- list()
   out.mat <- numeric(0)
 
+  ## TODO: Remove in 4.9 or thereabout.
   if(!is.null(nsim)){
-    .Deprecate_once(msg = "nsim= argument for the san() functions has been deprecated. Just use replicate().")
+    .Deprecate_once(msg = "nsim= argument for the san() functions has been deprecated and may be removed in the a version. Just use replicate().")
     if(nsim>1 && !is.null(control$seed)) warn("Setting the random seed with nsim>1 will produce a list of identical networks.")
     if(nsim>1){
       return(structure(replicate(nsim,

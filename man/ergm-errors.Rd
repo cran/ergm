@@ -3,16 +3,25 @@
 \name{ergm-errors}
 \alias{ergm-errors}
 \alias{ergm_Init_abort}
+\alias{ergm_Init_stop}
 \alias{ergm_Init_warn}
+\alias{ergm_Init_warning}
 \alias{ergm_Init_inform}
+\alias{ergm_Init_message}
 \alias{ergm_Init_try}
 \title{Sensible error and warning messages by \code{ergm} initializers}
 \usage{
-ergm_Init_abort(..., default.loc = NULL)
+ergm_Init_abort(..., default.loc = NULL, call = NULL)
+
+ergm_Init_stop(..., call. = FALSE, default.loc = NULL)
 
 ergm_Init_warn(..., default.loc = NULL)
 
+ergm_Init_warning(..., call. = FALSE, default.loc = NULL)
+
 ergm_Init_inform(..., default.loc = NULL)
+
+ergm_Init_message(..., default.loc = NULL)
 
 ergm_Init_try(expr)
 }
@@ -22,6 +31,9 @@ character vector, concatenated into the message.}
 
 \item{default.loc}{Optional name for the source of the error, to be
 used if an initializer cannot be autodetected.}
+
+\item{call., call}{See \code{\link[=stop]{stop()}} and \code{\link[rlang:abort]{abort()}} respectively; note the
+different defaults.}
 
 \item{expr}{Expression to be evaluated (in the caller's
 environment).}
@@ -36,15 +48,24 @@ end-users, but may be useful to developers.
 \itemize{
 \item \code{ergm_Init_try()}: A helper function that evaluates the
 specified expression in the caller's environment, passing any
-errors to \code{\link[=ergm_Init_abort]{ergm_Init_abort()}}.
+errors to \code{\link[=ergm_Init_stop]{ergm_Init_stop()}}.
 
 }}
+\note{
+At this time, the \CRANpkg{rlang} analogues
+\code{ergm_Init_stop()}, \code{ergm_Init_warning()}, and \code{ergm_Init_message()}
+all concatenate their arguments like their base \R
+counterparts. This may change in the future, and if you wish to
+retain their old behavior, please switch to their base \R
+analogues \code{ergm_Init_stop()}, \code{ergm_Init_warning()}, and
+\code{ergm_Init_message()}.
+}
 \seealso{
-\code{\link[=stop]{stop()}}, \code{\link[=abort]{abort()}}
+\code{\link[=stop]{stop()}}, \code{\link[rlang:abort]{abort()}}
 
-\code{\link[=warning]{warning()}}, \code{\link[=warn]{warn()}}
+\code{\link[=warning]{warning()}}, \code{\link[rlang:abort]{warn()}}
 
-\code{\link[=message]{message()}}, \code{\link[=inform]{inform()}}
+\code{\link[=message]{message()}}, \code{\link[rlang:abort]{inform()}}
 
 \code{\link[=try]{try()}}, \code{\link[=tryCatch]{tryCatch()}}
 }

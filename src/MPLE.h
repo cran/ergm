@@ -5,16 +5,11 @@
  *  open source, and has the attribution requirements (GPL Section 7) at
  *  https://statnet.org/attribution .
  *
- *  Copyright 2003-2023 Statnet Commons
+ *  Copyright 2003-2024 Statnet Commons
  */
 #ifndef MPLE_H
 #define MPLE_H
 
-/* Specify allocators. */
-#define kcalloc(N,Z) R_chk_calloc(N,Z)
-#define kmalloc(Z) R_chk_calloc(Z,1)
-#define krealloc(P,Z) R_chk_realloc(P,Z)
-#define kfree(P) R_chk_free(P)
 #include "ergm_edgetree.h"
 #include "ergm_changestat.h"
 #include "ergm_model.h"

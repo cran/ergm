@@ -117,16 +117,17 @@ simulate_formula(object, ..., basis = eval_lhs.formula(object))
   sequential = TRUE,
   control = control.simulate.ergm(),
   verbose = FALSE,
-  ...
+  ...,
+  return.args = NULL
 )
 }
 \arguments{
 \item{object}{Either a \code{\link{formula}} or an
 \code{\link{ergm}} object.  The \code{\link{formula}} should be of the form
 \code{y ~ <model terms>}, where \code{y} is a network object or a matrix
-that can be coerced to a \code{\link[network]{network}} object.  For the
+that can be coerced to a \code{\link[network:network]{network}} object.  For the
 details on the possible \code{<model terms>}, see \code{\link{ergmTerm}}.
-To create a \code{\link[network]{network}} object in , use the
+To create a \code{\link[network:network]{network}} object in , use the
 \code{network()} function, then add nodal attributes to it using the
 \code{\%v\%} operator if necessary.}
 
@@ -135,11 +136,11 @@ distribution on the set of all networks, returned by the Metropolis-Hastings
 algorithm.}
 
 \item{seed}{Seed value (integer) for the random number generator.  See
-\code{\link[base]{set.seed}}.}
+\code{\link[=set.seed]{set.seed()}}.}
 
 \item{\dots}{Further arguments passed to or used by methods.}
 
-\item{basis}{a value (usually a \code{\link{network}}) to override the LHS of the formula.}
+\item{basis}{a value (usually a \code{\link[network:network]{network}}) to override the LHS of the formula.}
 
 \item{coef}{Vector of parameter values for the model from which the
 sample is to be drawn.  If \code{object} is of class \code{ergm},
@@ -253,9 +254,9 @@ proposal every time. Valid inputs at this time are \code{"formula"},
 respective stopping points.}
 }
 \value{
-If \code{output=="stats"} an \code{\link{mcmc}} object containing the
+If \code{output=="stats"} an \code{\link[coda:mcmc]{mcmc}} object containing the
 simulated network statistics. If \code{control$parallel>0}, an
-\code{\link{mcmc.list}} object. If \code{simplify=TRUE} (the default), these
+\code{\link[coda:mcmc.list]{mcmc.list}} object. If \code{simplify=TRUE} (the default), these
 would then be "stacked" and converted to a standard \code{\link{matrix}}. A
 logical vector indicating whether or not the term had come from
 the \verb{monitor=} formula is stored in \code{\link[=attr]{attr()}}-style attribute
@@ -264,12 +265,12 @@ the \verb{monitor=} formula is stored in \code{\link[=attr]{attr()}}-style attri
 Otherwise, a representation of the simulated network is returned,
 in the form specified by \code{output}. In addition to a network
 representation or a list thereof, they have the following
-\code{\link{attr}}-style attributes: \describe{
+\code{\link[=attr]{attr()}}-style attributes: \describe{
 
 \item{\code{formula}}{The \code{\link{formula}} used to generate the
 sample.}
 
-\item{\code{stats}}{An \code{\link{mcmc}} or \code{\link{mcmc.list}} object as above.}
+\item{\code{stats}}{An \code{\link[coda:mcmc]{mcmc}} or \code{\link[coda:mcmc.list]{mcmc.list}} object as above.}
 
 \item{\code{control}}{Control parameters used to generate the sample.}
 
@@ -290,11 +291,11 @@ The following are the permitted network formats: \describe{
 \code{\link{network.list}} (a list of networks) with the
 above-listed additional attributes.}
 
-\item{\code{"edgelist"}}{An \code{\link{edgelist}} representation of the network,
+\item{\code{"edgelist"}}{An \code{\link[network:as.edgelist]{edgelist}} representation of the network,
 or a list thereof, depending on \code{nsim}.}
 
 \item{\code{"ergm_state"}}{A semi-internal representation of
-a network consisting of a \code{\link{network}} object emptied of edges, with
+a network consisting of a \code{\link[network:network]{network}} object emptied of edges, with
 an attached edgelist matrix, or a list thereof, depending on
 \code{nsim}.}
 
@@ -309,7 +310,7 @@ network itself will be returned.
 }
 \description{
 \code{\link[stats]{simulate}} is used to draw from exponential
-family random network models.  See \code{\link{ergm}} for more
+family random network models.  See \code{\link[=ergm]{ergm()}} for more
 information on these models.
 
 The method for \code{\link{ergm}} objects inherits the model,
@@ -324,7 +325,7 @@ network to which the ERGM was fit.
 A sample of networks is randomly drawn from the specified model.  The model
 is specified by the first argument of the function.  If the first argument
 is a \code{\link{formula}} then this defines the model.  If the first
-argument is the output of a call to \code{\link{ergm}} then the model used
+argument is the output of a call to \code{\link[=ergm]{ergm()}} then the model used
 for that call is the one fit -- and unless \code{coef} is specified, the
 sample is from the MLE of the parameters.  If neither of those are given as
 the first argument then a Bernoulli network is generated with the
@@ -335,7 +336,7 @@ and any subsequent networks are sampled each \code{interval} steps
 after the first.
 
 More information can be found by looking at the documentation of
-\code{\link{ergm}}.
+\code{\link[=ergm]{ergm()}}.
 }
 \section{Functions}{
 \itemize{
@@ -343,7 +344,7 @@ More information can be found by looking at the documentation of
 
 }}
 \note{
-The actual \code{\link{network}} method for \code{\link[=simulate_formula]{simulate_formula()}} is
+The actual \code{\link[network:network]{network}} method for \code{\link[=simulate_formula]{simulate_formula()}} is
 actually called \code{.simulate_formula.network()} and is also
 exported as an object. This allows it to be overridden by
 extension packages, such as \code{tergm}, but also accessed directly
@@ -420,7 +421,7 @@ g.sim <- simulate(gest, nsim=3,
 unclass(g.sim)
 }
 \seealso{
-\code{\link{ergm}}, \code{\link[network]{network}},
+\code{\link[=ergm]{ergm()}}, \code{\link[network:network]{network}},
 \code{\link[=ergm_MCMC_sample]{ergm_MCMC_sample()}} for a demonstration of \verb{return.args=}.
 }
 \keyword{models}

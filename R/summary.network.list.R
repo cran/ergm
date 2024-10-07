@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2023 Statnet Commons
+#  Copyright 2003-2024 Statnet Commons
 ################################################################################
 
 
@@ -14,7 +14,7 @@
 #' @param stats.print Logical: If TRUE, print network statistics.
 #' @param net.print Logical: If TRUE, print network overviews.
 #' @param net.summary Logical: If TRUE, print network summaries.
-#' @seealso \code{\link{simulate.ergm}}
+#' @seealso [simulate.ergm()]
 #' @examples
 #' 
 #' # Draw from a Bernoulli model with 16 nodes

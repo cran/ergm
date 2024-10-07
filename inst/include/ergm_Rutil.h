@@ -5,7 +5,7 @@
  *  open source, and has the attribution requirements (GPL Section 7) at
  *  https://statnet.org/attribution .
  *
- *  Copyright 2003-2023 Statnet Commons
+ *  Copyright 2003-2024 Statnet Commons
  */
 #ifndef _ERGM_RUTIL_H_
 #define _ERGM_RUTIL_H_
@@ -57,7 +57,7 @@ static inline SEXP mkRStrVec(const char **x){
 // Safely test if x is a NULL C pointer or a NULL R pointer.
 #define isNULL(x) ((x)==NULL || (x)==R_NilValue)
 
-// An alias for R_alloc that behaves more like Calloc(); uses the
+// An alias for R_alloc that behaves more like R_Calloc(); uses the
 // following helper function:
 static inline void *R_calloc_helper(size_t n, size_t size){
   char *tmp = R_alloc(n, size);

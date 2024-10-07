@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2023 Statnet Commons
+#  Copyright 2003-2024 Statnet Commons
 ################################################################################
 
 # Meta-constraint for a dot placeholder
@@ -262,7 +262,7 @@ InitErgmConstraint.bd<-function(nw, arglist, ...){
                       defaultvalues = list(NULL, NA_integer_, NA_integer_, NA_integer_, NA_integer_),
                       required = c(FALSE, FALSE, FALSE, FALSE, FALSE))
 
-  if(!is.directed(nw) && (!all(is.na(a$minin)) || !all(is.na(a$maxin)))) ergm_Init_abort(sQuote("minin"), " and ", sQuote("maxin"), " cannot be used with undirected networks.")
+  if(!is.directed(nw) && (!all(is.na(a$minin)) || !all(is.na(a$maxin)))) ergm_Init_stop(sQuote("minin"), " and ", sQuote("maxin"), " cannot be used with undirected networks.")
 
    if(all(is.na(a$minout)) && all(is.na(a$minin))) {
      constrain <- c("bd","bdmax")
@@ -414,13 +414,23 @@ InitErgmConstraint.observed <- function(nw, arglist, ...){
        dependence = FALSE, implies = c("observed"))
 }
 
+warn_netsize <- function(.n, ...){
+  mismatch <- vapply(list(...), function(x) is.network(x) && network.size(x) != .n, logical(1))
+  if(any(mismatch))
+    ergm_Init_warning("Network size of argument(s) ", paste.and(sQuote(...names()[mismatch])), " differs from that of the response network.")
+}
+
 #' @templateVar name fixedas
-#' @title Preserve and preclude edges
-#' @description Preserve the edges in 'present' and preclude the edges in 'absent'.
+#' @title Fix specific dyads
+#' @description Fix the dyads in `fixed.dyads` at their current value, preserve the edges in `present`, and preclude the edges in `absent`.
 #'
 #' @usage
-#' # fixedas(present, absent)
-#' @param present,absent edgelist or network
+#' # fixedas(fixed.dyads, present, absent)
+#' @param fixed.dyads,present,absent a two-column edge list or a [`network`]
+#'
+#' @details `present` and `absent` differ from `fixed.dyads` in that
+#'   they check that the specified edges are in fact present and/or
+#'   absent and stop with an error if not.
 #'
 #' @template ergmConstraint-general
 #'
@@ -429,32 +439,36 @@ InitErgmConstraint.observed <- function(nw, arglist, ...){
 #' @concept undirected
 InitErgmConstraint.fixedas<-function(nw, arglist,...){
   a <- check.ErgmTerm(nw, arglist,
-                      varnames = c("present", "absent"),
-                      vartypes = c("network,matrix", "network,matrix"),
-                      defaultvalues = list(NULL, NULL),
-                      required = c(FALSE, FALSE))
-  present <- a$present; absent <- a$absent
-  if(is.null(present) && is.null(absent))
-    ergm_Init_abort(paste("fixedas constraint takes at least one argument, either present or absent or both."))
+                      varnames = c("fixed.dyads", "present", "absent"),
+                      vartypes = c("network,matrix", "network,matrix", "network,matrix"),
+                      defaultvalues = list(NULL, NULL, NULL),
+                      required = c(FALSE, FALSE, FALSE))
+  fixed <- a$fixed.dyads; present <- a$present; absent <- a$absent
+
+  if(is.null(fixed) && is.null(present) && is.null(absent))
+    ergm_Init_stop(sQuote("fixedas()"), " constraint requires at least one argument.")
+
+  warn_netsize(network.size(nw), fixed.dyads = fixed, present = present, absent = absent)
+
+  if(is.network(fixed)) fixed <- as.edgelist(fixed)
+  if(is.network(present)) present <- as.edgelist(present)
+  if(is.network(absent)) absent <- as.edgelist(absent)
+
+  if(!is.null(present) && any(nw[present] == 0)) ergm_Init_stop("Edges constrained to be present are absent in the LHS network.")
+  if(!is.null(absent) && any(nw[absent] != 0)) ergm_Init_stop("Edges constrained to be absent are present in the LHS network.")
+
+  fixed <- as.edgelist(unique(rbind(fixed, present, absent)),
+                       n = nw%n%"n",
+                       directed = nw%n%"directed",
+                       bipartite = nw%n%"bipartite",
+                       loops = nw%n%"loops")
+
+  rm(nw, a, present, absent, arglist, "...")
 
   list(
-    free_dyads = function(){
-      if(is.network(present)) present <- as.edgelist(present)
-      if(is.network(absent)) absent <- as.edgelist(absent)
-
-      # FixedEdgeList
-      fixed <- as.edgelist(rbind(present,absent),
-                           n=nw%n%"n",
-                           directed=nw%n%"directed",
-                           bipartite=nw%n%"bipartite",
-                           loops=nw%n%"loops")
-      if(any(duplicated(fixed))){
-        ergm_Init_abort("Dyads cannot be fixed at both present and absent")
-      }
-
-      !as.rlebdm(fixed)
-    },
-    dependence = FALSE)
+    free_dyads = function() !as.rlebdm(fixed),
+    dependence = FALSE
+  )
 }
 
 #' @templateVar name fixallbut
@@ -477,6 +491,8 @@ InitErgmConstraint.fixallbut<-function(nw, arglist,...){
                       defaultvalues = list(NULL),
                       required = c(TRUE))
   free.dyads <- a$free.dyads
+
+  warn_netsize(network.size(nw), free.dyads = free.dyads)
 
   list(
     free_dyads = function(){
@@ -598,12 +614,12 @@ InitErgmConstraint.Dyads<-function(nw, arglist, ...){
   fix <- a$fix; vary <- a$vary
 
   if(is.null(fix) & is.null(vary))
-    ergm_Init_abort(paste("Dyads constraint takes at least one argument, either",sQuote("fix"),"or",sQuote("vary"),"or both."))
+    ergm_Init_stop("Dyads constraint takes at least one argument, either ",sQuote("fix")," or ",sQuote("vary")," or both.")
 
   for(f in c(fix, vary)){
     f[[3]] <- f[[2]]
     f[[2]] <- nw
-    if(!is.dyad.independent(f)) ergm_Init_abort(paste("Terms passed to the Dyads constraint must be dyad-independent."))
+    if(!is.dyad.independent(f)) ergm_Init_stop("Terms passed to the Dyads constraint must be dyad-independent.")
   }
 
   list(

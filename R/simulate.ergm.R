@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2023 Statnet Commons
+#  Copyright 2003-2024 Statnet Commons
 ################################################################################
 #========================================================================
 # This file contains the following 2 functions for simulating ergms
@@ -16,15 +16,15 @@
 #' Draw from the distribution of an Exponential Family Random Graph Model
 #' 
 #' \code{\link[stats]{simulate}} is used to draw from exponential
-#' family random network models.  See \code{\link{ergm}} for more
+#' family random network models.  See [ergm()] for more
 #' information on these models. 
 #'
 #' 
 #'
 #' A sample of networks is randomly drawn from the specified model.  The model
 #' is specified by the first argument of the function.  If the first argument
-#' is a \code{\link{formula}} then this defines the model.  If the first
-#' argument is the output of a call to \code{\link{ergm}} then the model used
+#' is a [`formula`] then this defines the model.  If the first
+#' argument is the output of a call to [ergm()] then the model used
 #' for that call is the one fit -- and unless \code{coef} is specified, the
 #' sample is from the MLE of the parameters.  If neither of those are given as
 #' the first argument then a Bernoulli network is generated with the
@@ -35,14 +35,14 @@
 #' after the first.
 #' 
 #' More information can be found by looking at the documentation of
-#' \code{\link{ergm}}.
+#' [ergm()].
 #' 
-#' @param object Either a \code{\link{formula}} or an
-#' \code{\link{ergm}} object.  The \code{\link{formula}} should be of the form
+#' @param object Either a [`formula`] or an
+#' [`ergm`] object.  The [`formula`] should be of the form
 #' \code{y ~ <model terms>}, where \code{y} is a network object or a matrix
-#' that can be coerced to a \code{\link[network]{network}} object.  For the
-#' details on the possible \code{<model terms>}, see \code{\link{ergmTerm}}.
-#' To create a \code{\link[network]{network}} object in , use the
+#' that can be coerced to a [`network`] object.  For the
+#' details on the possible \code{<model terms>}, see [`ergmTerm`].
+#' To create a [`network`] object in , use the
 #' \code{network()} function, then add nodal attributes to it using the
 #' \code{\%v\%} operator if necessary.
 #' @param nsim Number of networks to be randomly drawn from the given
@@ -129,9 +129,9 @@
 #' Otherwise, a representation of the simulated network is returned,
 #' in the form specified by `output`. In addition to a network
 #' representation or a list thereof, they have the following
-#' \code{\link{attr}}-style attributes: \describe{
+#' [attr()]-style attributes: \describe{
 #'
-#' \item{`formula`}{The \code{\link{formula}} used to generate the
+#' \item{`formula`}{The [`formula`] used to generate the
 #' sample.}
 #'
 #' \item{`stats`}{An [`mcmc`] or [`mcmc.list`] object as above.}
@@ -152,7 +152,7 @@
 #'
 #' \item{`"network"`}{If \code{nsim==1}, an object of class
 #' \code{network}.  If \code{nsim>1}, it returns an object of class
-#' \code{\link{network.list}} (a list of networks) with the
+#' [`network.list`] (a list of networks) with the
 #' above-listed additional attributes.}
 #'
 #' \item{`"edgelist"`}{An [`edgelist`] representation of the network,
@@ -178,7 +178,7 @@
 #'   extension packages, such as `tergm`, but also accessed directly
 #'   when needed.
 #'
-#' @seealso \code{\link{ergm}}, \code{\link[network]{network}},
+#' @seealso [ergm()], [`network`],
 #'   [ergm_MCMC_sample()] for a demonstration of `return.args=`.
 #' @keywords models
 #' @examples
@@ -396,10 +396,6 @@ simulate.ergm_model <- function(object, nsim=1, seed=NULL,
     output <- "function"
   }
 
-  # TODO: Remove this in the next release.
-  if(theta0pos <- "theta0" %in% ...names())
-    stop("Passing the parameter vector as theta0= is deprecated. Use coef= instead.")
-
   if(!is.null(seed)) {set.seed(as.integer(seed))}
   
   # define nw as either the basis argument or (if NULL) the LHS of the formula
@@ -435,6 +431,10 @@ simulate.ergm_model <- function(object, nsim=1, seed=NULL,
     if (verbose) message(sQuote(paste0(proposal$pkgname,":MH_",proposal$name)),".")
   }
 
+  proposal$aux.slots <- m$slots.extra.aux$proposal
+
+  ## TODO: In principle, we can initialize an empty model with just
+  ## the auxiliary and append it to the model.
   if(length(proposal$auxiliaries) && !length(m$slots.extra.aux$proposal))
     stop("The proposal appears to be requesting auxiliaries, but the initialized model does not export any proposal auxiliaries.")
   
@@ -618,7 +618,7 @@ simulate.ergm <- function(object, nsim=1, seed=NULL,
                           simplify=TRUE,
                           sequential=TRUE,
                           control=control.simulate.ergm(),
-                          verbose=FALSE, ...) {
+                          verbose=FALSE, ..., return.args=NULL) {
   check_dots_used(error = unused_dots_warning)
   check.control.class(c("simulate.ergm","simulate.formula"), "simulate.ergm")
   handle.control.toplevel("simulate.ergm", ...)
@@ -656,5 +656,5 @@ simulate.ergm <- function(object, nsim=1, seed=NULL,
                    monitor=monitor,
                    basis=basis,
            output=output, simplify=simplify,
-                   control=control, verbose=verbose, seed=seed, ...)
+                   control=control, verbose=verbose, seed=seed, ..., return.args=return.args)
 }

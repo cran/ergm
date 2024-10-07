@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2023 Statnet Commons
+#  Copyright 2003-2024 Statnet Commons
 ################################################################################
 
 binary_wrap <- function(InitFun, nw, a, valued_args, ddd, namemap = identity, cnmap = identity){
@@ -365,7 +365,7 @@ InitWtErgmTerm.ininterval<-function(nw, arglist, ...) {
 
   OPENSPECS = c('()', '(]', '[)', '[]')
   if(is(open, "character")){
-    if(! open%in%OPENSPECS) ergm_Init_abort("Interval openness specification via a string must be ", paste.and(OPENSPECS,'"','"',"or"),".")
+    if(! open%in%OPENSPECS) ergm_Init_stop("Interval openness specification via a string must be ", paste.and(OPENSPECS,'"','"',"or"),".")
     open <- c(substr(open,1,1)=="(",
               substr(open,2,2)==")")
   }

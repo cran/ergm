@@ -30,13 +30,13 @@ document.addEventListener('DOMContentLoaded', function(e) {
 </script>
 
 <style type="text/css">
-  code{white-space: pre-wrap;}
-  span.smallcaps{font-variant: small-caps;}
-  span.underline{text-decoration: underline;}
-  div.column{display: inline-block; vertical-align: top; width: 50%;}
-  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
-  ul.task-list{list-style: none;}
-    </style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
 
 
 
@@ -336,7 +336,9 @@ reference.</li>
 and their outputs are stored in a list of initialized constraints (an
 <code>ergm_conlist</code> object). <code>.dyads</code> pseudo-constraint
 is added to dyad-independent constraints (not to hints with
-<code>$priority &lt; Inf</code>).
+<code>$priority &lt; Inf</code>). For hints, <code>$dependence</code>
+element is overwritten to <code>FALSE</code>. The list is named, with
+the name taken from the first element of the <code>$constrains</code>.
 <ol style="list-style-type: decimal">
 <li><code>constraints=</code></li>
 <li><code>MCMC.prop=</code></li>

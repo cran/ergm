@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2023 Statnet Commons
+#  Copyright 2003-2024 Statnet Commons
 ################################################################################
 InitErgmConstraint.TNT<-function(nw, arglist, ...){
   .Deprecate_once("sparse")
@@ -24,7 +24,50 @@ InitErgmConstraint.TNT<-function(nw, arglist, ...){
 #' @concept dyad-independent
 InitErgmConstraint.sparse<-function(nw, arglist, ...){
   a <- check.ErgmTerm(nw, arglist)
-  list(dependence = FALSE, priority=10, impliedby=c("sparse", "edges", "degrees", "edges", "idegrees", "odegrees", "b1degrees", "b2degrees", "idegreedist", "odegreedist", "degreedist", "b1degreedist", "b2degreedist"), constrain="sparse")
+  list(priority=10, impliedby=c("sparse", "edges", "degrees", "edges", "idegrees", "odegrees", "b1degrees", "b2degrees", "idegreedist", "odegreedist", "degreedist", "b1degreedist", "b2degreedist"), constrain="sparse")
+}
+
+#' @templateVar name triadic
+#' @title Network with strong clustering (triad-closure) effects
+#' @description The network has a high clustering coefficient. This typically results in alternating between the Tie-Non-Tie (TNT) proposal and a triad-focused proposal along the lines of that of \insertCite{WaAt13a;textual}{ergm}.
+#'
+#' @usage
+#' # triadic(triFocus = 0.25, type="OTP")
+#'
+#' @param triFocus A number between 0 and 1, indicating how often triad-focused proposals should be made relative to the standard proposals.
+#' @template ergmTerm-sp-type
+#'
+#' @template ergmTerm-sp-types
+#'
+#' @template ergmHint-general
+#'
+#' @references \insertAllCited{}
+#'
+#' @concept dyad-dependent
+InitErgmConstraint.triadic<-function(nw, arglist, ...){
+  a <- check.ErgmTerm(nw, arglist, bipartite = FALSE,
+                      varnames = c("triFocus", "type"),
+                      vartypes = c("numeric", "character"),
+                      defaultvalues = list(0.25, "OTP"),
+                      required = c(FALSE, FALSE))
+  if(!is.directed(nw)) a$type <- "UTP"
+  list(triFocus=a$triFocus, type = a$type, priority=4, constrain="triadic")
+}
+
+#' @templateVar name triadic
+#' @template ergmHint-rdname
+#' @aliases .triadic-ergmHint
+#' @usage
+#' # .triadic(triFocus = 0.25, type = "OTP")
+#' @section `.triadic()` versus `triadic()`: If given a bipartite
+#'   network, the dotted form will skip silently, whereas the plain
+#'   form will raise an error, since triadic effects are not possible
+#'   in bipartite networks. The dotted form is thus suitable as a
+#'   default argument when the bipartitedness of the network is not
+#'   known *a priori*.
+InitErgmConstraint..triadic<-function(nw, arglist, ...){
+  if(is.bipartite(nw)) NULL
+  else InitErgmConstraint.triadic(nw, arglist, ...)
 }
 
 InitErgmConstraint.Strat<-function(nw, arglist, ...){
@@ -106,7 +149,7 @@ InitErgmConstraint.strat <- function(nw, arglist, ...) {
   pmat <- NVL(pmat, matrix(1, nrow = length(strat_row_levels), ncol = length(strat_col_levels)))
 
   if(NROW(pmat) != length(strat_row_levels) || NCOL(pmat) != length(strat_col_levels)) {
-    ergm_Init_abort(sQuote("pmat"), " does not have the correct dimensions for ", sQuote("attr"), ".")
+    ergm_Init_stop(sQuote("pmat"), " does not have the correct dimensions for ", sQuote("attr"), ".")
   }
 
   if(!is.bipartite(nw) && !is.directed(nw)) {
@@ -128,8 +171,7 @@ InitErgmConstraint.strat <- function(nw, arglist, ...) {
   # record the number of unique attr codes
   nlevels <- length(strat_levels)
 
-  list(dependence = FALSE,
-       priority = 10,
+  list(priority = 4,
        tailattrs = tailattrs,
        headattrs = headattrs,
        probvec = probvec,

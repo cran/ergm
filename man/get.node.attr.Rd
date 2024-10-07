@@ -8,7 +8,7 @@ a network}
 get.node.attr(nw, attrname, functionname = NULL, numeric = FALSE)
 }
 \arguments{
-\item{nw}{a \code{\link{network}} object}
+\item{nw}{a \code{\link[network:network]{network}} object}
 
 \item{attrname}{the name of a nodal attribute, as a character string}
 
@@ -37,7 +37,7 @@ data(faux.mesa.high)
 get.node.attr(faux.mesa.high,'Grade')
 }
 \seealso{
-\code{\link[network]{get.vertex.attribute}} for a version without
+\code{\link[network:attribute.methods]{get.vertex.attribute()}} for a version without
 the checking functionality
 }
 \keyword{internal}

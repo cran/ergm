@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2023 Statnet Commons
+#  Copyright 2003-2024 Statnet Commons
 ################################################################################
 
 #' ERGM Predictors and response for logistic regression calculation of MPLE
@@ -25,11 +25,13 @@
 #' the corresponding edge exists or not).
 #' 
 #' Using \code{output="matrix"}, note that the result of the fit may be
-#' obtained from the \code{\link{glm}} function, as shown in the examples
+#' obtained from the [glm()] function, as shown in the examples
 #' below.
 #' 
 #' @param formula,constraints,obs.constraints An ERGM formula and
-#'   (optional) constraint specification formulas. See \code{\link{ergm}}.
+#'   (optionally) a constraint specification formulas. See
+#'   [ergm()]. This function supports only dyad-independent
+#'   constraints.
 #' 
 #' @param output Character, partially matched. See Value.
 #'
@@ -78,10 +80,10 @@
 #' containing the [mapping and offset information][ergm.eta].
 #' 
 #' If \code{output=="fit"}, then \code{ergmMPLE} simply calls the
-#' \code{\link{ergm}} function with the \code{estimate="MPLE"} option set,
+#' [ergm()] function with the \code{estimate="MPLE"} option set,
 #' returning an object of class \code{ergm} that gives the fitted
 #' pseudolikelihood model.
-#' @seealso \code{\link{ergm}}, \code{\link{glm}}
+#' @seealso [ergm()], [glm()]
 #' @keywords regression models
 #' @examples
 #' 

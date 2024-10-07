@@ -5,7 +5,7 @@
  *  open source, and has the attribution requirements (GPL Section 7) at
  *  https://statnet.org/attribution .
  *
- *  Copyright 2003-2023 Statnet Commons
+ *  Copyright 2003-2024 Statnet Commons
  */
 #ifndef _ERGM_RLEBDM_H_
 #define _ERGM_RLEBDM_H_
@@ -238,6 +238,9 @@ static inline Dyad NextRLEBDM1D(Dyad d, Dyad stride, const RLEBDM1D *m, RLERun *
   
   return nxtdi - m->cumlens[nxtl-1] + m->starts[nxtl-1];
 }
+
+#define FirstRLEBDM1D(m) ((m)->starts[0])
+#define LastRLEBDM1D(m) ((m)->starts[(m)->nruns-1] - (m)->cumlens[(m)->nruns-2] + (m)->cumlens[(m)->nruns-1] - 1)
 
 void PrintRLEBDM1D(const RLEBDM1D *m);
 

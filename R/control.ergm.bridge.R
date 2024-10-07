@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2023 Statnet Commons
+#  Copyright 2003-2024 Statnet Commons
 ################################################################################
 
 
@@ -24,6 +24,7 @@
 #' @param bridge.nsteps Number of geometric bridges to use.
 #' @param bridge.target.se If not `NULL`, if the estimated MCMC standard error of the likelihood estimate exceeds this, repeat the bridge sampling, accumulating samples.
 #' @param bridge.bidirectional Whether the bridge sampler first bridges from `from` to `to`, then from `to` to `from` (skipping the first burn-in), etc. if multiple attempts are required.
+#' @param drop See [control.ergm()].
 #' @param MCMC.burnin Number of proposals before any MCMC sampling is done. It
 #' typically is set to a fairly large number.
 #' @param MCMC.burnin.between Number of proposals between the bridges; typically, less and less is needed as the number of steps decreases.
@@ -50,6 +51,8 @@ control.ergm.bridge<-function(bridge.nsteps=16, # Number of geometric bridges to
                               bridge.target.se=NULL,
                               bridge.bidirectional = TRUE,
 
+                              drop = TRUE,
+
                               MCMC.burnin=MCMC.interval*128,
                               MCMC.burnin.between=max(ceiling(MCMC.burnin/sqrt(bridge.nsteps)), MCMC.interval*16),
                               MCMC.interval=128,
@@ -60,7 +63,7 @@ control.ergm.bridge<-function(bridge.nsteps=16, # Number of geometric bridges to
                               obs.MCMC.interval=MCMC.interval,
                               obs.MCMC.samplesize=MCMC.samplesize,
 
-                              MCMC.prop=trim_env(~sparse),
+                              MCMC.prop=trim_env(~sparse + .triadic),
                               MCMC.prop.weights="default",
                               MCMC.prop.args=list(),
                               obs.MCMC.prop=MCMC.prop,

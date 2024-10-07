@@ -5,12 +5,9 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2023 Statnet Commons
+#  Copyright 2003-2024 Statnet Commons
 ################################################################################
 
-
-library(statnet.common)
-opttest({
 data(florentine)
 
 run.test <- function() {
@@ -69,5 +66,3 @@ run.test <- function() {
 test_that("undirected network with missing data and dyadic dependence", {
   expect_error(run.test(), NA)
 })
-
-},"undirected network with missing data and dyadic dependence")

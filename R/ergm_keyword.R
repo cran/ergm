@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2023 Statnet Commons
+#  Copyright 2003-2024 Statnet Commons
 ################################################################################
 
 DISPLAY_TEXT_KW_INDEX_MAX_WIDTHS <- list('name'=20, 'short'=8, 'description'=30, 'popular'=8, 'package'=8)
@@ -36,7 +36,7 @@ ergm_keyword <- local({
     if (all(is.null(name), is.null(short), is.null(description), is.null(popular), is.null(package))) {
       return(cache)
     } else if (any(is.null(name), is.null(short), is.null(description), is.null(popular), is.null(package))) {
-      stop("All arguments are needed to register Ergm keyword")
+      stop("All arguments are needed to register ", sQuote("ergm"), " keyword")
     } else if (!is.logical(popular)) {
       stop("Logical value expected for argument 'popular'")
     } else {
@@ -104,7 +104,6 @@ ergm_keyword <- local({
 #'
 #' @name ergmKeyword
 #' @aliases ergm-keywords keywords-ergm ergm.keywords keywords.ergm
-#' @docType package
 #' @description This collects all defined keywords defined for the ERGM and derived packages
 #'
 #' @section Possible keywords defined by the ERGM and derived packages:

@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2023 Statnet Commons
+#  Copyright 2003-2024 Statnet Commons
 ################################################################################
 
 #' Internal Function to Sample Networks and Network Statistics
@@ -34,6 +34,7 @@
 #' \item{networks}{a list of final sampled networks, one for each thread.}
 #' \item{status}{status code, propagated from `ergm_MCMC_slave()`.}
 #' \item{final.interval}{adaptively determined MCMC interval.}
+#' \item{final.effectiveSize}{adaptively determined target ESS (non-trivial if `control$MCMC.effectiveSize` is specified via a matrix).}
 #'
 #' \item{sampnetworks}{If `control$MCMC.save_networks` is set and is
 #' `TRUE`, a list of lists of `ergm_state`s corresponding to the
@@ -248,16 +249,25 @@ ergm_MCMC_sample <- function(state, control, theta=NULL,
       }
 
       best.burnin <- .find_OK_burnin(esteq, control)
-      if(is.na(best.burnin$burnin)){
-        if(verbose>1) message("Can not compute a valid burn-in. Setting burn-in to",interval,".")
-        best.burnin$burnin <- interval
-      }
       burnin.pval <- best.burnin$pval
-      if(is.na(burnin.pval) | burnin.pval <= control$MCMC.effectiveSize.burnin.pval){
+      postburnin.mcmc <- window(esteq, start=start(esteq)+best.burnin$burnin*thin(esteq))
+
+      if(is.na(burnin.pval) || burnin.pval <= control$MCMC.effectiveSize.burnin.pval){
+        if(is.const.sample(postburnin.mcmc)){
+          message("Post-burnin sample is constant; returning.")
+          control.parallel$MCMC.effectiveSize <- eS <- 1
+          break
+        }
         if(verbose>1) message("Selected burn-in ", format(start(esteq)+best.burnin$burnin*thin(esteq), digits=2, scientific=TRUE), " (",round(best.burnin$burnin/niter(esteq)*100,2),"%) p-value = ", format(burnin.pval), " is below the threshold of ",control$MCMC.effectiveSize.burnin.pval,".")
         next
       }
-      postburnin.mcmc <- window(esteq, start=start(esteq)+best.burnin$burnin*thin(esteq))
+
+      if(is.matrix(control$MCMC.effectiveSize)){
+        ## Target effective size determined by covariance matrix.
+        postburnin.var <- var.mcmc.list(postburnin.mcmc)
+        control.parallel$MCMC.effectiveSize <- mean(diag(control$MCMC.effectiveSize%*%postburnin.var))
+        if(verbose>1) message("Variance-based adaptive MCMC set target effective size to ", format(control.parallel$MCMC.effectiveSize), ".")
+      }
       
       eS <- niter(postburnin.mcmc)*nchain(postburnin.mcmc)/attr(spectrum0.mvar(postburnin.mcmc, order.max=control$MCMC.effectiveSize.order.max),"infl")
       
@@ -273,15 +283,17 @@ ergm_MCMC_sample <- function(state, control, theta=NULL,
       }
     }
 
-    if(eS<control.parallel$MCMC.effectiveSize)
+    if(control.parallel$MCMC.effectiveSize > 1 && eS < control.parallel$MCMC.effectiveSize)
       warning("Unable to reach target effective size in iterations alotted.")
 
     for(i in seq_along(outl)){
       if(best.burnin$burnin) sms[[i]] <- sms[[i]][-seq_len(best.burnin$burnin),,drop=FALSE]
       sms[[i]] <- coda::mcmc(sms[[i]], (best.burnin$burnin+1)*interval, thin=interval)
       if(!is.null(nws)) nws[[i]] <- nws[[i]][seq_len(floor(length(nws[[i]])/2))*2+length(nws[[i]])%%2]
-      outl[[i]]$final.interval <- interval
     }
+
+    final.interval <- interval
+    final.effectiveSize <- control.parallel$MCMC.effectiveSize
   }else{
     #################################
     ########## Static MCMC ##########
@@ -294,6 +306,8 @@ ergm_MCMC_sample <- function(state, control, theta=NULL,
     if(control.parallel$MCMC.runtime.traceplot){
       lapply(sms, function(sm) NVL3(theta, ergm.estfun(sm, ., as.ergm_model(state0[[1]])), sm[,!as.ergm_model(state0[[1]])$etamap$offsetmap,drop=FALSE])) %>% lapply(mcmc, start=control.parallel$MCMC.burnin+1, thin=control.parallel$MCMC.interval) %>% as.mcmc.list() %>% window(., thin=thin(.)*max(1,floor(niter(.)/1000))) %>% plot(ask=FALSE,smooth=TRUE,density=FALSE)
     }
+
+    final.effectiveSize <- final.interval <- NULL
   }
 
   #
@@ -303,20 +317,18 @@ ergm_MCMC_sample <- function(state, control, theta=NULL,
   newnetworks <- vector("list", nthreads(control))
   sampnetworks <- if(!is.null(nws)) vector("list", nthreads(control))
 
-  final.interval <- c()
   for(i in (1:nthreads(control))){
     z <- outl[[i]]
     statsmatrices[[i]] <- sms[[i]]
     newnetworks[[i]] <- update(state0[[i]], state=z$state)
     if(!is.null(nws)) sampnetworks[[i]] <- lapply(nws[[i]], function(state) update(state0[[i]], state=state))
-    final.interval <- c(final.interval, z$final.interval)
   }
   
   stats <- as.mcmc.list(statsmatrices)
   if(verbose){message("Sample size = ",niter(stats)*nchain(stats)," by ",
                   niter(stats),".")}
   
-  list(stats = stats, networks=newnetworks, sampnetworks=sampnetworks, status=0, final.interval=final.interval)
+  list(stats = stats, networks=newnetworks, sampnetworks=sampnetworks, status=0, final.interval=final.interval, final.effectiveSize=final.effectiveSize)
 }
 
 #' @rdname ergm_MCMC_sample
@@ -428,7 +440,7 @@ ergm_MCMC_slave <- function(state, eta,control,verbose,..., burnin=NULL, samples
 
   FAIL <- list(burnin=round(nit*control$MCMC.effectiveSize.burnin.max), pval=0)
 
-  bestfits <- unlist(lapply(x, function(chain) lapply(seq_len(p), function(i) fit_decay(chain[,i], c(0,nit*log2(bscl)*8)))), recursive=FALSE) %>% compact
+  bestfits <- lapply(x, function(chain) lapply(seq_len(p), function(i) fit_decay(chain[,i], c(0,nit*log2(bscl)*8)))) %>% unlist(recursive=FALSE) %>% compact
 
   best <- ifelse(sapply(bestfits, function(fit) sd(resid(fit))/sd(fit$y)<1-1/bscl*2),
                  sapply(bestfits, best_burnin.lm),

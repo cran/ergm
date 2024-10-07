@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2023 Statnet Commons
+#  Copyright 2003-2024 Statnet Commons
 ################################################################################
 #==========================================================================
 # This file contains the following 14 functions for computing log likelihoods,
@@ -74,7 +74,7 @@ llik.fun.obs.lognormal <- function(theta, xsim, xsim.obs=NULL,
   mb <- lweighted.mean(basepred,lrowweights(xsim))
   vb <- lweighted.var(basepred,lrowweights(xsim))
   mm <- lweighted.mean(obspred,lrowweights(xsim.obs))
-  vm <- lweighted.var(obspred,lrowweights(xsim.obs))
+  vm <- lweighted.var(obspred,lrowweights(xsim.obs), 0)
 # 
 # This is the log-likelihood ratio (and not its negative)
 #
@@ -135,7 +135,7 @@ llik.hessian.obs.IS <- function(theta, xsim, xsim.obs=NULL,
   osim <- t(ergm.etagradmult(theta, t(xsim.obs), etamap))
   
   # Weighted variance-covariance matrix of estimating functions ~ -Hessian
-  H <- lweighted.var(osim, obspred) - lweighted.var(esim, basepred)
+  H <- lweighted.var(osim, obspred, 0) - lweighted.var(esim, basepred)
 
   dimnames(H) <- list(names(theta), names(theta))
   H

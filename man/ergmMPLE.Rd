@@ -18,7 +18,9 @@ ergmMPLE(
 }
 \arguments{
 \item{formula, constraints, obs.constraints}{An ERGM formula and
-(optional) constraint specification formulas. See \code{\link{ergm}}.}
+(optionally) a constraint specification formulas. See
+\code{\link[=ergm]{ergm()}}. This function supports only dyad-independent
+constraints.}
 
 \item{output}{Character, partially matched. See Value.}
 
@@ -39,7 +41,7 @@ down processing.}
 
 \item{\dots}{Additional arguments, to be passed to lower-level functions.}
 
-\item{basis}{a value (usually a \code{\link{network}}) to override the LHS of the formula.}
+\item{basis}{a value (usually a \code{\link[network:network]{network}}) to override the LHS of the formula.}
 }
 \value{
 If \code{output=="matrix"} (the default), then only the response, predictor,
@@ -78,7 +80,7 @@ To all of the above output types, \code{attr(., "etamap")} is attached
 containing the \link[=ergm.eta]{mapping and offset information}.
 
 If \code{output=="fit"}, then \code{ergmMPLE} simply calls the
-\code{\link{ergm}} function with the \code{estimate="MPLE"} option set,
+\code{\link[=ergm]{ergm()}} function with the \code{estimate="MPLE"} option set,
 returning an object of class \code{ergm} that gives the fitted
 pseudolikelihood model.
 }
@@ -99,7 +101,7 @@ observed network (i.e., each entry is either 0 or 1, depending on whether
 the corresponding edge exists or not).
 
 Using \code{output="matrix"}, note that the result of the fit may be
-obtained from the \code{\link{glm}} function, as shown in the examples
+obtained from the \code{\link[=glm]{glm()}} function, as shown in the examples
 below.
 }
 \examples{
@@ -146,7 +148,7 @@ mplearray$predictor[1:5,1:5,1:3]
 mplearray$weights[1:5,1:5]
 }
 \seealso{
-\code{\link{ergm}}, \code{\link{glm}}
+\code{\link[=ergm]{ergm()}}, \code{\link[=glm]{glm()}}
 }
 \keyword{models}
 \keyword{regression}

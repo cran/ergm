@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2023 Statnet Commons
+#  Copyright 2003-2024 Statnet Commons
 ################################################################################
 
 warning_once <- once(warning)
@@ -18,11 +18,11 @@ warning_once <- once(warning)
 #' `M`. If `p` is a matrix, a value that scales all rows of `p` into
 #' the convex hull of `M` is found.
 #'
-#' @note This is a successor to the deprecated function `is.inCH()`, which
-#' was originally written for the "stepping" algorithm of Hummel et al
-#' (2012). See Krivitsky, Kuvelkar, and Hunter (2022) for detailed
-#' discussion of algorithms used in `is.inCH()` and
-#' `shrink_into_CH()`.
+#' @note This is a successor to the deprecated function `is.inCH()`,
+#'   which was originally written for the "stepping" algorithm of
+#'   \insertCite{HuHu12i;textual}{ergm}. See the updated of
+#'   \insertCite{KrKu23l;textual}{ergm} for detailed discussion of algorithms
+#'   used in `is.inCH()` and `shrink_into_CH()`.
 #'
 #' @param p a \eqn{d}-dimensional vector or a matrix with \eqn{d}
 #'   columns.
@@ -32,33 +32,24 @@ warning_once <- once(warning)
 #'   which to shrink; must be in the interior of the convex hull of
 #'   \eqn{M}, and defaults to its centroid (column means).
 #' @template verbose
+#' @param max_run if there are no decreases in step length in this
+#'   many consecutive test points, conclude that diminishing returns
+#'   have been reached and finish.
 #' @param \dots arguments passed directly to linear program solver.
 #' @param solver a character string selecting which solver to use; by
 #'   default, tries `Rglpk`'s but falls back to `lpSolveAPI`'s.
-#' @return Logical, telling whether \code{p} is (or all rows of
-#'   \code{p} are) in the closed convex hull of the points in
-#'   \code{M}.
 #'
 #' @return The scaling factor described above is
 #'   returned. `shrink_into_CH() >= 1` indicates that all points in
 #'   `p` are in the convex hull of `M`.
 #'
-#' @references
+#' @references \insertAllCited{}
 #'
 #' \url{https://www.cs.mcgill.ca/~fukuda/soft/polyfaq/node22.html}
-#' 
-#' Hummel, R. M., Hunter, D. R., and Handcock, M. S. (2012), Improving
-#' Simulation-Based Algorithms for Fitting ERGMs, *Journal of
-#' Computational and Graphical Statistics*, 21: 920-939.
-#'
-#' Krivitsky, P. N., Kuvelkar, A. R., and Hunter,
-#' D. R. (2022). Likelihood-based Inference for Exponential-Family
-#' Random Graph Models via Linear Programming. *arXiv preprint*
-#' arXiv:2202.03572. \url{https://arxiv.org/abs/2202.03572}
 #'
 #' @keywords internal
 #' @export
-shrink_into_CH <- function(p, M, m = NULL, verbose=FALSE, ..., solver = c("glpk", "lpsolve")) { # Pass extra arguments directly to LP solver
+shrink_into_CH <- function(p, M, m = NULL, verbose = FALSE, max_run = nrow(M), ..., solver = c("glpk", "lpsolve")) { # Pass extra arguments directly to LP solver
   solver <- match.arg(solver)
   verbose <- max(0, min(verbose, 4))
 
@@ -112,10 +103,11 @@ shrink_into_CH <- function(p, M, m = NULL, verbose=FALSE, ..., solver = c("glpk"
     M <- slam::as.simple_triplet_matrix(M)
   }
 
-  if (verbose >= 2) message("Iterating over ", np, " test points.")
+  if (verbose >= 2) message("Iterating over at most ", np, " test points:")
   g <- Inf
+  run <- 0L
   for (i in seq_len(np)) { # Iterate over test points.
-    if (verbose >= 3) message("Test point ", i)
+    message(i, " ", appendLF=FALSE)
     if (all(abs((x <- p[i,])) <= sqrt(.Machine$double.eps))) next # Test point is at centroid. TODO: Allow the user to specify tolerance?
 
     if(solver == "lpsolve"){
@@ -146,10 +138,18 @@ shrink_into_CH <- function(p, M, m = NULL, verbose=FALSE, ..., solver = c("glpk"
       o <- Rglpk::Rglpk_solve_LP(x, M, dir, rhs, list(lower=list(ind=seq_len(d), val=lb)), control=list(..., verbose=max(0,verbose-3)))$optimum
     }
 
+    g.prev <- g
     g <- min(g, abs(-1/o)) # abs() guards against optimum being numerically equivalent to 0 with -1/0 = -Inf.
 
-    if (verbose >= 3) message("Step length is now ", g, ".")
+    if (g < g.prev){
+      if (verbose >= 3) message("|", sprintf("%0.4f", g), "| ", appendLF = FALSE)
+      run <- 0L
+    } else {
+      run <- run + 1L
+      if (run >= max_run) break
+    }
   }
+  if(verbose >= 3) message("")
 
   g
 }

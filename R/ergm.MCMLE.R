@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2023 Statnet Commons
+#  Copyright 2003-2024 Statnet Commons
 ################################################################################
 ############################################################################
 # The <ergm.MCMLE> function provides one of the styles of maximum
@@ -78,6 +78,10 @@ ergm.MCMLE <- function(init, s, s.obs,
   control$MCMC.base.samplesize <- control$MCMC.samplesize
   control$obs.MCMC.base.samplesize <- control$obs.MCMC.samplesize
 
+  adapt <- !is.null(control$MCMC.effectiveSize)
+  adapt.obs.ESS <- obs && adapt && !is.null(control$obs.MCMC.effectiveSize)
+  adapt.obs.var <- obs && adapt && !adapt.obs.ESS
+
   control0 <- control
 
   # Start cluster if required (just in case we haven't already).
@@ -103,9 +107,9 @@ ergm.MCMLE <- function(init, s, s.obs,
     s.obs <- rep(list(s.obs),nthreads(control))
   }
 
-  # A helper function to increase the MCMC sample size and target effective size by the specified factor.
+  ## A helper function to increase the MCMC sample size and target effective size by the specified factor.
   .boost_samplesize <- function(boost, base=FALSE){
-    for(ctrl in c("control", if(obs) "control.obs")){
+    for(ctrl in c("control", if(obs && !adapt.obs.var) "control.obs")){
       control <- get(ctrl, parent.frame())
       sampsize.boost <-
         NVL2(control$MCMC.effectiveSize,
@@ -119,6 +123,19 @@ ergm.MCMLE <- function(init, s, s.obs,
       
       assign(ctrl, control, parent.frame())
     }
+
+    .set_obs_samplesize()
+    NULL
+  }
+
+  ## A helper function to set the variance-based effective size and
+  ## MCMC sample size for the constrained sample.  There is no great
+  ## way to compute the corresponding raw sample size, so we'll just
+  ## set it to the same as the unconstrained.
+  .set_obs_samplesize <- function(){
+    if(!adapt.obs.var) return()
+    control.obs$MCMC.effectiveSize <<- sginv(esteq.var, tol=.Machine$double.eps^(3/4)) * control$MCMC.effectiveSize
+    control.obs$MCMC.samplesize <<- max(control$obs.MCMLE.samplesize.min, ceiling(control$MCMC.samplesize * min(obs.ESS.adj * 1.2, 1))) # Fudge factor
     NULL
   }
 
@@ -133,6 +150,7 @@ ergm.MCMLE <- function(init, s, s.obs,
   mcmc.init <- init
   calc.MCSE <- FALSE
   last.adequate <- FALSE
+  if(adapt.obs.var) obs.ESS.adj <- 1
 
   # ERGM_STATE_ELEMENTS = elements of the ergm_state objects (currently s and s.obs) that need to be saved.
   # STATE_VARIABLES = variables collectively containing the state of the optimizer that would allow it to resume, excluding control lists.
@@ -222,13 +240,30 @@ ergm.MCMLE <- function(init, s, s.obs,
         message_print(colMeans(statsmatrix))
       }
     }
-    
-    ##  Does the same, if observation process:
+
+    ## Compute the sample estimating equations.
+    esteqs <- ergm.estfun(statsmatrices, theta=mcmc.init, model=model)
+    esteq <- as.matrix(esteqs)
+    if(is.const.sample(esteq) && !all(esteq==0))
+      stop("Unconstrained MCMC sampling did not mix at all. Optimization cannot continue.")
+
+    check_nonidentifiability(esteq, NULL, model,
+                             tol = control$MCMLE.nonident.tol, type="statistics",
+                             nonident_action = control$MCMLE.nonident,
+                             nonvar_action = control$MCMLE.nonvar)
+
+    ##  Do the same, if observation process:
     if(obs){
+      if(adapt.obs.var) esteq.var <- var(esteq)
+      .set_obs_samplesize()
+
       if(verbose) message("Starting constrained MCMC...")
       z.obs <- ergm_MCMC_sample(s.obs, control.obs, theta=mcmc.init, verbose=max(verbose-1,0))
-      
-      ## if(z.obs$status==1) stop("Number of edges in the simulated network exceeds that observed by a large factor (",control$MCMC.max.maxedges,"). This is a strong indication of model degeneracy. If you are reasonably certain that this is not the case, increase the MCMLE.density.guard control.ergm() parameter.")
+
+      if(adapt.obs.var){
+        obs.ESS.adj <- z.obs$final.effectiveSize / control$MCMC.effectiveSize
+        if(verbose>1) message("New constrained vs. unconstrained target ESS adjustment factor: ", format(obs.ESS.adj), ".")
+      }
 
       statsmatrices.obs <- z.obs$stats
       s.obs.returned <- z.obs$networks
@@ -258,22 +293,11 @@ ergm.MCMLE <- function(init, s, s.obs,
       save(list=intersect(ls(), INTERMEDIATE_VARIABLES), file=sprintf(control$MCMLE.save_intermediates, iteration))
     }
 
-    # Compute the sample estimating equations and the convergence p-value. 
-    esteqs <- ergm.estfun(statsmatrices, theta=mcmc.init, model=model)
-    esteq <- as.matrix(esteqs)
-    if(isTRUE(all.equal(apply(esteq,2,stats::sd), rep(0,ncol(esteq)), check.names=FALSE))&&!all(esteq==0))
-      stop("Unconstrained MCMC sampling did not mix at all. Optimization cannot continue.")
-
-    check_nonidentifiability(esteq, NULL, model,
-                             tol = control$MCMLE.nonident.tol, type="statistics",
-                             nonident_action = control$MCMLE.nonident,
-                             nonvar_action = control$MCMLE.nonvar)
-
     esteqs.obs <- if(obs) ergm.estfun(statsmatrices.obs, theta=mcmc.init, model=model) else NULL
     esteq.obs <- if(obs) as.matrix(esteqs.obs) else NULL
 
     # Update the interval to be used.
-    if(!is.null(control$MCMC.effectiveSize)){
+    if(adapt){
       control$MCMC.interval <- round(max(z$final.interval/control$MCMLE.effectiveSize.interval_drop,1))
       control$MCMC.burnin <- round(max(z$final.interval*16,16))
       if(verbose) message("New interval = ",control$MCMC.interval,".")
@@ -315,6 +339,8 @@ ergm.MCMLE <- function(init, s, s.obs,
       estdiff <- NVL3(esteq.obs, colMeans(.), 0) - colMeans(esteq)
       pprec <- diag(sqrt(control$MCMLE.MCMC.precision), nrow=length(estdiff))
       Vm <- pprec%*%(cov(esteq) - NVL3(esteq.obs, cov(.), 0))%*%pprec
+      novar <- diag(Vm) <= 0
+      Vm[,novar] <- Vm[novar,] <- 0
       d2 <- xTAx_seigen(estdiff, Vm)
       if(d2<2) last.adequate <- TRUE
     }
@@ -421,7 +447,15 @@ ergm.MCMLE <- function(init, s, s.obs,
           basepred <- sm[,!nochg,drop=FALSE] %*% etadiff[!nochg]
         }
         lw2w <- function(lw){w<-exp(lw-max(lw)); w/sum(w)}
-        hotel <- try(suppressWarnings(approx.hotelling.diff.test(esteqs, esteqs.obs)), silent=TRUE)
+        # Handle a corner case in which none of the constrained sample
+        # statistics vary. Then, Hotelling's test must be performed in
+        # the 1-sample mode.
+        novar.obs <- NVL3(esteq.obs, all(sweep(., 2L, .[1L,], `==`)), FALSE)
+        hotel <- try(suppressWarnings(
+          approx.hotelling.diff.test(esteqs,
+                                     if(!novar.obs) esteqs.obs,
+                                     mu0 = if(novar.obs) esteq.obs[1L,])
+        ), silent=TRUE)
         if(inherits(hotel, "try-error")){ # Within tolerance ellipsoid, but cannot be tested.
           message("Unable to test for convergence; increasing sample size.")
           .boost_samplesize(control$MCMLE.confidence.boost)
@@ -431,7 +465,7 @@ ergm.MCMLE <- function(init, s, s.obs,
           esteq.w <- lw2w(esteq.lw)
           estdiff <- -lweighted.mean(esteq, esteq.lw)
           estcov <- hotel$covariance.x*sum(esteq.w^2)*length(esteq.w)
-          if(obs){
+          if(obs && !novar.obs){
             esteq.obs.lw <- IS.lw(statsmatrix.obs, etadiff)
             esteq.obs.w <- lw2w(esteq.obs.lw)
             estdiff <- estdiff + lweighted.mean(esteq.obs, esteq.obs.lw)
@@ -452,7 +486,7 @@ ergm.MCMLE <- function(init, s, s.obs,
               if(T2nullity && verbose) message("Estimated covariance matrix of the statistics has nullity ", format(T2nullity), ". Effective parameter number adjusted to ", format(T2param), ".")
               nonconv.pval <- .ptsq(T2, T2param, hotel$parameter["df"], lower.tail=FALSE)
               if(verbose) message("Test statistic: T^2 = ", format(T2),", with ",
-                                  format(T2param), " free parameters and ", format(hotel$parameter["df"]), " degrees of freedom.")
+                                  format(T2param), " free parameter(s) and ", format(hotel$parameter["df"]), " degrees of freedom.")
               message("Convergence test p-value: ", fixed.pval(nonconv.pval, 4), ". ", appendLF=FALSE)
               if(nonconv.pval < 1-control$MCMLE.confidence){
                 message("Converged with ",control$MCMLE.confidence*100,"% confidence.")
@@ -504,7 +538,7 @@ ergm.MCMLE <- function(init, s, s.obs,
         last.adequate <- FALSE
         prec.scl <- max(sqrt(mean(prec.loss^2, na.rm=TRUE))/control$MCMLE.MCMC.precision, 1) # Never decrease it.
         
-        if (!is.null(control$MCMC.effectiveSize)) { # ESS-based sampling
+        if (adapt) { # ESS-based sampling
           control$MCMC.effectiveSize <- round(control$MCMC.effectiveSize * prec.scl)
           if(control$MCMC.effectiveSize/control$MCMC.samplesize>control$MCMLE.MCMC.max.ESS.frac) control$MCMC.samplesize <- control$MCMC.effectiveSize/control$MCMLE.MCMC.max.ESS.frac
           # control$MCMC.samplesize <- round(control$MCMC.samplesize * prec.scl)
@@ -516,11 +550,13 @@ ergm.MCMLE <- function(init, s, s.obs,
         }
 
         if(obs){
-          if (!is.null(control.obs$MCMC.effectiveSize)) { # ESS-based sampling
+          if (adapt.obs.ESS) { # ESS-based sampling
             control.obs$MCMC.effectiveSize <- round(control.obs$MCMC.effectiveSize * prec.scl)
             if(control.obs$MCMC.effectiveSize/control.obs$MCMC.samplesize>control.obs$MCMLE.MCMC.max.ESS.frac) control.obs$MCMC.samplesize <- control.obs$MCMC.effectiveSize/control.obs$MCMLE.MCMC.max.ESS.frac
             # control$MCMC.samplesize <- round(control$MCMC.samplesize * prec.scl)
             message("Increasing target constrained MCMC sample size to ", control.obs$MCMC.samplesize, ", ESS to",control.obs$MCMC.effectiveSize,".")
+          } else if(adapt.obs.var){
+            .set_obs_samplesize()
           } else { # Fixed-interval sampling
             control.obs$MCMC.samplesize <- round(control.obs$MCMC.samplesize * prec.scl)
             control.obs$MCMC.burnin <- round(control.obs$MCMC.burnin * prec.scl)

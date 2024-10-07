@@ -9,6 +9,7 @@ control.ergm.bridge(
   bridge.nsteps = 16,
   bridge.target.se = NULL,
   bridge.bidirectional = TRUE,
+  drop = TRUE,
   MCMC.burnin = MCMC.interval * 128,
   MCMC.burnin.between = max(ceiling(MCMC.burnin/sqrt(bridge.nsteps)), MCMC.interval * 16),
   MCMC.interval = 128,
@@ -18,7 +19,7 @@ control.ergm.bridge(
     obs.MCMC.interval * 16),
   obs.MCMC.interval = MCMC.interval,
   obs.MCMC.samplesize = MCMC.samplesize,
-  MCMC.prop = trim_env(~sparse),
+  MCMC.prop = trim_env(~sparse + .triadic),
   MCMC.prop.weights = "default",
   MCMC.prop.args = list(),
   obs.MCMC.prop = MCMC.prop,
@@ -39,6 +40,7 @@ control.logLik.ergm(
   bridge.nsteps = 16,
   bridge.target.se = NULL,
   bridge.bidirectional = TRUE,
+  drop = NULL,
   MCMC.burnin = NULL,
   MCMC.interval = NULL,
   MCMC.samplesize = NULL,
@@ -68,6 +70,8 @@ control.logLik.ergm(
 \item{bridge.target.se}{If not \code{NULL}, if the estimated MCMC standard error of the likelihood estimate exceeds this, repeat the bridge sampling, accumulating samples.}
 
 \item{bridge.bidirectional}{Whether the bridge sampler first bridges from \code{from} to \code{to}, then from \code{to} to \code{from} (skipping the first burn-in), etc. if multiple attempts are required.}
+
+\item{drop}{See \code{\link[=control.ergm]{control.ergm()}}.}
 
 \item{MCMC.burnin}{Number of proposals before any MCMC sampling is done. It
 typically is set to a fairly large number.}
@@ -116,7 +120,7 @@ not be needed outside of very strange setups.}
 \item{term.options}{A list of additional arguments to be passed to term initializers. See \code{\link[=term.options]{? term.options}}.}
 
 \item{seed}{Seed value (integer) for the random number generator.  See
-\code{\link[base]{set.seed}}.}
+\code{\link[=set.seed]{set.seed()}}.}
 
 \item{parallel}{Number of threads in which to run the sampling. Defaults to
 0 (no parallelism). See the entry on \link[=ergm-parallel]{parallel processing}
@@ -127,7 +131,7 @@ are \code{"MPI"} and \code{"PSOCK"}. Defaults to using the \code{parallel}
 package with PSOCK clusters. See \code{\link{ergm-parallel}}}
 
 \item{parallel.version.check}{Logical: If TRUE, check that the version of
-\code{\link[=ergm-package]{ergm}} running on the slave nodes is the same as
+\pkg{ergm} running on the slave nodes is the same as
 that running on the master node.}
 
 \item{parallel.inherit.MT}{Logical: If TRUE, slave nodes and
@@ -158,6 +162,6 @@ the user to selectively override them.
 \seealso{
 \code{\link[=ergm.bridge.llr]{ergm.bridge.llr()}}
 
-\code{\link{logLik.ergm}}
+\code{\link[=logLik.ergm]{logLik.ergm()}}
 }
 \keyword{models}

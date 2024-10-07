@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2023 Statnet Commons
+#  Copyright 2003-2024 Statnet Commons
 ################################################################################
 #=================================================================================
 # This file contains the following 10 diagnostic tools and their helper functions
@@ -16,44 +16,6 @@
 #      <is.mcmc.list.object>
 #      <plot.mcmc.ergm>              <varnames.mcmc>
 #=================================================================================
-
-
-
-#########################################################################
-# The <mcmc.diagnostics.X> functions create diagnostic plots for the
-# MCMC sampled statistics of the ergm X and prints the Raftery-Lewis
-# diagnostics, indicating whether they are sufficient or not; if X is not
-# an ergm, execution will halt
-#
-# --PARAMTERS--
-#   object : an ergm object, that has an MCMC established stats matrix
-#   sample : the name of the component in 'object' to base the diagnosis
-#            on; recognized strings are "observed", "sample", and
-#            "thetasample"; default="sample"
-#   smooth : whether to draw a smooth line through the trace plots;
-#            default=TRUE
-#   maxplot: the maximum number of statistics to plot; default=1000
-#   verbose: whether to print out additional information about the
-#            MCMC runs including lag correlations; default=TRUE
-#   center : whether the samples should be centered on the observed
-#            statistics; default=TRUE
-#   ...    : addtional parameters that are passed to <plot.mcmc.ergm>
-#   main, ylab, xlab: have their usual par-like meanings
-#
-#
-# --IGNORED PARAMETERS--
-#   r      : what percentile of the distribution to estimate; this is
-#            ignored: default=.0125
-#   digits : the number of digits to print; default=6
-#
-# --RETURNED--
-#   raft: a list containing
-#    params          : ?? 
-#    resmatrix       : ??
-#    simvals         :
-#
-##########################################################################
-
 
 
 #' Conduct MCMC diagnostics on a model fit
@@ -69,18 +31,13 @@
 #' @aliases mcmc.diagnostics.default
 #' @param object A model fit object to be diagnosed.
 #' @param \dots Additional arguments, to be passed to plotting functions.
-#' @seealso \code{\link{ergm}}, \code{network} package, \code{coda} package,
-#' \code{\link{summary.ergm}}
+#' @seealso [ergm()], \CRANpkg{network} package, \CRANpkg{coda} package,
+#' [summary.ergm()]
 #' @references
 #' Raftery, A.E. and Lewis, S.M. (1995).  The number of iterations, convergence
 #' diagnostics and generic Metropolis algorithms.  In Practical Markov Chain
 #' Monte Carlo (W.R. Gilks, D.J. Spiegelhalter and S. Richardson, eds.).
 #' London, U.K.: Chapman and Hall.
-#'
-#' This function is based on the \code{coda} package It is based on the the R
-#' function \code{raftery.diag} in \code{coda}.  \code{raftery.diag}, in turn,
-#' is based on the FORTRAN program \code{gibbsit} written by Steven Lewis which
-#' is available from the Statlib archive.
 #' @keywords models
 #' @examples
 #'
@@ -128,20 +85,19 @@ mcmc.diagnostics.default <- function(object, ...) {
 #'   observed network statistics. For that functionality, please use
 #'   the GOF command: \code{gof(object, GOF=~model)}.
 #'
-#'   In fact, an ergm output \code{object} contains the matrix of
-#'   statistics from the MCMC run as component \code{$sample}.  This
-#'   matrix is actually an object of class \code{mcmc} and can be used
-#'   directly in the \code{coda} package to assess MCMC
-#'   convergence. \emph{Hence all MCMC diagnostic methods available in
-#'   \code{coda} are available directly.} See the examples and
-#'   \url{https://www.mrc-bsu.cam.ac.uk/software/bugs/the-bugs-project-winbugs/coda-readme/}.
+#'   In fact, an [ergm()] output object contains the sample of
+#'   statistics from the last MCMC run as element `$sample`. If
+#'   missing data MLE is fit, the corresponding element is named
+#'   `$sample.obs`. These are objects of [`mcmc`] and can be used
+#'   directly in the \CRANpkg{coda} package to assess MCMC
+#'   convergence.
 #'
 #'   More information can be found by looking at the documentation of
-#'   \code{\link{ergm}}.
+#'   [ergm()].
 #'
-#' @param center Logical: If TRUE, center the samples on the observed
+#' @param center Logical: If `TRUE`, center the samples on the observed
 #'   statistics.
-#' @param esteq Logical: If TRUE, for statistics corresponding to
+#' @param esteq Logical: If `TRUE`, for statistics corresponding to
 #'   curved ERGM terms, summarize the curved statistics by their
 #'   negated estimating function values (evaluated at the MLE of any curved
 #'   parameters) (i.e., \eqn{\eta'_{I}(\hat{\theta})\cdot (g_{I}(Y)-g_{I}(y))}
@@ -149,7 +105,7 @@ mcmc.diagnostics.default <- function(object, ...) {
 #'   question), rather than the canonical (sufficient) vectors of the
 #'   curved statistics relative to the observed (\eqn{g_{I}(Y)-g_{I}(y)}).
 #' @param vars.per.page Number of rows (one variable per row) per
-#'   plotting page.  Ignored if \code{latticeExtra} package is not
+#'   plotting page.  Ignored if \CRANpkg{latticeExtra} package is not
 #'   installed.
 #' @param which A character vector specifying which diagnostics to
 #'   plot and/or print. Defaults to all of the below if meaningful:
@@ -255,7 +211,7 @@ mcmc.diagnostics.ergm <- function(object,
       # This can probably be improved.
       if(is.null(sm.obs)){
         cat("\nAre sample statistics significantly different from observed?\n")
-        ds <- colMeans.mcmc.list(sm) - if(!center) object$target.stats else 0
+        ds <- colMeans.mcmc.list(sm) - if(!center) NVL(object$target.stats, object$nw.stats) else 0
         sds <- apply(as.matrix(sm),2,sd)
         ns <- effectiveSize(sm)
 

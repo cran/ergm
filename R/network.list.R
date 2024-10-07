@@ -5,10 +5,10 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2023 Statnet Commons
+#  Copyright 2003-2024 Statnet Commons
 ################################################################################
 #' A convenience container for a list of [`network`] objects, output
-#' by \code{\link{simulate.ergm}} among others.
+#' by [simulate.ergm()] among others.
 #'
 #' @param object,x a `list` of networks or a `network.list` object.
 #' @param ... for `network.list`, additional attributes to be set on
@@ -18,10 +18,9 @@
 #' @export network.list
 network.list <- function(object,...){
   if(any(!sapply(object, is.network))) stop("network.list() takes a list of networks as its first argument.")
-  ddd <- list(...) # FIXME: Use alist here?
-  ns <- names(ddd)
-  for(i in seq_along(ddd)){
-    attr(object, ns[i]) <- ddd[[i]]
+  ns <- ...names()
+  for(i in seq_len(...length())){
+    attr(object, ns[i]) <- ...elt(i)
   }
   class(object) <- c("network.list","list")
   object

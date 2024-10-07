@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2023 Statnet Commons
+#  Copyright 2003-2024 Statnet Commons
 ################################################################################
 
 #NOTE: a number of undocumented terms have been removed from this file
@@ -175,11 +175,6 @@ ergm_cutoff_message <- function(cutoff, term, stat, arg=NULL, opt=NULL){
                )
 }
 
-.spcache.aux <- function(type){
-  type <- toupper(type)
-  trim_env(as.formula(as.call(list(as.name('~'), as.call(list(as.name('.spcache.net'),type=if(type=='ITP')'OTP' else type))))))
-}
-
 nodecov_names <- function(nodecov, prefix=NULL){
   cn <- if(is.matrix(nodecov)){
           cn <- colnames(nodecov)
@@ -203,17 +198,25 @@ ergm_edgecov_args <- function(name, nw, a){
   # Process the arguments
   if(is.network(a$x)){
     if(!is.null(a$attrname) && !a$attrname %in% list.edge.attributes(a$x))
-      ergm_Init_abort("Specified network ", sQuote(deparse1(attr(a,"exprs")$x)), " does not have an edge attribute ", sQuote(a$attrname), ".")
+      ergm_Init_stop("Specified network ", sQuote(deparse1(attr(a,"exprs")$x)), " does not have an edge attribute ", sQuote(a$attrname), ".")
     xm <- as.matrix(a$x, matrix.type="adjacency", a$attrname)
   }else if(is.character(a$x)){
     xm <- get.network.attribute(nw, a$x)
-    if(is.null(xm) || !is.matrix(xm)) ergm_Init_abort("There is no network attribute named ", sQuote(a$x), " or it is not a matrix.")
+    if(is.null(xm) || !(is.matrix(xm) || is.network(xm))) ergm_Init_stop("There is no network attribute named ", sQuote(a$x), " or it is not a matrix or a network.")
     if(is.network(xm)){
-      if(!is.null(a$attrname) && !a$attrname %in% list.edge.attributes(xm)) ergm_Init_abort("Network at attribute named ", sQuote(a$x), " does not have an edge attribute ", sQuote(a$attrname), ".")
+      if(!is.null(a$attrname) && !a$attrname %in% list.edge.attributes(xm)) ergm_Init_stop("Network at attribute named ", sQuote(a$x), " does not have an edge attribute ", sQuote(a$attrname), ".")
       xm <- as.matrix(xm, matrix.type="adjacency", attrname=a$attrname)
       name <- paste(name, a$x, sep=".")
     }
   }else xm <- as.matrix(a$x)
+
+  # Check dimension
+  actual <- dim(xm)
+  expected <-
+    if(is.bipartite(nw)) c(nw %n% "bipartite", network.size(nw) - nw %n% "bipartite")
+    else rep(network.size(nw), 2)
+
+  if(any(actual!=expected)) ergm_Init_stop("Dyadic covariate matrix has dimension ", actual[1], "x", actual[2], ", ", expected[1], "x", expected[2], " expected.")
 
   cn <- if(!is.null(a$attrname)) paste(name, a$attrname, sep = ".")
         else paste(name, if(is.character(a$x)) a$x else deparse1(attr(a,"exprs")$x), sep = ".")
@@ -229,15 +232,15 @@ LEVELS_BASE1 <- NULL
 
 decay_vs_fixed <- function(a, name, no_curved_attrarg=TRUE){
   if(!is.null(a$alpha)){
-    ergm_Init_abort("For consistency with ", sQuote("gw*degree"), " terms, in all ", sQuote("gw*sp"), " and ", sQuote("dgw*sp"), " terms the argument ", sQuote("alpha"), " has been renamed to " ,sQuote("decay"), ".")
+    ergm_Init_stop("For consistency with ", sQuote("gw*degree"), " terms, in all ", sQuote("gw*sp"), " and ", sQuote("dgw*sp"), " terms the argument ", sQuote("alpha"), " has been renamed to " ,sQuote("decay"), ".")
   }
 
   if(a$fixed){
-    if(!attr(a, "missing")["cutoff"]) ergm_Init_warn("When ", sQuote('fixed=TRUE'), " parameter ", sQuote('cutoff'), " has no effect.")
-    if(is.null(a$decay)) ergm_Init_abort("Using ", sQuote('fixed=TRUE'), " requires a decay parameter ", sQuote('decay'), ".")
+    if(!attr(a, "missing")["cutoff"]) ergm_Init_warning("When ", sQuote('fixed=TRUE'), " parameter ", sQuote('cutoff'), " has no effect.")
+    if(is.null(a$decay)) ergm_Init_stop("Using ", sQuote('fixed=TRUE'), " requires a decay parameter ", sQuote('decay'), ".")
   }else{
-    if(!is.null(a$decay)) ergm_Init_warn("When ", sQuote('fixed=FALSE'), " parameter ", sQuote('decay')," has no effect. To specify an initial value for ", sQuote('decay'),", use the ", sQuote('control.ergm()'), " parameter ", sQuote('init='), ".")
-    if(no_curved_attrarg && !is.null(NVL(a$attrname,a$attr))) ergm_Init_abort("Using ", sQuote('fixed=FALSE'), " with an attribute is not implemented at this time. Use ", sQuote('fixed=TRUE'), ".")
+    if(!is.null(a$decay)) ergm_Init_warning("When ", sQuote('fixed=FALSE'), " parameter ", sQuote('decay')," has no effect. To specify an initial value for ", sQuote('decay'),", use the ", sQuote('control.ergm()'), " parameter ", sQuote('init='), ".")
+    if(no_curved_attrarg && !is.null(NVL(a$attrname,a$attr))) ergm_Init_stop("Using ", sQuote('fixed=FALSE'), " with an attribute is not implemented at this time. Use ", sQuote('fixed=TRUE'), ".")
   }
 }
 
@@ -264,10 +267,10 @@ decay_vs_fixed <- function(a, name, no_curved_attrarg=TRUE){
 
   if(length(to)==1 && length(from)>1) to <- rep(to, length(from))
   else if(length(from)==1 && length(to)>1) from <- rep(from, length(to))
-  else if(length(from)!=length(to)) ergm_Init_abort("The arguments of term ", sQuote(termname), " must have arguments either of the same length, or one of them must have length 1.")
+  else if(length(from)!=length(to)) ergm_Init_stop("The arguments of term ", sQuote(termname), " must have arguments either of the same length, or one of them must have length 1.")
 
   to <- ifelse(to==Inf, pmax(from, network.size(nw)) + 1, to)
-  if(any(from>=to)) ergm_Init_abort("Term ", sQuote(termname), " must have ", sQuote("from"), "<", sQuote("to"), ".")
+  if(any(from>=to)) ergm_Init_stop("Term ", sQuote(termname), " must have ", sQuote("from"), "<", sQuote("to"), ".")
 
   emptynwstats<-NULL
   if(!is.null(byarg)) {
@@ -553,7 +556,8 @@ InitErgmTerm.absdiffcat <- function(nw, arglist, ..., version=packageVersion("er
   nodecov <- ergm_get_vattr(attrarg, nw, accept = "numeric")
   attrname <- attr(nodecov, "name")
 
-  u <- sort(unique(as.vector(abs(outer(nodecov,nodecov,"-")))),na.last=NA)
+  unodecov <- unique(nodecov)
+  u <- sort(unique(as.vector(abs(outer(unodecov,unodecov,"-")))),na.last=NA)
   u <- u[u>0]
   
   u <- ergm_attr_levels(a$levels, nodecov, nw, levels = u)
@@ -767,7 +771,7 @@ InitErgmTerm.attrcov <- function (nw, arglist, ..., version=packageVersion("ergm
     nodecov <- c(match(b1nodecov, b1levels), match(b2nodecov, b2levels))
   
     if(NROW(a$mat) != length(b1levels) || NCOL(a$mat) != length(b2levels)) {
-      ergm_Init_abort("mat has wrong dimensions for attr")
+      ergm_Init_stop("mat has wrong dimensions for attr")
     }
   } else {
     nodecov <- ergm_get_vattr(a$attr, nw)
@@ -777,7 +781,7 @@ InitErgmTerm.attrcov <- function (nw, arglist, ..., version=packageVersion("ergm
     nodecov <- match(nodecov, levels)
       
     if(NROW(a$mat) != length(levels) || NCOL(a$mat) != length(levels)) {
-      ergm_Init_abort("mat has wrong dimensions for attr")
+      ergm_Init_stop("mat has wrong dimensions for attr")
     }
   }
   
@@ -1262,7 +1266,7 @@ InitErgmTerm.b1starmix <- function(nw, arglist, ..., version=packageVersion("erg
   # Recode to numeric
   nodecov <- match(nodecov,u,nomatch=length(u)+1)
   if (length(a$k) > 1) 
-    { ergm_Init_abort("Only a single scalar k may be used with each b1starmix term") }
+    { ergm_Init_stop("Only a single scalar k may be used with each b1starmix term") }
   b1namescov <- sort(unique(nodecov[1:nb1]))
   b2namescov <- sort(unique(nodecov[(1+nb1):network.size(nw)]))
   b1nodecov <- match(nodecov[1:nb1],b1namescov)
@@ -1841,7 +1845,7 @@ InitErgmTerm.b2starmix <- function(nw, arglist, ..., version=packageVersion("erg
   # Recode to numeric
   nodecov <- match(nodecov,u,nomatch=length(u)+1)
   if (length(a$k) > 1) 
-    { ergm_Init_abort("Only a single scalar k may be used with each b2starmix term") }
+    { ergm_Init_stop("Only a single scalar k may be used with each b2starmix term") }
   b1namescov <- sort(unique(nodecov[1:nb1]))
   b2namescov <- sort(unique(nodecov[(1+nb1):network.size(nw)]))
   b1nodecov <- match(nodecov[1:nb1],b1namescov)
@@ -2172,22 +2176,22 @@ InitErgmTerm.cycle <- function(nw, arglist, ...) {
                      required = c(TRUE,FALSE))
   ### Process the arguments
   if(any(a$k > network.size(nw))) {
-    ergm_Init_warn("cycles of length greater than the network size cannot exist and their statistics will be omitted")
+    ergm_Init_warning("cycles of length greater than the network size cannot exist and their statistics will be omitted")
     a$k <- a$k[a$k <= network.size(nw)]
   }
 
   if(!is.directed(nw) && any(a$k < 3)) {
-    ergm_Init_warn("cycles of length less than 3 cannot exist in an undirected network and their statistics will be omitted")
+    ergm_Init_warning("cycles of length less than 3 cannot exist in an undirected network and their statistics will be omitted")
     a$k <- a$k[a$k >= 3]  
   }
 
   if(any(a$k < 2)) {
-    ergm_Init_warn("cycles of length less than 2 cannot exist and their statistics will be omitted")
+    ergm_Init_warning("cycles of length less than 2 cannot exist and their statistics will be omitted")
     a$k <- a$k[a$k >= 2]
   }
   
   if(is.directed(nw) && a$semi && any(a$k == 2)) {
-    ergm_Init_warn("semicycles of length 2 are not currently supported and their statistics will be omitted")
+    ergm_Init_warning("semicycles of length 2 are not currently supported and their statistics will be omitted")
     a$k <- a$k[a$k >= 3]  
   }
 
@@ -2483,10 +2487,10 @@ InitErgmTerm.diff <- function(nw, arglist, ..., version=packageVersion("ergm")) 
   sign.action <- match.arg(tolower(a$sign.action), SIGN.ACTIONS)
   sign.code <- match(sign.action, SIGN.ACTIONS)
 
-  if(sign.action!="abs" && !is.directed(nw) && !is.bipartite(nw)) ergm_Init_inform(paste("Note that behavior of term diff() on unipartite, undirected networks may be unexpected. See", sQuote("ergmTerm?diff"),"for more information."))
+  if(sign.action!="abs" && !is.directed(nw) && !is.bipartite(nw)) ergm_Init_message("Note that behavior of term ", sQuote("diff()"), " on unipartite, undirected networks may be unexpected. See", sQuote("ergmTerm?diff"),"for more information.")
   
   # 1 and 4 are sign codes that allow negative differences.
-  if(sign.code %in% c(1, 4) &&  a$pow!=round(a$pow)) ergm_Init_abort("In term diff(attr, pow, sign=",a$sign,"), pow must be an integer.")
+  if(sign.code %in% c(1, 4) &&  a$pow!=round(a$pow)) ergm_Init_stop("In term diff(attr, pow, sign=",a$sign,"), pow must be an integer.")
   
   ### Construct the list to return
   list(name="diff",                                     #name: required
@@ -2538,7 +2542,7 @@ InitErgmTerm.dyadcov<-function (nw, arglist, ...) {
    # DH:  Since nw is directed, why are we testing for symmetry here?  
    if (any(xm[upper.tri(xm)]!=t(xm)[upper.tri(xm)])){
      xm[lower.tri(xm)]<-t(xm)[lower.tri(xm)]
-     ergm_Init_warn("asymmetric covariate in dyadcov; using upper triangle only")
+     ergm_Init_warning("asymmetric covariate in dyadcov; using upper triangle only")
    }
    coef.names <- paste(cn, c("mutual","utri","ltri"),sep=".")
   }else{
@@ -2928,7 +2932,7 @@ InitErgmTerm.hamming<-function (nw, arglist, ...) {
       covm<-as.matrix(a$cov)
     }
     if (is.null(covm) || !is.matrix(covm) || NCOL(covm)!=3){
-      ergm_Init_abort("Improper dyadic covariate passed to hamming()")
+      ergm_Init_stop("Improper dyadic covariate passed to hamming()")
     }
     emptynwstats <- sum(apply(xm, 1, function(a,b) sum(b[(a[1]==b[,1] & a[2]==b[,2]),3]), covm))
     if (is.null(a$defaultweight))
@@ -2986,7 +2990,7 @@ InitErgmTerm.hammingmix<-function (nw, arglist, ..., version=packageVersion("erg
   x<-a$x
 
   if (a$contrast) {
-    ergm_Init_abort("The 'contrast' argument of the hammingmix term is deprecated.  Use 'levels2' instead")
+    ergm_Init_stop("The 'contrast' argument of the hammingmix term is deprecated.  Use 'levels2' instead")
   }
   if(is.network(x)){
     xm<-as.edgelist(x)
@@ -2999,7 +3003,7 @@ InitErgmTerm.hammingmix<-function (nw, arglist, ..., version=packageVersion("erg
     x<-paste(quote(x))
   }
   if (is.null(xm) || ncol(xm)!=2){
-    ergm_Init_abort("hammingmix() requires an edgelist")
+    ergm_Init_stop("hammingmix() requires an edgelist")
   }
 
   nodecov <- ergm_get_vattr(attrarg, nw)
@@ -3431,7 +3435,7 @@ InitErgmTerm.localtriangle<-function (nw, arglist, ...) {
   else
     xm<-as.matrix(x)
   if(!isSymmetric(xm)){
-    ergm_Init_warn("localtriangle requires an undirected neighborhood. Using only mutual ties.")
+    ergm_Init_warning("localtriangle requires an undirected neighborhood. Using only mutual ties.")
     xm <- pmin(xm[],(t(xm))[])
   }
   if(!is.null(attrname))
@@ -3718,7 +3722,7 @@ InitErgmTerm.mutual<-function (nw, arglist, ..., version=packageVersion("ergm"))
     if (!is.null(a$same)) {
      attrarg <- a$same
      if (!is.null(a$by)) 
-       ergm_Init_warn("Ignoring 'by' argument to mutual because 'same' exists")
+       ergm_Init_warning("Ignoring 'by' argument to mutual because 'same' exists")
     }else{
      attrarg <- a$by
     }
@@ -4215,7 +4219,7 @@ InitErgmTerm.nodemix<-function (nw, arglist, ..., version=packageVersion("ergm")
 
   ### Process the arguments
   if (is.bipartite(nw) && is.directed(nw)) {
-    ergm_Init_abort("Directed bipartite networks are not currently possible")
+    ergm_Init_stop("Directed bipartite networks are not currently possible")
   }
 
   nodecov <- ergm_get_vattr(attrarg, nw)
@@ -4273,6 +4277,7 @@ InitErgmTerm.nodemix<-function (nw, arglist, ..., version=packageVersion("ergm")
       indmat[as.matrix(u)] <- seq_len(NROW(u)) + length(cn)
 
       namescov <- c(b1namescov, b2namescov)
+      u[,2L] <- u[,2L] + nr
       cn <- c(cn, paste("mix", paste(attrname,collapse="."), apply(matrix(namescov[as.matrix(u)],ncol=2),
                                          1,paste,collapse="."), sep="."))
     }
@@ -4906,7 +4911,7 @@ InitErgmTerm.smalldiff<-function (nw, arglist, ..., version=packageVersion("ergm
   
   cutoff <- a$cutoff
   if (length(cutoff)>1)
-    ergm_Init_abort("cutoff for smalldiff() must be a scalar.")
+    ergm_Init_stop("cutoff for smalldiff() must be a scalar.")
 
   nodecov <- ergm_get_vattr(attrarg, nw, accept="numeric")
   attrname <- attr(nodecov, "name")
@@ -5081,7 +5086,7 @@ InitErgmTerm.threetrail <- function(nw, arglist, ..., version=packageVersion("er
 #' @usage
 #' # binary: threepath(keep=NULL, levels=NULL)
 InitErgmTerm.threepath <- function(nw, arglist, ..., version=packageVersion("ergm")) {
-  ergm_Init_warn(paste("This term is inaccurately named and actually refers to a '3-trail' in that it counts repeated vertices: i-j-k-i is a 3-trail but not a 3-path. See", sQuote("ergmTerm?treepath"), "help for more information. This name has been deprecated and will be removed in a future version: if a 3-trail is what you want, use the term 'threetrail'."))
+  ergm_Init_warning("This term is inaccurately named and actually refers to a '3-trail' in that it counts repeated vertices: i-j-k-i is a 3-trail but not a 3-path. See ", sQuote("ergmTerm?treepath"), " help for more information. This name has been deprecated and will be removed in a future version: if a 3-trail is what you want, use the term ", sQuote("threetrail"), ".")
 
   f <- InitErgmTerm.threetrail
   f(nw, arglist, ..., version=version)

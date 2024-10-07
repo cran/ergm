@@ -5,10 +5,8 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2023 Statnet Commons
+#  Copyright 2003-2024 Statnet Commons
 ################################################################################
-
-library(statnet.common)
 
 load("testnet3d.RData")
 
@@ -69,8 +67,6 @@ test_that("Standard-normal-reference ERGM with mutuality by correlation", {
   expect_error(run.stdnormal.test(), NA)
 })
 
-opttest({
-
 set.seed(0)
 
 ## DiscUnif-reference
@@ -126,5 +122,3 @@ test_that("Continuous-uniform-reference ERGM with minimum of -1 and maxium of 5"
     expect_gte(test$p.value, 0.001)
   }
 })
-
-}, "continuous uniform reference")

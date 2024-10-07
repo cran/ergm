@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2023 Statnet Commons
+#  Copyright 2003-2024 Statnet Commons
 ################################################################################
 #===================================================================
 # This file contains the following 3 files for penalized glm fits
@@ -148,7 +148,8 @@ ergm.pen.glm <- function(formula,
   fit
 }
 
-
+#' @noRd
+#' @exportS3method NULL
 model.matrix.pen.glm <- function(object, ...)
 {
 	object$model.matrix

@@ -5,18 +5,14 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2023 Statnet Commons
+#  Copyright 2003-2024 Statnet Commons
 ################################################################################
 
-library(statnet.common)
-opttest({
-
-options(ergm.eval.loglik=FALSE)
+o <- options(ergm.eval.loglik=FALSE)
 data(florentine)
 
 test_that("runtime diagnostics", {
   expect_error(ergm(flomarriage ~ kstar(1:2) + absdiff("wealth") + triangle,
                control=control.ergm(MCMC.runtime.traceplot=TRUE)), NA)
 })
-
-}, "runtime diagnostics")
+options(o)

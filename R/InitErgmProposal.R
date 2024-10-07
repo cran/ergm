@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2023 Statnet Commons
+#  Copyright 2003-2024 Statnet Commons
 ################################################################################
 #===========================================================================
 # The <InitErgmProposal> file contains the following 24 functions for
@@ -232,7 +232,7 @@ NULL
 InitErgmProposal.CondOutDegree <- function(arguments, nw) {
   proposal <- list(name = "CondOutDegree", inputs=NULL)
   if (!is.directed(nw)) # Really, this should never trigger, since the InitErgmConstraint function should check.
-    ergm_Init_abort("The CondOutDegree proposal function does not work with an",
+    ergm_Init_stop("The CondOutDegree proposal function does not work with an",
           "undirected network.")
   proposal
 }
@@ -247,7 +247,7 @@ NULL
 InitErgmProposal.CondInDegree <- function(arguments, nw) {
   proposal <- list(name = "CondInDegree", inputs=NULL)
   if (!is.directed(nw)) # Really, this should never trigger, since the InitErgmConstraint function should check.
-    ergm_Init_abort("The CondInDegree proposal function does not work with an",
+    ergm_Init_stop("The CondInDegree proposal function does not work with an",
           "undirected network.")
   proposal
 }
@@ -263,7 +263,7 @@ NULL
 InitErgmProposal.CondB1Degree <- function(arguments, nw) {
   proposal <- list(name = "CondB1Degree", inputs=NULL)
   if (!is.bipartite(nw)) # Really, this should never trigger, since the InitErgmConstraint function should check.
-    ergm_Init_abort("The CondB1Degree proposal function does not work with a non-bipartite network.")
+    ergm_Init_stop("The CondB1Degree proposal function does not work with a non-bipartite network.")
   
   proposal
 }
@@ -279,7 +279,7 @@ NULL
 InitErgmProposal.CondB2Degree <- function(arguments, nw) {
   proposal <- list(name = "CondB2Degree", inputs=NULL)
   if (!is.bipartite(nw)) # Really, this should never trigger, since the InitErgmConstraint function should check.
-    ergm_Init_abort("The CondB2Degree proposal function does not work with a non-bipartite network.")
+    ergm_Init_stop("The CondB2Degree proposal function does not work with a non-bipartite network.")
   proposal
 }
 
@@ -294,7 +294,7 @@ NULL
 InitErgmProposal.CondDegreeDist <- function(arguments, nw) {
   proposal <- list(name = "CondDegreeDist", inputs=NULL)
   if (is.directed(nw)) {
-    ergm_Init_warn("Using the 'degreedist' constraint with a directed network ",
+    ergm_Init_warning("Using the 'degreedist' constraint with a directed network ",
           "is currently perilous.  We recommend that you use 'outdegree' or ",
           "'idegrees' instead.")
   }
@@ -314,7 +314,7 @@ NULL
 InitErgmProposal.CondInDegreeDist <- function(arguments, nw) {
   proposal <- list(name = "CondInDegreeDist", inputs=NULL)
   if (!is.directed(nw)) {
-    ergm_Init_warn("Using the 'idegreedist' constraint with an undirected network ",
+    ergm_Init_warning("Using the 'idegreedist' constraint with an undirected network ",
           "is currently perilous.  We recommend that you use 'degreedist' ",
           " instead.")
   }
@@ -334,7 +334,7 @@ NULL
 InitErgmProposal.CondOutDegreeDist <- function(arguments, nw) {
   proposal <- list(name = "CondOutDegreeDist", inputs=NULL)
   if (!is.directed(nw)) {
-    ergm_Init_warn("Using the 'odegreedist' constraint with an undirected network n",
+    ergm_Init_warning("Using the 'odegreedist' constraint with an undirected network n",
           "is currently perilous.  We recommend that you use 'degreedist' ",
           " instead.")
   }
@@ -386,4 +386,26 @@ InitErgmProposal.HammingTNT <- function(arguments, nw) {
     proposal$name <- "BipartiteHammingTNT"
   }
   proposal
+}
+
+#' @templateVar name SPDyad
+#' @aliases InitErgmProposal.SPDyad
+#' @title A proposal alternating between TNT and a triad-focused
+#'   proposal
+#' @description The specified proportion of the time, the proposal
+#'   proceeds along the lines of \insertCite{WaAt13a;textual}{ergm}, albeit
+#'   with different weighting. A dyad is selected uniformly at random
+#'   from among those dyads with at least one shared partnership or
+#'   transitivity of the specified type.
+#'
+#' @references \insertAllCited{}
+#'
+#' @template ergmProposal-general
+NULL
+InitErgmProposal.SPDyad <- function(arguments, nw) {
+  list(name = "SPDyad",
+       inputs = c(NVL(arguments$constraints$triadic$triFocus,0.25)),
+       iinputs = SPTYPE_CODE[arguments$constraints$triadic$type],
+       auxiliaries = .spcache.aux(arguments$constraints$triadic$type),
+       dyadgen = ergm_dyadgen_select(arguments, nw), bd = ergm_bd_init(arguments, nw))
 }

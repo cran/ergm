@@ -5,7 +5,7 @@
  *  open source, and has the attribution requirements (GPL Section 7) at
  *  https://statnet.org/attribution .
  *
- *  Copyright 2003-2023 Statnet Commons
+ *  Copyright 2003-2024 Statnet Commons
  */
 #ifndef _ERGM_BLOCK_H_
 #define _ERGM_BLOCK_H_
@@ -29,7 +29,7 @@ typedef struct {
 } Block;
 
 static inline Block *BlockInitialize(NodeList *tails, NodeList *heads, int diagonal, int directed) {
-  Block *block = Calloc(1, Block);
+  Block *block = R_Calloc(1, Block);
   block->tails = tails;
   block->heads = heads;
   block->diagonal = diagonal;
@@ -38,7 +38,7 @@ static inline Block *BlockInitialize(NodeList *tails, NodeList *heads, int diago
 }
 
 static inline void BlockDestroy(Block *block) {
-  Free(block);
+  R_Free(block);
 }
 
 static inline void BlockPut2Dyad(Vertex *tail, Vertex *head, Dyad dyadindex, Block *block) {
@@ -49,7 +49,7 @@ static inline void BlockPut2Dyad(Vertex *tail, Vertex *head, Dyad dyadindex, Blo
     if(block->directed) {
       dyadindex /= 2;
     }
-    tailindex = dyadindex / block->tails->length;
+    tailindex = dyadindex / (block->heads->length - 1);
     headindex = dyadindex % (block->heads->length - 1);
     if(tailindex == headindex) {
       headindex = block->heads->length - 1;

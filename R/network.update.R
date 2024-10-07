@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2023 Statnet Commons
+#  Copyright 2003-2024 Statnet Commons
 ################################################################################
 #============================================================================
 # This file contains the following 3 functions used to update networks:
@@ -51,7 +51,7 @@
 #' 
 #' @param matrix.type One of `"adjacency"` or `"edgelist"` telling
 #'   which type of matrix \code{new} is.  Default is to use the
-#'   \code{\link[network]{which.matrix.type}} function.
+#'   [which.matrix.type()] function.
 #' 
 #' @param attrname For a network with edge weights gives the name of
 #'   the edge attribute whose names to set.

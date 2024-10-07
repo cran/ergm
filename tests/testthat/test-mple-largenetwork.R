@@ -5,11 +5,9 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2023 Statnet Commons
+#  Copyright 2003-2024 Statnet Commons
 ################################################################################
 
-library(statnet.common)
-opttest({
 # Note:  n can be made larger if a more stringent test is desired
 
 # First, a test for sparse networks with n edges, so the
@@ -37,4 +35,3 @@ for(n in 500) { # n should be a multiple of 100
     expect_equal(coef(e), eta, tolerance=0.0001, ignore_attr=TRUE)
   })
 }
-},"MPLE for large networks")

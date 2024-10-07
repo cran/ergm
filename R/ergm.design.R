@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2023 Statnet Commons
+#  Copyright 2003-2024 Statnet Commons
 ################################################################################
 #################################################################################
 # The <ergm.design> function functions as <ergm.Cprepare> would, but acts on the
@@ -40,7 +40,7 @@
 #' @param nw a [`network`] object.
 #' @param ... term options.
 #'
-#' @return \code{ergm.design} returns a \code{\link{rlebdm}} of
+#' @return \code{ergm.design} returns a [`rlebdm`] of
 #'   informative (non-missing, non fixed) dyads.
 #' @export ergm.design
 ergm.design <- function(nw, ...){

@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2023 Statnet Commons
+#  Copyright 2003-2024 Statnet Commons
 ################################################################################
 ##################################################################################
 # The <ergm.estimate> function searches for and returns a maximizer of the
@@ -139,7 +139,7 @@ ergm.estimate<-function(init, model, statsmatrices, statsmatrices.obs=NULL,
       V.obs <- tmp$cov
     }else{
       av.obs <- lweighted.mean(xsim.obs, lrowweights(xsim.obs))
-      V.obs <- lweighted.var(xsim.obs, lrowweights(xsim.obs))
+      V.obs <- lweighted.var(xsim.obs, lrowweights(xsim.obs), 0)
     }
 
     xobs <- av.obs - av
@@ -337,9 +337,12 @@ ergm.estimate<-function(init, model, statsmatrices, statsmatrices.obs=NULL,
                         eta0=eta0, etamap=etamap.no
                         )
     }
-    
+
+    invHessian <- try(sginv(-Lout$hessian, tol=.Machine$double.eps^(3/4)), TRUE)
+    if(inherits(invHessian, "try-error")) invHessian <- Lout$hessian[] <- NA # Hessian non-SNND.
+
     covar <- matrix(NA, ncol=length(theta), nrow=length(theta))
-    covar[!model$etamap$offsettheta, !model$etamap$offsettheta] <- sginv(-Lout$hessian, tol=.Machine$double.eps^(3/4))
+    covar[!model$etamap$offsettheta, !model$etamap$offsettheta] <- invHessian
     dimnames(covar) <- list(names(theta),names(theta))
     He <- matrix(NA, ncol=length(theta), nrow=length(theta))
     He[!model$etamap$offsettheta, !model$etamap$offsettheta] <- Lout$hessian
@@ -351,11 +354,12 @@ ergm.estimate<-function(init, model, statsmatrices, statsmatrices.obs=NULL,
       mcse.metric <-
         if ((metric == "lognormal" || metric == "Likelihood") && length(model$etamap$curved) == 0) "lognormal"
         else "IS"
-      mc.cov <- ergm.MCMCse(model = model, theta = theta, init = init,
-                            statsmatrices = statsmatrices,
-                            statsmatrices.obs = statsmatrices.obs,
-                            H = V, H.obs = V.obs,
-                            metric = mcse.metric)
+      mc.cov <- ERRVL(try(ergm.MCMCse(model = model, theta = theta, init = init,
+                                      statsmatrices = statsmatrices,
+                                      statsmatrices.obs = statsmatrices.obs,
+                                      H = V, H.obs = V.obs,
+                                      metric = mcse.metric)),
+                      matrix(NA, length(theta), length(theta), dimnames=list(names(theta),names(theta))))
     }
 
     # Output results as ergm-class object

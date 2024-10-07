@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2023 Statnet Commons
+#  Copyright 2003-2024 Statnet Commons
 ################################################################################
 
 SUPPORTED_TERM_TYPES <- c('ergmTerm', 'ergmConstraint', 'ergmReference', 'ergmHint', 'ergmProposal')
@@ -270,7 +270,7 @@ ergmTermCache <- local({
 .buildProposalsList <- function(proposal) {
   proposals <- ergmTermCache("ergmProposal")
   if (!missing(proposal)) {
-    proposals <- proposals[[paste0(proposal, '-ergmProposal')]]$rules
+    proposals <- proposals[[paste0(proposal)]]$rules
   } else {
     proposals <- proposals %>% map("rules") %>% flatten()
   }
@@ -415,7 +415,7 @@ PROPOSAL_NOT_IN_TABLE <- "This proposal is not referenced in the lookup table."
 }
 
 # output listings of terms, grouped by keywords
-#' @importFrom magrittr "%>%" "%<>%"
+#' @importFrom magrittr %>% %<>%
 .formatIndexText <- function(df) {
   if(is.null(df)) return(NULL)
 
@@ -717,7 +717,7 @@ search.ergmTermType <-function(term.type, search, net, keywords, name, packages)
 #' optionally restricting by additional keywords and search term
 #' matches.
 #' 
-#' Uses \code{\link{grep}} internally to match the search terms against the term
+#' Uses [grep()] internally to match the search terms against the term
 #' description, so \code{search} is currently matched as a single phrase.
 #' Keyword tags will only return a match if all of the specified tags are
 #' included in the term.
@@ -738,7 +738,7 @@ search.ergmTermType <-function(term.type, search, net, keywords, name, packages)
 #' @author skyebend@uw.edu
 #' @seealso See also [`ergmTerm`],
 #' [`ergmConstraint`], [`ergmReference`], [`ergmHint`], and
-#' [`ergmProposal`], for lists of terms and term-alikes visible to \pkg{ergm}.
+#' [`ergmProposal`], for lists of terms and term-alikes visible to \CRANpkg{ergm}.
 #' @examples
 #' \donttest{
 #' # find all of the terms that mention triangles

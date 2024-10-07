@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2023 Statnet Commons
+#  Copyright 2003-2024 Statnet Commons
 ################################################################################
 # Save the cluster we are in charge of.
 ergm.cluster.started <- local({
@@ -196,11 +196,11 @@ NULL
 #' @rdname ergm-parallel
 #' @description The \code{ergm.getCluster} function is usually called
 #'   internally by the ergm process (in
-#'   \code{\link{ergm_MCMC_sample}}) and will attempt to start the
+#'   [ergm_MCMC_sample()]) and will attempt to start the
 #'   appropriate type of cluster indicated by the
-#'   \code{\link{control.ergm}} settings. It will also check that the
+#'   [control.ergm()] settings. It will also check that the
 #'   same version of `ergm` is installed on each node.
-#' @param control a \code{\link{control.ergm}} (or similar) list of
+#' @param control a [control.ergm()] (or similar) list of
 #'   parameter values from which the parallel settings should be read;
 #'   can also be [`NULL`], in which case an existing cluster is used
 #'   if started, or no cluster otherwise.

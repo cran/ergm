@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2023 Statnet Commons
+#  Copyright 2003-2024 Statnet Commons
 ################################################################################
 #' Global options and term options for the `ergm` package
 #'
@@ -19,7 +19,7 @@
 #' 
 #' \item{`ergm.loglik.warn_dyads = TRUE`}{Whether log-likelihood evaluation should issue a warning when the effective number of dyads that can vary in the sample space is poorly defined, such as if the degree sequence is constrained.}
 #' 
-#' \item{`ergm.cluster.retries = 5`}{\pkg{ergm}'s parallel routines implement rudimentary fault-tolerance. This option controls the number of retries for a cluster call before giving up.}
+#' \item{`ergm.cluster.retries = 5`}{\CRANpkg{ergm}'s parallel routines implement rudimentary fault-tolerance. This option controls the number of retries for a cluster call before giving up.}
 #' 
 #' \item{`ergm.term = list()`}{The default term options below.}
 #' 

@@ -5,12 +5,9 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2023 Statnet Commons
+#  Copyright 2003-2024 Statnet Commons
 ################################################################################
 # Simulate a network with a high number of nodes with outdegree=3 and a low number with indegree=3:
-
-library(statnet.common)
-opttest({
 
 data(sampson)
 
@@ -19,5 +16,3 @@ test_that("extreme outdegree and indegree simulation test", {
   s <- summary(m~odegree(3)+idegree(3))
   expect_lt(diff(s), 0)
 })
-
-}, "")

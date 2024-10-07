@@ -5,8 +5,8 @@
 \alias{network.list}
 \alias{print.network.list}
 \alias{summary.network.list}
-\title{A convenience container for a list of \code{\link{network}} objects, output
-by \code{\link{simulate.ergm}} among others.}
+\title{A convenience container for a list of \code{\link[network:network]{network}} objects, output
+by \code{\link[=simulate.ergm]{simulate.ergm()}} among others.}
 \usage{
 network.list(object, ...)
 
@@ -34,8 +34,8 @@ lower-level functions.}
 \item{net.summary}{Logical: If TRUE, print network summaries.}
 }
 \description{
-A convenience container for a list of \code{\link{network}} objects, output
-by \code{\link{simulate.ergm}} among others.
+A convenience container for a list of \code{\link[network:network]{network}} objects, output
+by \code{\link[=simulate.ergm]{simulate.ergm()}} among others.
 }
 \section{Methods (by generic)}{
 \itemize{
@@ -63,5 +63,5 @@ summary(g.sim)
 
 }
 \seealso{
-\code{\link{simulate.ergm}}
+\code{\link[=simulate.ergm]{simulate.ergm()}}
 }

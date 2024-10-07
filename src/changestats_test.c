@@ -5,7 +5,7 @@
  *  open source, and has the attribution requirements (GPL Section 7) at
  *  https://statnet.org/attribution .
  *
- *  Copyright 2003-2023 Statnet Commons
+ *  Copyright 2003-2024 Statnet Commons
  */
 #include "ergm_edgetree.h"
 #include "ergm_changestat.h"
@@ -81,9 +81,9 @@ C_CHANGESTAT_FN(c_disc_inter_union_net_Network){
 }
 
 C_CHANGESTAT_FN(c_disc_inter_union_net_DyadSet){
-  GET_AUX_STORAGE_NUM(StoreDyadSetAndRefEL, dstorage, 0);
-  GET_AUX_STORAGE_NUM(StoreDyadSetAndRefEL, istorage, 1);
-  GET_AUX_STORAGE_NUM(StoreDyadSetAndRefEL, ustorage, 2);
+  GET_AUX_STORAGE_NUM(StoreStrictDyadSetAndRefEL, dstorage, 0);
+  GET_AUX_STORAGE_NUM(StoreStrictDyadSetAndRefEL, istorage, 1);
+  GET_AUX_STORAGE_NUM(StoreStrictDyadSetAndRefEL, ustorage, 2);
 
   int refedge = dEdgeListSearch(tail, head, INPUT_PARAM)!=0;
   
