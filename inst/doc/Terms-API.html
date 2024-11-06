@@ -61,7 +61,7 @@ div.sourceCode { overflow: auto; }
 }
 @media print {
 pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
 }
 pre.numberSource code
 { counter-reset: source-line 0; }
@@ -596,7 +596,10 @@ function was found is assumed.</p>
 addition of this term to the model induces dyadic-dependence; if all
 terms (ignoring auxiliaries) have <code>dependence</code> set to
 <code>FALSE</code>, the model is inferred to be dyad-independent; if not
-specified, <code>TRUE</code> is assumed.</p>
+specified, <code>TRUE</code> is assumed. A special value of
+<code>NA</code> infers dependence from the auxiliaries used by the term:
+if all of its auxiliaries are independent, then the term is
+independent.</p>
 <p><code>emptynwstats</code>: a numeric vector of length <span class="math inline">\(p\)</span> providing the value of the statistic if
 evaluated on an empty network; if not specified or NULL, assumed to be a
 vector of zeros. (See <code>InitErgmTerm.degree()</code> in
@@ -622,6 +625,20 @@ numeric vector of length <code>n</code> containing <span class="math inline">\(\
 <code>map</code> and returning the gradient of <code>map</code> (<span class="math inline">\(\eta&#39;(\theta)\)</span>) as a <span class="math inline">\(q\times p\)</span> numeric matrix.</p>
 <p><code>cov</code>: an optional arbitrary data structure that if
 present is passed to <code>map</code> and <code>gradient</code>.</p>
+<p>If the term has an extended state (such as used by the dynamic
+simulation of <code>tergm</code>), it should also provide the
+following:</p>
+<p><code>ext.encode</code>: a function taking two arguments,
+<code>el</code> (an edge list) and <code>nw0</code> (a
+<code>network</code> without edges) and returning an arbitrary
+<code>R</code> data structure encoding the additional information about
+<code>nw0</code>.</p>
+<p><code>ext.decode</code>: a function taking three arguments, an
+encoded extended state (typically created on the <code>C</code> side by
+the <code>w_</code> function), <code>el</code> (an edge list), and
+<code>nw0</code> (a <code>network</code> without edges) and returning a
+list with two elements: <code>el</code> with the updated edge list and
+<code>nw0</code> with the updated network.</p>
 </div>
 </div>
 </div>
@@ -786,7 +803,11 @@ it wishes to use separated by the <code>+</code> operator.</p>
 <h4><code>i_</code> functions: Initializer/Constructor</h4>
 <p>This function is optional for using storage: if it’s not provided,
 the model code will call the <code>u_</code> function with an invalid
-toggle first, signaling for it to initialize.</p>
+toggle first, signaling for it to initialize. If the term makes use of
+the extended state API, it is also typically up to the <code>i_</code>
+function to decode the term’s extended state created by
+<code>term$ext.encode()</code> into a useful <code>C</code> structure in
+its private or public storage.</p>
 <p>Binary:
 <code>void i_&lt;NAME&gt;(Model *mtp, Network *nwp)</code></p>
 <p>Valued:
@@ -906,6 +927,22 @@ sensibly.</p>
 <code>void x_&lt;NAME&gt;(unsigned int type, void *data, Model *mtp, Network *nwp)</code></p>
 <p>Valued:
 <code>void x_&lt;NAME&gt;(unsigned int type, void *data, Model *mtp, Network *nwp)</code></p>
+</div>
+<div id="w_-functions-save-extended-state" class="section level2">
+<h2><code>w_</code> functions: save extended state</h2>
+<p>This interface is intended to be used by packages extending
+<code>ergm</code> to send information back other than the edge list back
+to <code>R</code>. For example, for dynamic simulation of temporal
+ERGMs, it is used to send back information about the last toggle time of
+each extant edge. It will typically encode the information in its
+private or public storage and return an <code>R</code> object that will
+be used by <code>term$ext.decode()</code> to update the template network
+<code>nw0</code> and edge list <code>el</code> of the
+<code>ergm_state</code>.</p>
+<p>Binary:
+<code>SEXP w_&lt;NAME&gt;(Model *mtp, Network *nwp)</code></p>
+<p>Valued:
+<code>SEXP w_&lt;NAME&gt;(WtModel *mtp, WtNetwork *nwp)</code></p>
 <div id="expects-5" class="section level5">
 <h5>Expects</h5>
 <p><strong>Parameters</strong></p>

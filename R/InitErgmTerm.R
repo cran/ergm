@@ -51,77 +51,8 @@
 #==========================================================================
 
 ################################################################################
-# The <InitErgmTerm.X> functions initialize each ergm term, X, by
-#   1) checking the validity of X and its arguments via <check.ErgmTerm> and
-#   2) setting appropiate values for each of the components in the returned list
-# X is initialized for inclusion into a model that is specified by formula F and
-# built via <ergm_model>
-# 
-# --PARAMETERS--
-#   nw        : the network given in formula F
-#   arglist   : the arguments given with term X in formula F
 #
-# --IGNORED PARAMETERS--
-#   ... : ignored, but necessary to accomodate other arguments
-#         passed by <ergm_model>
-#
-# --RETURNED--
-#   a list of term-specific elements required by the C changestats
-#   functions and other R rountines; the first two components of this
-#   list are required*, the remaining components are optional:
-#     *name      : the name of term X; this is used to locate the C function
-#                  calculating the change statistics for X, which will be
-#                  'name' prepended with "d_"; for example if X=absdiff,
-#                  'name'="absdiff", and the C function is "d_absdiff"
-#     *coef.names: the vector of names for the coefficients (parameters)
-#                  as they will be reported in the output
-#     inputs     : the vector of (double-precision numeric) inputs that the 
-#                  changestat function called d_<name> will require
-#                  (see WHAT THE C CHANGESTAT FUNCTION RECEIVES below);
-#                  this MUST be a vector!; thus, if the inputs are  matrices,
-#                  they must be "flattened" to vectors; if they are categorical
-#                  character-valued variables, they must be converted to numbers;
-#                  optionally, 'inputs' may have an attribute named
-#                  "ParamsBeforeCov",which is the number that used to be the
-#                  old Element 1 and is needed for backwards compatability
-#                  (see the old <InitErgm> for details); default=NULL
-#     soname     : the name of the package containing the C function called
-#                  d_'name'; default="ergm"
-#     dependence : whether the addition of term X to the model makes the model
-#                  into a dyadic dependence model (T or F); if all terms have
-#                  'dependence' set FALSE, the model is assumed to be a
-#                  dyadic independence model; default=TRUE
-#    emptynwstats: the vector of values (if nonzero) for the statistics evaluated
-#                  on the empty network; if all are zero for this term, this
-#                  argument may be omitted.  Example:  If the degree0 term is
-#                  among the statistics, this argument is unnecessary because
-#                  degree0 = number of nodes for the empty network
-#    minpar      : the vector of minimal valid values for each of the model's parameters
-#    maxpar      : the vector of maximal valid values for each of the model's parameters
-#    params      : a list whose names correspond to parameter values for curved exponential family model
-#                  terms only; the items in the list are there for historical reasons and are ignored;
-#    map         : a function taking two arguments, theta and length('params'), which
-#                  gives the map from the canonical parameters, theta, to the curved
-#                  parameters, eta; 'map' is only necessary for curved exponential
-#                  family model terms
-#   gradient     : a function taking two arguments, theta and length('params'), which
-#                  gives the gradient of the eta map above as a p by q matrix, where
-#                  p=length(theta), q=length(params); 'gradient' is only necessary
-#                  for curved exponential family model terms
-#   offset       : a logical value; if TRUE, forces the term to be an offset
-#   offsettheta  : a logical vector length equal to the number of parameters; if TRUE,
-#                  the corresponding parameter is forced to be an offset
-#   offsetmap    : a logical vector length equal to the number of statistics; if TRUE,
-#                  the corresponding statistic is forced to be an offset
-# WHAT THE C CHANGESTAT FUNCTION RECEIVES:
-#                The changestat function, written in C and called d_'name',
-#                will have access to 'inputs'; this array will be called INPUT_PARAMS
-#                in the C code and its entries may accessed as INPUT_PARAMS[0],
-#                INPUT_PARAMS[1], and so on; the size of INPUT_PARAMS=N_INPUT_PARAMS,
-#                a value which is automatically set for you and which is available
-#                inside the C function; thus INPUT_PARAMS[N_INPUT_PARAMS-1] is the last
-#                element in the vector; note in particular that it is NOT necessary 
-#                to add the number of inputs to 'inputs' since this is done automatically
+# See the Terms API vignette for an up to date documentation of the terms API.
 #
 ################################################################################
 
@@ -3512,22 +3443,26 @@ InitErgmTerm.meandeg<-function(nw, arglist, ...) {
 
 #' @templateVar name mm
 #' @title Mixing matrix cells and margins
-#' @description `attrs` is the rows of the mixing matrix and whose RHS gives
-#'   that for its columns. A one-sided formula (e.g.,
-#'   `~A` ) is symmetrized (e.g., `A~A` ). A two-sided formula with a dot on one side
-#'   calculates the margins of the mixing matrix, analogously to `nodefactor` , with
-#'   `A~.` calculating the row/sender/b1 margins and `.~A`
-#'   calculating the column/receiver/b2 margins.
+#' @description `attrs` is the rows of the mixing matrix and whose RHS
+#'   gives that for its columns (which may be different). A one-sided
+#'   formula (e.g., `~A` ) is symmetrized (e.g., `A~A` ). A two-sided
+#'   formula with a dot on one side calculates the margins of the
+#'   mixing matrix, analogously to `nodefactor` , with `A~.`
+#'   calculating the row/sender/b1 margins and `.~A` calculating the
+#'   column/receiver/b2 margins. If row and column attributes are the
+#'   same and the network is undirected, only the cells at or above
+#'   the diagonal (where \eqn{\text{row} \le \text{column}}{row <=
+#'   column}) will be calculated.
 #'
 #' @usage
 #' # binary: mm(attrs, levels=NULL, levels2=-1)
 #'
 #' @param attrs a two-sided formula whose LHS gives the attribute or
-#'   attribute function (see Specifying Vertex attributes and Levels (`?nodal_attributes`) for details.) for the rows of the mixing matrix and whose RHS gives
+#'   attribute function (see Specifying Vertex attributes and Levels ([`?nodal_attributes`][nodal_attributes]) for details.) for the rows of the mixing matrix and whose RHS gives
 #'   for its columns. A one-sided formula (e.g., `~A`) is symmetrized (e.g., `A~A`)
 #' @templateVar explain subset of rows and columns to be used.
 #' @template ergmTerm-levels-doco
-#' @param levels2 which specific cells of the matrix to include
+#' @param levels2 which specific cells of the matrix to include; [`?nodal_attributes`][nodal_attributes] for details
 #'
 #' @template ergmTerm-general
 #'
@@ -3626,6 +3561,15 @@ InitErgmTerm.mm<-function (nw, arglist, ..., version=packageVersion("ergm")) {
   levels2sel <- ergm_attr_levels(a$levels2, list(row=attrval$row$val, col=attrval$col$val), nw, levels=levels2)
   if(length(levels2sel) == 0) return(NULL)
   levels2codes <- levels2codes[match(levels2sel,levels2, NA)]
+  levels2missing <- map_lgl(levels2codes, is.null)
+  if(any(levels2missing) && symm){
+    rev_matches <- levels2sel[levels2missing] %>% map(function(cell) list(row = cell$col, col = cell$row)) %in% levels2
+    if(any(rev_matches)){
+      rev_matches <- map_chr(levels2sel[levels2missing][rev_matches], function(cell) paste0("[", cell$row, ",", cell$col, "]"))
+      ergm_Init_warn("Selected cells ", paste.and(sQuote(rev_matches)), " are redundant (below the diagonal) in the mixing matrix and will have count 0.")
+    }
+  }
+  levels2codes[levels2missing] <- list(list(row = 0, col = 0))
   levels2 <- levels2sel; rm(levels2sel)
 
   # Construct the level names
@@ -3648,7 +3592,7 @@ InitErgmTerm.mm<-function (nw, arglist, ..., version=packageVersion("ergm")) {
 
   list(name = "mixmat",
        coef.names = coef.names,
-       inputs = c(symm+marg*2, attrval$row$valcodes, attrval$col$valcodes, unlist(levels2codes)),
+       iinputs = c(symm+marg*2, attrval$row$valcodes, attrval$col$valcodes, unlist(levels2codes)),
        dependence = FALSE,
        minval = 0)
 }

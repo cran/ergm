@@ -1,3 +1,6 @@
+## ----echo=FALSE, cache=FALSE--------------------------------------------------
+options(rmarkdown.html_vignette.check_title = FALSE)
+
 ## ----setup, include=FALSE------------------------------------------------
 library(knitr)
 opts_chunk$set(
@@ -5,7 +8,7 @@ cache=TRUE,
 autodep=TRUE,
 concordance=TRUE,
 error=FALSE,
-width=6,fig.height=6
+fig.width=6,fig.height=6
 )
 options(width=75)
 
@@ -19,7 +22,7 @@ library(ergm)
 set.seed(0)
 
 ## ----eval=FALSE----------------------------------------------------------
-#  ergmTerm
+#  ? ergmTerm
 
 ## ----eval=FALSE----------------------------------------------------------
 #  ergmTerm?edges
@@ -36,10 +39,10 @@ search.ergmTerms(keyword='homophily')
 ## ----eval=FALSE----------------------------------------------------------
 #  data(package='ergm') # tells us the datasets in our packages
 
-## ------------------------------------------------------------------------
+## ----echo = -1-----------------------------------------------------------
+par(mfrow=c(1,2), mar = c(0,0,0,0) + 0.1) # Setup a 2 panel plot
 data(florentine) # loads flomarriage and flobusiness data
 flomarriage # Look at the flomarriage network properties (uses `network`), esp. the vertex attributes
-par(mfrow=c(1,2)) # Setup a 2 panel plot
 plot(flomarriage, 
      main="Florentine Marriage", 
      cex.main=0.8, 
@@ -82,9 +85,9 @@ summary(flomodel.03)
 data(faux.mesa.high) 
 mesa <- faux.mesa.high
 
-## ------------------------------------------------------------------------
+## ----echo = -1-----------------------------------------------------------
+par(mfrow=c(1,1), mar = c(0,0,1,0) + 0.1) # Back to 1-panel plots
 mesa
-par(mfrow=c(1,1)) # Back to 1-panel plots
 plot(mesa, vertex.col='Grade')
 legend('bottomleft',fill=7:12,
        legend=paste('Grade',7:12),cex=0.75)
@@ -104,7 +107,8 @@ summary(mesa ~edges  +
           nodefactor('Grade') + nodematch('Grade',diff=T) +
           nodefactor('Race') + nodematch('Race',diff=T))
 
-## ------------------------------------------------------------------------
+## ----echo = -1-----------------------------------------------------------
+par(mfrow=c(1,1), mar = c(0,0,1,0) + 0.1) # Back to 1-panel plots
 data(samplk) 
 ls() # directed data: Sampson's Monks
 samplk3
@@ -115,7 +119,8 @@ summary(samplk3~edges+mutual)
 sampmodel.01 <- ergm(samplk3~edges+mutual)
 summary(sampmodel.01)
 
-## ------------------------------------------------------------------------
+## ----echo = -1-----------------------------------------------------------
+par(mfrow=c(1,1), mar = c(0,0,1,0) + 0.1) # Back to 1-panel plots
 missnet <- network.initialize(10,directed=F) # initialize an empty net with 10 nodes
 missnet[1,2] <- missnet[2,7] <- missnet[3,6] <- 1 # add a few ties
 missnet[4,6] <- missnet[4,9] <- missnet[5,6] <- NA # mark a few dyads missing
@@ -147,7 +152,8 @@ fit <- ergm(flobusiness~edges+degree(1))
 summary(fit)
 mcmc.diagnostics(fit)
 
-## ------------------------------------------------------------------------
+## ----echo = -1-----------------------------------------------------------
+par(mfrow=c(1,1), mar = c(0,0,1,0) + 0.1) # Back to 1-panel plots
 flomodel.03.sim <- simulate(flomodel.03,nsim=10)
 
 class(flomodel.03.sim) # what does this produce?
@@ -187,7 +193,8 @@ plot(mesamodel.02.gof)
 #  fit <- ergm(flobusiness~edges+degree(1))
 #  mcmc.diagnostics(fit, center=F)
 
-## ------------------------------------------------------------------------
+## ----echo = -1-----------------------------------------------------------
+par(mfrow=c(1,1), mar = c(0,0,1,0) + 0.1) # Back to 1-panel plots
 data('faux.magnolia.high')
 magnolia <- faux.magnolia.high
 plot(magnolia, vertex.cex=.5)

@@ -12,7 +12,7 @@
 
 <meta name="author" content="The Statnet Team" />
 
-<meta name="date" content="2024-10-07" />
+<meta name="date" content="2024-11-06" />
 
 <title>Nodal Attribute Specification in ERGM Terms</title>
 
@@ -62,7 +62,7 @@ div.sourceCode { overflow: auto; }
 }
 @media print {
 pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
 }
 pre.numberSource code
 { counter-reset: source-line 0; }
@@ -341,7 +341,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <h1 class="title toc-ignore">Nodal Attribute Specification in ERGM
 Terms</h1>
 <h4 class="author">The Statnet Team</h4>
-<h4 class="date">2024-10-07</h4>
+<h4 class="date">2024-11-06</h4>
 
 
 
@@ -605,11 +605,13 @@ using the attribute <code>Sex</code> (which as two levels):</p>
 <span id="cb56-4"><a href="#cb56-4" tabindex="-1"></a>                          <span class="at">levels2 =</span> <span class="fu">I</span>(<span class="fu">list</span>(<span class="fu">list</span>(<span class="at">row=</span><span class="st">&quot;M&quot;</span>,<span class="at">col=</span><span class="st">&quot;M&quot;</span>),</span>
 <span id="cb56-5"><a href="#cb56-5" tabindex="-1"></a>                                           <span class="fu">list</span>(<span class="at">row=</span><span class="st">&quot;M&quot;</span>,<span class="at">col=</span><span class="st">&quot;F&quot;</span>),</span>
 <span id="cb56-6"><a href="#cb56-6" tabindex="-1"></a>                                           <span class="fu">list</span>(<span class="at">row=</span><span class="st">&quot;F&quot;</span>,<span class="at">col=</span><span class="st">&quot;M&quot;</span>)))))</span></code></pre></div>
+<pre><code>## Warning: In term &#39;mm&#39; in package &#39;ergm&#39;: Selected cells &#39;[M,F]&#39; are
+## redundant (below the diagonal) in the mixing matrix and will have count 0.</code></pre>
 <pre><code>## mm[Sex=M,Sex=M] mm[Sex=M,Sex=F] mm[Sex=F,Sex=M] 
-##              50              71               0</code></pre>
+##              50               0              71</code></pre>
 <p>The attributes of the <code>mm()</code> term can be a two-sided
 formula with different attributes:</p>
-<div class="sourceCode" id="cb58"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1" tabindex="-1"></a><span class="fu">summary</span>(faux.mesa.high<span class="sc">~</span><span class="fu">mm</span>(Grade<span class="sc">~</span>Race, <span class="at">levels2=</span><span class="cn">TRUE</span>))</span></code></pre></div>
+<div class="sourceCode" id="cb59"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb59-1"><a href="#cb59-1" tabindex="-1"></a><span class="fu">summary</span>(faux.mesa.high<span class="sc">~</span><span class="fu">mm</span>(Grade<span class="sc">~</span>Race, <span class="at">levels2=</span><span class="cn">TRUE</span>))</span></code></pre></div>
 <pre><code>##  mm[Grade=7,Race=Black]  mm[Grade=8,Race=Black]  mm[Grade=9,Race=Black] 
 ##                       1                       6                       5 
 ## mm[Grade=10,Race=Black] mm[Grade=11,Race=Black] mm[Grade=12,Race=Black] 
@@ -630,10 +632,10 @@ formula with different attributes:</p>
 ##                      23                       1                       6 
 ## mm[Grade=10,Race=White] mm[Grade=11,Race=White] mm[Grade=12,Race=White] 
 ##                       6                       8                       1</code></pre>
-<div class="sourceCode" id="cb60"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb60-1"><a href="#cb60-1" tabindex="-1"></a><span class="co"># It is possible to have collapsing functions in the formula; note</span></span>
-<span id="cb60-2"><a href="#cb60-2" tabindex="-1"></a><span class="co"># the parentheses around &quot;~Race&quot;: this is because a formula</span></span>
-<span id="cb60-3"><a href="#cb60-3" tabindex="-1"></a><span class="co"># operator (~) has lower precedence than pipe (|&gt;):</span></span>
-<span id="cb60-4"><a href="#cb60-4" tabindex="-1"></a><span class="fu">summary</span>(faux.mesa.high<span class="sc">~</span><span class="fu">mm</span>(Grade<span class="sc">~</span>(<span class="sc">~</span>Race) <span class="sc">%&gt;%</span> <span class="fu">COLLAPSE_SMALLEST</span>(<span class="dv">3</span>,<span class="st">&quot;BWO&quot;</span>), <span class="at">levels2=</span><span class="cn">TRUE</span>))</span></code></pre></div>
+<div class="sourceCode" id="cb61"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb61-1"><a href="#cb61-1" tabindex="-1"></a><span class="co"># It is possible to have collapsing functions in the formula; note</span></span>
+<span id="cb61-2"><a href="#cb61-2" tabindex="-1"></a><span class="co"># the parentheses around &quot;~Race&quot;: this is because a formula</span></span>
+<span id="cb61-3"><a href="#cb61-3" tabindex="-1"></a><span class="co"># operator (~) has lower precedence than pipe (|&gt;):</span></span>
+<span id="cb61-4"><a href="#cb61-4" tabindex="-1"></a><span class="fu">summary</span>(faux.mesa.high<span class="sc">~</span><span class="fu">mm</span>(Grade<span class="sc">~</span>(<span class="sc">~</span>Race) <span class="sc">%&gt;%</span> <span class="fu">COLLAPSE_SMALLEST</span>(<span class="dv">3</span>,<span class="st">&quot;BWO&quot;</span>), <span class="at">levels2=</span><span class="cn">TRUE</span>))</span></code></pre></div>
 <pre><code>##    mm[Grade=7,Race=BWO]    mm[Grade=8,Race=BWO]    mm[Grade=9,Race=BWO] 
 ##                      24                       7                      12 
 ##   mm[Grade=10,Race=BWO]   mm[Grade=11,Race=BWO]   mm[Grade=12,Race=BWO] 

@@ -410,6 +410,18 @@ Search the list of <code>nwp</code>’s callbacks for <code>u_func</code>
 and <code>payload</code> and delete the callback when it is found. (If
 it is not found, an immediate error is raised.)</p>
 </div>
+<div id="nb-undefined-behaviour-sanitisers" class="section level2">
+<h2>NB: Undefined Behaviour Sanitisers</h2>
+<p>Whereas before, it was possible to define a <code>u_func</code> with
+a specific payload type, e.g.,
+<code>void u_myterm(Vertex tail, Vertex head, ModelTerm *mtp, Network *nwp)</code>,
+this will now trigger a warning by <code>clang-asan</code>, since the
+function signature expected will be different (i.e.,
+<code>ModelTerm *</code> vs. <code>void *</code>). Terms and proposals
+therefore wrap their <code>u</code> functions, so this should be
+transparent to the developer, but anyone else using the API should be
+aware of this.</p>
+</div>
 </div>
 
 
