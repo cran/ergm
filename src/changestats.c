@@ -5,7 +5,7 @@
  *  open source, and has the attribution requirements (GPL Section 7) at
  *  https://statnet.org/attribution .
  *
- *  Copyright 2003-2024 Statnet Commons
+ *  Copyright 2003-2025 Statnet Commons
  */
 #include "changestats.h"
 #include "ergm_storage.h"
@@ -1875,20 +1875,20 @@ S_CHANGESTAT_FN(s_edges) {
 *****************/
 C_CHANGESTAT_FN(c_gwdegree) { 
   int  echange=0;
-  double decay, oneexpd, change;
+  double decay, loneexpd, change;
   Vertex taild, headd=0, *id, *od;
   
   id=IN_DEG;
   od=OUT_DEG;
   decay = INPUT_PARAM[0];
-  oneexpd = 1.0-exp(-decay);
+  loneexpd = log1mexp(decay);
   
   /* *** don't forget tail -> head */    
   change = 0.0;
     echange = edgestate ? -1:+1;
     taild = od[tail] + id[tail] + (echange - 1)/2;
     headd = od[head] + id[head] + (echange - 1)/2;
-    change += echange*(pow(oneexpd,(double)taild)+pow(oneexpd,(double)headd));
+    change += echange*(exp(loneexpd*taild)+exp(loneexpd*headd));
       
   CHANGE_STAT[0] = change;
   
@@ -1904,23 +1904,23 @@ C_CHANGESTAT_FN(c_gwdegree_by_attr) {
          from 1 through N_CHANGE_STATS
   */
   int  tailattr, headattr, echange=0;
-  double decay, oneexpd;
+  double decay, loneexpd;
   Vertex taild, headd=0, *id, *od;
   
   id=IN_DEG;
   od=OUT_DEG;
   decay = INPUT_PARAM[0];
-  oneexpd = 1.0-exp(-decay);
+  loneexpd = log1mexp(decay);
   
   /* *** don't forget tail -> head */    
     echange = edgestate ? -1:+1;
     taild = od[tail] + id[tail] + (echange - 1)/2;
     tailattr = INPUT_PARAM[tail]; 
-    CHANGE_STAT[tailattr-1] += echange*(pow(oneexpd,(double)taild));
+    CHANGE_STAT[tailattr-1] += echange*exp(loneexpd*taild);
     
     headd = od[head] + id[head] + (echange - 1)/2;
     headattr = INPUT_PARAM[head]; 
-    CHANGE_STAT[headattr-1] += echange*(pow(oneexpd,(double)headd));
+    CHANGE_STAT[headattr-1] += echange*exp(loneexpd*headd);
       
 }
 
@@ -1928,16 +1928,16 @@ C_CHANGESTAT_FN(c_gwdegree_by_attr) {
  changestat: d_gwidegree
 *****************/
 C_CHANGESTAT_FN(c_gwidegree) { 
-  double decay, oneexpd, change;
+  double decay, loneexpd, change;
   Vertex headd=0;
   
   decay = INPUT_PARAM[0];
-  oneexpd = 1.0-exp(-decay);
+  loneexpd = log1mexp(decay);
   change = 0.0;
 
   /* *** don't forget tail -> head */    
     headd = IN_DEG[head] - edgestate;
-    change += (edgestate? -1.0 : 1.0) * pow(oneexpd,(double)headd);
+    change += (edgestate? -1.0 : 1.0) * exp(loneexpd*headd);
   CHANGE_STAT[0]=change; 
 }
 
@@ -1951,33 +1951,33 @@ C_CHANGESTAT_FN(c_gwidegree_by_attr) {
          from 1 through N_CHANGE_STATS
   */
   int  headattr, echange;
-  double decay, oneexpd;
+  double decay, loneexpd;
   Vertex headd;
   
   decay = INPUT_PARAM[0];
-  oneexpd = 1.0-exp(-decay);
+  loneexpd = log1mexp(decay);
 
   /* *** don't forget tail -> head */    
     echange = edgestate ? -1 : 1;
     headd = IN_DEG[head] + (echange - 1)/2;
     headattr = INPUT_PARAM[head - BIPARTITE]; /* BIPARTITE to make the b2 version a special case. */
-    CHANGE_STAT[headattr-1] += echange*(pow(oneexpd,(double)headd));      
+    CHANGE_STAT[headattr-1] += echange*exp(loneexpd*headd);
 }
 
 /*****************
  changestat: d_gwodegree
 *****************/
 C_CHANGESTAT_FN(c_gwodegree) { 
-  double decay, oneexpd, change;
+  double decay, loneexpd, change;
   Vertex taild;
   
   decay = INPUT_PARAM[0];
-  oneexpd = 1.0-exp(-decay);  
+  loneexpd = log1mexp(decay);
   change = 0.0;
 
   /* *** don't forget tail -> head */    
     taild = OUT_DEG[tail] - edgestate;
-    change += (edgestate? -1 : 1) * pow(oneexpd,(double)taild);
+    change += (edgestate? -1 : 1) * exp(loneexpd*taild);
   CHANGE_STAT[0] = change;
 }
 
@@ -1991,17 +1991,17 @@ C_CHANGESTAT_FN(c_gwodegree_by_attr) {
          from 1 through N_CHANGE_STATS
   */
   int  tailattr, echange;
-  double decay, oneexpd;
+  double decay, loneexpd;
   Vertex taild;
   
   decay = INPUT_PARAM[0];
-  oneexpd = 1.0-exp(-decay);
+  loneexpd = log1mexp(decay);
 
   /* *** don't forget tail -> head */    
     echange = edgestate ? -1 : 1;
     taild = OUT_DEG[tail] + (echange - 1)/2;
     tailattr = INPUT_PARAM[tail]; 
-    CHANGE_STAT[tailattr-1] += echange*(pow(oneexpd,(double)taild));      
+    CHANGE_STAT[tailattr-1] += echange*exp(loneexpd*taild);
 }
 
 /********************  changestats:  H    ***********/
@@ -2034,31 +2034,6 @@ C_CHANGESTAT_FN(c_hamming) {
 
     CHANGE_STAT[0] += (discord ? -val : val);
 
-}
-
-/*****************
- changestat: d_hammingmix
-*****************/
-C_CHANGESTAT_FN(c_hammingmix) { 
-  
-  Edge nhedge =  INPUT_PARAM[0];
-/*  Rprintf("nstats %d nhedge %d i0 %f i1 %f i2 %f i3 %f\n",nstats, nhedge, INPUT_PARAM[0],
-                                 INPUT_PARAM[1],
-                                 INPUT_PARAM[2],
-                                 INPUT_PARAM[3]
-		  ); */
-
-
-  /* *** don't forget tail -> head */    
-      int matchvaltail = INPUT_PARAM[tail+2*N_CHANGE_STATS+2*nhedge];
-    int matchvalhead = INPUT_PARAM[head+2*N_CHANGE_STATS+2*nhedge];
-    unsigned int discord = XOR(dEdgeListSearch(tail, head, INPUT_PARAM), edgestate);
-    for (unsigned int j=0; j<N_CHANGE_STATS; j++){
-      if(matchvaltail==INPUT_PARAM[2*nhedge+1+j] &&
-        matchvalhead==INPUT_PARAM[2*nhedge+1+N_CHANGE_STATS+j]){
-          CHANGE_STAT[j] += (discord ? -1.0 : 1.0);
-      }
-    }
 }
 
 /********************  changestats:  I    ***********/

@@ -5,8 +5,10 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2024 Statnet Commons
+#  Copyright 2003-2025 Statnet Commons
 ################################################################################
+
+unloadNamespace("ergm.count")
 
 # Correct values. Note that for undirected networks, this needs to be
 # divied by 2.
@@ -93,3 +95,5 @@ test_that("valued triadic effects in directed networks", {
 
   expect_equal(s_results,as.matrix(d_results), ignore_attr=TRUE)
 })
+
+library(ergm.count)

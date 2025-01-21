@@ -5,7 +5,7 @@
  *  open source, and has the attribution requirements (GPL Section 7) at
  *  https://statnet.org/attribution .
  *
- *  Copyright 2003-2024 Statnet Commons
+ *  Copyright 2003-2025 Statnet Commons
  */
 #include "changestats_dgw_sp.h"
 #include "ergm_storage.h"
@@ -27,15 +27,15 @@
 #define dvec_calc(term)                                                 \
   static inline void term ## _calc(Vertex tail, Vertex head, ModelTerm *mtp, Network *nwp, Rboolean edgestate, StoreStrictDyadMapUInt *spcache, int nd, Vertex *dvec, double *cs) { \
     int echange = edgestate ? -1 : 1;                                   \
-    term ## _change(L, {                                                \
+    term ## _change({                                                   \
         for(unsigned int j = 0; j < nd; j++){                           \
           Vertex deg = dvec[j];                                         \
-          cs[j] += ((L+echange == deg) - (L == deg));                   \
+          cs[j] += ((L2+echange == deg) - (L2 == deg));                 \
         }                                                               \
       },{                                                               \
         for(unsigned int j = 0; j < nd; j++){                           \
           Vertex deg = dvec[j];                                         \
-          cs[j] += (echange)*(L == deg);                                \
+          cs[j] += (echange)*(L2 == deg);                               \
         }                                                               \
       });                                                               \
   }
@@ -43,15 +43,15 @@
 #define dvec_calc2(term)                                                \
   static inline void term ## _calc(Vertex tail, Vertex head, ModelTerm *mtp, Network *nwp, Rboolean edgestate, StoreStrictDyadMapUInt *spcache, int nd, Vertex *dvec, double *cs) { \
     int echange = edgestate ? -1 : 1;                                   \
-    term ## _change(L, {                                                \
+    term ## _change({                                                   \
         for(unsigned int j = 0; j < nd; j++){                           \
           Vertex deg = (Vertex)dvec[j];                                 \
-          cs[j] += ((L+echange == deg) - (L == deg))*2;                 \
+          cs[j] += ((L2+echange == deg) - (L2 == deg))*2;               \
         }                                                               \
       },{                                                               \
         for(unsigned int j = 0; j < nd; j++){                           \
           Vertex deg = (Vertex)dvec[j];                                 \
-          cs[j] += (echange)*(L == deg);                                \
+          cs[j] += (echange)*(L2 == deg);                               \
         }                                                               \
       });                                                               \
   }
@@ -62,55 +62,53 @@
 #define dist_calc(term)                                                 \
   static inline void term ## _dist_calc(Vertex tail, Vertex head, ModelTerm *mtp, Network *nwp, Rboolean edgestate, StoreStrictDyadMapUInt *spcache, int nd, double *cs) { \
     int echange = edgestate ? -1 : 1;                                   \
-    term ## _change(L, {                                                \
-        int nL = L + echange;                                           \
-        if(nL > nd) cutoff_error(mtp);                                  \
-        if(L) cs[L-1]--;                                                \
-        if(nL) cs[nL-1]++;                                              \
+    term ## _change({                                                   \
+        int nL2 = L2 + echange;                                         \
+        if(nL2 > nd) cutoff_error(mtp);                                 \
+        if(L2) cs[L2-1]--;                                              \
+        if(nL2) cs[nL2-1]++;                                            \
       },{                                                               \
-        if(L > nd) cutoff_error(mtp);                                   \
-        if(L) cs[L-1] += echange;                                       \
+        if(L2 > nd) cutoff_error(mtp);                                  \
+        if(L2) cs[L2-1] += echange;                                     \
       });                                                               \
   }
 
 #define dist_calc2(term)                                                \
   static inline void term ## _dist_calc(Vertex tail, Vertex head, ModelTerm *mtp, Network *nwp, Rboolean edgestate, StoreStrictDyadMapUInt *spcache, int nd, double *cs) { \
     int echange = edgestate ? -1 : 1;                                   \
-    term ## _change(L, {                                                \
-        int nL = L + echange;                                           \
-        if(nL > nd) cutoff_error(mtp);                                  \
-        if(L) cs[L-1]-=2;                                               \
-        if(nL) cs[nL-1]+=2;                                             \
+    term ## _change({                                                   \
+        int nL2 = L2 + echange;                                         \
+        if(nL2 > nd) cutoff_error(mtp);                                 \
+        if(L2) cs[L2-1]-=2;                                             \
+        if(nL2) cs[nL2-1]+=2;                                           \
       },{                                                               \
-        if(L > nd) cutoff_error(mtp);                                   \
-        if(L) cs[L-1] += echange;                                       \
+        if(L2 > nd) cutoff_error(mtp);                                  \
+        if(L2) cs[L2-1] += echange;                                     \
       });                                                               \
   }
 
 
-#define gwsp_args tail,head,mtp,nwp,edgestate,spcache,alpha,oneexpa
+#define gwsp_args tail,head,mtp,nwp,edgestate,spcache,alpha,loneexpa
 
 #define gw_calc(term)                                                   \
-  static inline double term ## _gw_calc(Vertex tail, Vertex head, ModelTerm *mtp, Network *nwp, Rboolean edgestate, StoreStrictDyadMapUInt *spcache, double alpha, double oneexpa) { \
+  static inline double term ## _gw_calc(Vertex tail, Vertex head, ModelTerm *mtp, Network *nwp, Rboolean edgestate, StoreStrictDyadMapUInt *spcache, double alpha, double loneexpa) { \
     double cumchange = 0;                                               \
-    term ## _change(L, {                                                \
-        cumchange += pow(oneexpa, L-edgestate);                         \
+    term ## _change({                                                   \
+        cumchange += alpha ? exp(loneexpa*(L2-edgestate)) : L2-edgestate == 0; \
       },{                                                               \
-        if(alpha < 100.0) cumchange += exp(alpha)*(1-pow(oneexpa, L));  \
-        else cumchange += L;                                            \
+        cumchange += alpha ? exp(alpha + log1mexp(-loneexpa*L2)) : L2 != 0; \
       });                                                               \
     return cumchange;                                                   \
   }
 
 
 #define gw_calc2(term)                                                  \
-  static inline double term ## _gw_calc(Vertex tail, Vertex head, ModelTerm *mtp, Network *nwp, Rboolean edgestate, StoreStrictDyadMapUInt *spcache, double alpha, double oneexpa) { \
+  static inline double term ## _gw_calc(Vertex tail, Vertex head, ModelTerm *mtp, Network *nwp, Rboolean edgestate, StoreStrictDyadMapUInt *spcache, double alpha, double loneexpa) { \
     double cumchange = 0;                                               \
-    term ## _change(L, {                                                \
-        cumchange += pow(oneexpa, L-edgestate)*2;                       \
+    term ## _change({                                                   \
+        cumchange += (alpha ? exp(loneexpa*(L2-edgestate)) : L2-edgestate == 0) * 2; \
       },{                                                               \
-        if(alpha < 100.0) cumchange += exp(alpha)*(1-pow(oneexpa, L));  \
-        else cumchange += L;                                            \
+        cumchange += alpha ? exp(alpha + log1mexp(-loneexpa*L2)) : L2 != 0;    \
       });                                                               \
     return cumchange;                                                   \
   }
@@ -198,7 +196,7 @@ C_CHANGESTAT_FN(c_dgwdsp) {
   /*Set things up*/
   StoreStrictDyadMapUInt *spcache = N_AUX ? AUX_STORAGE : NULL;
   double alpha = INPUT_PARAM[0];       /*Get alpha*/
-  double oneexpa = 1.0-exp(-alpha);    /*Precompute (1-exp(-alpha))*/
+  double loneexpa = log1mexp(alpha);    /*Precompute log(1-exp(-alpha))*/
   int type = IINPUT_PARAM[0];     /*Get the ESP type code to be used*/
   double cumchange = 0;
 
@@ -217,11 +215,11 @@ C_CHANGESTAT_FN(c_dgwdsp) {
 
 
 all_calcs(espUTP)
-all_calcs(espOTP)
-all_calcs(espITP)
-all_calcs(espOSP)
-all_calcs(espISP)
-all_calcs(espRTP)
+     all_calcs(espOTP)
+     all_calcs(espITP)
+     all_calcs(espOSP)
+     all_calcs(espISP)
+     all_calcs(espRTP)
 
 
 /*****************
@@ -243,7 +241,7 @@ all_calcs(espRTP)
 
   Only one type may be specified per esp term.  UTP should always be used for undirected graphs; OTP is the traditional directed default.
 */
-C_CHANGESTAT_FN(c_desp) {
+     C_CHANGESTAT_FN(c_desp) {
   /*Set things up*/
   StoreStrictDyadMapUInt *spcache = N_AUX ? AUX_STORAGE : NULL;
   int type = IINPUT_PARAM[0];     /*Get the ESP type code to be used*/
@@ -299,7 +297,7 @@ C_CHANGESTAT_FN(c_dgwesp) {
   /*Set things up*/
   StoreStrictDyadMapUInt *spcache = N_AUX ? AUX_STORAGE : NULL;
   double alpha = INPUT_PARAM[0];       /*Get alpha*/
-  double oneexpa = 1.0-exp(-alpha);    /*Precompute (1-exp(-alpha))*/
+  double loneexpa = log1mexp(alpha);    /*Precompute (1-exp(-alpha))*/
   int type = IINPUT_PARAM[0];     /*Get the ESP type code to be used*/
   double cumchange = 0;
 
@@ -441,7 +439,7 @@ C_CHANGESTAT_FN(c_dgwnsp) {
   /*Set things up*/
   StoreStrictDyadMapUInt *spcache = N_AUX ? AUX_STORAGE : NULL;
   double alpha = INPUT_PARAM[0];       /*Get alpha*/
-  double oneexpa = 1.0-exp(-alpha);    /*Precompute (1-exp(-alpha))*/
+  double loneexpa = log1mexp(alpha);    /*Precompute (1-exp(-alpha))*/
   int type = IINPUT_PARAM[0];     /*Get the ESP type code to be used*/
   double cumchange = 0;
 

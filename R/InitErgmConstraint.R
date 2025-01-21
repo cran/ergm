@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2024 Statnet Commons
+#  Copyright 2003-2025 Statnet Commons
 ################################################################################
 
 # Meta-constraint for a dot placeholder
@@ -68,7 +68,7 @@ InitErgmConstraint..attributes <- function(nw, arglist, ...){
               lens[2L*i] <- i
             }
             lens[2L*n-1L] <- 1L
-          }          
+          }
           structure(list(lengths=lens,values=vals), class="rle")
         }
       rlebdm(d, n)
@@ -239,7 +239,7 @@ InitErgmConstraint.odegreedist<-function(nw, arglist, ...){
 
 #' @templateVar name bd
 #' @title Constrain maximum and minimum vertex degree
-#' @description Condition on the number of inedge or outedges posessed by a node. 
+#' @description Condition on the number of inedge or outedges posessed by a node.
 #' See Placing Bounds on Degrees section for more information. ([`?ergmConstraint`][ergmConstraint])
 #'
 #' @usage
@@ -415,7 +415,7 @@ InitErgmConstraint.observed <- function(nw, arglist, ...){
 }
 
 warn_netsize <- function(.n, ...){
-  mismatch <- vapply(list(...), function(x) is.network(x) && network.size(x) != .n, logical(1))
+  mismatch <- map_lgl(list(...), function(x) (is.network(x) && network.size(x) != .n) || (is(x, "rlebdm") && nrow(x) != .n))
   if(any(mismatch))
     ergm_Init_warning("Network size of argument(s) ", paste.and(sQuote(...names()[mismatch])), " differs from that of the response network.")
 }
@@ -477,7 +477,7 @@ InitErgmConstraint.fixedas<-function(nw, arglist,...){
 #'
 #' @usage
 #' # fixallbut(free.dyads)
-#' @param free.dyads edgelist or network. Networks will be converted to the corresponding edgelist.
+#' @param free.dyads a two-column edge list, a [`network`], or an [`rlebdm`]. Networks will be converted to the corresponding edgelist.
 #'
 #' @template ergmConstraint-general
 #'
@@ -487,7 +487,7 @@ InitErgmConstraint.fixedas<-function(nw, arglist,...){
 InitErgmConstraint.fixallbut<-function(nw, arglist,...){
   a <- check.ErgmTerm(nw, arglist,
                       varnames = c("free.dyads"),
-                      vartypes = c("network,matrix"),
+                      vartypes = c("network,matrix,rlebdm"),
                       defaultvalues = list(NULL),
                       required = c(TRUE))
   free.dyads <- a$free.dyads
@@ -495,15 +495,16 @@ InitErgmConstraint.fixallbut<-function(nw, arglist,...){
   warn_netsize(network.size(nw), free.dyads = free.dyads)
 
   list(
-    free_dyads = function(){
-      if(is.network(free.dyads)) free.dyads <- as.edgelist(free.dyads)
-      else free.dyads <- as.edgelist(free.dyads,
-                                     n=nw%n%"n",
-                                     directed=nw%n%"directed",
-                                     bipartite=nw%n%"bipartite",
-                                     loops=nw%n%"loops")
-      as.rlebdm(free.dyads)
-    },
+    free_dyads =
+      if(is(free.dyads, "rlebdm")) free.dyads
+      else function()
+        as.rlebdm(if(is.network(free.dyads)) as.edgelist(free.dyads)
+                  else as.edgelist(free.dyads,
+                                   n=nw%n%"n",
+                                   directed=nw%n%"directed",
+                                   bipartite=nw%n%"bipartite",
+                                   loops=nw%n%"loops")
+                  ),
     dependence = FALSE)
 }
 
@@ -515,7 +516,7 @@ InitErgmConstraint.fixallbut<-function(nw, arglist,...){
 #'   probability of erroneously observing a tie where the true network
 #'   had a non-tie and `p10` giving the dyadwise probability of
 #'   erroneously observing a nontie where the true network had a tie.
-#'   
+#'
 #' @usage
 #' # dyadnoise(p01, p10)
 #' @param p01,p10 can both be scalars or both be adjacency matrices of the same dimension as that of the
@@ -580,69 +581,12 @@ InitErgmConstraint.egocentric <- function(nw, arglist, ...){
       # Remember: column-major order.
 
       rlea <- rle(a)
-      
+
       fd <- rlebdm(switch(direction,
                           `out` = rep(rlea, n),
                           `in` = rep(rlea, rep(n, length(rlea$lengths)), scale="run"),
                           `both` = compress(rep(rlea, n) & rep(rlea, rep(n, length(rlea$lengths)), scale="run"))), # The others are already compressed by rep().
                    n)
-    },
-    dependence = FALSE
-  )
-}
-
-#' @templateVar name Dyads
-#' @title Constrain fixed or varying dyad-independent terms
-#' @description This is an "operator" constraint that takes one or two [`ergmTerm`] dyad-independent formulas. For the terms in the `vary=` formula, only those that change at least one of the terms will be allowed to vary, and all others will be fixed. If both formulas are given, the dyads that vary either for one or for the other will be allowed to vary. Note that a formula passed to `Dyads` without an argument name will default to `fix=` .
-#'
-#' @usage
-#' # Dyads(fix=NULL, vary=NULL)
-#' @param fix,vary formula with only dyad-independent terms
-#'
-#' @template ergmConstraint-general
-#'
-#' @concept dyad-independent
-#' @concept operator
-#' @concept directed
-#' @concept undirected
-InitErgmConstraint.Dyads<-function(nw, arglist, ...){
-  a <- check.ErgmTerm(nw, arglist,
-                      varnames = c("fix", "vary"),
-                      vartypes = c("formula", "formula"),
-                      defaultvalues = list(NULL, NULL),
-                      required = c(FALSE, FALSE))
-  fix <- a$fix; vary <- a$vary
-
-  if(is.null(fix) & is.null(vary))
-    ergm_Init_stop("Dyads constraint takes at least one argument, either ",sQuote("fix")," or ",sQuote("vary")," or both.")
-
-  for(f in c(fix, vary)){
-    f[[3]] <- f[[2]]
-    f[[2]] <- nw
-    if(!is.dyad.independent(f)) ergm_Init_stop("Terms passed to the Dyads constraint must be dyad-independent.")
-  }
-
-  list(
-    free_dyads = function(){
-      fd <- lapply(list(fix=fix,vary=vary),
-                   function(f){
-                     if(!is.null(f)){
-                       f[[3]] <- f[[2]]
-                       f[[2]] <- nw
-                       m <- ergmMPLE(f, expand.bipartite=TRUE, output="array")$predictor
-                       m <- m!=0
-                       m[is.na(m)] <- FALSE
-                       if(!is.directed(nw)){
-                         m <- m | aperm(m, c(2L,1L,3L))
-                       }
-                       lapply(seq_len(dim(m)[3]), function(i) as.rlebdm(m[,,i]))
-                     }
-                   })
-      fd$fix <- if(length(fd$fix)) fd$fix %>% map(`!`) %>% reduce(`&`)
-      fd$vary <- if(length(fd$vary)) fd$vary %>% reduce(`|`)
-      fd <- Reduce(`|`, fd)
-
-      compress(fd)
     },
     dependence = FALSE
   )

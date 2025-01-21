@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2024 Statnet Commons
+#  Copyright 2003-2025 Statnet Commons
 ################################################################################
 
 #NOTE: a number of undocumented terms have been removed from this file
@@ -23,14 +23,14 @@
 #        <b2star>           <b2starmix>       <b2twostar>
 #        <balance>
 #   C:   <concurrent>       <cycle>           <ctriple>=<ctriad> 
-#   D:   <degree>           <degreepopularity><density>         <dsp>
+#   D:   <degree>           <density>         <dsp>
 #        <dyadcov>          <degcrossprod>    <degcor>
 #   E:   <edgecov>          <edges>           <esp>
 #   G:   <gwb1degree>       <gwb2degree>      <gwdegree>
 #        <gwdsp>            <gwesp>           <gwidegree>
 #        <gwnsp>            <gwodegree>
 #   H:   <hamming>
-#   I:   <idegree>          <intransitive>    <idegreepopularity> 
+#   I:   <idegree>          <intransitive>
 #        <isolates>         <istar>
 #   K:   <kstar>
 #   L:   <localtriangle>
@@ -40,7 +40,6 @@
 #        <nodemix>          <nodeocov>        <nodeofactor>       
 #        <nsp>
 #   O:   <odegree>          <opentriad>       <ostar>
-#        <odegreepopularity>  
 #   P:   <pdegcor>
 #   R:   <receiver>         <rdegcor>
 #   S:   <sender>           <simmelian>       <simmelianties>
@@ -72,13 +71,13 @@
 ergm_GWDECAY <- list(
   map = function(x,n,...) {
     i <- 1:n
-    x[1] * ifelse(i==1, 1, (exp(x[2])*(1-(1-exp(-x[2]))^i)))
+    x[1] * exp(x[2] + log1mexp(-log1mexp(x[2])*i))
   },
   gradient = function(x,n,...) {
     i <- 1:n
-    e2 <- exp(x[2])
-    a <- 1-exp(-x[2])
-    rbind((1-a^i)*e2, ifelse(i==1, 0, x[1] * ( (1-a^i)*e2 - i*a^(i-1) ) ) )
+    a <- log1mexp(x[2])
+    w <- exp(x[2] + log1mexp(-a*i))
+    rbind(w, x[1] * (w - i*exp(a*(i-1))))
   },
   minpar = c(-Inf, 0)
 )
@@ -223,7 +222,7 @@ decay_vs_fixed <- function(a, name, no_curved_attrarg=TRUE){
   } else {
     if (any(from==0)) {
       emptynwstats <- rep(0, length(from))
-      emptynwstats[from==0] <- network.size(nw)
+      emptynwstats[from==0] <- switch(deg, b1 = nw %n% "bipartite", b2 = network.size(nw) - nw %n% "bipartite", network.size(nw))
     }
   }
   if(is.null(byarg)) {
@@ -293,7 +292,7 @@ decay_vs_fixed <- function(a, name, no_curved_attrarg=TRUE){
   } else {
     if (any(d==0)) {
       emptynwstats <- rep(0, length(d))
-      emptynwstats[d==0] <- network.size(nw)
+      emptynwstats[d==0] <- switch(deg, b1 = nw %n% "bipartite", b2 = network.size(nw) - nw %n% "bipartite", network.size(nw))
     }
   }
   if(is.null(byarg)) {
@@ -311,7 +310,10 @@ decay_vs_fixed <- function(a, name, no_curved_attrarg=TRUE){
     if(ncol(du)==0) {return(NULL)}
     #  No covariates here, so "ParamsBeforeCov" unnecessary
     # See comment in d_degree_by_attr function
-    coef.names <- paste0(deg, "deg", du[1,], ".", attrname,u[du[2,]])
+    coef.names <- if(EVL(version <= as.package_version("4.7.5"), FALSE))
+                    paste0(deg, "deg", du[1,], ".", attrname, u[du[2,]])
+                  else
+                    paste0(deg, "deg", du[1,], ".", attrname, ".", u[du[2,]])
     name <- paste0(degname, "degree_by_attr")
     inputs <- c(as.vector(du), nodecov)
   }
@@ -368,7 +370,10 @@ decay_vs_fixed <- function(a, name, no_curved_attrarg=TRUE){
      #  No covariates here, so "ParamsBeforeCov" unnecessary
      # See comment in c_*degree_by_attr functions
       name <- sprintf("gw%sdegree_by_attr", degname)
-      coef.names <- sprintf("gw%sdeg%s.%s%s", deg, decay, attrname, u)
+      coef.names <- if(EVL(version <= as.package_version("4.7.5"), FALSE))
+                      sprintf("gw%sdeg%s.%s%s", deg, decay, attrname, u)
+                    else
+                      sprintf("gw%sdeg%s.%s.%s", deg, decay, attrname, u)
       inputs <- c(decay, nodecov)
     }else{
       name <- sprintf("gw%sdegree", degname)
@@ -2291,21 +2296,6 @@ InitErgmTerm.degree1.5<-function (nw, arglist, ...) {
 
 
 ################################################################################
-#' @include ergm-deprecated.R
-#' @describeIn ergm-deprecated Use [`degree1.5`][degree1.5-ergmTerm] instead.
-InitErgmTerm.degreepopularity<-function (nw, arglist, ...) {
-  .Deprecated("degree1.5")
-  a <- check.ErgmTerm(nw, arglist, directed=FALSE,
-                      varnames = NULL,
-                      vartypes = NULL,
-                      defaultvalues = list(),
-                      required = NULL)
-  list(name="degreepopularity", coef.names="degreepopularity",
-       minval=0, maxval=network.dyadcount(nw,FALSE)*sqrt(network.size(nw)-1), conflicts.constraints="degreedist")
-}
-
-
-################################################################################
 
 #' @templateVar name density
 #' @title Density
@@ -2891,101 +2881,6 @@ InitErgmTerm.hamming<-function (nw, arglist, ...) {
        minval = minval, maxval = maxval)
 }
 
-################################################################################
-#' @rdname ergm-deprecated
-#' @aliases hammingmix
-InitErgmTerm.hammingmix<-function (nw, arglist, ..., version=packageVersion("ergm")) {
-  .Deprecate_once(msg="hammingmix() has been deprecated due to disuse.")
-  if(version <= as.package_version("3.9.4")){
-    # There is no reason hammingmix should be directed-only, but for now
-    # the undirected version does not seem to work properly, so:
-    a <- check.ErgmTerm(nw, arglist, directed=TRUE,
-                        varnames = c("attrname","x","base","contrast"),
-                        vartypes = c("character","matrix,network","numeric","logical"),
-                        defaultvalues = list(NULL,nw,NULL,FALSE),
-                        required = c(TRUE,FALSE,FALSE,FALSE),
-                        dep.inform = list(FALSE, FALSE, "levels2", FALSE))
-    attrarg <- a$attrname
-  }else{
-    # There is no reason hammingmix should be directed-only, but for now
-    # the undirected version does not seem to work properly, so:
-    a <- check.ErgmTerm(nw, arglist, directed=TRUE,
-                        varnames = c("attr", "x", "base", "levels", "levels2","contrast"),
-                        vartypes = c(ERGM_VATTR_SPEC, "matrix,network", "numeric", ERGM_LEVELS_SPEC, ERGM_LEVELS_SPEC,"logical"),
-                        defaultvalues = list(NULL,nw,NULL,NULL,NULL,FALSE),
-                        required = c(TRUE,FALSE,FALSE,FALSE,FALSE,FALSE),
-                        dep.inform = list(FALSE, FALSE, "levels2", FALSE, FALSE, FALSE))
-    attrarg <- a$attr
-  }
-
-  x<-a$x
-
-  if (a$contrast) {
-    ergm_Init_stop("The 'contrast' argument of the hammingmix term is deprecated.  Use 'levels2' instead")
-  }
-  if(is.network(x)){
-    xm<-as.edgelist(x)
-    x<-paste(quote(x))
-  }else if(is.character(x)){
-    xm<-get.network.attribute(nw,x)
-    xm<-as.edgelist(xm)
-  }else{
-    xm<-as.matrix(x)
-    x<-paste(quote(x))
-  }
-  if (is.null(xm) || ncol(xm)!=2){
-    ergm_Init_stop("hammingmix() requires an edgelist")
-  }
-
-  nodecov <- ergm_get_vattr(attrarg, nw)
-  attrname <- attr(nodecov, "name")
-
-  u <- ergm_attr_levels(a$levels, nodecov, nw, sort(unique(nodecov)))
-  namescov <- u
-  
-  nr <- length(u)
-  nc <- length(u)
-
-  levels2.list <- transpose(expand.grid(row = u, col = u, stringsAsFactors=FALSE))
-  indices2.grid <- expand.grid(row = 1:nr, col = 1:nc)
-    
-  levels2.sel <- if((!hasName(attr(a,"missing"), "levels2") || attr(a,"missing")["levels2"]) && any(NVL(a$base,0)!=0)) levels2.list[-a$base]
-                 else ergm_attr_levels(a$levels2, list(row = nodecov, col = nodecov), nw, levels2.list)
-  
-  rows2keep <- match(levels2.sel,levels2.list, NA)
-  rows2keep <- rows2keep[!is.na(rows2keep)]
-  
-  u <- indices2.grid[rows2keep,]
-
-  nodecov.indices <- match(nodecov, namescov, nomatch=length(namescov) + 1)
-
-  coef.names <- paste("hammingmix",attrname,
-                      apply(matrix(namescov[as.matrix(u)],ncol=2),1,paste,collapse="."), 
-                      sep=".")
-  #  Number of input parameters before covariates equals twice the number
-  #  of used matrix cells, namely 2*length(uui),
-  inputs=c(to_ergm_Cdouble(xm, prototype=nw), u[,1], u[,2], nodecov.indices)
-  attr(inputs, "ParamsBeforeCov") <- nrow(u)
-  # The emptynwstats code below does not work right for
-  # undirected networks, mostly since hammingmix doesn't work 
-  # in this case anyway.
-  nw %v% "_tmp_nodecov" <- as.vector(nodecov)
-  if(version <= as.package_version("3.9.4")){
-    emptynwstats <- summary(nw ~ nodemix("_tmp_nodecov", base=a$base))
-  }else{
-    nodemix.call <- c(list(as.name("nodemix"),"_tmp_nodecov"), list(base=a$base, levels=a$levels, levels2=a$levels2)[!attr(a,"missing")[c("base","levels","levels2")]])
-    nodemix.call <- as.call(nodemix.call)
-    nodemix.form <- as.formula(call("~", nw, nodemix.call))
-    emptynwstats <- summary(nodemix.form)
-  }
-  list(name="hammingmix", coef.names=coef.names, inputs=inputs, 
-       emptynwstats=emptynwstats, dependence=FALSE)
-}
-
-
-
-
-
 
 #=======================InitErgmTerm functions:  I============================#
 
@@ -3072,21 +2967,6 @@ InitErgmTerm.idegree1.5<-function (nw, arglist, ...) {
   list(name="idegreepopularity", coef.names="idegree1.5",
        minval=0, maxval=network.dyadcount(nw,FALSE)*sqrt(network.size(nw)-1), conflicts.constraints="idegreedist")
 }
-
-
-################################################################################
-#' @describeIn ergm-deprecated Use [`idegree1.5`][idegree1.5-ergmTerm] instead.
-InitErgmTerm.idegreepopularity<-function (nw, arglist, ...) {
-  .Deprecated("idegree1.5")
-  a <- check.ErgmTerm(nw, arglist, directed=TRUE,
-                      varnames = NULL,
-                      vartypes = NULL,
-                      defaultvalues = list(),
-                      required = NULL)
-  list(name="idegreepopularity", coef.names="idegreepopularity",
-       minval=0, maxval=network.dyadcount(nw,FALSE)*sqrt(network.size(nw)-1), conflicts.constraints="idegreedist")
-}
-
 
 
 ################################################################################
@@ -4524,20 +4404,6 @@ InitErgmTerm.odegree1.5<-function (nw, arglist, ...) {
                       defaultvalues = list(),
                       required = NULL)
   list(name="odegreepopularity", coef.names="odegree1.5",
-       minval=0, maxval=network.dyadcount(nw,FALSE)*sqrt(network.size(nw)-1), conflicts.constraints="odegreedist")
-}
-
-
-################################################################################
-#' @describeIn ergm-deprecated Use [`odegree1.5`][odegree1.5-ergmTerm] instead.
-InitErgmTerm.odegreepopularity<-function (nw, arglist, ...) {
-  .Deprecated("odegree1.5")
-  a <- check.ErgmTerm(nw, arglist, directed=TRUE,
-                      varnames = NULL,
-                      vartypes = NULL,
-                      defaultvalues = list(),
-                      required = NULL)
-  list(name="odegreepopularity", coef.names="odegreepopularity",
        minval=0, maxval=network.dyadcount(nw,FALSE)*sqrt(network.size(nw)-1), conflicts.constraints="odegreedist")
 }
 

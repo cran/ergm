@@ -5,7 +5,7 @@
  *  open source, and has the attribution requirements (GPL Section 7) at
  *  https://statnet.org/attribution .
  *
- *  Copyright 2003-2024 Statnet Commons
+ *  Copyright 2003-2025 Statnet Commons
  */
 #include "ergm_MHproposal.h"
 #include "ergm_changestat.h"
@@ -31,6 +31,7 @@ MHProposal *MHProposalInitialize(SEXP pR, Network *nwp, void **aux_storage){
   /* Extract the required string information from the relevant sources */
   const char *fname = FIRSTCHAR(getListElement(pR, "name")),
     *sn = FIRSTCHAR(getListElement(pR, "pkgname"));
+
   char *fn = R_Calloc(strlen(fname)+4, char);
   fn[0]='M';
   fn[1]='H';
@@ -62,9 +63,11 @@ MHProposal *MHProposalInitialize(SEXP pR, Network *nwp, void **aux_storage){
   MHp->x_func=(void (*)(unsigned int, void *, MHProposal*, Network*)) R_FindSymbol(fn,sn,NULL);
 
   SEXP tmp = getListElement(pR, "inputs");
-  MHp->inputs=length(tmp) ? REAL(tmp) : NULL;
+  MHp->ninputs = length(tmp);
+  MHp->inputs = MHp->ninputs ? REAL(tmp) : NULL;
   tmp = getListElement(pR, "iinputs");
-  MHp->iinputs=length(tmp) ? INTEGER(tmp) : NULL;
+  MHp->niinputs = length(tmp);
+  MHp->iinputs = MHp->niinputs ? INTEGER(tmp) : NULL;
   
   /*Clean up by freeing sn and fn*/
   R_Free(fn);

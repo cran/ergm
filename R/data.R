@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2024 Statnet Commons
+#  Copyright 2003-2025 Statnet Commons
 ################################################################################
 #' Two versions of an E. Coli network dataset
 #' 
@@ -578,7 +578,7 @@ NULL
 #' experimental and case study of relationships,} Unpublished Ph.D.
 #' dissertation, Department of Sociology, Cornell University.
 #' 
-#' \url{http://vlado.fmf.uni-lj.si/pub/networks/data/esna/sampson.htm}
+#' \url{https://github.com/bavla/Nets/raw/refs/heads/master/data/Pajek/esna/Sampson.zip}
 #' @keywords datasets
 NULL
 
@@ -675,7 +675,7 @@ NULL
 #' experimental and case study of relationships,} Unpublished Ph.D.
 #' dissertation, Department of Sociology, Cornell University.
 #' 
-#' \url{http://vlado.fmf.uni-lj.si/pub/networks/data/esna/sampson.htm}
+#' \url{https://github.com/bavla/Nets/raw/refs/heads/master/data/Pajek/esna/Sampson.zip}
 #' @keywords datasets
 NULL
 

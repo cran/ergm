@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2024 Statnet Commons
+#  Copyright 2003-2025 Statnet Commons
 ################################################################################
 ############################################################################
 # The <ergm.stocapprox> function provides one of the styles of maximum
@@ -79,7 +79,7 @@ ergm.stocapprox <- function(init, s, s.obs,
   if(verbose){message("Using Newton-Raphson Step ...")}
 
   v <- ergm.estimate(init=theta, model=model,
-                     statsmatrices=mcmc.list(as.mcmc(z$stats)),
+                     statsmatrices=z$stats,
                      statsmatrices.obs=NULL,
                      epsilon=control$epsilon,
                      nr.maxit=control$MCMLE.NR.maxit,

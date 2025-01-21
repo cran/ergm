@@ -5,7 +5,7 @@
  *  open source, and has the attribution requirements (GPL Section 7) at
  *  https://statnet.org/attribution .
  *
- *  Copyright 2003-2024 Statnet Commons
+ *  Copyright 2003-2025 Statnet Commons
  */
 #include "wtchangestats_operator.h"
 #include "ergm_wtchangestats_operator.h"
@@ -116,12 +116,10 @@ WtC_CHANGESTAT_FN(c_import_binary_term_nonzero){
   GET_AUX_STORAGE(Network, bnwp);
   GET_STORAGE(Model, m);
   
-
   if((weight!=0)!=(edgestate!=0)){ // If going from 0 to nonzero or vice versa...
     ChangeStats1(tail, head, bnwp, m, edgestate!=0);
+    memcpy(CHANGE_STAT, m->workspace, N_CHANGE_STATS*sizeof(double));
   }
-  
-  memcpy(CHANGE_STAT, m->workspace, N_CHANGE_STATS*sizeof(double));
 }
 
 WtZ_CHANGESTAT_FN(z_import_binary_term_nonzero){

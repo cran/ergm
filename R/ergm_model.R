@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2024 Statnet Commons
+#  Copyright 2003-2025 Statnet Commons
 ################################################################################
 #===================================================================================
 # This file contains the following 2 functions for creating the 'ergm_model' object
@@ -155,7 +155,8 @@ ergm_model.ergm_model <- function(object, nw, ..., env=globalenv(), extra.aux=li
 
   # I.e., construct a vector of package names associated with the model terms.
   # Note that soname is not the same, since it's not guaranteed to be a loadable package.
-  ergm.MCMC.packagenames(unlist(sapply(model$terms, "[[", "pkgname")))
+  ergm.MCMC.packagenames(pkgnames <- unlist(sapply(model$terms, "[[", "pkgname")))
+  sapply(pkgnames, check_ABI)
 
   model
 }

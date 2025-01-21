@@ -33,6 +33,14 @@
 \alias{san.ergm}
 \alias{is.inCH}
 \alias{as.rlebdm.ergm}
+\alias{degreepopularity-ergmTerm}
+\alias{odegreepopularity-ergmTerm}
+\alias{idegreepopularity-ergmTerm}
+\alias{hammingmix-ergmTerm}
+\alias{offset.info.formula}
+\alias{InitErgmTerm.degreepopularity}
+\alias{InitErgmTerm.idegreepopularity}
+\alias{InitErgmTerm.odegreepopularity}
 \title{Functions that have been removed from this package}
 \usage{
 robust.inverse(...)
@@ -96,6 +104,14 @@ san.ergm(...)
 is.inCH(...)
 
 as.rlebdm.ergm(...)
+
+offset.info.formula(...)
+
+InitErgmTerm.degreepopularity(...)
+
+InitErgmTerm.idegreepopularity(...)
+
+InitErgmTerm.odegreepopularity(...)
 }
 \arguments{
 \item{...}{Arguments to defunct functions.}
@@ -165,5 +181,11 @@ Functions that have been removed after a period of deprecation.
 \code{is.inCH()}: use \code{shrink_into_CH()}.
 
 \code{as.rlebdm.ergm()}: no longer used
+
+\code{offset.info.formula()}: no longer used
+
+\code{degreepopularity}, \code{odegreepopularity}, \code{idegreepopularity}: use the corresponding \code{degree1.5} term
+
+\code{hammingmix}: use \code{hamming(...):nodemix(...)} for example
 }
 \keyword{internal}

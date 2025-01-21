@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2024 Statnet Commons
+#  Copyright 2003-2025 Statnet Commons
 ################################################################################
 ###################################################################
 ## This file has utilities whose primary purpose is examining or ##
@@ -282,14 +282,4 @@ enformulate.curved.formula <- function(object, theta, ...){
     list(filter=is.fixed.1, tocoef=1, toarg=list(decay=2))
 
   model.transform.formula(object, theta, recipes, ...)
-}
-
-#' @describeIn ergm-deprecated \code{offset.info.formula} returns the offset
-#'   vectors associated with a formula.
-#' @export offset.info.formula
-offset.info.formula <- function(object, ...){
-  .Deprecated()
-  nw <- ergm.getnetwork(object)
-  m<-ergm_model(object, nw, ...)
-  with(m$etamap, list(term=offset, theta=offsettheta,eta=offsetmap))
 }

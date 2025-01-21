@@ -5,10 +5,9 @@
  *  open source, and has the attribution requirements (GPL Section 7) at
  *  https://statnet.org/attribution .
  *
- *  Copyright 2003-2024 Statnet Commons
+ *  Copyright 2003-2025 Statnet Commons
  */
-#include "ergm_MHproposal.h"
-#include "ergm_changestat.h"
+#include "ergm_MHproposals_degree.h"
 
 /* 
 void MH_CondDegreeTetrad

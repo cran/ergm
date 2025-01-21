@@ -5,7 +5,7 @@
  *  open source, and has the attribution requirements (GPL Section 7) at
  *  https://statnet.org/attribution .
  *
- *  Copyright 2003-2024 Statnet Commons
+ *  Copyright 2003-2025 Statnet Commons
  */
 #include <string.h>
 #include "ergm_model.h"
@@ -162,6 +162,7 @@ Model* ModelInitialize(SEXP mR, SEXP ext_state, Network *nwp, Rboolean noinit_s)
       the respective functions.*/
       const char *fname = FIRSTCHAR(getListElement(thisterm->R, "name")),
         *sn = FIRSTCHAR(getListElement(thisterm->R, "pkgname"));
+
       /* Extract the required string information from the relevant sources */
       char *fn = R_Calloc(strlen(fname)+3, char);
       fn[1]='_';
@@ -452,8 +453,14 @@ void SummStats(Edge n_edges, Vertex *tails, Vertex *heads, Network *nwp, Model *
     /* The following code is pretty inefficient, but it'll do for now. */
     /* Grab network state and output workspace. */
     n_edges = EDGECOUNT(nwp);
-    tails = R_Calloc(n_edges, Vertex);
-    heads = R_Calloc(n_edges, Vertex);
+    /* Use R's memory management to make the routine interruptible.
+
+       TODO: Check how much overhead this incurs over and above
+       in-house on.exit() memory management.
+    */
+    tails = (Vertex *) INTEGER(PROTECT(allocVector(INTSXP, n_edges)));
+    heads = (Vertex *) INTEGER(PROTECT(allocVector(INTSXP, n_edges)));
+
     EdgeTree2EdgeList(tails, heads, nwp, n_edges);
     stats = m->workspace;
 
@@ -462,7 +469,12 @@ void SummStats(Edge n_edges, Vertex *tails, Vertex *heads, Network *nwp, Model *
     m = ModelInitialize(m->R, m->ext_state, nwp, TRUE);
     mynet = TRUE;
   }else{
-    stats = R_Calloc(m->n_stats, double);
+    /* Use R's memory management to make the routine interruptible.
+
+       TODO: Check how much overhead this incurs over and above
+       in-house on.exit() memory management.
+    */
+    stats = REAL(PROTECT(allocVector(REALSXP, m->n_stats)));
     mynet = FALSE;
   }
 
@@ -518,11 +530,10 @@ void SummStats(Edge n_edges, Vertex *tails, Vertex *heads, Network *nwp, Model *
   if(mynet){
     ModelDestroy(nwp,m);
     NetworkDestroy(nwp);
-    R_Free(tails);
-    R_Free(heads);
+    UNPROTECT(2);
   }else{
     DetUnShuffleEdges(tails,heads,n_edges); /* Unshuffle edgelist. */
     memcpy(m->workspace, stats, m->n_stats*sizeof(double));
-    R_Free(stats);
+    UNPROTECT(1);
   }
 }

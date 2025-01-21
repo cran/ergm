@@ -13,7 +13,7 @@ fig.width=6,fig.height=6
 options(width=75)
 
 ## ----eval=FALSE----------------------------------------------------------
-#  install.packages('ergm')
+# install.packages('ergm')
 
 ## ------------------------------------------------------------------------
 library(ergm)
@@ -22,22 +22,22 @@ library(ergm)
 set.seed(0)
 
 ## ----eval=FALSE----------------------------------------------------------
-#  ? ergmTerm
+# ? ergmTerm
 
 ## ----eval=FALSE----------------------------------------------------------
-#  ergmTerm?edges
+# ergmTerm?edges
 
 ## ------------------------------------------------------------------------
 search.ergmTerms(keyword='homophily')
 
 ## ----eval=FALSE----------------------------------------------------------
-#  vignette('ergm-term-crossRef')
+# vignette('ergm-term-crossRef')
 
 ## ----eval=FALSE----------------------------------------------------------
-#  vignette("networkVignette")
+# vignette("networkVignette")
 
 ## ----eval=FALSE----------------------------------------------------------
-#  data(package='ergm') # tells us the datasets in our packages
+# data(package='ergm') # tells us the datasets in our packages
 
 ## ----echo = -1-----------------------------------------------------------
 par(mfrow=c(1,2), mar = c(0,0,0,0) + 0.1) # Setup a 2 panel plot
@@ -183,15 +183,15 @@ plot(mesamodel.02.gof)
 
 
 ## ----eval=FALSE----------------------------------------------------------
-#  fit <- ergm(flobusiness~edges+degree(1),
-#    control=control.ergm(MCMC.interval=1, MCMC.burnin=1000, seed=1))
+# fit <- ergm(flobusiness~edges+degree(1),
+#   control=control.ergm(MCMC.interval=1, MCMC.burnin=1000, seed=1))
 
 ## ----eval=FALSE----------------------------------------------------------
-#  mcmc.diagnostics(fit, center=F)
+# mcmc.diagnostics(fit, center=F)
 
 ## ----eval=FALSE----------------------------------------------------------
-#  fit <- ergm(flobusiness~edges+degree(1))
-#  mcmc.diagnostics(fit, center=F)
+# fit <- ergm(flobusiness~edges+degree(1))
+# mcmc.diagnostics(fit, center=F)
 
 ## ----echo = -1-----------------------------------------------------------
 par(mfrow=c(1,1), mar = c(0,0,1,0) + 0.1) # Back to 1-panel plots
@@ -200,22 +200,24 @@ magnolia <- faux.magnolia.high
 plot(magnolia, vertex.cex=.5)
 
 ## ----error=TRUE----------------------------------------------------------
+try({
 fit <- ergm(magnolia~edges+triangle, control=control.ergm(seed=1))
+})
 
 ## ----eval=FALSE----------------------------------------------------------
-#  fit <- ergm(magnolia~edges+triangle, control=control.ergm(seed=1), verbose=T)
+# fit <- ergm(magnolia~edges+triangle, control=control.ergm(seed=1), verbose=T)
 
 ## ----eval=FALSE----------------------------------------------------------
-#  fit <- ergm(magnolia~edges+triangle,seed=1,
-#   control = control.ergm(seed=1, MCMC.samplesize=20000),
-#   verbose=T)
-#  mcmc.diagnostics(fit, center=F)
+# fit <- ergm(magnolia~edges+triangle,seed=1,
+#  control = control.ergm(seed=1, MCMC.samplesize=20000),
+#  verbose=T)
+# mcmc.diagnostics(fit, center=F)
 
 ## ----eval=FALSE----------------------------------------------------------
-#  fit <- ergm(magnolia~edges+gwesp(0.5,fixed=T)+nodematch('Grade')+nodematch('Race')+
-#    nodematch('Sex'),
-#   control =  control.ergm(seed=1, MCMLE.MCMC.precision=2))
-#  mcmc.diagnostics(fit)
+# fit <- ergm(magnolia~edges+gwesp(0.5,fixed=T)+nodematch('Grade')+nodematch('Race')+
+#   nodematch('Sex'),
+#  control =  control.ergm(seed=1, MCMLE.MCMC.precision=2))
+# mcmc.diagnostics(fit)
 
 ## ----results='hide'------------------------------------------------------
 fit <- ergm(magnolia~edges+gwesp(0.25,fixed=T)+nodematch('Grade')+nodematch('Race')+

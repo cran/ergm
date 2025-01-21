@@ -5,8 +5,10 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2024 Statnet Commons
+#  Copyright 2003-2025 Statnet Commons
 ################################################################################
+
+unloadNamespace("ergm.count")
 
 mean_mat <- function(Mmin, Mmax){
   Mmin <- statnet.common::NVL(Mmin, Mmax)
@@ -160,3 +162,5 @@ y0 <- as.network(mean_mat(Mmin,Mmax), matrix.type="adjacency", directed=TRUE, ig
 y0 %v% "b" <- a
 
 test_dind_constr(y0, ~blockdiag("b"), Mmin, Mmax, response="w", reference=~DiscUnif(0,4))
+
+library(ergm.count)

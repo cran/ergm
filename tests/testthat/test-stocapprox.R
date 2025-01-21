@@ -5,10 +5,12 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2024 Statnet Commons
+#  Copyright 2003-2025 Statnet Commons
 ################################################################################
 
 options(ergm.eval.loglik=FALSE)
+
+unloadNamespace("ergm.count")
 
 data(florentine)
 
@@ -44,3 +46,5 @@ test_that("Stochastic Approximation produces similar results to MCMLE (valued ER
 
   expect_equal(coef(mod.sa), coef(mod.mcmle), tolerance = 0.1, ignore_attr=TRUE)
 })
+
+library(ergm.count)

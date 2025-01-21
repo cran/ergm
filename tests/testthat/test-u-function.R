@@ -5,7 +5,7 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2024 Statnet Commons
+#  Copyright 2003-2025 Statnet Commons
 ################################################################################
 
 n <- 4
@@ -81,8 +81,10 @@ test_that("Multiplicitous proposal", {
   expect_true(all(sim.dyads==s[,-(1:4)]))
 })
 
-test_that("Ergm.count_test", {
+test_that("ergm.count test", {
   library(ergm.count)
+  skip_if_not(check_ABI("ergm.count"))
+
   nw <- network.initialize(4, dir=TRUE)
   nw[1,2,names.eval="v",add.edges=TRUE] <- 1
   nw[1,3,names.eval="v",add.edges=TRUE] <- 1

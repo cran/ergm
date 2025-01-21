@@ -5,8 +5,14 @@
  *  open source, and has the attribution requirements (GPL Section 7) at
  *  https://statnet.org/attribution .
  *
- *  Copyright 2003-2024 Statnet Commons
+ *  Copyright 2003-2025 Statnet Commons
  */
+
+#include "ergm_constants.h"
+
+int GetBuiltABIVersion_ergm(void){
+  return ERGM_ABI_VERSION;
+}
 
 #define STUBFILE
 #include <stddef.h>
@@ -76,6 +82,16 @@ void WtDyadGenUpdate(Vertex tail, Vertex head, double weight, void *gen, WtNetwo
 static void (*fun)(Vertex,Vertex,double,void *,WtNetwork *,double) = NULL;
 if(fun==NULL) fun = (void (*)(Vertex,Vertex,double,void *,WtNetwork *,double)) R_FindSymbol("WtDyadGenUpdate", "ergm", NULL);
 fun(tail,head,weight,gen,nwp,edgestate);
+}
+void AddOnDyadGenInit(OnDyadGenInit callback, void *payload){
+static void (*fun)(OnDyadGenInit,void *) = NULL;
+if(fun==NULL) fun = (void (*)(OnDyadGenInit,void *)) R_FindSymbol("AddOnDyadGenInit", "ergm", NULL);
+fun(callback,payload);
+}
+void DeleteOnDyadGenInit(OnDyadGenInit callback, void *payload){
+static void (*fun)(OnDyadGenInit,void *) = NULL;
+if(fun==NULL) fun = (void (*)(OnDyadGenInit,void *)) R_FindSymbol("DeleteOnDyadGenInit", "ergm", NULL);
+fun(callback,payload);
 }
 
 #define STUBFILE
@@ -315,6 +331,46 @@ return fun(pR,nwp,aux_storage);
 void MHProposalDestroy(MHProposal *MHp, Network *nwp){
 static void (*fun)(MHProposal *,Network *) = NULL;
 if(fun==NULL) fun = (void (*)(MHProposal *,Network *)) R_FindSymbol("MHProposalDestroy", "ergm", NULL);
+fun(MHp,nwp);
+}
+
+#define STUBFILE
+#include <stddef.h>
+#include <R_ext/Rdynload.h>
+#include "ergm_MHproposals_degree.h"
+void MH_CondDegreeTetrad(MHProposal *MHp, Network *nwp){
+static void (*fun)(MHProposal *,Network *) = NULL;
+if(fun==NULL) fun = (void (*)(MHProposal *,Network *)) R_FindSymbol("MH_CondDegreeTetrad", "ergm", NULL);
+fun(MHp,nwp);
+}
+void MH_CondDegreeHexad(MHProposal *MHp, Network *nwp){
+static void (*fun)(MHProposal *,Network *) = NULL;
+if(fun==NULL) fun = (void (*)(MHProposal *,Network *)) R_FindSymbol("MH_CondDegreeHexad", "ergm", NULL);
+fun(MHp,nwp);
+}
+void MH_CondDegree(MHProposal *MHp, Network *nwp){
+static void (*fun)(MHProposal *,Network *) = NULL;
+if(fun==NULL) fun = (void (*)(MHProposal *,Network *)) R_FindSymbol("MH_CondDegree", "ergm", NULL);
+fun(MHp,nwp);
+}
+void MH_CondOutDegree(MHProposal *MHp, Network *nwp){
+static void (*fun)(MHProposal *,Network *) = NULL;
+if(fun==NULL) fun = (void (*)(MHProposal *,Network *)) R_FindSymbol("MH_CondOutDegree", "ergm", NULL);
+fun(MHp,nwp);
+}
+void MH_CondInDegree(MHProposal *MHp, Network *nwp){
+static void (*fun)(MHProposal *,Network *) = NULL;
+if(fun==NULL) fun = (void (*)(MHProposal *,Network *)) R_FindSymbol("MH_CondInDegree", "ergm", NULL);
+fun(MHp,nwp);
+}
+void MH_CondB1Degree(MHProposal *MHp, Network *nwp){
+static void (*fun)(MHProposal *,Network *) = NULL;
+if(fun==NULL) fun = (void (*)(MHProposal *,Network *)) R_FindSymbol("MH_CondB1Degree", "ergm", NULL);
+fun(MHp,nwp);
+}
+void MH_CondB2Degree(MHProposal *MHp, Network *nwp){
+static void (*fun)(MHProposal *,Network *) = NULL;
+if(fun==NULL) fun = (void (*)(MHProposal *,Network *)) R_FindSymbol("MH_CondB2Degree", "ergm", NULL);
 fun(MHp,nwp);
 }
 

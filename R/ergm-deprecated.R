@@ -5,13 +5,13 @@
 #  open source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2024 Statnet Commons
+#  Copyright 2003-2025 Statnet Commons
 ################################################################################
 #' @name ergm-deprecated
 #' @rdname ergm-deprecated
 #' @title Functions that will no longer be supported in future releases of the package
 #' @description Functions that have been superceed, were never documented, or will be removed from the package for other reasons
-#' @param nw,arglist,...,formula,object,x
+#' @param ...,object,x
 #' Arguments to deprecated functions.
 #'
 #' @keywords misc internal
