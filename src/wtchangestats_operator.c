@@ -1,8 +1,8 @@
-/*  File src/wtchangestats_operator.c in package ergm, part of the
- *  Statnet suite of packages for network analysis, https://statnet.org .
+/*  File src/wtchangestats_operator.c in package ergm, part of the Statnet
+ *  suite of packages for network analysis, https://statnet.org .
  *
- *  This software is distributed under the GPL-3 license.  It is free,
- *  open source, and has the attribution requirements (GPL Section 7) at
+ *  This software is distributed under the GPL-3 license.  It is free, open
+ *  source, and has the attribution requirements (GPL Section 7) at
  *  https://statnet.org/attribution .
  *
  *  Copyright 2003-2025 Statnet Commons
@@ -68,7 +68,7 @@ WtF_CHANGESTAT_FN(f_wtpassthrough_term){
 WtI_CHANGESTAT_FN(i_import_binary_term_sum){
   ALLOC_STORAGE(1, StoreNetAndModel, store);
 
-  store->nwp = NetworkInitialize(NULL, NULL, 0, N_NODES, DIRECTED, BIPARTITE, FALSE, 0, NULL);
+  store->nwp = NetworkInitialize(NULL, NULL, 0, N_NODES, DIRECTED, BIPARTITE);
   Network *mynwp = store->nwp;
   store->m = ModelInitialize(getListElement(mtp->R, "submodel"), NULL,  mynwp, FALSE);
   DELETE_IF_UNUSED_IN_SUBMODEL(z_func, store->m);
@@ -197,7 +197,7 @@ WtF_CHANGESTAT_FN(f_import_binary_term_form){
 */
 
 WtI_CHANGESTAT_FN(i__binary_nonzero_net){
-  Network *bnwp = AUX_STORAGE = NetworkInitialize(NULL, NULL, 0, N_NODES, DIRECTED, BIPARTITE, FALSE, 0, NULL);
+  Network *bnwp = AUX_STORAGE = NetworkInitialize(NULL, NULL, 0, N_NODES, DIRECTED, BIPARTITE);
   WtEXEC_THROUGH_NET_EDGES_PRE(t, h, e, w, {
       if(w!=0) ToggleEdge(t, h, bnwp);
     });
@@ -231,7 +231,7 @@ WtF_CHANGESTAT_FN(f__binary_nonzero_net){
 WtI_CHANGESTAT_FN(i__binary_formula_net){
   ALLOC_AUX_STORAGE(1, StoreNetAndWtModel, storage);
   WtModel *m = storage->m = WtModelInitialize(getListElement(mtp->R, "submodel"), NULL, nwp, FALSE);
-  Network *bnwp = storage->nwp = NetworkInitialize(NULL, NULL, 0, N_NODES, DIRECTED, BIPARTITE, FALSE, 0, NULL);
+  Network *bnwp = storage->nwp = NetworkInitialize(NULL, NULL, 0, N_NODES, DIRECTED, BIPARTITE);
  
   WtEXEC_THROUGH_NET_EDGES_PRE(t, h, e, w, {
       if(w!=0){
@@ -458,3 +458,15 @@ WtZ_CHANGESTAT_FN(z_wtExp){
     else CHANGE_STAT[i] = exp(CHANGE_STAT[i]+modstats->m->workspace[i]) - exp(CHANGE_STAT[i]);
   }
 }
+
+
+#include "ergm_wtchangestats_auxnet.h"
+
+/* ON_WtAUXNET(_discord_net_Network) */
+/* ON_WtAUXNET(_intersect_net_Network) */
+/* ON_WtAUXNET(_union_net_Network) */
+/* ON_WtAUXNET(_blockdiag_net) */
+ON_WtAUXNET(_wtundir_net)
+/* ON_WtAUXNET(_filter_formula_net) */
+ON_WtAUXNET(_wtsubgraph_net)
+ON_WtAUXNET(_wttransformed_net)

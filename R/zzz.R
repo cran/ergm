@@ -1,13 +1,14 @@
-#  File R/zzz.R in package ergm, part of the
-#  Statnet suite of packages for network analysis, https://statnet.org .
+#  File R/zzz.R in package ergm, part of the Statnet suite of packages for
+#  network analysis, https://statnet.org .
 #
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) at
+#  This software is distributed under the GPL-3 license.  It is free, open
+#  source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
 #  Copyright 2003-2025 Statnet Commons
 ################################################################################
 #' @importFrom Rdpack reprompt
+#' @importFrom rlang "%|%"
 .onAttach <- function(libname, pkgname){
   #' @importFrom statnet.common statnetStartupMessage
   sm <- statnetStartupMessage("ergm", c("statnet","ergm.count","tergm"), TRUE)
@@ -21,9 +22,12 @@
   # . is used as a placeholder by stantet.common::NVL3().
   utils::globalVariables(".")
 
-  default_options(ergm.eval.loglik=TRUE,
-                  ergm.loglik.warn_dyads=TRUE,
-                  ergm.cluster.retries=5)
+  default_options(
+    ergm.eval.loglik=TRUE,
+    ergm.loglik.warn_dyads=TRUE,
+    ergm.warn_loops = TRUE,
+    ergm.cluster.retries=5
+  )
 
   eval(COLLATE_ALL_MY_CONTROLS_EXPR)
 

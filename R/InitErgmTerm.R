@@ -1,8 +1,8 @@
-#  File R/InitErgmTerm.R in package ergm, part of the
-#  Statnet suite of packages for network analysis, https://statnet.org .
+#  File R/InitErgmTerm.R in package ergm, part of the Statnet suite of packages
+#  for network analysis, https://statnet.org .
 #
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) at
+#  This software is distributed under the GPL-3 license.  It is free, open
+#  source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
 #  Copyright 2003-2025 Statnet Commons
@@ -967,8 +967,7 @@ InitErgmTerm.b1dsp <- function(nw, arglist, cache.sp=TRUE, ...){
 #'
 #' @template ergmTerm-attr
 #' @param base deprecated
-#' @templateVar explain this optional argument controls which levels of the attribute
-#'   should be included and which should be excluded.
+#' @templateVar explain this optional argument controls which levels of the attribute should be included and which should be excluded.
 #' @template ergmTerm-levels-doco
 #'
 #' @template ergmTerm-levels-not-first
@@ -1313,8 +1312,8 @@ InitErgmTerm.b1twostar <- function(nw, arglist, ..., version=packageVersion("erg
                  else ergm_attr_levels(a$levels2, list(row = b1nodecov, col = b2nodecov, col2 = b2nodecov), nw, levels2.list)
   
   rows2keep <- match(levels2.sel,levels2.list, NA)
-  rows2keep <- rows2keep[!is.na(rows2keep)]
-  
+  rows2keep <- rows2keep %[!f]% is.na
+
   u <- indices2.grid[rows2keep,]
   
   # Recode to numeric
@@ -1554,8 +1553,7 @@ InitErgmTerm.b2dsp <- function(nw, arglist, cache.sp=TRUE, ...){
 #'
 #' @template ergmTerm-attr
 #' @param base deprecated
-#' @templateVar explain this optional argument controls which levels of the attribute
-#'   should be included and which should be excluded.
+#' @templateVar explain this optional argument controls which levels of the attribute should be included and which should be excluded.
 #' @template ergmTerm-levels-doco
 #'
 #' @template ergmTerm-levels-not-first
@@ -1888,7 +1886,7 @@ InitErgmTerm.b2twostar <- function(nw, arglist, ..., version=packageVersion("erg
                  else ergm_attr_levels(a$levels2, list(row = b2nodecov, col = b1nodecov, col2 = b1nodecov), nw, levels2.list)
   
   rows2keep <- match(levels2.sel,levels2.list, NA)
-  rows2keep <- rows2keep[!is.na(rows2keep)]
+  rows2keep <- rows2keep %[!f]% is.na
   
   u <- indices2.grid[rows2keep,]
   
@@ -2141,7 +2139,7 @@ InitErgmTerm.cycle <- function(nw, arglist, ...) {
     basenam<-"cycle"
   list(name="cycle",                            #name: required
        coef.names = paste(basenam, a$k, sep=""),  #coef.names: required
-       inputs = c(a$semi, max(a$k), (2:max(a$k)) %in% a$k),
+       iinputs = c(a$semi, max(a$k), (2:max(a$k)) %in% a$k),
        minval = 0)
 }
 
@@ -2626,11 +2624,13 @@ InitErgmTerm.gwb1dsp<-function(nw, arglist, cache.sp=TRUE, gw.cutoff=30, ...) {
 #' @templateVar name gwb2degree
 #' @title Geometrically weighted degree distribution for the second mode in a bipartite network
 #' @description This term adds one network statistic to the model equal to the weighted
-#'   degree distribution with decay controlled by the which should be non-negative,
-#'   for nodes in the
-#'   second mode of a bipartite network. The second mode of a bipartite network
+#'   degree distribution with decay controlled by the `decay` parameter, which should be non-negative,
+#'   for nodes in the second mode of a bipartite network. The second mode of a bipartite network
 #'   object is sometimes known as the "event" mode.
-#'   
+#'
+#'   This term can only be used with undirected bipartite
+#'   networks.
+#'
 #' @usage
 #' # binary: gwb2degree(decay, fixed=FALSE, attr=NULL, cutoff=30, levels=NULL)
 #'
@@ -2738,7 +2738,7 @@ InitErgmTerm.gwidegree<-function(nw, arglist, gw.cutoff=30, ..., version=package
 #' @title Geometrically weighted out-degree distribution
 #' @description This term adds one network statistic to the model
 #'   equal to the weighted out-degree distribution with decay parameter
-#'   `decay` parameter, which should be non-negative. This
+#'   `decay` parameter, which should be positive. This
 #'   term can only be used with directed networks.
 #'   
 #' @usage
@@ -3702,8 +3702,7 @@ InitErgmTerm.nodemain<-InitErgmTerm.nodecov
 #'
 #' @template ergmTerm-attr
 #' @param base deprecated
-#' @templateVar explain this optional argument controls which levels of the attribute
-#'   should be included and which should be excluded.
+#' @templateVar explain this optional argument controls which levels of the attribute should be included and which should be excluded.
 #' @template ergmTerm-levels-doco
 #'
 #' @template ergmTerm-general
@@ -3830,8 +3829,7 @@ InitErgmTerm.nodeicov<-function (nw, arglist, ..., version=packageVersion("ergm"
 #'
 #' @template ergmTerm-attr
 #' @param base deprecated
-#' @templateVar explain this optional argument controls which levels of the attribute
-#'   should be included and which should be excluded.
+#' @templateVar explain this optional argument controls which levels of the attribute should be included and which should be excluded.
 #' @template ergmTerm-levels-doco
 #'
 #' @template ergmTerm-levels-not-first
@@ -3912,8 +3910,7 @@ InitErgmTerm.nodeifactor<-function (nw, arglist, ..., version=packageVersion("er
 #' @template ergmTerm-attr
 #' @param diff specify if the term has uniform or differential homophily
 #' @param keep deprecated
-#' @templateVar explain this optional argument controls which levels of the attribute
-#'   should be included and which should be excluded.
+#' @templateVar explain this optional argument controls which levels of the attribute should be included and which should be excluded.
 #' @template ergmTerm-levels-doco
 #'
 #' @template ergmTerm-keep-dep
@@ -4079,8 +4076,11 @@ InitErgmTerm.nodemix<-function (nw, arglist, ..., version=packageVersion("ergm")
     cn <- c()
 
     if (has.groups) {
-      for (g in sort(unique(as.vector(a$levels2[!is.na(a$levels2) & a$levels2 != ''])))) {
-        if (g != '') {
+      for (g in a$levels2 %[.]% (!is.na(.) & . != "") |>
+                as.vector() |>
+                unique() |>
+                sort()) {
+        if (g != "") {
           cn <- c(cn, paste("mix", paste(attrname, collapse="."), g, sep="."))
           indmat[a$levels2 == g] <- length(cn)
           if (!is.directed(nw)) {
@@ -4092,7 +4092,7 @@ InitErgmTerm.nodemix<-function (nw, arglist, ..., version=packageVersion("ergm")
 
     if (length(levels2.sel) > 0) {
       rows2keep <- match(levels2.sel,levels2.list, NA)
-      rows2keep <- rows2keep[!is.na(rows2keep)]
+      rows2keep <- rows2keep %[!f]% is.na
 
       u <- indices2.grid[rows2keep,]
 
@@ -4146,8 +4146,11 @@ InitErgmTerm.nodemix<-function (nw, arglist, ..., version=packageVersion("ergm")
     cn <- c()
 
     if (has.groups) {
-      for (g in sort(unique(as.vector(a$levels2[!is.na(a$levels2) & a$levels2 != ''])))) {
-        if (g != '') {
+      for (g in a$levels2 %[.]% (!is.na(.) & . != "") |>
+                as.vector() |>
+                unique() |>
+                sort()) {
+        if (g != "") {
           cn <- c(cn, paste("mix", paste(attrname, collapse="."), g, sep="."))
           indmat[a$levels2 == g] <- length(cn)
           if (!is.directed(nw)) {
@@ -4160,7 +4163,7 @@ InitErgmTerm.nodemix<-function (nw, arglist, ..., version=packageVersion("ergm")
     if (length(levels2.sel) > 0) {
       indmat.ungrouped <- matrix(0L, nrow=nr, ncol=nc)
       rows2keep <- match(levels2.sel,levels2.list, NA)
-      rows2keep <- rows2keep[!is.na(rows2keep)]
+      rows2keep <- rows2keep %[!f]% is.na
 
       u <- indices2.grid[rows2keep,]
       uun <- uun[rows2keep]
@@ -4256,8 +4259,7 @@ InitErgmTerm.nodeocov<-function (nw, arglist, ..., version=packageVersion("ergm"
 #'
 #' @template ergmTerm-attr
 #' @param base deprecated
-#' @templateVar explain this optional argument controls which levels of the attribute
-#'   should be included and which should be excluded.
+#' @templateVar explain this optional argument controls which levels of the attribute should be included and which should be excluded.
 #' @template ergmTerm-levels-doco
 #'
 #' @template ergmTerm-base-dep
@@ -4951,8 +4953,7 @@ InitErgmTerm.transitive<-function (nw, arglist, ...) {
 #' @usage
 #' # binary: triadcensus(levels)
 #'
-#' @templateVar explain For directed networks, specify a set of terms to add other than the default value of `1:15`. 
-#'   For undirected networks, specify which of the four types of ties to include. The default is `1:3` where 0 is dropped.
+#' @templateVar explain For directed networks, specify a set of terms to add other than the default value of `1:15`. For undirected networks, specify which of the four types of ties to include. The default is `1:3` where 0 is dropped.
 #' @template ergmTerm-levels-doco
 #'
 #' @template ergmTerm-general
@@ -5047,7 +5048,7 @@ InitErgmTerm.triadcensus<-function (nw, arglist, ..., version=packageVersion("er
 #'   equal values of the vertex attribute specified by `attr` . If `attr` is specified and `diff` is `TRUE` ,
 #'   then one statistic is added for each value of `attr` ,
 #'   equal to the number of triangles where all three nodes have that value of the attribute.
-#' @templateVar explain add one statistic for each value specified if `diff` is `TRUE`.
+#' @templateVar explain this optional argument controls which levels of the attribute should be included and which should be excluded.
 #' @template ergmTerm-levels-doco
 #'
 #' @template ergmTerm-general
@@ -5081,21 +5082,18 @@ InitErgmTerm.triangle<-InitErgmTerm.triangles<-function (nw, arglist, ..., versi
     nodecov <- ergm_get_vattr(attrarg, nw)
     attrname <- attr(nodecov, "name")
     u <- ergm_attr_levels(levels, nodecov, nw, levels = sort(unique(nodecov)))
-    nodecov <- match(nodecov,u,nomatch=length(u)+1)
-    ui <- seq(along=u)
+    nodecov <- match(nodecov, u, nomatch = 0)
     if (!diff) {
       coef.names <- paste("triangle",attrname,sep=".")
-      inputs <- c(nodecov)
     } else {
       coef.names <- paste("triangle",attrname, u, sep=".")
-      inputs <- c(ui, nodecov)
-      attr(inputs, "ParamsBeforeCov") <- length(ui)
     }
+    inputs <- c(diff, nodecov)
   }else{
     coef.names <- "triangle"
     inputs <- NULL
   }
-  list(name="triangle", coef.names=coef.names, inputs=inputs, minval=0)
+  list(name="triangle", coef.names=coef.names, iinputs=inputs, minval=0)
 }
 
 
@@ -5122,8 +5120,7 @@ InitErgmTerm.triangle<-InitErgmTerm.triangles<-function (nw, arglist, ..., versi
 #'   equal values of the vertex attribute specified by `attr` . If `attr` is specified and `diff` is `TRUE` ,
 #'   then one statistic is added for each value of `attr` ,
 #'   equal to the number of triangles where all three nodes have that value of the attribute.
-#' @templateVar explain add one statistic for each value specified if `diff` is `TRUE`
-#'   should be included and which should be excluded.
+#' @templateVar explain add one statistic for each value specified if `diff` is `TRUE` should be included and which should be excluded.
 #' @template ergmTerm-levels-doco
 #'
 #' @template ergmTerm-general

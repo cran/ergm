@@ -1,8 +1,8 @@
 #  File tests/testthat/test-ergm-godfather.R in package ergm, part of the
 #  Statnet suite of packages for network analysis, https://statnet.org .
 #
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) at
+#  This software is distributed under the GPL-3 license.  It is free, open
+#  source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
 #  Copyright 2003-2025 Statnet Commons
@@ -20,9 +20,9 @@ nwd[,,names.eval="w",add.edges=TRUE] <-
 nwu <- network.initialize(4, dir=FALSE)
 nwu[,,names.eval="w",add.edges=TRUE] <-
   matrix(c(0,1,2,0,
-           1,0,1,3,
-           2,1,0,0,
-           0,3,0,0),
+           0,0,1,3,
+           0,0,0,0,
+           0,0,0,0),
          4,4,
          byrow=TRUE)
 

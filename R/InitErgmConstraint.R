@@ -1,8 +1,8 @@
-#  File R/InitErgmConstraint.R in package ergm, part of the
-#  Statnet suite of packages for network analysis, https://statnet.org .
+#  File R/InitErgmConstraint.R in package ergm, part of the Statnet suite of
+#  packages for network analysis, https://statnet.org .
 #
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) at
+#  This software is distributed under the GPL-3 license.  It is free, open
+#  source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
 #  Copyright 2003-2025 Statnet Commons
@@ -336,7 +336,7 @@ InitErgmConstraint.blocks <- function(nw, arglist, ...) {
                                        levels2_list)
 
   rows_to_keep <- match(levels2_selected, levels2_list, nomatch = NA)
-  rows_to_keep <- rows_to_keep[!is.na(rows_to_keep)]
+  rows_to_keep <- rows_to_keep %[!f]% is.na
 
   pairs_to_fix <- indices2_grid[rows_to_keep,]
 

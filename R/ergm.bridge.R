@@ -1,8 +1,8 @@
-#  File R/ergm.bridge.R in package ergm, part of the
-#  Statnet suite of packages for network analysis, https://statnet.org .
+#  File R/ergm.bridge.R in package ergm, part of the Statnet suite of packages
+#  for network analysis, https://statnet.org .
 #
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) at
+#  This software is distributed under the GPL-3 license.  It is free, open
+#  source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
 #  Copyright 2003-2025 Statnet Commons
@@ -26,8 +26,8 @@
 #' @param reference {A one-sided formula specifying the reference
 #'   measure (\eqn{h(y)}) to be used.  (Defaults to
 #'   \code{~Bernoulli}.)}
-#' @param target.stats {A vector of sufficient statistics to be used
-#'   in place of those of the network in the formula.}
+#' @param target.stats A vector of sufficient statistics to be used
+#'   in place of those of the network in the formula. \matchnames{statistic}
 #' @param from,to The initial and final parameter vectors.
 #' @param basis An optional [`network`] object to
 #'   start the Markov chain.  If omitted, the default is the
@@ -43,7 +43,7 @@
 #' @template verbose
 #'
 #' @param coef A vector of coefficients for the configuration of
-#'   interest.
+#'   interest. \matchnames{coefficient}
 #' @param llkonly Whether only the estiamted log-likelihood should be
 #'   returned by the `ergm.bridge.0.llk` and
 #'   `ergm.bridge.dindstart.llk`.  (Defaults to TRUE.)
@@ -144,7 +144,9 @@ ergm.bridge.llr<-function(object, response=NULL, reference=~Bernoulli, constrain
   sim_settings <- simulate(object, coef=from, nsim=1, reference=reference, constraints=list(constraints, obs.constraints), observational=FALSE, output="ergm_state", verbose=max(verbose-1,0), basis = basis, control=gen_control(FALSE, "first"), ..., return.args = "ergm_state")
   if(verbose) message("Model and proposals initialized.")
   state <- list(sim_settings$object)
-
+  model <- as.ergm_model(state[[1]])
+  etamap <- model$etamap
+  
   if(obs){
     if(verbose) message("Initializing constrained model and proposals...")
     sim_settings.obs <- simulate(object, coef=from, nsim=1, reference=reference, constraints=list(constraints, obs.constraints), observational=TRUE, output="ergm_state", verbose=max(verbose-1,0), basis = basis, control=gen_control(TRUE, "first"), ..., return.args = "ergm_state")
@@ -153,22 +155,20 @@ ergm.bridge.llr<-function(object, response=NULL, reference=~Bernoulli, constrain
   }
 
   ## Miscellaneous settings
-  Dtheta.Du <- ifelse(mapply(identical, to, from), 0, to - from)[!state[[1]]$model$etamap$offsettheta]
+  Dtheta.Du <- ifelse(mapply(identical, to, from), 0, to - from)[!etamap$offsettheta]
 
   ## Handle target statistics, if passed.
   if(!is.null(target.stats)){
-    if(nparam(as.ergm_model(state[[1]]), canonical=TRUE, offset=FALSE)!=length(target.stats)){
-      stop("Incorrect length of the target.stats vector: should be ", nparam(as.ergm_model(state[[1]]), canonical=TRUE, offset=FALSE), " but is ",length(target.stats),". Note that offset() terms should *not* get target statistics.")
-    }
-    target.stats <- .align.target.stats.offset(as.ergm_model(state[[1]]), target.stats)
-    if(any(as.ergm_model(state[[1]])$etamap$offsetmap)) warning("Using target.stats for a model with offset terms may produce an inaccurate estimate of the log-likelihood and derived quantities (deviance, AIC, BIC, etc.), because some of the target stats must be imputed.")
+    target.stats <- match_names(target.stats, param_names(model, canonical=TRUE, offset=FALSE))
+    target.stats <- .embed.target.stats(model, target.stats)
+    if(any(etamap$offsetmap)) warning("Using target.stats for a model with offset terms may produce an inaccurate estimate of the log-likelihood and derived quantities (deviance, AIC, BIC, etc.), because some of the target stats must be imputed.")
   }else target.stats <- summary(state[[1]])
 
 
   ## Helper function to calculate Dtheta.Du %*% Deta.Dtheta %*% g(y)
   llrsamp <- function(samp, theta){
-    if(is.mcmc.list(samp)) lapply.mcmc.list(ergm.estfun(samp, theta, state[[1]]$model$etamap), `%*%`, Dtheta.Du)
-    else sum(ergm.estfun(samp, theta, state[[1]]$model$etamap) * Dtheta.Du)
+    if(is.mcmc.list(samp)) lapply.mcmc.list(ergm.estfun(samp, theta, etamap), `%*%`, Dtheta.Du)
+    else sum(ergm.estfun(samp, theta, etamap) * Dtheta.Du)
   }
 
 
@@ -195,7 +195,7 @@ ergm.bridge.llr<-function(object, response=NULL, reference=~Bernoulli, constrain
                             control = gen_control(FALSE, if(i == 1 && (attempt == 1 || !control$bridge.bidirectional)) "first" else "between"))
       state <- z$networks
       samp <- llrsamp(z$stats, theta)
-      vcov.llrs[i] <- c(ERRVL(try(spectrum0.mvar(samp)/(niter(samp)*nchain(samp)), silent=TRUE), 0))
+      vcov.llrs[i] <- c(ERRVL2(spectrum0.mvar(samp)/(niter(samp)*nchain(samp)), 0))
       llrs[i] <- mean(as.matrix(samp))
 
       if(obs){
@@ -203,7 +203,7 @@ ergm.bridge.llr<-function(object, response=NULL, reference=~Bernoulli, constrain
                               control = gen_control(TRUE, if(i == 1 && (attempt == 1 || !control$bridge.bidirectional)) "first" else "between"))
         state.obs <- z$networks
         samp <- llrsamp(z$stats, theta)
-        vcov.llrs[i] <- vcov.llrs[i] + c(ERRVL(try(spectrum0.mvar(samp)/(niter(samp)*nchain(samp)), silent=TRUE), 0))
+        vcov.llrs[i] <- vcov.llrs[i] + c(ERRVL2(spectrum0.mvar(samp)/(niter(samp)*nchain(samp)), 0))
         llrs[i] <- llrs[i] - mean(as.matrix(samp))
       }else llrs[i] <- llrs[i] - llrsamp(target.stats, theta)
     }
@@ -264,7 +264,7 @@ ergm.bridge.0.llk<-function(object, response=NULL, reference=~Bernoulli, coef, .
 #' \code{object} with an overal density term (\code{edges}) added if not
 #' redundant.
 #' @param coef.dind Parameter configuration for the dyad-independent starting
-#' point. Defaults to the MLE of \code{dind}.
+#' point. Defaults to the MLE of \code{dind}. \matchnames{coefficient}
 #'
 #' @return \code{ergm.bridge.dindstart.llk} result list also includes
 #'   an `llk` element, with the log-likelihood itself and an
@@ -288,18 +288,17 @@ ergm.bridge.dindstart.llk<-function(object, response=NULL, constraints=~., coef,
   m<-ergm_model(object, nw, term.options=control$term.options)
   m.edges <- ergm_model(~edges, nw, term.options = control$term.options)
 
+  coef <- match_names(coef, param_names(m, canonical = FALSE))
+  trm_coef <- split_len(coef, nparam(m, canonical = FALSE, byterm = TRUE))
+
   if(!is.null(target.stats)){
-    if(nparam(m, canonical=TRUE, offset=FALSE)!=length(target.stats)){
-      stop("Incorrect length of the target.stats vector: should be ", nparam(m, canonical=TRUE, offset=FALSE), " but is ",length(target.stats),". Note that offset() terms should *not* get target statistics.")
-    }
-    target.stats <- .align.target.stats.offset(m, target.stats)
-    target.stats[is.na(target.stats) & m$etamap$offsetmap] <- summary(m, nw)[is.na(target.stats) & m$etamap$offsetmap]
+    target.stats <- .embed.target.stats(m, match_names(target.stats, param_names(m, canonical=TRUE, offset=FALSE)))
+    if(anyNA(target.stats))
+      target.stats[is.na(target.stats) & m$etamap$offsetmap] <- summary(m, nw)[is.na(target.stats) & m$etamap$offsetmap]
+    trm_tgt <- split_len(target.stats,
+                         nparam(m, canonical = TRUE, byterm = TRUE))
   }
 
-  q.pos.full <- c(0,cumsum(nparam(m, canonical=FALSE, byterm=TRUE, offset=TRUE)))
-  p.pos.full <- c(0,cumsum(nparam(m, canonical=TRUE, byterm=TRUE, offset=FALSE)))
-  rng <- function(x, from, to) if(to>=from) x[from:to]
-  
   tmp <- .handle.auto.constraints(nw, constraints, obs.constraints, target.stats); nw <- tmp$nw
   if(!is.dyad.independent(ergm_conlist(tmp$conterms,nw,term.options=control$term.options), ergm_conlist(tmp$conterms.obs,nw,term.options=control$term.options))) stop("Bridge sampling with dyad-independent start does not work with dyad-dependent constraints.")
 
@@ -323,8 +322,8 @@ ergm.bridge.dindstart.llk<-function(object, response=NULL, constraints=~., coef,
         dindmap <- c(dindmap, rep(FALSE, length(m$terms[[i]]$offset)))
       }else{
         dindmap <- c(dindmap, rep(TRUE, length(m$terms[[i]]$offset)))
-        if(!is.null(target.stats)) ts.dind <- c(ts.dind, rng(target.stats, p.pos.full[i]+1, p.pos.full[i+1]))
-        offset.dind <- c(offset.dind, coef[(q.pos.full[i]+1):q.pos.full[i+1]][m$terms[[i]]$offset]) # Add offset coefficient where applicable.
+        if(!is.null(target.stats)) ts.dind <- c(ts.dind, trm_tgt[[i]])
+        offset.dind <- c(offset.dind, trm_coef[[i]][m$terms[[i]]$offset])
       }
 
     terms.full <- c(terms.full, list(as.name("edges")))
@@ -348,6 +347,7 @@ ergm.bridge.dindstart.llk<-function(object, response=NULL, constraints=~., coef,
     llk.dind <- ergm.dind$mple.lik
   }else{
     mple.dind <- suppressMessages(suppressWarnings(ergmMPLE(dind, output="matrix", constraints=constraints,obs.constraints=obs.constraints, control=control.ergm(drop=control$drop, term.options=control$term.options, MPLE.max.dyad.types=control$MPLE.max.dyad.types))))
+    coef.dind <- match_names(coef.dind, names(coef(mple.dind)))
     etamap.dind <- attr(ergm.dind, "etamap")
     stats.dind <- summary(dind, basis=nw)
 
@@ -360,10 +360,10 @@ ergm.bridge.dindstart.llk<-function(object, response=NULL, constraints=~., coef,
   # case they are different from those to which the dyad-independent
   # submodel was actually fit:
   # l(theta,ts)-l(theta,ns)=sum(theta*(ts-ns)).
-  if(!is.null(target.stats)) llk.dind <- llk.dind + c(crossprod(eta.dind, NVL(c(ts.dind), stats.dind[!etamap.dind$offsetmap]) - stats.dind[!etamap.dind$offsetmap]))
+  if(!is.null(target.stats)) llk.dind <- llk.dind + c(crossprod(eta.dind, NVL(ts.dind, stats.dind)[!etamap.dind$offsetmap] - stats.dind[!etamap.dind$offsetmap]))
 
   coef.dind <- numeric(length(dindmap))
-  coef.dind[dindmap] <- replace(coef(ergm.dind), is.na(coef(ergm.dind)), 0)
+  coef.dind[dindmap] <- replace(coef(ergm.dind), is.na, 0)
   coef.aug <- c(coef, 0)
 
   form.aug <- append_rhs.formula(object, list(as.name("edges")), keep.onesided = TRUE)

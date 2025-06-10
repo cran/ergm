@@ -1,8 +1,8 @@
-#  File R/ergm.mple.R in package ergm, part of the
-#  Statnet suite of packages for network analysis, https://statnet.org .
+#  File R/ergm.mple.R in package ergm, part of the Statnet suite of packages
+#  for network analysis, https://statnet.org .
 #
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) at
+#  This software is distributed under the GPL-3 license.  It is free, open
+#  source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
 #  Copyright 2003-2025 Statnet Commons
@@ -155,13 +155,11 @@ ergm.mple<-function(s, s.obs, init=NULL,
    covar <- diag(rep(0,length(theta)))
    hess <- diag(rep(0,length(theta)))
   }
-# covar <- as.matrix(covar[!m$etamap$offsettheta,!m$etamap$offsettheta])
-# covar[!is.na(real.coef),!is.na(real.coef)] <- real.cov
-  covar[!is.na(theta)&!m$etamap$offsettheta,
-        !is.na(theta)&!m$etamap$offsettheta] <- real.cov
-  hess[!is.na(theta)&!m$etamap$offsettheta,
-        !is.na(theta)&!m$etamap$offsettheta] <- if(length(real.cov)) -sginv(real.cov, tol=.Machine$double.eps^(3/4)) else matrix(0,0,0)
-#
+
+  covar %[.,.]% (!is.na(theta) & !m$etamap$offsettheta) <- real.cov
+  hess %[.,.]% (!is.na(theta) & !m$etamap$offsettheta) <-
+    EVL3(real.cov, -sginv(., tol = .Machine$double.eps^(3 / 4)), 0)
+
   iteration <-  mplefit$iter 
 
 # mplefit <- call(control$MPLE.type, pl$zy ~ 1, family=binomial)
@@ -196,10 +194,10 @@ ergm.mple<-function(s, s.obs, init=NULL,
       MCMCtheta=theta, gradient=gradient,
       hessian=hess, covar=covar, failure=FALSE,
       mple.lik = structure(
-        ERRVL(try(logLik(mplefit), silent=TRUE), -mplefit$deviance/2),
+        ERRVL2(logLik(mplefit), -mplefit$deviance/2),
         nobs = nobs, df = df, class="logLik"),
       mple.lik.null = structure(
-        ERRVL(try(logLik(mplefit.null), silent=TRUE), -mplefit.null$deviance/2),
+        ERRVL2(logLik(mplefit.null), -mplefit.null$deviance/2),
         nobs = nobs, df = df, class="logLik")
       ),
       class="ergm")

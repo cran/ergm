@@ -1,8 +1,8 @@
-#  File R/ergm.llik.obs.R in package ergm, part of the
-#  Statnet suite of packages for network analysis, https://statnet.org .
+#  File R/ergm.llik.obs.R in package ergm, part of the Statnet suite of
+#  packages for network analysis, https://statnet.org .
 #
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) at
+#  This software is distributed under the GPL-3 license.  It is free, open
+#  source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
 #  Copyright 2003-2025 Statnet Commons
@@ -57,9 +57,8 @@
 #        approximation; i.e., assuming that the network statistics are approximately
 #        normally  distributed so that exp(eta * stats) is lognormal
 #####################################################################################                           
-llik.fun.obs.lognormal <- function(theta, xsim, xsim.obs=NULL,
+llik.fun.obs.lognormal <- function(theta, xsim, xsim.obs, ...,
                      varweight=0.5,
-                     dampening=FALSE,dampening.min.ess=100, dampening.level=0.1,
                      eta0, etamap){
   eta <- ergm.eta(theta, etamap)
   etaparam <- eta-eta0
@@ -87,9 +86,7 @@ llik.fun.obs.lognormal <- function(theta, xsim, xsim.obs=NULL,
 # --RETURNED--
 #   llg: the gradient of the not-offset eta parameters with ??
 #####################################################################################
-llik.grad.obs.IS <- function(theta, xsim,  xsim.obs=NULL,
-                      varweight=0.5,
-                      dampening=FALSE,dampening.min.ess=100, dampening.level=0.1,
+llik.grad.obs.IS <- function(theta, xsim, xsim.obs, ...,
                       eta0, etamap){
   # Obtain canonical parameters incl. offsets and difference from sampled-from
   eta <- ergm.eta(theta, etamap)
@@ -101,12 +98,10 @@ llik.grad.obs.IS <- function(theta, xsim,  xsim.obs=NULL,
   # Calculate log-importance-weights (constrained)
   obspred <- xsim.obs %*% etaparam + lrowweights(xsim.obs)
   
-  llg <- lweighted.mean(xsim.obs, obspred) - lweighted.mean(xsim, basepred)
-  llg <- t(ergm.etagradmult(theta, llg, etamap))
-
-  llg[is.na(llg)] <- 0 # Note: Before, infinite values would get zeroed as well. Let's see if this works.
-  
-  llg
+  (lweighted.mean(xsim.obs, obspred) - lweighted.mean(xsim, basepred)) |>
+    ergm.etagradmult(theta, v = _, etamap) |>
+    t() |>
+    replace(is.na, 0)
 }
 
 
@@ -116,9 +111,7 @@ llik.grad.obs.IS <- function(theta, xsim,  xsim.obs=NULL,
 #   He: the ?? Hessian matrix
 #####################################################################################
 
-llik.hessian.obs.IS <- function(theta, xsim, xsim.obs=NULL,
-                     varweight=0.5,
-                     dampening=FALSE,dampening.min.ess=100, dampening.level=0.1,
+llik.hessian.obs.IS <- function(theta, xsim, xsim.obs, ...,
                      eta0, etamap){
   # Obtain canonical parameters incl. offsets and difference from sampled-from
   eta <- ergm.eta(theta, etamap)
@@ -148,9 +141,7 @@ llik.hessian.obs.IS <- function(theta, xsim, xsim.obs=NULL,
 #            "Simple convergence"
 #####################################################################################
 
-llik.fun.obs.IS <- function(theta, xsim, xsim.obs=NULL, 
-                     varweight=0.5,
-                     dampening=FALSE,dampening.min.ess=100, dampening.level=0.1,
+llik.fun.obs.IS <- function(theta, xsim, xsim.obs, ...,
                      eta0, etamap){
   # Obtain canonical parameters incl. offsets and difference from sampled-from
   eta <- ergm.eta(theta, etamap)
@@ -169,9 +160,8 @@ llik.fun.obs.IS <- function(theta, xsim, xsim.obs=NULL,
 #                "robust obsing data code"
 #####################################################################################
 
-llik.fun.obs.robust<- function(theta, xsim, xsim.obs=NULL,
+llik.fun.obs.robust<- function(theta, xsim, xsim.obs, ...,
                      varweight=0.5,
-                     dampening=FALSE,dampening.min.ess=100, dampening.level=0.1,
                      eta0, etamap){
   eta <- ergm.eta(theta, etamap)
   etaparam <- eta-eta0

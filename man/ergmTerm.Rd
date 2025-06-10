@@ -97,6 +97,15 @@ binary terms to valued models, and is more flexible, at the cost of being
 somewhat slower.
 }
 
+\subsection{Transformations of dyad values}{
+
+A expression of the form \code{... + (EXPR ~ TERMS) + ...} will evaluate
+\code{TERMS} on a network constructed by applying the transformation
+specified by \code{EXPR} to edge values. At this time, \code{"sqrt"} is the
+only transformation supported (e.g., \code{("sqrt" ~ sum)} is equivalent
+to \code{sum(pow = 1/2)}).
+}
+
 }
 
 \subsection{Nodal attribute levels and indices}{
@@ -146,7 +155,12 @@ desired.
 
 Users and other packages may build custom terms, and package
 \pkg{ergm.userterms} (\url{https://github.com/statnet/ergm.userterms}) provides
-tools for implementing them.
+tools for implementing them, and the \href{https://cran.r-project.org/package=ergm/vignettes/Terms-API.html}{Terms-API vignette}.
+
+There is also a number of \emph{auxiliaries} available---terms that do
+not have statistics of their own but provide data structures useful
+to other terms. For auxiliaries currently visible to
+\CRANpkg{ergm}, see \code{\link{ergmAuxiliary}}.
 
 The current recommendation for any package implementing additional terms is
 to document the term with Roxygen comments and a name in the form

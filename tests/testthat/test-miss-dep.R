@@ -1,8 +1,8 @@
-#  File tests/testthat/test-miss-dep.R in package ergm, part of the
-#  Statnet suite of packages for network analysis, https://statnet.org .
+#  File tests/testthat/test-miss-dep.R in package ergm, part of the Statnet
+#  suite of packages for network analysis, https://statnet.org .
 #
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) at
+#  This software is distributed under the GPL-3 license.  It is free, open
+#  source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
 #  Copyright 2003-2025 Statnet Commons
@@ -19,7 +19,7 @@ test_that("Missing data MLE with edge observational constraint", {
   mcmcfit <- suppressWarnings(ergm(flomarriage~edges, constraints = ~fixedas(flobusiness), obs.constraints = ~edges))
 
   ## Point estimate
-  expect_lt(abs(theta-coef(mcmcfit))/sqrt(diag(vcov(mcmcfit, source="estimation"))), tolerance)
+  expect_within_mc_err(mcmcfit, theta)
 
   ## Likelihood
   # Relative to NULL model, whose likelihood is defined to be 0.

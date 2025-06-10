@@ -12,7 +12,7 @@
 
 <meta name="author" content="statnet.org" />
 
-<meta name="date" content="2025-01-21" />
+<meta name="date" content="2025-06-10" />
 
 <title>ERGM terms cross-reference</title>
 
@@ -340,7 +340,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 <h1 class="title toc-ignore">ERGM terms cross-reference</h1>
 <h4 class="author">statnet.org</h4>
-<h4 class="date">2025-01-21</h4>
+<h4 class="date">2025-06-10</h4>
 
 
 
@@ -362,7 +362,7 @@ search for specific keywords of terms using the
 that mention ‘triangle’ in their description:</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">search.ergmTerms</span>(<span class="at">search=</span><span class="st">&#39;triangle&#39;</span>)</span></code></pre></div>
 <pre><code>## Found  9  matching ergm terms:
-## Symmetrize(formula, rule=&quot;weak&quot;) (binary)
+## Symmetrize(formula, rule=&quot;weak&quot;) (binary, valued)
 ##     Evaluation on symmetrized (undirected) network
 ## 
 ## ctriple(attr=NULL, diff=FALSE, levels=NULL) (binary)
@@ -1155,6 +1155,7 @@ undir
 <td style="text-align:left;">
 </td>
 <td style="text-align:left;">
+✔
 </td>
 <td style="text-align:left;">
 </td>
@@ -1285,6 +1286,7 @@ undir
 <td style="text-align:left;">
 </td>
 <td style="text-align:left;">
+✔
 </td>
 <td style="text-align:left;">
 </td>
@@ -1323,6 +1325,7 @@ undir
 <td style="text-align:left;">
 </td>
 <td style="text-align:left;">
+✔
 </td>
 <td style="text-align:left;">
 </td>
@@ -1547,6 +1550,7 @@ cat dyad attr
 ✔
 </td>
 <td style="text-align:left;">
+✔
 </td>
 <td style="text-align:left;">
 ✔
@@ -1810,6 +1814,7 @@ cat dyad attr
 ✔
 </td>
 <td style="text-align:left;">
+✔
 </td>
 <td style="text-align:left;">
 ✔
@@ -1885,6 +1890,7 @@ cat dyad attr
 ✔
 </td>
 <td style="text-align:left;">
+✔
 </td>
 <td style="text-align:left;">
 ✔
@@ -2160,6 +2166,7 @@ cat dyad attr
 <td style="text-align:left;">
 </td>
 <td style="text-align:left;">
+✔
 </td>
 <td style="text-align:left;">
 ✔
@@ -6821,14 +6828,14 @@ operator, binary
 </tr>
 <tr>
 <td>
-<a id="For-ergmTerm-f403b433">For(…)</a><br /><em>A for operator for
-terms</em>: This operator evaluates the formula given to it,
+<a id="For-ergmTerm-f403b433">For(…) For(…)</a><br /><em>A for operator
+for terms</em>: This operator evaluates the formula given to it,
 substituting the specified loop counter variable with each element in a
 sequence.
 </p>
 </td>
 <td>
-operator, binary
+operator, binary, valued
 </td>
 </tr>
 <tr>
@@ -6938,17 +6945,18 @@ bipartite, operator, binary
 </tr>
 <tr>
 <td>
-<a id="S-ergmTerm-28cff48d">S(formula, attrs)</a><br /><em>Evaluation on
-an induced subgraph</em>: This operator takes a two-sided forumla attrs
-whose LHS gives the attribute or attribute function for which tails and
-heads will be used to construct the induced subgraph. They must evaluate
-either to a logical vector equal in length to the number of tails (for
-LHS) and heads (for RHS) indicating which nodes are to be used to induce
-the subgraph or a numeric vector giving their indices.
+<a id="S-ergmTerm-28cff48d">S(formula, attrs) S(formula,
+attrs)</a><br /><em>Evaluation on an induced subgraph</em>: This
+operator takes a two-sided forumla attrs whose LHS gives the attribute
+or attribute function for which tails and heads will be used to
+construct the induced subgraph. They must evaluate either to a logical
+vector equal in length to the number of tails (for LHS) and heads (for
+RHS) indicating which nodes are to be used to induce the subgraph or a
+numeric vector giving their indices.
 </p>
 </td>
 <td>
-operator, binary
+operator, binary, valued
 </td>
 </tr>
 <tr>
@@ -6965,22 +6973,25 @@ operator, binary, valued
 </tr>
 <tr>
 <td>
-<p><a id="Symmetrize-ergmTerm-61cab8ac">Symmetrize(formula,
-rule=“weak”)</a><br /><em>Evaluation on symmetrized (undirected)
-network</em>: Evaluates the terms in formula on an undirected network
-constructed by symmetrizing the LHS network using one of four rules:</p>
-“weak” A tie (i,j) is present in the constructed network if the LHS
-network has either tie (i,j) or (j,i) (or both). “strong” A tie (i,j) is
-present in the constructed network if the LHS network has both tie (i,j)
-and tie (j,i) . “upper” A tie (i,j) is present in the constructed
-network if the LHS network has tie ((i,j),(i,j)) : the upper triangle of
-the LHS network. “lower” A tie (i,j) is present in the constructed
-network if the LHS network has tie ((i,j),(i,j)) : the lower triangle of
-the LHS network.
+<p><a id="Symmetrize-ergmTerm-61cab8ac">Symmetrize(formula, rule=“weak”)
+Symmetrize(formula, rule=“weak”)</a><br /><em>Evaluation on symmetrized
+(undirected) network</em>: Evaluates the terms in formula on an
+undirected network constructed by symmetrizing the LHS network using one
+of four rules:</p>
+“weak”/“max” A tie (i,j) is present in the constructed network if the
+LHS network has either tie (i,j) or (j,i) (or both). For a valued
+network, the maximum is used. “strong”/“min” A tie (i,j) is present in
+the constructed network if the LHS network has both tie (i,j) and tie
+(j,i). For a valued network, the minimum is used. “upper” A tie (i,j) is
+present in the constructed network if the LHS network has tie
+((i,j),(i,j))(min(i,j), max(i,j)) : the upper triangle of the LHS
+network. “lower” A tie (i,j) is present in the constructed network if
+the LHS network has tie ((i,j),(i,j))(max(i,j), min(i,j)) : the lower
+triangle of the LHS network.
 </p>
 </td>
 <td>
-directed, operator, binary
+directed, operator, binary, valued
 </td>
 </tr>
 <tr>
@@ -7065,13 +7076,13 @@ directed, dyad-independent, undirected, valued
 </tr>
 <tr>
 <td>
-<p><a id="attrcov-ergmTerm-a2d6aeef">attrcov(attr,
-mat)</a><br /><em>Edge covariate by attribute pairing</em>: This term
-adds one statistic to the model, equal to the sum of the covariate
-values for each edge appearing in the network, where the covariate value
-for a given edge is determined by its mixing type on attr. Undirected
-networks are regarded as having undirected mixing, and it is assumed
-that mat is symmetric in that case.</p>
+<p><a id="attrcov-ergmTerm-a2d6aeef">attrcov(attr, mat) attrcov(attr,
+mat, form=“sum”)</a><br /><em>Edge covariate by attribute pairing</em>:
+This term adds one statistic to the model, equal to the sum of the
+covariate values for each edge appearing in the network, where the
+covariate value for a given edge is determined by its mixing type on
+attr. Undirected networks are regarded as having undirected mixing, and
+it is assumed that mat is symmetric in that case.</p>
 This term can be useful for simulating large networks with many mixing
 types, where nodemix would be slow due to the large number of
 statistics, and edgecov cannot be used because an adjacency matrix would
@@ -7079,7 +7090,7 @@ be too big.
 </p>
 </td>
 <td>
-directed, dyad-independent, undirected, binary
+directed, dyad-independent, undirected, binary, valued
 </td>
 </tr>
 <tr>
@@ -7919,14 +7930,15 @@ bipartite, curved, undirected, binary
 </tr>
 <tr>
 <td>
-<a id="gwb2degree-ergmTerm-584e787c">gwb2degree(decay, fixed=FALSE,
+<p><a id="gwb2degree-ergmTerm-584e787c">gwb2degree(decay, fixed=FALSE,
 attr=NULL, cutoff=30, levels=NULL)</a><br /><em>Geometrically weighted
 degree distribution for the second mode in a bipartite network</em>:
 This term adds one network statistic to the model equal to the weighted
-degree distribution with decay controlled by the which should be
-non-negative, for nodes in the second mode of a bipartite network. The
-second mode of a bipartite network object is sometimes known as the
-“event” mode.
+degree distribution with decay controlled by the decay parameter, which
+should be non-negative, for nodes in the second mode of a bipartite
+network. The second mode of a bipartite network object is sometimes
+known as the “event” mode.</p>
+This term can only be used with undirected bipartite networks.
 </p>
 </td>
 <td>
@@ -8061,8 +8073,8 @@ directed, binary
 attr=NULL, cutoff=30, levels=NULL)</a><br /><em>Geometrically weighted
 out-degree distribution</em>: This term adds one network statistic to
 the model equal to the weighted out-degree distribution with decay
-parameter decay parameter, which should be non-negative. This term can
-only be used with directed networks.
+parameter decay parameter, which should be positive. This term can only
+be used with directed networks.
 </p>
 </td>
 <td>
@@ -9113,14 +9125,18 @@ dyadic attribute</a>
 <a href="#B-ergmTerm-1e2e5333">B</a>
 <a href="#Curve-ergmTerm-a37fe1f0">Curve</a>
 <a href="#Exp-ergmTerm-2a7372d1">Exp</a>
+<a href="#For-ergmTerm-f403b433">For</a>
 <a href="#Label-ergmTerm-6de33f4e">Label</a>
 <a href="#Log-ergmTerm-f1bed869">Log</a>
 <a href="#Prod-ergmTerm-1bd03b4f">Prod</a>
+<a href="#S-ergmTerm-28cff48d">S</a>
 <a href="#Sum-ergmTerm-fe08cb7f">Sum</a>
+<a href="#Symmetrize-ergmTerm-61cab8ac">Symmetrize</a>
 <a href="#absdiff-ergmTerm-9fc8de5a">absdiff</a>
 <a href="#absdiffcat-ergmTerm-5b2a4b77">absdiffcat</a>
 <a href="#atleast-ergmTerm-1b0585b0">atleast</a>
 <a href="#atmost-ergmTerm-145d3def">atmost</a>
+<a href="#attrcov-ergmTerm-a2d6aeef">attrcov</a>
 <a href="#b1cov-ergmTerm-a16e8340">b1cov</a>
 <a href="#b1factor-ergmTerm-ad0d3a93">b1factor</a>
 <a href="#b1sociality-ergmTerm-4c85e6e8">b1sociality</a>
@@ -9664,13 +9680,13 @@ attribute</a>
 <hr />
 <p>This documentation was built with..</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code></pre></div>
-<pre><code>## R Under development (unstable) (2025-01-20 r87606)
+<pre><code>## R Under development (unstable) (2025-06-09 r88292)
 ## Platform: x86_64-pc-linux-gnu
-## Running under: Debian GNU/Linux trixie/sid
+## Running under: Debian GNU/Linux 13 (trixie)
 ## 
 ## Matrix products: default
 ## BLAS:   /home/pavel/Documents/Research/Software/R-trunk/lib/libRblas.so 
-## LAPACK: /usr/lib/x86_64-linux-gnu/lapack/liblapack.so.3.12.0  LAPACK version 3.12.0
+## LAPACK: /usr/lib/x86_64-linux-gnu/lapack/liblapack.so.3.12.1;  LAPACK version 3.12.0
 ## 
 ## locale:
 ##  [1] LC_CTYPE=en_AU.UTF-8       LC_NUMERIC=C              
@@ -9687,22 +9703,22 @@ attribute</a>
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-## [1] ergm_4.8.1     network_1.19.0
+## [1] ergm_4.9.0     network_1.19.0
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] trust_0.1-8              jsonlite_1.8.9           compiler_4.5.0          
-##  [4] stringr_1.5.1            parallel_4.5.0           jquerylib_0.1.4         
-##  [7] yaml_2.3.10              fastmap_1.2.0            lattice_0.22-6          
-## [10] coda_0.19-4.1            R6_2.5.1                 robustbase_0.99-4-1     
-## [13] knitr_1.49               rbibutils_2.3            tibble_3.2.1            
-## [16] rle_0.9.2                statnet.common_4.11.0    bslib_0.8.0             
-## [19] pillar_1.10.1            rlang_1.1.5              stringi_1.8.4           
-## [22] cachem_1.1.0             xfun_0.50                sass_0.4.9              
-## [25] memoise_2.0.1            cli_3.6.3                magrittr_2.0.3          
-## [28] Rdpack_2.6.2             digest_0.6.37            grid_4.5.0              
-## [31] lpSolveAPI_5.5.2.0-17.12 lifecycle_1.0.4          DEoptimR_1.1-3-1        
+##  [1] trust_0.1-8              jsonlite_2.0.0           compiler_4.6.0          
+##  [4] stringr_1.5.1            parallel_4.6.0           jquerylib_0.1.4         
+##  [7] yaml_2.3.10              fastmap_1.2.0            lattice_0.22-7          
+## [10] coda_0.19-4.1            R6_2.6.1                 robustbase_0.99-4-1     
+## [13] knitr_1.50               rbibutils_2.3            tibble_3.3.0            
+## [16] rle_0.10.0               statnet.common_4.12.0    bslib_0.9.0             
+## [19] pillar_1.10.2            rlang_1.1.6              stringi_1.8.7           
+## [22] cachem_1.1.0             xfun_0.52                sass_0.4.10             
+## [25] memoise_2.0.1            cli_3.6.5                magrittr_2.0.3          
+## [28] Rdpack_2.6.4             digest_0.6.37            grid_4.6.0              
+## [31] lpSolveAPI_5.5.2.0-17.14 lifecycle_1.0.4          DEoptimR_1.1-3-1        
 ## [34] vctrs_0.6.5              evaluate_1.0.3           glue_1.8.0              
-## [37] rmarkdown_2.29           purrr_1.0.2              tools_4.5.0             
+## [37] rmarkdown_2.29           purrr_1.0.4              tools_4.6.0             
 ## [40] pkgconfig_2.0.3          htmltools_0.5.8.1</code></pre>
 </div>
 

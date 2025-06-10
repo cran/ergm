@@ -1,18 +1,12 @@
-#  File R/ergm_model.R in package ergm, part of the
-#  Statnet suite of packages for network analysis, https://statnet.org .
+#  File R/ergm_model.R in package ergm, part of the Statnet suite of packages
+#  for network analysis, https://statnet.org .
 #
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) at
+#  This software is distributed under the GPL-3 license.  It is free, open
+#  source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
 #  Copyright 2003-2025 Statnet Commons
 ################################################################################
-#===================================================================================
-# This file contains the following 2 functions for creating the 'ergm_model' object
-#             <ergm_model>
-#             <updatemodel.ErgmTerm>
-#===================================================================================
-
 #' Internal representation of an `ergm` network model
 #' 
 #' These methods are generally not called directly by users, but may
@@ -47,7 +41,7 @@
 #' @keywords internal
 #' @export
 ergm_model <- function(object, nw=NULL, ..., formula = NULL){
-  ## TODO: Remove workaround around ergm 4.9.
+  ## TODO: Remove the following after October 2025 and ergm 4.8.
   if(!is.null(formula)){
     .Deprecate_once(msg = "ergm_model()'s first argument is now 'object'.")
     object <- formula
@@ -138,14 +132,16 @@ ergm_model.ergm_model <- function(object, nw, ..., env=globalenv(), extra.aux=li
 
   if(offset.decorate){
     if(length(model$etamap$offsetmap)){
-      ol <- split(model$etamap$offsetmap, factor(rep.int(seq_along(model$terms), nparam(model, byterm=TRUE, canonical=TRUE)), levels=seq_along(model$terms)))
+      ol <- split_len(model$etamap$offsetmap,
+                      nparam(model, byterm = TRUE, canonical = TRUE))
       for(i in seq_along(model$terms)){
         pn <- model$terms[[i]]$coef.names
         if(!is.null(pn)) model$terms[[i]]$coef.names <- ifelse(ol[[i]], paste0("offset(",pn,")"), pn)
       }
     }
     if(length(model$etamap$offsettheta)){
-      ol <- split(model$etamap$offsettheta, factor(rep.int(seq_along(model$terms), nparam(model, byterm=TRUE, canonical=FALSE)), levels=seq_along(model$terms)))
+      ol <- split_len(model$etamap$offsettheta,
+                      nparam(model, byterm = TRUE, canonical = FALSE))
       for(i in seq_along(model$terms)){
         pn <- names(model$terms[[i]]$params)
         if(!is.null(pn)) names(model$terms[[i]]$params) <- ifelse(ol[[i]], paste0("offset(",pn,")"), pn)
@@ -210,7 +206,7 @@ call.ErgmTerm <- function(term, env, nw, ..., term.options=list()){
 
   # Ensure input vectors are of the correct storage mode. (There is no
   # checking on C level at this time.) Note that as.double() and
-  # as.integer() will strip attributes such as ParamBeforeCov and so
+  # as.integer() will strip attributes such as ParamsBeforeCov and so
   # should not be used.
   storage.mode(out$inputs) <- "double"
   storage.mode(out$iinputs) <- "integer"

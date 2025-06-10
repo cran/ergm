@@ -1,13 +1,14 @@
-#  File tests/testthat/test-operators.R in package ergm, part of the
-#  Statnet suite of packages for network analysis, https://statnet.org .
+#  File tests/testthat/test-operators.R in package ergm, part of the Statnet
+#  suite of packages for network analysis, https://statnet.org .
 #
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) at
+#  This software is distributed under the GPL-3 license.  It is free, open
+#  source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
 #  Copyright 2003-2025 Statnet Commons
 ################################################################################
 data(florentine)
+add_eattr(flomarriage, "w")
 
 test_that("Simulation for Passthrough() and .submodel() and .summary()", {
   text <- capture.output(
@@ -28,6 +29,7 @@ test_that("Simulation for Passthrough() and .submodel() and .summary()", {
 })
 
 data(sampson)
+add_eattr(samplike, "w")
 g <- samplike%v%"group"
 sameg <- outer(g,g,"==")
 
@@ -64,17 +66,27 @@ test_that("Summary for F() with complex form", {
                       sum)/2, ignore_attr=TRUE)
 })
 
-test_that("Symmetrize() summary", {
+test_that("Symmetrize() (binary and valued) summary", {
   m <- as.matrix(samplike)
+  mw <- as.matrix(samplike, attrname = "w")
+
   expect_equal(
     c(sum(m*t(m))/2, sum(m+t(m)>0)/2, sum(m[lower.tri(m)]), sum(m[upper.tri(m)])),
     summary(samplike ~ Symmetrize(~edges,"strong") + Symmetrize(~edges,"weak") + Symmetrize(~edges,"lower") + Symmetrize(~edges,"upper")),
     ignore_attr=TRUE
   )
+
+  expect_equal(
+    c(sum(pmin(mw,t(mw)))/2, sum(pmax(mw,t(mw)))/2, sum(mw[lower.tri(mw)]), sum(mw[upper.tri(mw)])),
+    summary(samplike ~ Symmetrize(~sum,"min") + Symmetrize(~sum,"max") + Symmetrize(~sum,"lower") + Symmetrize(~sum,"upper"), response = "w"),
+    ignore_attr=TRUE
+  )
 })
 
-test_that("S() summary directed->bipartite", {
+test_that("S() (binary and valued) summary directed->bipartite", {
   m <- as.matrix(samplike)
+  mw <- as.matrix(samplike, attrname = "w")
+
   b1 <- sample.int(network.size(samplike), 5)
   b2 <- sample(setdiff(seq_len(network.size(samplike)), b1), 4)
 
@@ -82,10 +94,17 @@ test_that("S() summary directed->bipartite", {
     c(sum(m[b1,b2])),
     summary(samplike ~ S(~edges,I(b1)~I(b2))), ignore_attr=TRUE
   )
+
+  expect_equal(
+    c(sum(mw[b1,b2])),
+    summary(samplike ~ S(~sum,I(b1)~I(b2)), response = "w"), ignore_attr=TRUE
+  )
 })
 
-test_that("S() summary undirected->bipartite", {
+test_that("S() (binary and valued) summary undirected->bipartite", {
   m <- as.matrix(flomarriage)
+  mw <- as.matrix(flomarriage, attrname = "w")
+
   b1 <- sample.int(network.size(flomarriage), 5)
   b2 <- sample(setdiff(seq_len(network.size(flomarriage)), b1), 4)
 
@@ -93,26 +112,45 @@ test_that("S() summary undirected->bipartite", {
     c(sum(m[b1,b2])),
     summary(flomarriage ~ S(~edges,I(b1)~I(b2))), ignore_attr=TRUE
   )
+
+  expect_equal(
+    c(sum(mw[b1,b2])),
+    summary(flomarriage ~ S(~sum,I(b1)~I(b2)), response = "w"), ignore_attr=TRUE
+  )
 })
 
-test_that("S() summary directed->directed", {
+test_that("S() (binary and valued) summary directed->directed", {
   m <- as.matrix(samplike)
+  mw <- as.matrix(samplike, attrname = "w")
+
   i <- sample.int(network.size(samplike), 5)
 
   expect_equal(
     c(sum(m[i,i])),
     summary(samplike ~ S(~edges,~i)), ignore_attr=TRUE
   )
+
+  expect_equal(
+    c(sum(mw[i,i])),
+    summary(samplike ~ S(~sum,~i), response = "w"), ignore_attr=TRUE
+  )
 })
 
 
-test_that("S() summary undirected->undirected", {
+test_that("S() (binary and valued) summary undirected->undirected", {
   m <- as.matrix(flomarriage)
+  mw <- as.matrix(flomarriage, attrname = "w")
+
   i <- sample.int(network.size(flomarriage), 5)
 
   expect_equal(
     c(sum(m[i,i])/2),
     summary(flomarriage ~ S(~edges,~i)), ignore_attr=TRUE
+  )
+
+  expect_equal(
+    c(sum(mw[i,i])/2),
+    summary(flomarriage ~ S(~sum,~i), response = "w"), ignore_attr=TRUE
   )
 })
 
@@ -149,7 +187,7 @@ test_that("Binary Label() summary", {
   )
 })
 
-test_that("Binary Label() estimation, offsets, and curved terms", {
+test_that("Binary Label() estimation, offsets, and curved terms; also test name matching", {
   expect_equal(
     coef(ergm(flomarriage ~ Label(~edges+offset(absdiff("wealth")), "abc"), offset.coef=-.5)),
     coef(ergm(flomarriage ~ edges+offset(absdiff("wealth")), offset.coef=-.5)), ignore_attr=TRUE
@@ -157,7 +195,7 @@ test_that("Binary Label() estimation, offsets, and curved terms", {
 
   expect_equal(
     coef(ergm(flomarriage ~ Label(~edges+offset(gwesp), "abc"), offset.coef=c(-.5,1), estimate="MPLE")),
-    coef(ergm(flomarriage ~ edges+offset(gwesp), offset.coef=c(-.5,1), estimate="MPLE")), ignore_attr=TRUE
+    coef(ergm(flomarriage ~ edges+offset(gwesp), offset.coef=c(`offset(gwesp.decay)`=1,`offset(gwesp)`=-.5), estimate="MPLE")), ignore_attr=TRUE
   )
 
   ## list label
@@ -241,4 +279,10 @@ test_that("Interaction terms handling of interact.dependent", {
   expect_error(summary(flomarriage~triangles:absdiff("wealth")), ".*poorly defined.*")
   expect_warning(summary(flomarriage~triangles:absdiff("wealth"), interact.dependent = "warning"), ".*poorly defined.*")
   expect_message(summary(flomarriage~triangles:absdiff("wealth"), interact.dependent = "message"), ".*poorly defined.*")
+})
+
+test_that("Square root transformation", {
+  expect_equal(summary(zach ~ ("sqrt"~sum), response = "contexts"),
+               summary(zach ~ sum(pow = 1/2), response = "contexts"),
+               ignore_attr = TRUE)
 })

@@ -1,8 +1,8 @@
-#  File R/ergm.san.R in package ergm, part of the
-#  Statnet suite of packages for network analysis, https://statnet.org .
+#  File R/ergm.san.R in package ergm, part of the Statnet suite of packages for
+#  network analysis, https://statnet.org .
 #
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) at
+#  This software is distributed under the GPL-3 license.  It is free, open
+#  source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
 #  Copyright 2003-2025 Statnet Commons
@@ -113,16 +113,16 @@ san <- function(object, ...){
 #' object.  If a different \code{formula} object is wanted, specify it here.
 #' @template constraints
 #' @param target.stats A vector of the same length as the number of non-offset statistics
-#' implied by the formula.
-#' @param nsim Number of networks to generate. Deprecated: just use [replicate()].
+#' implied by the formula. \matchnames{statistic}
 #' @param basis If not NULL, a \code{network} object used to start the Markov
 #' chain.  If NULL, this is taken to be the network named in the formula.
 #'
 #' @param output Character, one of `"network"` (default),
-#'   `"edgelist"`, or `"ergm_state"`: determines the
-#'   output format. Partial matching is performed.
+#'   `"edgelist"`, or `"ergm_state"`: determines the output
+#'   format. Partial matching is performed.
 #' @param only.last if `TRUE`, only return the last network generated;
-#'   otherwise, return a [`network.list`] with `nsim` networks.
+#'   otherwise, return a [`network.list`] with a network for each
+#'   iteration.
 #'
 #' @templateVar mycontrol control.san
 #' @template control
@@ -182,7 +182,7 @@ san <- function(object, ...){
 #' }
 #' @export
 san.formula <- function(object, response=NULL, reference=~Bernoulli, constraints=~., target.stats=NULL,
-                        nsim=NULL, basis=NULL,
+                        basis = NULL,
                         output=c("network","edgelist","ergm_state"),
                         only.last=TRUE,
                         control=control.san(),
@@ -202,13 +202,9 @@ san.formula <- function(object, response=NULL, reference=~Bernoulli, constraints
   } else {
     nw <- ergm.getnetwork(formula)
   }
-  if(inherits(nw,"network.list")){
-    nw <- nw$networks[[1]]
-  }
-  if(is.null(target.stats)){
-    stop("You need to specify target statistic via",
-         " the 'target.stats' argument")
-  }
+
+  if(is.null(target.stats))
+    stop("missing ", sQuote("target.stats"))
 
   nw <- as.network(ensure_network(nw), populate=FALSE)
   # nw is now a network/ergm_state hybrid class. As long
@@ -228,22 +224,22 @@ san.formula <- function(object, response=NULL, reference=~Bernoulli, constraints
   proposal$aux.slots <- model$slots.extra.aux$proposal
   if (verbose) message("Model initialized.")
 
-  
-  if(length(offset.coef) != sum(model$etamap$offsettheta)) {
-    stop("Length of ", sQuote("offset.coef"), " in SAN is ", length(offset.coef), ", while the number of offset coefficients in the model is ", sum(model$etamap$offsettheta), ".")  
-  }
-  
+  offset.coef <- match_names(offset.coef, param_names(model, canonical=FALSE, offset=TRUE))
+
   if(any(is.na(offset.coef))) {
     stop("Missing offset coefficients passed to SAN.")
   }
   
-  san(model, reference=reference, constraints=proposal, target.stats=target.stats, nsim=nsim, basis=nw, output=output, only.last=only.last, control=control, verbose=verbose, offset.coef=offset.coef, ...)
+  san(model, reference = reference, constraints = proposal,
+      target.stats = target.stats, basis = nw, output = output,
+      only.last = only.last, control = control, verbose = verbose,
+      offset.coef = offset.coef, ...)
 }
 
 #' @describeIn san A lower-level function that expects a pre-initialized [`ergm_model`].
 #' @export
 san.ergm_model <- function(object, reference=~Bernoulli, constraints=~., target.stats=NULL,
-                           nsim=NULL, basis=NULL,
+                           basis = NULL,
                            output=c("network","edgelist","ergm_state"),
                            only.last=TRUE,
                            control=control.san(),
@@ -259,25 +255,10 @@ san.ergm_model <- function(object, reference=~Bernoulli, constraints=~., target.
   out.list <- list()
   out.mat <- numeric(0)
 
-  ## TODO: Remove in 4.9 or thereabout.
-  if(!is.null(nsim)){
-    .Deprecate_once(msg = "nsim= argument for the san() functions has been deprecated and may be removed in the a version. Just use replicate().")
-    if(nsim>1 && !is.null(control$seed)) warn("Setting the random seed with nsim>1 will produce a list of identical networks.")
-    if(nsim>1){
-      return(structure(replicate(nsim,
-                                 san(object, reference=reference, constraints=constraints, target.stats=target.stats,
-                                     basis=basis,
-                                     output=output,
-                                     only.last=only.last,
-                                     control=control,
-                                     verbose=verbose,
-                                     offset.coef=offset.coef,
-                                     ...)),
-                       class="network.list"))
-    }
-  }
+  if ("nsim" %in% ...names())
+    stop("The ", sQuote("nsim="), " argument for the ", sQuote("san()"),
+         " family has been deprecated. Just use ", sQuote("replicate()"), ".")
 
-  
   if(!is.null(control$seed)) set.seed(as.integer(control$seed))
   nw <- basis
   nw <- as.network(ensure_network(nw), populate=FALSE)
@@ -287,7 +268,7 @@ san.ergm_model <- function(object, reference=~Bernoulli, constraints=~., target.
 
   if(is.null(target.stats)){
     stop("You need to specify target statistic via",
-         " the 'target.stats' argument")
+         " the ", sQuote("target.stats"), " argument")
   }
 
   if(inherits(constraints, "ergm_proposal")) proposal <- constraints
@@ -327,7 +308,7 @@ san.ergm_model <- function(object, reference=~Bernoulli, constraints=~., target.
         " steps", ifelse(control$SAN.maxit>1, " each", ""), ".", sep=""))
   }
   netsumm<-summary(model,nw)[!offset.indicators]
-  target.stats <- vector.namesmatch(target.stats, names(netsumm))
+  target.stats <- match_names(target.stats, names(netsumm))
   stats <- netsumm-target.stats
   invcov.dim <- nparam(model, canonical=TRUE) - noffset
   NVL(control$SAN.invcov) <- diag(1/invcov.dim, invcov.dim)
@@ -352,7 +333,7 @@ san.ergm_model <- function(object, reference=~Bernoulli, constraints=~., target.
     
     # if we have (essentially) zero temperature, need to zero out the finite offsets for the C code to work properly,
     # even if control$SAN.ignore.finite.offsets is FALSE
-    if(abs(tau) < .Machine$double.eps) offsets[is.finite(offsets)] <- 0
+    if (abs(tau) < .Machine$double.eps) offsets %[f]% is.finite <- 0
     
     z <- ergm_SAN_slave(state, tau, control, verbose,..., nsteps=nsteps, statindices=statindices, offsetindices=offsetindices, offsets=offsets)
     state <- z$state
@@ -368,7 +349,8 @@ san.ergm_model <- function(object, reference=~Bernoulli, constraints=~., target.
       else sginv(cov(sm.prop), tol=.Machine$double.eps^(3/4))
 
     # Ensure no statistic has weight 0:
-    diag(invcov)[abs(diag(invcov))<.Machine$double.eps] <- min(diag(invcov)[abs(diag(invcov))>=.Machine$double.eps],1)
+    diag(invcov)[diag(invcov) < .Machine$double.eps] <-
+      min(max(diag(invcov), .Machine$double.eps), 1)
     invcov <- invcov / sum(diag(invcov)) # Rescale for consistency.
     control$SAN.invcov <- invcov
     

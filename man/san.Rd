@@ -15,7 +15,6 @@ san(object, ...)
   reference = ~Bernoulli,
   constraints = ~.,
   target.stats = NULL,
-  nsim = NULL,
   basis = NULL,
   output = c("network", "edgelist", "ergm_state"),
   only.last = TRUE,
@@ -30,7 +29,6 @@ san(object, ...)
   reference = ~Bernoulli,
   constraints = ~.,
   target.stats = NULL,
-  nsim = NULL,
   basis = NULL,
   output = c("network", "edgelist", "ergm_state"),
   only.last = TRUE,
@@ -94,19 +92,18 @@ measures are supported. However, for relatively simple constraints
 dyads from changing), arbitrary combinations should be possible.}
 
 \item{target.stats}{A vector of the same length as the number of non-offset statistics
-implied by the formula.}
-
-\item{nsim}{Number of networks to generate. Deprecated: just use \code{\link[=replicate]{replicate()}}.}
+implied by the formula. \matchnames{statistic}}
 
 \item{basis}{If not NULL, a \code{network} object used to start the Markov
 chain.  If NULL, this is taken to be the network named in the formula.}
 
 \item{output}{Character, one of \code{"network"} (default),
-\code{"edgelist"}, or \code{"ergm_state"}: determines the
-output format. Partial matching is performed.}
+\code{"edgelist"}, or \code{"ergm_state"}: determines the output
+format. Partial matching is performed.}
 
 \item{only.last}{if \code{TRUE}, only return the last network generated;
-otherwise, return a \code{\link{network.list}} with \code{nsim} networks.}
+otherwise, return a \code{\link{network.list}} with a network for each
+iteration.}
 
 \item{control}{A list of control parameters for algorithm tuning,
 typically constructed with \code{\link[=control.san]{control.san()}}. Its documentation

@@ -1,8 +1,8 @@
-#  File R/gof.ergm.R in package ergm, part of the
-#  Statnet suite of packages for network analysis, https://statnet.org .
+#  File R/gof.ergm.R in package ergm, part of the Statnet suite of packages for
+#  network analysis, https://statnet.org .
 #
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) at
+#  This software is distributed under the GPL-3 license.  It is free, open
+#  source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
 #  Copyright 2003-2025 Statnet Commons
@@ -34,7 +34,7 @@
 #' @param \dots Additional arguments, to be passed to lower-level functions.
 #' @param coef When given either a formula or an object of class ergm,
 #' \code{coef} are the parameters from which the sample is drawn. By default
-#' set to a vector of 0.
+#' set to a vector of 0. \matchnames{coefficient}
 #' @param GOF formula; an formula object, of the form \code{~ <model terms>}
 #' specifying the statistics to use to diagnosis the goodness-of-fit of the
 #' model.  They do not need to be in the model formula specified in
@@ -251,8 +251,8 @@ gof.formula <- function(object, ...,
   if(verbose)
     message("Calculating observed network statistics.")
 
-  summ_form <- function(nw, term, range){
-    summary(as.formula(call('~',call(term, range))), basis=nw)
+  summ_form <- function(term, range){
+    as.formula(call('~',call(term, range)))
   }
 
   if(is.bipartite(nw)){
@@ -272,18 +272,27 @@ gof.formula <- function(object, ...,
     namestriadcensus <- c("0","1","2", "3")
   }
 
-  GVMAP <- list(model=list('model', NULL, function(x) summary(object, basis=x, term.options=control$term.options)),
+  GVMAP <- list(model=list('model', NULL, object),
                 distance=list('dist', 1:n, function(x){o <- ergm.geodistdist(x); o[o==Inf]<-n; o}),
-                odegree=list('odeg', 0:(n-1), function(x) summ_form(x, 'odegree', 0:(n-1))),
-                idegree=list('ideg', 0:(n-1), function(x) summ_form(x, 'idegree', 0:(n-1))),
-                degree=list('deg', 0:(n-1), function(x) summ_form(x, 'degree', 0:(n-1))),
-                b1degree=list('b1deg', 0:nb2, function(x) summ_form(x, 'b1degree', 0:nb2)),
-                b2degree=list('b2deg', 0:nb1, function(x) summ_form(x, 'b2degree', 0:nb1)),
-                espartners=list('espart', 0:(n-2), function(x) summ_form(x, 'esp', 0:(n-2))),
-                dspartners=list('dspart', 0:(n-2), function(x) summ_form(x, 'dsp', 0:(n-2))),
-                triadcensus=list('triadcensus', namestriadcensus, function(x) summ_form(x, 'triadcensus', triadcensus)))
+                odegree=list('odeg', 0:(n-1), summ_form('odegree', 0:(n-1))),
+                idegree=list('ideg', 0:(n-1), summ_form('idegree', 0:(n-1))),
+                degree=list('deg', 0:(n-1), summ_form('degree', 0:(n-1))),
+                b1degree=list('b1deg', 0:nb2, summ_form('b1degree', 0:nb2)),
+                b2degree=list('b2deg', 0:nb1, summ_form('b2degree', 0:nb1)),
+                espartners=list('espart', 0:(n-2), summ_form('esp', 0:(n-2))),
+                dspartners=list('dspart', 0:(n-2), summ_form('dsp', 0:(n-2))),
+                triadcensus=list('triadcensus', namestriadcensus, summ_form('triadcensus', triadcensus)))
 
   GVMAP <- GVMAP[names(GVMAP)%in%all.gof.vars]
+
+  # If gv[[3]] is a formula, preinitialize the model and have the
+  # function execute it on the network.
+  for(i in seq_along(GVMAP))
+    if(is(GVMAP[[i]][[3]], "formula"))
+      GVMAP[[i]][[3]] <- local({
+        m <- ergm_model(GVMAP[[i]][[3]], nw, term.options = control$term.options)
+        function(x) summary(m, nw = x)
+      })
 
   calc_obs_stat <- function(gv, names, calc){
     simname <- paste("sim", gv, sep=".")
@@ -340,7 +349,7 @@ gof.formula <- function(object, ...,
     pobs <- if(!is.null(names)) obs/sum(obs) else pval.top
     if(!is.null(names)){
       psim <- sweep(sim,1,apply(sim,1,sum),"/")
-      psim[is.na(psim)] <- 1
+      psim %[f]% is.na <- 1
     }else{
       psim <- apply(sim,2,rank)/nrow(sim)
       psim <- matrix(psim, ncol=ncol(sim)) # Guard against the case of sim having only one row.
@@ -498,21 +507,18 @@ plot.gof <- function(x, ...,
     }
 
     if (plotlogodds) {
-      odds <- psim
-      odds[!is.na(odds)] <- log(odds[!is.na(odds)]/(1 - odds[!is.na(odds)]))
-      odds.obs <- pobs
-      odds.obs[!is.na(odds.obs)] <- log(odds.obs[!is.na(odds.obs)]/(1 - odds.obs[!is.na(odds.obs)]))
-      odds.bds <- bds
-      odds.bds[!is.na(odds.bds)] <- log(odds.bds[!is.na(odds.bds)]/(1 - odds.bds[!is.na(odds.bds)]))
-      mininf <- min(min(odds[is.finite(odds)]),min(odds.obs[is.finite(odds.obs)]),min(odds.bds[is.finite(odds.bds)]))
-      maxinf <- max(max(odds[is.finite(odds)]),max(odds.obs[is.finite(odds.obs)]),max(odds.bds[is.finite(odds.bds)]))
+      odds <- logit(psim)
+      odds.obs <- logit(pobs)
+      odds.bds <- logit(bds)
+      mininf <- min(c(odds, odds.obs, odds.bds) %[f]% is.finite)
+      maxinf <- max(c(odds, odds.obs, odds.bds) %[f]% is.finite)
 
-      odds[!is.finite(odds)&odds>0] <- maxinf
-      odds[!is.finite(odds)&odds<0] <- mininf
-      odds.obs[!is.finite(odds.obs)&odds.obs>0] <- maxinf
-      odds.obs[!is.finite(odds.obs)&odds.obs<0] <- mininf
-      odds.bds[!is.finite(odds.bds)&odds.bds>0] <- maxinf
-      odds.bds[!is.finite(odds.bds)&odds.bds<0] <- mininf
+      odds %[.]% (!is.finite(.) & . > 0) <- maxinf
+      odds %[.]% (!is.finite(.) & . < 0) <- mininf
+      odds.obs %[.]% (!is.finite(.) & . > 0) <- maxinf
+      odds.obs %[.]% (!is.finite(.) & . < 0) <- mininf
+      odds.bds %[.]% (!is.finite(.) & . > 0) <- maxinf
+      odds.bds %[.]% (!is.finite(.) & . < 0) <- mininf
 
       out <- odds
       out.obs <- odds.obs

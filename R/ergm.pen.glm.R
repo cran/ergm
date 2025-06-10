@@ -1,8 +1,8 @@
-#  File R/ergm.pen.glm.R in package ergm, part of the
-#  Statnet suite of packages for network analysis, https://statnet.org .
+#  File R/ergm.pen.glm.R in package ergm, part of the Statnet suite of packages
+#  for network analysis, https://statnet.org .
 #
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) at
+#  This software is distributed under the GPL-3 license.  It is free, open
+#  source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
 #  Copyright 2003-2025 Statnet Commons
@@ -92,7 +92,7 @@ ergm.pen.glm <- function(formula,
     beta[1] <- beta[1] - sum((x %*% start)*weights)
   }
   iter <- 0
-  pi <- as.vector(1/(1 + exp( - x %*% beta)))
+  pi <- expit(drop(x %*% beta))
   loglik <- .BernLogLik(pi, y, weights)
   XW2 <- sweep(x, 1, (weights*(pi * (1 - pi)))^0.5, "*")  #### X' (W ^ 1/2)
   Fisher <- crossprod(XW2)  #### X' W  X
@@ -121,7 +121,7 @@ ergm.pen.glm <- function(formula,
    loglik.old <- loglik
    for(halfs in 1:maxhs) {
 ## Half-Steps
-    pi <- as.vector(1/(1 + exp( - x %*% beta)))
+    pi <- expit(drop(x %*% beta))
     loglik <- .BernLogLik(pi, y, weights)
     XW2 <- sweep(x, 1, (weights*(pi * (1 - pi)))^0.5, "*") #### X' (W ^ 1/2)
     Fisher <- crossprod(XW2) #### X' W  X

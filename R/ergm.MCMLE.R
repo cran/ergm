@@ -1,8 +1,8 @@
-#  File R/ergm.MCMLE.R in package ergm, part of the
-#  Statnet suite of packages for network analysis, https://statnet.org .
+#  File R/ergm.MCMLE.R in package ergm, part of the Statnet suite of packages
+#  for network analysis, https://statnet.org .
 #
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) at
+#  This software is distributed under the GPL-3 license.  It is free, open
+#  source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
 #  Copyright 2003-2025 Statnet Commons
@@ -341,7 +341,7 @@ ergm.MCMLE <- function(init, s, s.obs,
       Vm <- pprec%*%(cov(esteq) - NVL3(esteq.obs, cov(.), 0))%*%pprec
       novar <- diag(Vm) <= 0
       Vm[,novar] <- Vm[novar,] <- 0
-      d2 <- xTAx_seigen(estdiff, Vm)
+      d2 <- tryCatch(xTAx_seigen(estdiff, Vm), error = function(e) Inf)
       if(d2<2) last.adequate <- TRUE
     }
 
@@ -412,7 +412,7 @@ ergm.MCMLE <- function(init, s, s.obs,
     # This allows premature termination.
     
     if(control$MCMLE.termination=='Hotelling'){
-      conv.pval <- ERRVL(try(suppressWarnings(approx.hotelling.diff.test(esteqs, esteqs.obs)$p.value)), NA)
+      conv.pval <- ERRVL2(suppressWarnings(approx.hotelling.diff.test(esteqs, esteqs.obs)$p.value), NA)
       message("Nonconvergence test p-value:", format(conv.pval), "")
       # I.e., so that the probability of one false nonconvergence in two successive iterations is control$MCMLE.conv.min.pval (sort of).
       if(!is.na(conv.pval) && conv.pval>=1-sqrt(1-control$MCMLE.conv.min.pval)){
@@ -429,7 +429,7 @@ ergm.MCMLE <- function(init, s, s.obs,
       }
     }else if(control$MCMLE.termination=='confidence'){
       if(!is.null(estdiff.prev)){
-        d2.prev <- xTAx_seigen(estdiff.prev, Vm)
+        d2.prev <- tryCatch(xTAx_seigen(estdiff.prev, Vm), error = function(e) Inf)
         if(verbose) message("Distance from origin on tolerance region scale: ", format(d2), " (previously ", format(d2.prev), ").")
         d2.not.improved <- d2.not.improved[-1] 
         if(d2 >= d2.prev){
@@ -472,11 +472,11 @@ ergm.MCMLE <- function(init, s, s.obs,
             estcov <- estcov + hotel$covariance.y*sum(esteq.obs.w^2)*length(esteq.obs.w)
           }
           estdiff <- estdiff[!hotel$novar]
-          estcov <- estcov[!hotel$novar, !hotel$novar]
+          estcov <- estcov[!hotel$novar, !hotel$novar, drop = FALSE]
 
-          d2e <- xTAx_seigen(estdiff, Vm[!hotel$novar, !hotel$novar])
+          d2e <- xTAx_seigen(estdiff, Vm[!hotel$novar, !hotel$novar, drop = FALSE])
           if(d2e<1){ # Update ends within tolerance ellipsoid.
-            T2 <- try(.ellipsoid_mahalanobis(estdiff, estcov, Vm[!hotel$novar, !hotel$novar]), silent=TRUE) # Distance to the nearest point on the tolerance region boundary.
+            T2 <- try(.ellipsoid_mahalanobis(estdiff, estcov, Vm[!hotel$novar, !hotel$novar, drop = FALSE]), silent=TRUE) # Distance to the nearest point on the tolerance region boundary.
             if(inherits(T2, "try-error")){ # Within tolerance ellipsoid, but cannot be tested.
               message("Unable to test for convergence; increasing sample size.")
               .boost_samplesize(control$MCMLE.confidence.boost)
@@ -630,14 +630,14 @@ ergm.MCMLE <- function(init, s, s.obs,
   y <- c(y)
   if(xTAx_seigen(y,U,tol=tol)>=1) stop("Point is not in the interior of the ellipsoid.")
   I <- diag(length(y))
-  WUi <- t(qr.solve(qr(U, tol=tol), W))
+  WUi <- t(qrssolve(U, W, tol=tol))
   x <- function(l) c(solve(I+l*WUi, y)) # Singluar for negative reciprocals of eigenvalues of WiU.
-  zerofn <- function(l) ERRVL(try({x <- x(l); xTAx_seigen(x,U,tol=tol)-1}, silent=TRUE), +Inf)
+  zerofn <- function(l) ERRVL2(xTAx_seigen(x(l), U, tol=tol) - 1, +Inf)
 
   # For some reason, WU sometimes has 0i element in its eigenvalues.
   eig <- Re(eigen(WUi, only.values=TRUE)$values)
   lmin <- -1/max(eig)
-  l <- uniroot(zerofn, lower=lmin, upper=0, tol=sqrt(.Machine$double.xmin))$root
+  l <- suppressWarnings(uniroot(zerofn, lower=lmin, upper=0, tol=sqrt(.Machine$double.xmin))$root)
   x <- x(l)
 
   xTAx_seigen(y-x, W, tol=tol)

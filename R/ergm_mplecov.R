@@ -1,8 +1,8 @@
-#  File R/ergm_mplecov.R in package ergm, part of the
-#  Statnet suite of packages for network analysis, https://statnet.org .
+#  File R/ergm_mplecov.R in package ergm, part of the Statnet suite of packages
+#  for network analysis, https://statnet.org .
 #
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) at
+#  This software is distributed under the GPL-3 license.  It is free, open
+#  source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
 #  Copyright 2003-2025 Statnet Commons
@@ -127,9 +127,6 @@ ergm_mplecov <- function(pl,
       boot.mple.mat[i,] <- coef(glm.sim)
 
     }# end for i
-    Boot.cov <- matrix(0,num.variables, num.variables)
-    diag(Boot.cov) <- apply(boot.mple.mat, 2, var)
-    return(Boot.cov)
-
+    cov(boot.mple.mat)
   } # end if bootstrap
 } # end function

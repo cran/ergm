@@ -1,8 +1,8 @@
-#  File tests/testthat/test-constrain-degrees-edges.R in package ergm, part of the
-#  Statnet suite of packages for network analysis, https://statnet.org .
+#  File tests/testthat/test-constrain-degrees-edges.R in package ergm, part of
+#  the Statnet suite of packages for network analysis, https://statnet.org .
 #
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) at
+#  This software is distributed under the GPL-3 license.  It is free, open
+#  source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
 #  Copyright 2003-2025 Statnet Commons
@@ -32,27 +32,27 @@ test_that("is.dyad.independent(ergm) accessor granularity", {
 })
 
 test_that("constraint = outdegree on a directed network", {
-  ys <- simulate(y0~sender(nodes=TRUE)+receiver(nodes=TRUE), constraints=~odegrees, coef=rep(0,n*2), nsim=nsim, output="stats")
+  ys <- simulate(y0~sender(nodes=TRUE)+receiver(nodes=TRUE), constraints=~odegrees, coef=setNames(0,""), nsim=nsim, output="stats")
   expect_true(all(sweep(ys[,1:n], 2, od(y0))==0))
   expect_true(any(sweep(ys[,-(1:n)], 2, id(y0))!=0))
 })
 
 test_that("constraint = indegree on a directed network", {
-  ys <- simulate(y0~receiver(nodes=TRUE)+sender(nodes=TRUE), constraints=~idegrees, coef=rep(0,n*2), nsim=nsim, output="stats")
+  ys <- simulate(y0~receiver(nodes=TRUE)+sender(nodes=TRUE), constraints=~idegrees, coef=setNames(0,""), nsim=nsim, output="stats")
   expect_true(all(sweep(ys[,1:n], 2, id(y0))==0))
   expect_true(any(sweep(ys[,-(1:n)], 2, od(y0))!=0))
 })
 
 test_that("both in- and outdegree constraint on a directed network", {
-  ys <- simulate(y0~sender(nodes=TRUE)+receiver(nodes=TRUE), constraints=~degrees, coef=rep(0,n*2), nsim=nsim, output="stats")
+  ys <- simulate(y0~sender(nodes=TRUE)+receiver(nodes=TRUE), constraints=~degrees, coef=setNames(0,""), nsim=nsim, output="stats")
   expect_true(all(sweep(ys, 2, c(od(y0),id(y0)))==0))
 
-  ys <- simulate(y0~sender(nodes=TRUE)+receiver(nodes=TRUE), constraints=~odegrees+idegrees, coef=rep(0,n*2), nsim=nsim, output="stats")
+  ys <- simulate(y0~sender(nodes=TRUE)+receiver(nodes=TRUE), constraints=~odegrees+idegrees, coef=setNames(0,""), nsim=nsim, output="stats")
   expect_true(all(sweep(ys, 2, c(od(y0),id(y0)))==0))
 })
 
 test_that("constraint = edges on a directed network", {
-  ys <- simulate(y0~sender(nodes=TRUE)+receiver(nodes=TRUE), constraints=~edges, coef=rep(0,n*2), nsim=nsim, output="stats")
+  ys <- simulate(y0~sender(nodes=TRUE)+receiver(nodes=TRUE), constraints=~edges, coef=setNames(0,""), nsim=nsim, output="stats")
   # Edges shouldn't vary, but in- and out-degrees should.
   expect_true(all(e(y0)==rowSums(ys[,1:n])))
   expect_true(all(e(y0)==rowSums(ys[,-(1:n)])))

@@ -1,8 +1,8 @@
-#  File R/InitErgmProposal.R in package ergm, part of the
-#  Statnet suite of packages for network analysis, https://statnet.org .
+#  File R/InitErgmProposal.R in package ergm, part of the Statnet suite of
+#  packages for network analysis, https://statnet.org .
 #
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) at
+#  This software is distributed under the GPL-3 license.  It is free, open
+#  source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
 #  Copyright 2003-2025 Statnet Commons
@@ -91,11 +91,11 @@ InitErgmProposal.BDStratTNT <- function(arguments, nw) {
                  matrix(TRUE, ncol = 1L, nrow = network.size(nw)))
 
   maxout <- NVL(arguments$constraints$bd$maxout, network.size(nw))
-  maxout[is.na(maxout)] <- network.size(nw)
+  maxout %[f]% is.na <- network.size(nw)
   maxout <- matrix(rep(maxout, length.out = length(attribs)), ncol = ncol(attribs))
 
   maxin <- NVL(arguments$constraints$bd$maxin, network.size(nw))
-  maxin[is.na(maxin)] <- network.size(nw)
+  maxin %[f]% is.na <- network.size(nw)
   maxin <- matrix(rep(maxin, length.out = length(attribs)), ncol = ncol(attribs))
 
   bd_vattr <- which(attribs, arr.ind = TRUE)
@@ -393,10 +393,11 @@ InitErgmProposal.HammingTNT <- function(arguments, nw) {
 #' @title A proposal alternating between TNT and a triad-focused
 #'   proposal
 #' @description The specified proportion of the time, the proposal
-#'   proceeds along the lines of \insertCite{WaAt13a;textual}{ergm}, albeit
-#'   with different weighting. A dyad is selected uniformly at random
-#'   from among those dyads with at least one shared partnership or
-#'   transitivity of the specified type.
+#'   proceeds along the lines of \insertCite{WaAt13a;textual}{ergm},
+#'   albeit with different weighting. A dyad is selected uniformly at
+#'   random from among those dyads with at least one shared
+#'   partnership or transitivity of the specified type. This is likely
+#'   to be more efficient for a model with excess triangles.
 #'
 #' @references \insertAllCited{}
 #'

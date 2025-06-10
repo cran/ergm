@@ -1,8 +1,8 @@
 #  File tests/testthat/test-term-flexible.R in package ergm, part of the
 #  Statnet suite of packages for network analysis, https://statnet.org .
 #
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) at
+#  This software is distributed under the GPL-3 license.  It is free, open
+#  source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
 #  Copyright 2003-2025 Statnet Commons
@@ -327,10 +327,13 @@ test_that("triangles, either", {
   e.a <- ergm(samplike~triangle("group"), estimate="MPLE")
   s.ad <- summary(samplike~triangles(~Trinity, diff=TRUE))
   e.ad <- ergm(fmh~triangle("Sex", diff=TRUE), estimate="MPLE")
+  s.al <- summary(fmh~triangle("Race", diff=FALSE, levels = -2))
+  e.al <- ergm(samplike~triangle("group", diff=FALSE, levels = -2), estimate = "MPLE")
 
   expect_summary(s.0, e.0, 62, -.06997)
   expect_summary(s.a, e.a, 18, .06354)
   expect_summary(s.ad, e.ad, c(2, 0, 0), -c(.70278, .44099))
+  expect_summary(s.al, e.al, 15, 0.05271)
 })
 
 test_that("triadcensus, either", {

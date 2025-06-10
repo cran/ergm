@@ -1,8 +1,8 @@
-#  File R/obs.constraints.R in package ergm, part of the
-#  Statnet suite of packages for network analysis, https://statnet.org .
+#  File R/obs.constraints.R in package ergm, part of the Statnet suite of
+#  packages for network analysis, https://statnet.org .
 #
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) at
+#  This software is distributed under the GPL-3 license.  It is free, open
+#  source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
 #  Copyright 2003-2025 Statnet Commons
@@ -73,13 +73,9 @@
 
 has.obs.constraints <- function(...) length(.handle.auto.constraints(...)$conterms.obs) > 0
 
-.align.target.stats.offset <- function(model, target.stats){
-  om <- model$etamap$offsetmap
-  cno <- param_names(model, canonical=TRUE)
-  cn <- param_names(model, canonical=TRUE)[!om]
-  target.stats <- na.omit(vector.namesmatch(target.stats, cn))
-  tmp <- rep(NA, length(om))
-  tmp[!om] <- target.stats
-  names(tmp) <- cno
-  tmp
+#' @importFrom rlang rep_named
+.embed.target.stats <- function(model, target.stats){
+  replace(rep_named(param_names(model, canonical=TRUE), NA_real_),
+          !model$etamap$offsetmap,
+          target.stats)
 }

@@ -1,8 +1,8 @@
-#  File R/ergm-options.R in package ergm, part of the
-#  Statnet suite of packages for network analysis, https://statnet.org .
+#  File R/ergm-options.R in package ergm, part of the Statnet suite of packages
+#  for network analysis, https://statnet.org .
 #
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) at
+#  This software is distributed under the GPL-3 license.  It is free, open
+#  source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
 #  Copyright 2003-2025 Statnet Commons
@@ -20,6 +20,8 @@
 #' \item{`ergm.loglik.warn_dyads = TRUE`}{Whether log-likelihood evaluation should issue a warning when the effective number of dyads that can vary in the sample space is poorly defined, such as if the degree sequence is constrained.}
 #' 
 #' \item{`ergm.cluster.retries = 5`}{\CRANpkg{ergm}'s parallel routines implement rudimentary fault-tolerance. This option controls the number of retries for a cluster call before giving up.}
+#'
+#' \item{`ergm.warn_loops = TRUE`}{Whether to issue a warning if the network contains self-loops.}
 #' 
 #' \item{`ergm.term = list()`}{The default term options below.}
 #'

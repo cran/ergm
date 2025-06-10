@@ -1,8 +1,8 @@
-#  File R/is.valued.R in package ergm, part of the
-#  Statnet suite of packages for network analysis, https://statnet.org .
+#  File R/is.valued.R in package ergm, part of the Statnet suite of packages
+#  for network analysis, https://statnet.org .
 #
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) at
+#  This software is distributed under the GPL-3 license.  It is free, open
+#  source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
 #  Copyright 2003-2025 Statnet Commons
@@ -27,10 +27,7 @@ is.valued.edgelist <- function(object, ...){
 
 #' @describeIn is.valued a method for [`ergm`] objects.
 #' @export
-is.valued.ergm <- function(object, ...){
-  # TODO: Delete the fallback after a few releases.
-  NVL(object$info$valued, is.valued(object$network))
-}
+is.valued.ergm <- function(object, ...) object$info$valued
 
 #' @describeIn is.valued a method for [`network`] objects that tests whether the network has been instrumented with a valued [`%ergmlhs%`] `"response"` specification, typically by [ergm_preprocess_response()]. Note that it is *not* a test for whether a network has edge attributes. This method is primarily for internal use.
 #' @export

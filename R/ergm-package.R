@@ -1,8 +1,8 @@
-#  File R/ergm-package.R in package ergm, part of the
-#  Statnet suite of packages for network analysis, https://statnet.org .
+#  File R/ergm-package.R in package ergm, part of the Statnet suite of packages
+#  for network analysis, https://statnet.org .
 #
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) at
+#  This software is distributed under the GPL-3 license.  It is free, open
+#  source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
 #  Copyright 2003-2025 Statnet Commons
@@ -127,7 +127,7 @@
 #' Strauss, D., and Ikeda, M.(1990). Pseudolikelihood estimation for social
 #' networks. \emph{Journal of the American Statistical Association}, 85,
 #' 204-212.
-#' @keywords models internal
+#' @keywords models
 "_PACKAGE"
 
 
@@ -189,6 +189,7 @@
 #' (a[i]+a[j])*(b[i]+b[j])*y[i,j].}
 #' 
 #' ## Binary and valued ERGM terms
+#'
 #' [`ergm`][ergm-package] functions such as [`ergm`] and
 #' [`simulate`][simulate.formula] (for ERGMs) may operate in two
 #' modes: binary and weighted/valued, with the latter activated by passing a
@@ -196,6 +197,7 @@
 #' name to be modeled/simulated.
 #' 
 #' ### Generalizations of binary terms
+#'
 #' Binary ERGM statistics cannot be
 #' used directly in valued mode and vice versa. However, a substantial number
 #' of binary ERGM statistics --- particularly the ones with dyadic independence
@@ -215,8 +217,17 @@
 #' The \ergmTerm{ergm}{B}{()} operator term documented below can be used to pass other
 #' binary terms to valued models, and is more flexible, at the cost of being
 #' somewhat slower.
+#'
+#' ### Transformations of dyad values
+#'
+#' A expression of the form `... + (EXPR ~ TERMS) + ...` will evaluate
+#' `TERMS` on a network constructed by applying the transformation
+#' specified by `EXPR` to edge values. At this time, `"sqrt"` is the
+#' only transformation supported (e.g., `("sqrt" ~ sum)` is equivalent
+#' to `sum(pow = 1/2)`).
 #' 
 #' ## Nodal attribute levels and indices
+#'
 #' Terms taking a categorical nodal covariate also take the `levels`
 #' argument.  (There are analogous `b1levels` and `b2levels`
 #' arguments for some terms that apply to bipartite networks, and the
@@ -257,12 +268,18 @@
 #' ## Custom `ergm` terms
 #' Users and other packages may build custom terms, and package
 #' \pkg{ergm.userterms} (\url{https://github.com/statnet/ergm.userterms}) provides
-#' tools for implementing them.
+#' tools for implementing them, and the [Terms-API vignette](https://cran.r-project.org/package=ergm/vignettes/Terms-API.html).
+#'
+#' There is also a number of *auxiliaries* available---terms that do
+#' not have statistics of their own but provide data structures useful
+#' to other terms. For auxiliaries currently visible to
+#' \CRANpkg{ergm}, see [`ergmAuxiliary`].
 #' 
 #' The current recommendation for any package implementing additional terms is
 #' to document the term with Roxygen comments and a name in the form
 #' `termName-ergmTerm`. This ensures that \code{help("ergmTerm")} will list ERGM
 #' terms available from all loaded packages.
+#'
 #'
 #' @section Terms included in the [`ergm`][ergm-package] package:
 #' As noted above, a cross-referenced HTML version of the term documentation is
@@ -367,6 +384,38 @@
 #' }
 NULL
 #TODO: Write a valued example.
+
+#' Auxiliaries to Facilitate Terms in Exponential Family Random Graph Models
+#'
+#' @name ergmAuxiliary
+#'
+#' @description This page is intended for term developers and provides information about auxiliaries---terms that do not produce statistics of their own but provide useful data structures for other terms to use. It also provides an indexed list of the possible auxiliaries currently visible to the \CRANpkg{ergm} API. Terms can also be searched via [`search.ergmAuxiliaries`], and help for an individual auxiliaries can be obtained with `ergmAuxiliary?<term>` or `help("<term>-ergmAuxiliary")`.
+#'
+#' By convention, their names are prefixed with a dot.
+#'
+#' @section Auxiliary index:
+#'
+#' \ergmCSS
+#'
+#' \if{latex}{\Sexpr[results=rd,stage=render]{ergm:::.formatIndexLatex(ergm:::.buildTermsDataframe("ergmAuxiliary"))}}
+#' \if{text}{\Sexpr[results=rd,stage=render]{ergm:::.formatIndexText(ergm:::.buildTermsDataframe("ergmAuxiliary"))}}
+#' \if{html}{\Sexpr[results=rd,stage=render]{ergm:::.formatIndexHtml(ergm:::.buildTermsDataframe("ergmAuxiliary"))}}
+#'
+#' ## All terms
+#' \if{latex}{\Sexpr[results=rd,stage=render]{ergm:::.formatMatrixLatex(ergm:::.termMatrix("ergmAuxiliary"))}}
+#' \if{text}{\Sexpr[results=rd,stage=render]{ergm:::.formatMatrixText(ergm:::.termMatrix("ergmAuxiliary"))}}
+#' \if{html}{\Sexpr[results=rd,stage=render]{ergm:::.formatMatrixHtml(ergm:::.termMatrix("ergmAuxiliary"))}}
+#' 
+#' ## Terms by keywords
+#' \if{latex}{\Sexpr[results=rd,stage=render]{ergm:::.formatTocLatex(ergm:::.termToc("ergmAuxiliary"))}}
+#' \if{text}{\Sexpr[results=rd,stage=render]{ergm:::.formatTocText(ergm:::.termToc("ergmAuxiliary"))}}
+#' \if{html}{\Sexpr[results=rd,stage=render]{ergm:::.formatTocHtml(ergm:::.termToc("ergmAuxiliary"))}}
+#'
+#' @seealso [`ergm`][ergm-package] package, [`ergm`], [`network`], [`%v%`], [`%n%`]
+#'
+#' @keywords internal
+#' @keywords models
+NULL
 
 
 #' Sample Space Constraints for Exponential-Family Random Graph Models

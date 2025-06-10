@@ -1,8 +1,8 @@
-/*  File src/CD.h in package ergm, part of the
- *  Statnet suite of packages for network analysis, https://statnet.org .
+/*  File src/CD.h in package ergm, part of the Statnet suite of packages for
+ *  network analysis, https://statnet.org .
  *
- *  This software is distributed under the GPL-3 license.  It is free,
- *  open source, and has the attribution requirements (GPL Section 7) at
+ *  This software is distributed under the GPL-3 license.  It is free, open
+ *  source, and has the attribution requirements (GPL Section 7) at
  *  https://statnet.org/attribution .
  *
  *  Copyright 2003-2025 Statnet Commons
@@ -32,10 +32,6 @@
   /* FIXME: This should be done in one call, but it's very easy \
      to make a fencepost error here. */                         \
   ToggleEdge(t, h, nwp);
-
-#define DISPATCH_CD_wrapper CD_wrapper
-#define DISPATCH_CDSample CDSample
-#define DISPATCH_CDStep CDStep
 
 #include "CD.h.template.do_not_include_directly.h"
 

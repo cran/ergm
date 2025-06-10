@@ -1,8 +1,8 @@
-#  File R/InitErgmConstraint.blockdiag.R in package ergm, part of the
-#  Statnet suite of packages for network analysis, https://statnet.org .
+#  File R/InitErgmConstraint.blockdiag.R in package ergm, part of the Statnet
+#  suite of packages for network analysis, https://statnet.org .
 #
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) at
+#  This software is distributed under the GPL-3 license.  It is free, open
+#  source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
 #  Copyright 2003-2025 Statnet Commons
@@ -34,9 +34,9 @@
   o <- .consensus.order(e1$values, e2$values)
 
   l1 <- e1$lengths[match(o, e1$values)]
-  l1[is.na(l1)] <- 0
+  l1 %[f]% is.na <- 0
   l2 <- e2$lengths[match(o, e2$values)]
-  l2[is.na(l2)] <- 0
+  l2 %[f]% is.na <- 0
 
   list(values=o, lengths1=l1, lengths2=l2)
 }

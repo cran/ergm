@@ -1,6 +1,6 @@
 Package: ergm
-Version: 4.8.1
-Date: 2025-01-20
+Version: 4.9.0
+Date: 2025-06-09
 Title: Fit, Simulate and Diagnose Exponential-Family Models for
         Networks
 Authors@R: c(
@@ -8,27 +8,27 @@ Authors@R: c(
              person(c("David", "R."), "Hunter", role=c("aut"), email="dhunter@stat.psu.edu"),
              person(c("Carter", "T."), "Butts", role=c("aut"), email="buttsc@uci.edu"),
              person(c("Steven", "M."), "Goodreau", role=c("aut"), email="goodreau@u.washington.edu"),
-             person(c("Pavel", "N."), "Krivitsky", role=c("aut","cre"), email="pavel@statnet.org", comment=c(ORCID="0000-0002-9101-3362")),
+             person(c("Pavel", "N."), "Krivitsky", role=c("aut", "cre"), email="pavel@statnet.org", comment=c(ORCID="0000-0002-9101-3362")),
              person("Martina", "Morris", role=c("aut"), email="morrism@u.washington.edu"),
-             person("Li","Wang",role=c("ctb"),email="lxwang@gmail.com"),
-             person("Kirk","Li",role=c("ctb"),email="kirkli@u.washington.edu"),
+             person("Li", "Wang", role=c("ctb"), email="lxwang@gmail.com"),
+             person("Kirk", "Li", role=c("ctb"), email="kirkli@u.washington.edu"),
              person("Skye", "Bender-deMoll", role=c("ctb"), email="skyebend@u.washington.edu"),
              person("Chad", "Klumb", role=c("ctb"), email="cklumb@gmail.com"),
-             person("Michał", " Bojanowski", role=c("ctb"), email="michal2992@gmail.com", comment=c(ORCID="0000-0001-7503-852X")),
+             person("Michał", "Bojanowski", role=c("ctb"), email="michal2992@gmail.com", comment=c(ORCID="0000-0001-7503-852X")),
              person("Ben", "Bolker", role=c("ctb"), email="bbolker+lme4@gmail.com"),
              person("Christian", "Schmid", role=c("ctb"), email="songhyo86@gmail.com"),
              person("Joyce", "Cheng", role=c("ctb"), email="joyce.cheng@student.unsw.edu.au"),
              person("Arya", "Karami", role=c("ctb"), email="a.karami@unsw.edu.au"),
              person("Adrien", "Le Guillou", role=c("ctb"), email="git@aleguillou.org", comment=c(ORCID="0000-0002-4791-418X")))
-Depends: R (>= 4.1), network (>= 1.19.0)
+Depends: R (>= 4.2), network (>= 1.19.0)
 Imports: robustbase (>= 0.99-4-1), coda (>= 0.19-4.1), trust (>=
-        0.1-8), lpSolveAPI (>= 5.5.2.0-17.12), statnet.common (>=
-        4.11.0), rle (>= 0.9.2), purrr (>= 1.0.2), rlang (>= 1.1.4),
+        0.1-8), lpSolveAPI (>= 5.5.2.0-17.14), statnet.common (>=
+        4.12.0), rle (>= 0.10.0), purrr (>= 1.0.4), rlang (>= 1.1.6),
         memoise (>= 2.0.1), tibble (>= 3.2.1), magrittr (>= 2.0.3),
-        Rdpack (>= 2.6.2), knitr (>= 1.49), stringr (>= 1.5.1),
+        Rdpack (>= 2.6.4), knitr (>= 1.50), stringr (>= 1.5.1),
         parallel, methods
 Suggests: latticeExtra (>= 0.6-30), sna (>= 2.8), rmarkdown (>= 2.29),
-        testthat (>= 3.2.2), ergm.count (>= 4.1.2), withr (>= 3.0.2),
+        testthat (>= 3.2.3), ergm.count (>= 4.1.2), withr (>= 3.0.2),
         covr (>= 3.6.4), Rglpk (>= 0.6-5.1), slam (>= 0.1-55),
         networkLite (>= 1.1.0), lattice
 RdMacros: Rdpack
@@ -47,64 +47,66 @@ Encoding: UTF-8
 Collate: 'InitErgmConstraint.R' 'InitErgmConstraint.blockdiag.R'
         'InitErgmConstraint.hints.R' 'InitErgmConstraint.operator.R'
         'InitErgmProposal.R' 'InitErgmProposal.dyadnoise.R'
-        'InitErgmReference.R' 'ergm-deprecated.R' 'InitErgmTerm.R'
-        'InitErgmTerm.auxnet.R' 'InitErgmTerm.bipartite.R'
-        'InitErgmTerm.bipartite.degree.R' 'InitErgmTerm.blockop.R'
-        'InitErgmTerm.coincidence.R' 'InitErgmTerm.dgw_sp.R'
-        'InitErgmTerm.diversity.R' 'InitErgmTerm.extra.R'
-        'InitErgmTerm.indices.R' 'InitErgmTerm.interaction.R'
-        'InitErgmTerm.operator.R' 'InitErgmTerm.projection.R'
-        'InitErgmTerm.spcache.R' 'InitErgmTerm.test.R'
-        'InitErgmTerm.transitiveties.R' 'InitWtErgmProposal.R'
-        'InitWtErgmTerm.R' 'InitWtErgmTerm.operator.R'
-        'InitWtErgmTerm.test.R' 'anova.ergm.R' 'anova.ergmlist.R'
+        'InitErgmReference.R' 'InitErgmTerm.R' 'InitErgmTerm.auxnet.R'
+        'InitErgmTerm.bipartite.R' 'InitErgmTerm.bipartite.degree.R'
+        'InitErgmTerm.blockop.R' 'InitErgmTerm.coincidence.R'
+        'InitErgmTerm.dgw_sp.R' 'InitErgmTerm.diversity.R'
+        'InitErgmTerm.extra.R' 'InitErgmTerm.indices.R'
+        'InitErgmTerm.interaction.R' 'InitErgmTerm.operator.R'
+        'InitErgmTerm.projection.R' 'InitErgmTerm.spcache.R'
+        'InitErgmTerm.test.R' 'InitErgmTerm.transitiveties.R'
+        'InitWtErgmProposal.R' 'InitWtErgmTerm.R'
+        'InitWtErgmTerm.auxnet.R' 'InitWtErgmTerm.operator.R'
+        'InitWtErgmTerm.test.R' 'anova.ergm.R'
         'approx.hotelling.diff.test.R' 'as.network.numeric.R'
         'build_term_index.R' 'check.ErgmTerm.R' 'control.ergm.R'
-        'control.ergm.bridge.R' 'control.gof.R' 'control.logLik.ergm.R'
-        'control.san.R' 'control.simulate.R' 'data.R' 'ergm-defunct.R'
-        'ergm-internal.R' 'ergm-options.R' 'ergm-package.R'
-        'ergm-terms-index.R' 'ergm.CD.fixed.R' 'ergm.Cprepare.R'
-        'ergm.MCMCse.R' 'ergm.MCMLE.R' 'ergm.R' 'ergm.allstats.R'
-        'ergm.auxstorage.R' 'ergm.bounddeg.R' 'ergm.bridge.R'
-        'ergm.design.R' 'ergm.errors.R' 'ergm.estimate.R' 'ergm.eta.R'
-        'ergm.etagrad.R' 'ergm.etagradmult.R' 'ergm.etamap.R'
+        'control.ergm.bridge.R' 'control.ergm3.R' 'control.gof.R'
+        'control.logLik.ergm.R' 'control.san.R' 'control.simulate.R'
+        'data.R' 'ergm-defunct.R' 'ergm-deprecated.R' 'ergm-internal.R'
+        'ergm-options.R' 'ergm-package.R' 'ergm-terms-index.R'
+        'ergm.CD.fixed.R' 'ergm.MCMCse.R' 'ergm.MCMLE.R' 'ergm.R'
+        'ergm.allstats.R' 'ergm.auxstorage.R' 'ergm.bounddeg.R'
+        'ergm.bridge.R' 'ergm.design.R' 'ergm.errors.R'
+        'ergm.estimate.R' 'ergm.eta.R' 'ergm.etamap.R'
         'ergm.geodistn.R' 'ergm.getCDsample.R' 'ergm.getMCMCsample.R'
         'ergm.getnetwork.R' 'ergm.initialfit.R' 'ergm.llik.R'
         'ergm.llik.obs.R' 'ergm.logitreg.R' 'ergm.mple.R'
-        'ergm.pen.glm.R' 'ergm.phase12.R' 'ergm.pl.R' 'ergm.san.R'
-        'ergm.stepping.R' 'ergm.stocapprox.R' 'ergm.utility.R'
-        'ergmMPLE.R' 'ergm_estfun.R' 'ergm_keyword.R' 'ergm_model.R'
+        'ergm.pen.glm.R' 'ergm.pl.R' 'ergm.san.R' 'ergm.stepping.R'
+        'ergm.stocapprox.R' 'ergm.utility.R' 'ergmMPLE.R'
+        'ergm_estfun.R' 'ergm_keyword.R' 'ergm_model.R'
         'ergm_model.utils.R' 'ergm_mplecov.R' 'ergm_proposal.R'
         'ergm_response.R' 'ergm_state.R' 'ergmlhs.R' 'formula.utils.R'
         'get.node.attr.R' 'godfather.R' 'gof.ergm.R' 'is.curved.R'
-        'is.dyad.independent.R' 'is.inCH.R' 'is.na.ergm.R'
-        'is.valued.R' 'logLik.ergm.R' 'mcmc.diagnostics.ergm.R'
-        'network.list.R' 'network.update.R' 'nonidentifiability.R'
-        'nparam.R' 'obs.constraints.R' 'parallel.utils.R'
-        'param_names.R' 'predict.ergm.R' 'print.ergm.R'
-        'print.network.list.R' 'print.summary.ergm.R'
-        'rank_test.ergm.R' 'rlebdm.R' 'simulate.ergm.R'
+        'is.dyad.independent.R' 'is.na.ergm.R' 'is.valued.R'
+        'logLik.ergm.R' 'mcmc.diagnostics.ergm.R' 'network.list.R'
+        'network.update.R' 'nonidentifiability.R' 'nparam.R'
+        'obs.constraints.R' 'parallel.utils.R' 'param_names.R'
+        'predict.ergm.R' 'print.ergm.R' 'rank_test.ergm.R'
+        'to_ergm_Cdouble.R' 'rlebdm.R' 'simulate.ergm.R'
         'simulate.formula.R' 'summary.ergm.R' 'summary.ergm_model.R'
-        'summary.network.list.R' 'summary.statistics.network.R'
-        'to_ergm_Cdouble.R' 'vcov.ergm.R' 'wtd.median.R' 'zzz.R'
+        'summary.statistics.network.R' 'vcov.ergm.R' 'wtd.median.R'
+        'zzz.R'
 NeedsCompilation: yes
-Packaged: 2025-01-21 02:50:02 UTC; pavel
+Packaged: 2025-06-10 01:43:53 UTC; pavel
 Author: Mark S. Handcock [aut],
   David R. Hunter [aut],
   Carter T. Butts [aut],
   Steven M. Goodreau [aut],
-  Pavel N. Krivitsky [aut, cre] (<https://orcid.org/0000-0002-9101-3362>),
+  Pavel N. Krivitsky [aut, cre] (ORCID:
+    <https://orcid.org/0000-0002-9101-3362>),
   Martina Morris [aut],
   Li Wang [ctb],
   Kirk Li [ctb],
   Skye Bender-deMoll [ctb],
   Chad Klumb [ctb],
-  Michał Bojanowski [ctb] (<https://orcid.org/0000-0001-7503-852X>),
+  Michał Bojanowski [ctb] (ORCID:
+    <https://orcid.org/0000-0001-7503-852X>),
   Ben Bolker [ctb],
   Christian Schmid [ctb],
   Joyce Cheng [ctb],
   Arya Karami [ctb],
-  Adrien Le Guillou [ctb] (<https://orcid.org/0000-0002-4791-418X>)
+  Adrien Le Guillou [ctb] (ORCID:
+    <https://orcid.org/0000-0002-4791-418X>)
 Maintainer: Pavel N. Krivitsky <pavel@statnet.org>
 Repository: CRAN
-Date/Publication: 2025-01-21 08:40:02 UTC
+Date/Publication: 2025-06-10 07:40:02 UTC

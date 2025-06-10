@@ -1,8 +1,8 @@
-#  File R/ergm.R in package ergm, part of the
-#  Statnet suite of packages for network analysis, https://statnet.org .
+#  File R/ergm.R in package ergm, part of the Statnet suite of packages for
+#  network analysis, https://statnet.org .
 #
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) at
+#  This software is distributed under the GPL-3 license.  It is free, open
+#  source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
 #  Copyright 2003-2025 Statnet Commons
@@ -65,8 +65,8 @@
 #'   arguments to the proposal should be specified through the
 #'   \code{obs.prop.args} argument to the relevant control function.
 #' 
-#' @param offset.coef {A vector of coefficients for the offset terms.}
-#' @param target.stats {vector of "observed network statistics,"
+#' @param offset.coef A vector of coefficients for the offset terms. \matchnames{coefficient}
+#' @param target.stats vector of "observed network statistics,"
 #' if these statistics are for some reason different than the 
 #' actual statistics of the network on the left-hand side of
 #' \code{formula}.
@@ -74,8 +74,8 @@
 #' model.  If this is given, the algorithm finds the natural
 #' parameter values corresponding to these mean-value parameters.
 #' If \code{NULL}, the mean-value parameters used are the observed
-#' statistics of the network in the formula.
-#' }
+#' statistics of the network in the formula. \matchnames{statistic}
+#'
 #' @param eval.loglik {Logical:  For dyad-dependent models, if TRUE, use bridge
 #' sampling to evaluate the log-likelihoood associated with the
 #' fit. Has no effect for dyad-independent models.
@@ -513,11 +513,7 @@ ergm <- function(formula, response=NULL,
 
   ## Construct approximate response network if target.stats are given.
   if(!is.null(target.stats)){
-    target.stats <- vector.namesmatch(target.stats, param_names(model, canonical=TRUE, offset=FALSE))
-    target.stats <- na.omit(target.stats)
-    if(length(target.stats) != (tmp <- nparam(model, canonical=TRUE, offset=FALSE))){
-      stop("Incorrect length of the target.stats vector: should be ", tmp, " but is ",length(target.stats),". Note that offset() terms should *not* get target statistics.")
-    }
+    target.stats <- match_names(target.stats, param_names(model, canonical=TRUE, offset=FALSE))
     
     # no need to pass the offset term's init to SAN
     san.control <- control$SAN
@@ -546,7 +542,7 @@ ergm <- function(formula, response=NULL,
     # TODO: Only have target.stats contain non-offset terms'
     # statistics, and have the rest of the code handle it
     # intelligently.
-    target.stats <- .align.target.stats.offset(model, target.stats)   
+    target.stats <- .embed.target.stats(model, target.stats)
 
     nw <- TARGET_STATS <- as.network(TARGET_STATS)
     #' @importFrom statnet.common nonsimp_update.formula
@@ -563,11 +559,11 @@ ergm <- function(formula, response=NULL,
   # for obtaining initial values.
   init.candidates <- c(proposal$reference$init_methods, "skip")
   if("MPLE" %in% init.candidates && !info$space_dind){
-    init.candidates <- init.candidates[init.candidates!="MPLE"]
+    init.candidates <- init.candidates %[.]% (. != "MPLE")
     if(verbose) message("MPLE cannot be used for this constraint structure.")
   }
 
-  control$init.method <- ERRVL(try(match.arg(control$init.method, init.candidates), silent=TRUE), {
+  control$init.method <- ERRVL2(match.arg(control$init.method, init.candidates), {
     message("Specified initial parameter method ", sQuote(control$init.method), " is not in the list of candidates. Use at your own risk.")
     control$init.method
   })
@@ -580,31 +576,23 @@ ergm <- function(formula, response=NULL,
   }
   
   # If some control$init is specified...
-  if(!is.null(control$init)){
-    # Check length of control$init.
-    if (length(control$init)!=length(model$etamap$offsettheta)) {
-      if(verbose){
-        message("control$init =")
-        message_print(control$init)
-        message("number of statistics is ", nparam(model, canonical=TRUE), "")
-      }
-      stop(paste("Invalid starting parameter vector control$init:",
-                 "wrong number of parameters."))
-    }
-  }else control$init <- rep(NA, length(model$etamap$offsettheta)) # Set the default value of control$init.
-  
+  control$init <- match_names(NVL(control$init, structure(numeric(0), names=character(0))),
+                              param_names(model, canonical=FALSE), NA)
+ 
   if(!is.null(offset.coef)){
-      # TODO: Names matching here?
-      if(length(control$init[model$etamap$offsettheta])!=length(offset.coef))
-          stop("Invalid offset parameter vector offset.coef: ",
-               "wrong number of parameters: expected ",
-               length(control$init[model$etamap$offsettheta]),
-               " got ",length(offset.coef),".")
-      control$init[model$etamap$offsettheta]<-offset.coef
+    offset.coef <- match_names(offset.coef, param_names(model, canonical=FALSE, offset=TRUE))
+    control$init[model$etamap$offsettheta]<-offset.coef
   }
-  
+
+  if(verbose){
+    message("Initial parameters:")
+    message_print(control$init)
+    message("number of free parameters: ", nparam(model, canonical=FALSE, offset=FALSE))
+    message("number of fixed parameters: ", nparam(model, canonical=FALSE, offset=TRUE))
+  }
+
   # Make sure any offset elements are given in control$init.
-  if(any(is.na(control$init) & model$etamap$offsettheta)) stop("The model contains offset terms whose parameter values have not been specified:", paste.and(param_names(model)[is.na(control$init)&model$offsettheta]), ".", sep="")
+  if(any(is.na(control$init) & model$etamap$offsettheta)) stop("The model contains offset terms whose parameter values have not been specified:", paste.and(sQuote(param_names(model)[is.na(control$init)&model$offsettheta])), ".", sep="")
   
   # Check if any terms are constrained to a constant and issue a warning.
   constrcheck <- ergm.checkconstraints.model(model, proposal, control$init)
@@ -720,18 +708,23 @@ ergm.fit <- function(nw, target.stats, model, model.obs, proposal, proposal.obs,
   ## statshift==0. To make target.stats play nicely with offsets, we
   ## set stat shifts to 0 where target.stats is NA (due to offset).
   nw.stats <- summary(model, s)
-  statshift <- nw.stats - NVL(target.stats, nw.stats)
-  statshift[is.na(statshift)] <- 0
+  statshift <- (nw.stats - NVL(target.stats, nw.stats)) |> replace(is.na, 0)
 
   s <- update(s, model=model, proposal=proposal, stats=statshift)
   s.obs <- NVL3(proposal.obs, update(s, model=NVL(model.obs,model), proposal=.))
 
-  ## If all other criteria for MPLE=MLE are met, _and_ SAN network matches target.stats exactly, we can get away with MPLE.
-  if (!is.null(target.stats) && !isTRUE(all.equal(target.stats[!is.na(target.stats)],nw.stats[!is.na(target.stats)])))
-    message("Unable to match target stats. Using MCMLE estimation.")
-  if(control$estimate=="MLE"
-    && info$MPLE_is_MLE && (is.null(target.stats) || isTRUE(all.equal(target.stats,nw.stats)))
-    && !control$force.main){
+  # If all other criteria for MPLE=MLE are met, _and_ SAN network
+  # matches target.stats exactly, we can get away with MPLE.
+  tgtmet <- NVL3(
+    target.stats,
+    isTRUE(all.equal(na.omit(.), nw.stats[!is.na(.)], check.attr = FALSE)),
+    TRUE
+  )
+
+  if (!tgtmet) message("Unable to match target stats. Using MCMLE estimation.")
+  if (control$estimate == "MLE"
+      && info$MPLE_is_MLE && tgtmet
+      && !control$force.main) {
     control$init.method <- "skip"
     control$main.method <- "MPLE"
   }
@@ -745,8 +738,7 @@ ergm.fit <- function(nw, target.stats, model, model.obs, proposal, proposal.obs,
                                 ...)
 
   ## Extract and process the initial value for the next stage:
-  init <- coef(initialfit)
-  init[is.na(init)] <- 0
+  init <- coef(initialfit) |> replace(is.na, 0)
   names(init) <- param_names(model, FALSE)
 
   c(

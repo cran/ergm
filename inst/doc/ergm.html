@@ -363,7 +363,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <h1 class="title toc-ignore">Introduction to Exponential-family Random
 Graph Models with <code>ergm</code></h1>
 <h4 class="author">The Statnet Development Team</h4>
-<h4 class="date"><code>ergm</code> version 4.8.1 (2025-01-21)</h4>
+<h4 class="date"><code>ergm</code> version 4.9.0 (2025-06-10)</h4>
 
 
 
@@ -1280,7 +1280,7 @@ then networks drawn from this distribution will be more likely to
 <span id="cb109-3"><a href="#cb109-3" tabindex="-1"></a><span class="fu">class</span>(flomodel.<span class="fl">03.</span>sim) <span class="co"># what does this produce?</span></span></code></pre></div>
 <pre><code>## [1] &quot;network.list&quot;</code></pre>
 <div class="sourceCode" id="cb111"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb111-1"><a href="#cb111-1" tabindex="-1"></a><span class="fu">summary</span>(flomodel.<span class="fl">03.</span>sim) <span class="co"># quick summary</span></span></code></pre></div>
-<pre><code>## Number of Networks: 10 
+<pre><code>## List of  10  Networks
 ## Model: flomarriage ~ edges + nodecov(&quot;wealth&quot;) 
 ## Reference: ~Bernoulli 
 ## Constraints: ~. ~. - observed 
@@ -1298,7 +1298,7 @@ then networks drawn from this distribution will be more likely to
 ## [10,]    20           2397
 ## attr(,&quot;monitored&quot;)
 ## [1] FALSE FALSE</code></pre>
-<pre><code>## Number of Networks: 10 
+<pre><code>## List of  10  Networks
 ## Model: flomarriage ~ edges + nodecov(&quot;wealth&quot;) 
 ## Reference: ~Bernoulli 
 ## Constraints: ~. ~. - observed</code></pre>
@@ -1612,6 +1612,13 @@ dependence.</p>
 ## Initializing model...
 ## Model initialized.
 ## Using initial method &#39;MPLE&#39;.
+## Initial parameters:
+##            edges gwesp.fixed.0.25  nodematch.Grade   nodematch.Race 
+##               NA               NA               NA               NA 
+##    nodematch.Sex 
+##               NA 
+## number of free parameters: 5
+## number of fixed parameters: 0
 ## Fitting initial model.
 ## Starting maximum pseudolikelihood estimation (MPLE):
 ## Obtaining the responsible dyads.

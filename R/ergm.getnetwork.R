@@ -1,8 +1,8 @@
-#  File R/ergm.getnetwork.R in package ergm, part of the
-#  Statnet suite of packages for network analysis, https://statnet.org .
+#  File R/ergm.getnetwork.R in package ergm, part of the Statnet suite of
+#  packages for network analysis, https://statnet.org .
 #
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) at
+#  This software is distributed under the GPL-3 license.  It is free, open
+#  source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
 #  Copyright 2003-2025 Statnet Commons
@@ -30,23 +30,26 @@
 #' is valid; if so, the network is returned; if not, execution is
 #' halted with warnings.
 #'
-#' @param formula a two-sided formula whose LHS is a [`network`], an object that can be coerced to a [`network`], or an expression that evaluates to one.
+#' @param formula a two-sided formula whose LHS is a [`network`], an object
+#'   that can be coerced to a [`network`], or an expression that evaluates
+#'   to one.
 #' @param loopswarning whether warnings about loops should be printed
-#'   (`TRUE` or `FALSE`); defaults to `TRUE`.
+#'   (`TRUE` or `FALSE`); defaults to value of option `ergm.warn_loops`
+#'   or `TRUE`.
 #' 
 #' @return A [`network`] object constructed by evaluating the LHS of
 #'   the model formula in the formula's environment.
 #' @export ergm.getnetwork
-ergm.getnetwork <- function (formula, loopswarning=TRUE){
+ergm.getnetwork <- function (formula, loopswarning=getOption("ergm.warn_loops")){
   nw <- eval_lhs.formula(formula)
   nw <- ensure_network(nw)
 
   if (loopswarning) {
     e <- as.edgelist(nw)
     if(any(e[,1]==e[,2])) {
-      print("Warning:  This network contains loops")
+      warning("This network contains loops")
     } else if (has.loops(as.network(nw,populate=FALSE))) {
-      print("Warning:  This network is allowed to contain loops")
+      warning("This network is allowed to contain loops")
     }
   }
   nw
@@ -54,8 +57,8 @@ ergm.getnetwork <- function (formula, loopswarning=TRUE){
 
 ensure_network <- function(nw){
   if(!is.network(nw) && !is.ergm_state(nw)){
-    nw <- ERRVL(
-      try(as.network(nw)),
+    nw <- ERRVL2(
+      as.network(nw),
       abort("A network object on the LHS of the formula or as a basis argument must be given")
     )
   }

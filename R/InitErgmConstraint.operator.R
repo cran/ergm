@@ -1,8 +1,8 @@
-#  File R/InitErgmConstraint.operator.R in package ergm, part of the
-#  Statnet suite of packages for network analysis, https://statnet.org .
+#  File R/InitErgmConstraint.operator.R in package ergm, part of the Statnet
+#  suite of packages for network analysis, https://statnet.org .
 #
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) at
+#  This software is distributed under the GPL-3 license.  It is free, open
+#  source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
 #  Copyright 2003-2025 Statnet Commons
@@ -47,8 +47,7 @@ InitErgmConstraint.Dyads<-function(nw, arglist, ...){
                        f[[3]] <- f[[2]]
                        f[[2]] <- nw
                        m <- ergmMPLE(f, expand.bipartite=TRUE, output="array")$predictor
-                       m <- m!=0
-                       m[is.na(m)] <- FALSE
+                       m <- (m != 0) %|% FALSE
                        if(!is.directed(nw)){
                          m <- m | aperm(m, c(2L,1L,3L))
                        }

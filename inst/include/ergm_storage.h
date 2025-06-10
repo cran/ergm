@@ -1,8 +1,8 @@
-/*  File inst/include/ergm_storage.h in package ergm, part of the
- *  Statnet suite of packages for network analysis, https://statnet.org .
+/*  File inst/include/ergm_storage.h in package ergm, part of the Statnet suite
+ *  of packages for network analysis, https://statnet.org .
  *
- *  This software is distributed under the GPL-3 license.  It is free,
- *  open source, and has the attribution requirements (GPL Section 7) at
+ *  This software is distributed under the GPL-3 license.  It is free, open
+ *  source, and has the attribution requirements (GPL Section 7) at
  *  https://statnet.org/attribution .
  *
  *  Copyright 2003-2025 Statnet Commons
@@ -10,6 +10,8 @@
 
 #ifndef _ERGM_STORAGE_H_
 #define _ERGM_STORAGE_H_
+
+#include "ergm_variadic_macros.h"
 
 /*** Storage utilities ***/
 
@@ -43,12 +45,16 @@
 #define ALLOC_AUX_STORAGE(nmemb, stored_type, store_into) stored_type *store_into = (stored_type *) (AUX_STORAGE = R_Calloc(nmemb, stored_type));
 // 1. Declares a stored_type *store_into.
 // 2. Assigns pointer to its assigned auxiliary storage slot (or, for a statistic, its first requested auxiliary) to store_into.
-#define GET_AUX_STORAGE(stored_type, store_into) stored_type *store_into = AUX_STORAGE;
+#define _GET_AUX_STORAGE2(stored_type, store_into) stored_type *store_into = AUX_STORAGE;
 // Pointer to the storage slot of a statistic's ind'th requested auxiliary.
 #define AUX_STORAGE_NUM(ind) (mtp->aux_storage[mtp->aux_slots[ind]])
 // 1. Declares a stored_type *store_into.
 // 2. Assigns pointer to its ind'th requested auxiliary to store_into.
-#define GET_AUX_STORAGE_NUM(stored_type, store_into, ind) stored_type *store_into = AUX_STORAGE_NUM(ind);
+#define _GET_AUX_STORAGE3(ind, stored_type, store_into) stored_type *store_into = AUX_STORAGE_NUM(ind);
+// For backwards-compatibility. TODO: Delete around 3.10 release.
+#define GET_AUX_STORAGE_NUM(stored_type, store_into, ind) _GET_AUX_STORAGE3(ind, stored_type, store_into)
+// This version takes 2 or 3 arguments; if 3 arguments, the first argument is the slot number.
+#define GET_AUX_STORAGE(...) _GET_OVERRIDE3(__VA_ARGS__, _GET_AUX_STORAGE3, _GET_AUX_STORAGE2,,)(__VA_ARGS__)
 
 /* Allocate a sociomatrix as auxiliary storage. */
 #define ALLOC_AUX_SOCIOMATRIX(stored_type, store_into)			\

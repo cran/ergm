@@ -1,8 +1,8 @@
-#  File R/summary.statistics.network.R in package ergm, part of the
-#  Statnet suite of packages for network analysis, https://statnet.org .
+#  File R/summary.statistics.network.R in package ergm, part of the Statnet
+#  suite of packages for network analysis, https://statnet.org .
 #
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) at
+#  This software is distributed under the GPL-3 license.  It is free, open
+#  source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
 #  Copyright 2003-2025 Statnet Commons
@@ -121,8 +121,22 @@ summary_formula.ergm <- function(object, ..., basis=NULL)
 #' @template response
 #' @export
 summary_formula.network.list <- function(object, response=NULL, ..., basis=eval_lhs.formula(object)){
-  out<-lapply(basis, function(nw) summary_formula.network(object, response=response, ..., basis=nw))
+  out <- lapply(basis, function(nw) {
+    summary_formula(object, response = response, ..., basis = nw)
+  })
   do.call(rbind,out)
+}
+
+#' @describeIn summary_formula a method for a [`network.list.list`] on
+#'   the LHS of the formula.
+#' @export
+summary_formula.network.list.list <- function(object, response = NULL, ...,
+                                              basis =
+                                                eval_lhs.formula(object)) {
+  out <- lapply(basis, lapply, function(nw) {
+    summary_formula(object, response = response, ..., basis = nw)
+  })
+  lapply(out, do.call(what = rbind))
 }
 
 #' @describeIn summary_formula a method for a [`network`] on the LHS of the formula.

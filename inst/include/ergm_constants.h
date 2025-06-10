@@ -1,8 +1,8 @@
-/*  File inst/include/ergm_constants.h in package ergm, part of the
- *  Statnet suite of packages for network analysis, https://statnet.org .
+/*  File inst/include/ergm_constants.h in package ergm, part of the Statnet
+ *  suite of packages for network analysis, https://statnet.org .
  *
- *  This software is distributed under the GPL-3 license.  It is free,
- *  open source, and has the attribution requirements (GPL Section 7) at
+ *  This software is distributed under the GPL-3 license.  It is free, open
+ *  source, and has the attribution requirements (GPL Section 7) at
  *  https://statnet.org/attribution .
  *
  *  Copyright 2003-2025 Statnet Commons
@@ -15,7 +15,7 @@
    'ergm' version. They should be updated with every minor version
    update. */
 #define ERGM_API_MAJOR 4
-#define ERGM_API_MINOR 8
+#define ERGM_API_MINOR 9
 
 /* ABI version: this should be updated only when the ABI changes, even
    if the change is 100% source-compatible. This includes, for
@@ -24,7 +24,7 @@
    Then, it should be set to a signed int with value major*1e6 +
    minor. Make sure to remove any leading zeros!
 */
-#define ERGM_ABI_VERSION 4000008
+#define ERGM_ABI_VERSION 4000009
 
 typedef enum MCMCStatus_enum {
   MCMC_OK = 0,

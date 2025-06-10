@@ -1,8 +1,8 @@
-#  File R/InitWtErgmTerm.R in package ergm, part of the
-#  Statnet suite of packages for network analysis, https://statnet.org .
+#  File R/InitWtErgmTerm.R in package ergm, part of the Statnet suite of
+#  packages for network analysis, https://statnet.org .
 #
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) at
+#  This software is distributed under the GPL-3 license.  It is free, open
+#  source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
 #  Copyright 2003-2025 Statnet Commons
@@ -140,6 +140,20 @@ InitWtErgmTerm.atmost<-function(nw, arglist, ...) {
        dependence=FALSE,
        minval=0, maxval=network.dyadcount(nw,FALSE),
        emptynwstats=ifelse(0<=a$threshold, network.dyadcount(nw,FALSE), 0))
+}
+
+#' @templateVar name attrcov
+#' @template ergmTerm-rdname
+#' @usage
+#' # valued: attrcov(attr, mat, form="sum")
+#' @template ergmTerm-form
+InitWtErgmTerm.attrcov <- function (nw, arglist, ...) {
+  a <- check.ErgmTerm(nw, arglist,
+                      varnames = c("attr", "mat", "form"),
+                      vartypes = c(ERGM_VATTR_SPEC, "matrix", "character"),
+                      defaultvalues = list(NULL, NULL, "sum"),
+                      required = c(TRUE, TRUE, FALSE))
+  binary_dind_wrap("attrcov", nw, a, ...)
 }
 
 #' @templateVar name b1cov
@@ -461,7 +475,7 @@ InitWtErgmTerm.sum<-function(nw, arglist, ...) {
                       defaultvalues = list(1),
                       required = c(FALSE))
   if(a$pow==1){
-    list(name="sum",
+    list(name="edges_sum",
          coef.names="sum",
          inputs=NULL,
          dependence=FALSE)
@@ -913,7 +927,7 @@ InitWtErgmTerm.nonzero<-function(nw, arglist, ...) {
                       vartypes = NULL,
                       defaultvalues = list(),
                       required = NULL)
-  list(name="nonzero",
+  list(name="edges_nonzero",
        coef.names="nonzero",
        inputs=NULL,
        dependence=FALSE,

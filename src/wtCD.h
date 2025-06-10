@@ -1,8 +1,8 @@
-/*  File src/wtCD.h in package ergm, part of the
- *  Statnet suite of packages for network analysis, https://statnet.org .
+/*  File src/wtCD.h in package ergm, part of the Statnet suite of packages for
+ *  network analysis, https://statnet.org .
  *
- *  This software is distributed under the GPL-3 license.  It is free,
- *  open source, and has the attribution requirements (GPL Section 7) at
+ *  This software is distributed under the GPL-3 license.  It is free, open
+ *  source, and has the attribution requirements (GPL Section 7) at
  *  https://statnet.org/attribution .
  *
  *  Copyright 2003-2025 Statnet Commons
@@ -36,10 +36,6 @@
   /* FIXME: This should be done in one call, but it's very easy \
      to make a fencepost error here. */                         \
   WtSetEdge(t, h, w, nwp);
-
-#define DISPATCH_CD_wrapper WtCD_wrapper
-#define DISPATCH_CDSample WtCDSample
-#define DISPATCH_CDStep WtCDStep
 
 #include "CD.h.template.do_not_include_directly.h"
 

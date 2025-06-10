@@ -1,8 +1,8 @@
-#  File R/ergm.MCMCse.R in package ergm, part of the
-#  Statnet suite of packages for network analysis, https://statnet.org .
+#  File R/ergm.MCMCse.R in package ergm, part of the Statnet suite of packages
+#  for network analysis, https://statnet.org .
 #
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) at
+#  This software is distributed under the GPL-3 license.  It is free, open
+#  source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
 #  Copyright 2003-2025 Statnet Commons
@@ -120,16 +120,14 @@ ergm.MCMCse <- function(model, theta, init, statsmatrices, statsmatrices.obs,
 
   mc.cov <- matrix(NA,ncol=length(novar),nrow=length(novar))
 
-  if(sum(!novar)==0 || ERRVL(try(srcond(-H) < .Machine$double.eps, TRUE), TRUE)){
-    warning("Approximate Hessian matrix is singular. Standard errors due to MCMC approximation of the likelihood cannot be evaluated. This is likely due to insufficient MCMC sample size or highly correlated model terms.", call.=FALSE)
-  }else{
-    mc.cov0 <- sandwich_ssolve(-H, cov.zbar)
-    mc.cov[!novar,!novar] <- mc.cov0
+  if(sum(!novar)==0 || ERRVL2(srcond(-H) < .Machine$double.eps, TRUE)){
+    warning("Approximate Hessian matrix is singular. Standard errors due to MCMC approximation of the likelihood may be unreliable. This is likely due to insufficient MCMC sample size or highly correlated model terms.", call.=FALSE)
   }
 
-  mc.cov.offset[!offsettheta,!offsettheta] <- mc.cov
+  mc.cov %[.,.]% !novar <- sandwich_sginv(-H, cov.zbar)
+  mc.cov.offset %[.,.]% !offsettheta <- mc.cov
 
-  rownames(mc.cov.offset) <- colnames(mc.cov.offset) <- param_names(model)
+  rowcolnames(mc.cov.offset) <- param_names(model)
 
   attr(mc.cov.offset, "imp.factor") <- imp.factor
   attr(mc.cov.offset, "imp.factor.obs") <- imp.factor.obs

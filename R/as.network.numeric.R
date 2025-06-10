@@ -1,8 +1,8 @@
-#  File R/as.network.numeric.R in package ergm, part of the
-#  Statnet suite of packages for network analysis, https://statnet.org .
+#  File R/as.network.numeric.R in package ergm, part of the Statnet suite of
+#  packages for network analysis, https://statnet.org .
 #
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) at
+#  This software is distributed under the GPL-3 license.  It is free, open
+#  source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
 #  Copyright 2003-2025 Statnet Commons
@@ -102,14 +102,9 @@ as.network.numeric<-function(x,
   if(NVL(numedges, 0) > ndyads)
     stop("The number of edges cannot be greater than the number of possible edges.")
 
-  if(missing(density)){
-    if(missing(init)){
-      #     So the expected number of ties is the same as
-      #     the number of nodes
-      density <- nb1/ndyads
-    }else{
-      density <- exp(init)/(1+exp(init))
-    }
+  if (missing(density)) {
+    density <- if (missing(init)) nb1 / ndyads  # E(# ties) == # nodes
+               else expit(init)
   }
 
   if(is.null(numedges))

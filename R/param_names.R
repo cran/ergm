@@ -1,8 +1,8 @@
-#  File R/param_names.R in package ergm, part of the
-#  Statnet suite of packages for network analysis, https://statnet.org .
+#  File R/param_names.R in package ergm, part of the Statnet suite of packages
+#  for network analysis, https://statnet.org .
 #
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) at
+#  This software is distributed under the GPL-3 license.  It is free, open
+#  source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
 #  Copyright 2003-2025 Statnet Commons
@@ -71,11 +71,15 @@ param_names.ergm_model <- function(object, canonical=FALSE, offset=NA, ...){
   lens <- nparam(object, canonical, byterm = TRUE)
   value <- rep_len(value, sum(lens))
 
-  values <- split(value, factor(rep(seq_along(lens), lens), levels = seq_along(lens)))
+  values <- split_len(value, lens)
   for(i in seq_along(object$terms)){
     if(lens[i]){
-      if(canonical || is.null(object$terms[[i]]$params)) object$terms[[i]]$coef.names %<>% replace(!is.na(values[[i]]), na.omit(values[[i]]))
-      else names(object$terms[[i]]$params) %<>% replace(!is.na(values[[i]]), na.omit(values[[i]]))
+      if (canonical || is.null(object$terms[[i]]$params))
+        object$terms[[i]]$coef.names[!is.na(values[[i]])] <-
+          na.omit(values[[i]])
+      else
+        names(object$terms[[i]]$params)[!is.na(values[[i]])] <-
+          na.omit(values[[i]])
     }
   }
 

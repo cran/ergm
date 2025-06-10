@@ -1,8 +1,8 @@
-#  File R/ergm.llik.R in package ergm, part of the
-#  Statnet suite of packages for network analysis, https://statnet.org .
+#  File R/ergm.llik.R in package ergm, part of the Statnet suite of packages
+#  for network analysis, https://statnet.org .
 #
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) at
+#  This software is distributed under the GPL-3 license.  It is free, open
+#  source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
 #  Copyright 2003-2025 Statnet Commons
@@ -59,9 +59,8 @@
 #        normally  distributed so that exp(eta * stats) is lognormal
 #####################################################################################
 
-llik.fun.lognormal <- function(theta, xsim, xsim.obs=NULL,
+llik.fun.lognormal <- function(theta, xsim, ...,
                      varweight=0.5,
-                     dampening=FALSE,dampening.min.ess=100, dampening.level=0.1,
                      eta0, etamap){
   # Convert theta to eta
   eta <- ergm.eta(theta, etamap)
@@ -94,12 +93,10 @@ llik.grad.IS <- function(theta, xsim,  xsim.obs=NULL,
   basepred <- xsim %*% etaparam + lrowweights(xsim)
   
   # Calculate the estimating function values sans offset
-  llg <- - lweighted.mean(xsim, basepred)
-  llg <- t(ergm.etagradmult(theta, llg, etamap))
-  
-  llg[is.na(llg)] <- 0 # Note: Before, infinite values would get zeroed as well. Let's see if this works.
-
-  llg
+  - lweighted.mean(xsim, basepred) |>
+    ergm.etagradmult(theta, v = _, etamap) |>
+    t() |>
+    replace(is.na, 0)
 }
 
 
@@ -178,9 +175,8 @@ llik.fun.IS <- function(theta, xsim, xsim.obs=NULL,
 #   llr: the log-likelihood ratio of l(eta) - l(eta0) using ?? (what sort of approach)
 #####################################################################################
 
-llik.fun.median <- function(theta, xsim, xsim.obs=NULL,
+llik.fun.median <- function(theta, xsim, ...,
                      varweight=0.5,
-                     dampening=FALSE,dampening.min.ess=100, dampening.level=0.1,
                      eta0, etamap){
   # Convert theta to eta
   eta <- ergm.eta(theta, etamap)
@@ -205,9 +201,10 @@ llik.fun.median <- function(theta, xsim, xsim.obs=NULL,
 }
 
 llik.fun.logtaylor <- function(theta, xsim, xsim.obs=NULL, 
-		                     varweight=0.5,
-	 	                     dampening=FALSE,dampening.min.ess=100, dampening.level=0.1, 
-	 	                     eta0, etamap){ 
+                               varweight=0.5,
+                               dampening=FALSE,dampening.min.ess=100, dampening.level=0.1,
+                               ...,
+                               eta0, etamap){
 	 	  # Convert theta to eta 
 	 	  eta <- ergm.eta(theta, etamap) 
  	 

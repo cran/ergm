@@ -1,8 +1,8 @@
-#  File R/ergm.logitreg.R in package ergm, part of the
-#  Statnet suite of packages for network analysis, https://statnet.org .
+#  File R/ergm.logitreg.R in package ergm, part of the Statnet suite of
+#  packages for network analysis, https://statnet.org .
 #
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) at
+#  This software is distributed under the GPL-3 license.  It is free, open
+#  source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
 #  Copyright 2003-2025 Statnet Commons
@@ -77,14 +77,14 @@ ergm.logitreg <- function(x, y, wt = rep(1, length(y)),
   }
 
   NVL(start) <- rep(NA, p)
-  start[is.na(start)]<-rnorm(sum(is.na(start)), 0, sqrt(.Machine$double.eps))
+  start %[f]% is.na <- rnorm(sum(is.na(start)), 0, sqrt(.Machine$double.eps))
 
   loglikelihoodfn.trust <-
     if(is.null(m)){
       function(theta, X, y, w, offset, etamap, etagrad){
         eta <- as.vector(.multiply.with.inf(X,etamap(theta))+offset)
         Xgradt <- X %*% t(etagrad(theta))
-        p <- plogis(eta)
+        p <- expit(eta)
         o <- list(value = sum(w * ifelse(y, log(p), log1p(-p))),
              gradient = as.vector(matrix(w * dlogis(eta) * ifelse(y, 1/p, -1/(1-p)), 1) %*% Xgradt),
              hessian = -crossprod(Xgradt, w*p*(1-p)*Xgradt))
@@ -109,7 +109,7 @@ ergm.logitreg <- function(x, y, wt = rep(1, length(y)),
         }else{
           eta <- as.vector(.multiply.with.inf(X,etamap(theta))+offset)
           Xgradt <- X %*% t(etagrad(theta))
-          p <- plogis(eta)
+          p <- expit(eta)
           o <- list(
             value = sum(w * ifelse(y, log(p), log1p(-p))),
             gradient = as.vector((matrix(w * dlogis(eta) * ifelse(y, 1/p, -1/(1-p)), 1) %*% Xgradt)[,!m$etamap$offsettheta,drop=FALSE]),

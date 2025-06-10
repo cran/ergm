@@ -1,8 +1,8 @@
 #  File tests/testthat/test-term-directed.R in package ergm, part of the
 #  Statnet suite of packages for network analysis, https://statnet.org .
 #
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) at
+#  This software is distributed under the GPL-3 license.  It is free, open
+#  source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
 #  Copyright 2003-2025 Statnet Commons
@@ -88,6 +88,10 @@ test_that("gwodegree, directed", {
   expect_summary(head(s.d), e.d, setNames(c(0,0,1,5,7,5), paste0("gwodegree#",1:6)), c(gwodeg.fixed.0.4=-1.990492))
   expect_summary(s.df, e.df, 24.23040, 43.61801)
   expect_summary(s.dfa, e.dfa, c(7.735906, 4.419631, 7.736070), -c(4.1860720, 5.9706455, 0.4921623))
+
+  # Also, check that gwodegree(0) works correctly, including when there are none.
+  expect_equal(summary(samplike~gwodegree(0, fixed = TRUE)), network.size(samplike), ignore_attr = TRUE)
+  expect_equal(coef(ergm(samplike~edges + gwodegree(0, fixed = TRUE), estimate="MPLE"))[[2]], +Inf)
 })
 
 test_that("idegree, directed", {

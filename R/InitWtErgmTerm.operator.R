@@ -1,8 +1,8 @@
-#  File R/InitWtErgmTerm.operator.R in package ergm, part of the
-#  Statnet suite of packages for network analysis, https://statnet.org .
+#  File R/InitWtErgmTerm.operator.R in package ergm, part of the Statnet suite
+#  of packages for network analysis, https://statnet.org .
 #
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) at
+#  This software is distributed under the GPL-3 license.  It is free, open
+#  source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
 #  Copyright 2003-2025 Statnet Commons
@@ -130,6 +130,20 @@ InitWtErgmTerm..binary.formula.net <- function(nw, arglist, ...){
 }
 
 # Arguments and outputs are identical to the binary version, except for the C routine names.
+
+#' @templateVar name Symmetrize
+#' @template ergmTerm-rdname
+#' @usage
+#' # valued: Symmetrize(formula, rule="weak")
+InitWtErgmTerm.Symmetrize <- function(...){
+  # Rename the function to avoid the extra nesting level in the
+  # diagnostic messages.
+  f <- InitErgmTerm.Symmetrize
+  term <- f(...)
+  term$name <- "on_wtundir_net"
+  term
+}
+
 #' @templateVar name Sum
 #' @template ergmTerm-rdname
 #' @usage
@@ -140,6 +154,19 @@ InitWtErgmTerm.Sum <- function(...){
   f <- InitErgmTerm.Sum
   term <- f(...)
   term$name <- "wtSum"
+  term
+}
+
+#' @templateVar name S
+#' @template ergmTerm-rdname
+#' @usage
+#' # valued: S(formula, attrs)
+InitWtErgmTerm.S <- function(...){
+  # Rename the function to avoid the extra nesting level in the
+  # diagnostic messages.
+  f <- InitErgmTerm.S
+  term <- f(...)
+  term$name <- "on_wtsubgraph_net"
   term
 }
 
@@ -208,3 +235,43 @@ InitWtErgmTerm.Log <- function(nw, arglist, ...){
 #' @usage
 #' # valued: Prod(formulas, label)
 InitWtErgmTerm.Prod <- InitErgmTerm.Prod
+
+#' @templateVar name For
+#' @template ergmTerm-rdname
+#' @usage
+#' # valued: For(...)
+InitWtErgmTerm.For <- InitErgmTerm.For
+
+net_transform_encode <- function(expr, env){
+  if(identical(expr, "sqrt")) 1L
+  else ergm_Init_stop("Network transformation expression ", sQuote(deparse1(expr)), " is not supported at this time.")
+}
+
+`InitWtErgmTerm.~` <- function(nw, arglist, ..., env){
+  al <- substitute(arglist)
+  a <- check.ErgmTerm(nw, arglist[-2],
+                      varnames = "expr",
+                      vartypes = "character",
+                      defaultvalues = list(NULL),
+                      required = TRUE)
+
+  rhs <- as.formula(call("~", al[[3]]), env)
+
+  op <- net_transform_encode(a$expr, env)
+  m <- ergm_model(rhs, nw, ..., terms.only = TRUE)
+
+  c(list(name = "on_wttransformed_net", iinput = op, submodel = m, auxiliaries = ~.transformed.net(a$expr)),
+    wrap.ergm_model(m, nw, ergm_mk_std_op_namewrap(a$expr)))
+}
+
+InitWtErgmTerm..transformed.net <- function(nw, arglist, ..., env){
+  a <- check.ErgmTerm(nw, arglist,
+                      varnames = "expr",
+                      vartypes = "character",
+                      defaultvalues = list(NULL),
+                      required = TRUE)
+
+  op <- net_transform_encode(a$expr, env)
+
+  c(list(name = "_wttransformed_net", coef.names = c(), iinputs = op, dependence = FALSE))
+}

@@ -1,8 +1,8 @@
-#  File R/nparam.R in package ergm, part of the
-#  Statnet suite of packages for network analysis, https://statnet.org .
+#  File R/nparam.R in package ergm, part of the Statnet suite of packages for
+#  network analysis, https://statnet.org .
 #
-#  This software is distributed under the GPL-3 license.  It is free,
-#  open source, and has the attribution requirements (GPL Section 7) at
+#  This software is distributed under the GPL-3 license.  It is free, open
+#  source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
 #  Copyright 2003-2025 Statnet Commons
@@ -54,7 +54,7 @@ nparam.ergm_model <- function(object, canonical=FALSE, offset=NA, byterm=FALSE, 
       })
 
     NVL(tocount) <- rep(TRUE, sum(lens))
-    counts <- tocount %>% split(factor(rep(seq_along(terms), lens),levels=seq_along(terms))) %>% map_int(sum)
+    counts <- tocount |> split_len(lens) |> map_int(sum)
     if(byterm) counts else sum(counts)
   }else sum(tocount)
 }
