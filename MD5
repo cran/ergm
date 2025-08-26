@@ -1,4 +1,4 @@
-6756c920eaedffed754cb2f51ed0340e *DESCRIPTION
+5974649c955e0afc94900418454992c2 *DESCRIPTION
 26a76d7bdf93a9f600e96521251eb9df *LICENSE
 794250d3127d18126de643ecf8a71c1e *LICENSE.note
 6966d48214ef09d4e73907206802d114 *NAMESPACE
@@ -96,7 +96,7 @@ bca09ea56ac99089bd60cb6c9bee6ea7 *R/is.dyad.independent.R
 2d89e976ba0ade11a8598dfb0073f1b7 *R/is.na.ergm.R
 03052a5f7df57d6aa6d58834077878a1 *R/is.valued.R
 e4c6658b75319312f5588dac7f720ffd *R/logLik.ergm.R
-3eba0b008d04161e127d9d48cbeec847 *R/mcmc.diagnostics.ergm.R
+ab7047c77085ff49c807be4591c1f25c *R/mcmc.diagnostics.ergm.R
 74f51fe64fa9c499c32e3b2f94e6167d *R/network.list.R
 3f3167b3d463d9543a28c85938197591 *R/network.update.R
 eab2adf813e72d43ffae9ce8e5be3470 *R/nonidentifiability.R
@@ -117,8 +117,8 @@ f528d8fc1a852b78ac90d3d4f50e0d2c *R/to_ergm_Cdouble.R
 9c740e4786d3e18b36c9cc110aa24e73 *R/vcov.ergm.R
 865234ef120001d0d54579b0b54e9a01 *R/wtd.median.R
 8e882a676fc2fb0452a5c7b11f6f5e8c *R/zzz.R
-9eaab0aed2dfbec93a85fa93f696900c *build/partial.rdb
-c1bb6991706934b66bef612c1cbc0894 *build/stage23.rdb
+040685bfa07c45d4defdcebd6658f0d5 *build/partial.rdb
+7b606b2c42db661c26b90a654f24ade8 *build/stage23.rdb
 c75ea94c1b9bd456ae47b7584b55d5a8 *build/vignette.rds
 9363ab81094cfb8a88bc674779464fca *data/cohab.RData
 6a4ab5855a420f3fe9f373bd691f56e3 *data/datalist
@@ -145,14 +145,14 @@ f0dd1b03c7425f0fb3aceda8bf6ab87c *inst/doc/Terms-API.Rmd
 4aeee9ca6af87cbc2f3dc8883620ef10 *inst/doc/Terms-API.html
 dfc31ba6cc406359f6473fc9c3e9bb46 *inst/doc/ergm-term-crossRef.R
 12a91264bc29e306ee568a2f53c2a06e *inst/doc/ergm-term-crossRef.Rmd
-98a23ae43032e7d640efe1830427a3fb *inst/doc/ergm-term-crossRef.html
+e200a336d78c35c7c11010b075e5de54 *inst/doc/ergm-term-crossRef.html
 c89520f57fd54597be073a16c14043eb *inst/doc/ergm.R
 9d93d1737c581235fe1637b2961feb0f *inst/doc/ergm.Rmd
 39c4330d7f9093a3c4adea5a88184717 *inst/doc/ergm.css
-dfbd63866b24c34506b466e1055b04b3 *inst/doc/ergm.html
+7b9eb95969f906ffc2537b707456aeff *inst/doc/ergm.html
 452f5cdcee5b22016f15bff041adabe8 *inst/doc/nodal_attributes.R
 f01689c02141743639da8cf2a862635d *inst/doc/nodal_attributes.Rmd
-8cb4f8a36312e9fb361f58e3abc77f9c *inst/doc/nodal_attributes.html
+0d804be40a89f4b9be0585715f7d7a96 *inst/doc/nodal_attributes.html
 a88bde7ab34b8d464059ba1a02a64f34 *inst/include/README
 bd75304fdf833d556d8ff2affc16a32f *inst/include/changestat.h
 33232ee9bf257efec017c55df28d8ef1 *inst/include/edgetree.h

@@ -1,5 +1,5 @@
 Package: ergm
-Version: 4.9.0
+Version: 4.9.0.1
 Date: 2025-06-09
 Title: Fit, Simulate and Diagnose Exponential-Family Models for
         Networks
@@ -87,7 +87,7 @@ Collate: 'InitErgmConstraint.R' 'InitErgmConstraint.blockdiag.R'
         'summary.statistics.network.R' 'vcov.ergm.R' 'wtd.median.R'
         'zzz.R'
 NeedsCompilation: yes
-Packaged: 2025-06-10 01:43:53 UTC; pavel
+Packaged: 2025-08-24 08:42:27 UTC; ripley
 Author: Mark S. Handcock [aut],
   David R. Hunter [aut],
   Carter T. Butts [aut],
@@ -109,4 +109,4 @@ Author: Mark S. Handcock [aut],
     <https://orcid.org/0000-0002-4791-418X>)
 Maintainer: Pavel N. Krivitsky <pavel@statnet.org>
 Repository: CRAN
-Date/Publication: 2025-06-10 07:40:02 UTC
+Date/Publication: 2025-08-26 04:18:23 UTC
