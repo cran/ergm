@@ -9,6 +9,7 @@
 ################################################################################
 #' @importFrom Rdpack reprompt
 #' @importFrom rlang "%|%"
+#' @import purrr
 .onAttach <- function(libname, pkgname){
   #' @importFrom statnet.common statnetStartupMessage
   sm <- statnetStartupMessage("ergm", c("statnet","ergm.count","tergm"), TRUE)
@@ -26,7 +27,8 @@
     ergm.eval.loglik=TRUE,
     ergm.loglik.warn_dyads=TRUE,
     ergm.warn_loops = TRUE,
-    ergm.cluster.retries=5
+    ergm.cluster.retries = 5,
+    ergm.ABI.action = "message"
   )
 
   eval(COLLATE_ALL_MY_CONTROLS_EXPR)

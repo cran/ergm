@@ -387,6 +387,9 @@ come).</li>
 <li>If the proposal is accepted, <code>u_</code> function is called, and
 network is updated for each toggle.</li>
 </ol></li>
+<li>If the term has an <code>s_</code> function but neither
+<code>c_</code> nor <code>d_</code>, <code>SummStatsS()</code> is called
+after each MCMC interval.</li>
 <li><code>ErgmStateRSave()</code> is called:
 <ol style="list-style-type: decimal">
 <li><code>Network2Redgelist()</code> is called, returning a

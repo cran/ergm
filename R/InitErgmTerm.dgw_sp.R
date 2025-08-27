@@ -59,10 +59,10 @@ SPTYPE_CODE <- c(UTP = 0L, OTP = 1L, ITP = 2L, RTP = 3L, OSP = 4L, ISP = 5L)
   }else bip <- ""
 
   a <- check.ErgmTerm(nw, arglist,
-                      varnames = c("d","type"),
-                      vartypes = c("numeric","character"),
-                      defaultvalues = list(NULL,"OTP"),
-                      required = c(TRUE, FALSE))
+                      varnames = c("d", if(!nchar(bip)) "type"),
+                      vartypes = c("numeric",if(!nchar(bip)) "character"),
+                      defaultvalues = c(list(NULL), if(!nchar(bip)) "OTP"),
+                      required = c(TRUE, if(!nchar(bip)) FALSE))
   utermname <- paste0(bip, sp, "sp")
 
   d<-a$d
@@ -84,10 +84,10 @@ SPTYPE_CODE <- c(UTP = 0L, OTP = 1L, ITP = 2L, RTP = 3L, OSP = 4L, ISP = 5L)
   }else bip <- ""
 
   a <- check.ErgmTerm(nw, arglist,
-                      varnames = c("decay","fixed","cutoff","type", "alpha"),
-                      vartypes = c("numeric","logical","numeric","character", "numeric"),
-                      defaultvalues = list(NULL, FALSE, gw.cutoff,"OTP", NULL),
-                      required = c(FALSE, FALSE, FALSE, FALSE, FALSE))
+                      varnames = c("decay", "fixed", "cutoff", if(!nchar(bip)) "type", "alpha"),
+                      vartypes = c("numeric","logical","numeric", if(!nchar(bip)) "character", "numeric"),
+                      defaultvalues = c(list(NULL), FALSE, gw.cutoff, if(!nchar(bip)) "OTP", list(NULL)),
+                      required = c(FALSE, FALSE, FALSE, if(!nchar(bip)) FALSE, FALSE))
   utermname <- paste0("gw",bip,sp,"sp")
   termname <- paste0("dgw",bip,sp,"sp")
 
@@ -100,8 +100,8 @@ SPTYPE_CODE <- c(UTP = 0L, OTP = 1L, ITP = 2L, RTP = 3L, OSP = 4L, ISP = 5L)
   statname <- if(type=="UTP" || nchar(bip)) utermname else paste(utermname,type,sep=".")
 
   if(!fixed){ # This is a curved exponential family model
-    maxsp <- min(cutoff, if(bip=="b1") network.size(nw)-nw%n%"bipartite"
-                          else if(bip=="b2") nw%n%"bipartite"
+    maxsp <- min(cutoff, if(bip=="b1") b2.size(nw)
+                          else if(bip=="b2") b1.size(nw)
                           else network.size(nw)-2)
     if(maxsp==0) return(NULL)
     d <- seq_len(maxsp)
@@ -118,17 +118,17 @@ SPTYPE_CODE <- c(UTP = 0L, OTP = 1L, ITP = 2L, RTP = 3L, OSP = 4L, ISP = 5L)
   }
 }
 
-.dsp_emptynwstats <- function(nw, d, ...){
-  if(any(d==0)){
-    emptynwstats <- numeric(length(d))
-    if(is.bipartite(nw)){
-      nb1 <- nw %n% "bipartite"
-      nb2 <- network.size(nw) - nb1
-      emptynwstats[d==0] <- nb1*(nb1-1)/2 + nb2*(nb2-1)/2
-    }else{
-      emptynwstats[d==0] <- network.dyadcount(nw,FALSE)
-    }
-    emptynwstats
+.dsp_emptynwstats <- function(nw, d, type, ...) {
+  if (any(d == 0)) {
+    n <-
+      if (is.bipartite(nw))
+        switch(type,
+               UTP = network.size(nw),
+               OSP = b1.size(nw),
+               ISP = b2.size(nw))
+      else network.size(nw)
+    replace(dbl_along(d), d == 0,
+            choose(n, 2L) * (is.directed(nw) + 1L))
   }
 }
 

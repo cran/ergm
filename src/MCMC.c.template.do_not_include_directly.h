@@ -173,6 +173,13 @@ MCMCStatus ETYPE(MCMCSample)(ETYPE(ErgmState) *s,
   return MCMC_OK;
 }
 
+static inline Rboolean check_skip(double *eta, double* stats, unsigned int n){
+  for(unsigned int i = 0; i < n; i++)
+    if(isnan(eta[i]) && stats[i] != 0)
+      return(TRUE);
+  return(FALSE);
+}
+
 /*********************
  void MetropolisHastings
 
@@ -197,6 +204,8 @@ MCMCStatus ETYPE(MetropolisHastings) (ETYPE(ErgmState) *s,
 /*  if (verbose)
     Rprintf("Now proposing %d MH steps... ", nsteps); */
   for(unsigned int step=0; step < nsteps; step++) {
+    if(verbose>=5) print_vector("stats", networkstatistics, m->n_stats);
+
     MHp->logratio = 0;
     (*(MHp->p_func))(MHp, nwp); /* Call MH function to propose toggles */
 
@@ -217,6 +226,15 @@ MCMCStatus ETYPE(MetropolisHastings) (ETYPE(ErgmState) *s,
 	  return MCMC_MH_FAILED;
 	}
       case MH_CONSTRAINT:
+        if(verbose>=5) Rprintf("Constraint hit.\n");
+
+        if(check_skip(eta, networkstatistics, m->n_stats)){
+          nsteps++;
+          if(verbose>=5){
+            Rprintf("Skipping.\n");
+          }
+        }
+
 	continue;
       }
     }
@@ -234,7 +252,7 @@ MCMCStatus ETYPE(MetropolisHastings) (ETYPE(ErgmState) *s,
     if(verbose>=5) print_vector("stat diff", m->workspace, m->n_stats);
 
     /* Calculate inner (dot) product */
-    double ip = dotprod(eta, m->workspace, m->n_stats);
+    double ip = dotprod_nan0(eta, m->workspace, m->n_stats);
 
     /* The logic is to set cutoff = ip+logratio ,
        then let the MH probability equal min{exp(cutoff), 1.0}.
@@ -263,7 +281,19 @@ MCMCStatus ETYPE(MetropolisHastings) (ETYPE(ErgmState) *s,
 
       PROP_CHANGESTATS_UNDO;
     }
+
+    if(check_skip(eta, networkstatistics, m->n_stats)){
+      nsteps++;
+      if(verbose>=5){
+        Rprintf("Skipping.\n");
+      }
+    }
   }
+
+  /* Calculate and update summary-only statistics */
+  m->workspace = networkstatistics;
+  ETYPE(SummStatsS)(nwp, m);
+  m->workspace = m->workspace_backup;
 
   *staken = taken;
   return MCMC_OK;

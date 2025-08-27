@@ -53,7 +53,9 @@
 #' @param coef Vector of parameter values for the model from which the
 #'   sample is to be drawn.  If \code{object} is of class \code{ergm},
 #'   the default value is the vector of estimated coefficients. Can be
-#'   set to `NULL` to bypass, but only if `return.args` below is used. \matchnames{coefficient}
+#'   set to [`NULL`] to bypass, but only if `return.args` below is
+#'   used. Note that [`NaN`] values are treated specially: see the
+#'   section on skipping below. \matchnames{coefficient}
 #' 
 #' @template response
 #' @template reference
@@ -117,6 +119,8 @@
 #'
 #' @param do.sim Logical; a deprecated interface superseded by `return.args`,
 #'   that saves the inputs to the next level of the function.
+#'
+#' @template MCMC-skipping
 #'
 #' @return If \code{output=="stats"} an [`mcmc`] object containing the
 #'   simulated network statistics. If \code{control$parallel>0}, an
@@ -476,7 +480,7 @@ simulate.ergm_state_full <- function(object, nsim=1, seed=NULL,
     else stop("return.args= is not NULL yet the code has arrived at the actual simulation stage; this likely means an incorrect value had been passed to return.args=")
   }
 
-  if (any(is.nan(coef) | is.na(coef)))
+  if (any(is.NA(coef)))
     stop("Illegal value of coef passed to simulate functions")
 
   if(is.character(output))

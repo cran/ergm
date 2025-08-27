@@ -112,12 +112,12 @@ ergm.pl<-function(state, state.obs, theta.offset=NULL,
   x.full <- x
 
   if(any(m$etamap$offsettheta) && !ignore.offset){
-    if(any(is.na(theta.offset[m$etamap$offsettheta]))){
+    if(any(is.NA(theta.offset[m$etamap$offsettheta]))){
       stop("Offset terms without offset coefficients specified!")
     }
     # Compute the offset's effect.
-    foffset <- .multiply.with.inf(t(x[m$etamap$offsetmap,,drop=FALSE]),
-                                  cbind(ergm.eta(theta.offset,m$etamap)[m$etamap$offsetmap]))
+    foffset <- mat_by_coef(t(x[m$etamap$offsetmap, , drop = FALSE]),
+                           ergm.eta(theta.offset, m$etamap)[m$etamap$offsetmap])
     
     # Remove offset covariate columns.
     x <- x[!m$etamap$offsettheta,,drop=FALSE]

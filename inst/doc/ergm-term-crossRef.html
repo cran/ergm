@@ -12,7 +12,7 @@
 
 <meta name="author" content="statnet.org" />
 
-<meta name="date" content="2025-08-24" />
+<meta name="date" content="2025-08-26" />
 
 <title>ERGM terms cross-reference</title>
 
@@ -50,9 +50,8 @@ overflow: visible;
 }
 </style>
 <style type="text/css" data-origin="pandoc">
-html { -webkit-text-size-adjust: 100%; }
 pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span { line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
 code.sourceCode > span { color: inherit; text-decoration: inherit; }
@@ -63,7 +62,7 @@ div.sourceCode { overflow: auto; }
 }
 @media print {
 pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
 }
 pre.numberSource code
 { counter-reset: source-line 0; }
@@ -341,7 +340,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 <h1 class="title toc-ignore">ERGM terms cross-reference</h1>
 <h4 class="author">statnet.org</h4>
-<h4 class="date">2025-08-24</h4>
+<h4 class="date">2025-08-26</h4>
 
 
 
@@ -5210,13 +5209,13 @@ cat dyad attr
 <td style="text-align:left;">
 </td>
 <td style="text-align:left;">
+</td>
+<td style="text-align:left;">
+</td>
+<td style="text-align:left;">
+</td>
+<td style="text-align:left;">
 ✔
-</td>
-<td style="text-align:left;">
-</td>
-<td style="text-align:left;">
-</td>
-<td style="text-align:left;">
 </td>
 <td style="text-align:left;">
 </td>
@@ -8307,13 +8306,13 @@ frequently-used, undirected, binary, valued
 diff=FALSE, keep=NULL, levels=NULL)
 mutual(form=“min”,threshold=0)</a><br /><em>Mutuality</em>: In binary
 ERGMs, equal to the number of pairs of actors i and j for which
-(i{}j)(i,j) and (j{}i)(j,i) both exist. For valued ERGMs, equal to
-<em>{i&lt;j} m(y</em>{i,j},y_{j,i}) , where m is determined by form
-argument: “min” for (y_{i,j},y_{j,i}) , “nabsdiff” for
--|y_{i,j},y_{j,i}| , “product” for y_{i,j}y_{j,i} , and “geometric” for
-. See Krivitsky (2012) for a discussion of these statistics.
-form=“threshold” simply computes the binary mutuality after thresholding
-at threshold .</p>
+(i{}j)(i,j) and (j{}i)(j,i) both exist.</p>
+<p>For valued ERGMs, equal to <em>{i&lt;j} m(y</em>{i,j},y_{j,i}) ,
+where m is determined by form argument: “min” for (y_{i,j},y_{j,i}),
+“nabsdiff” for -|y_{i,j},y_{j,i}|, “product” for y_{i,j}y_{j,i}, and
+“geometric” for . See Krivitsky (2012) for a discussion of these
+statistics. form=“threshold” simply computes the binary mutuality after
+thresholding at threshold.</p>
 This term can only be used with directed networks.
 </p>
 </td>
@@ -8374,7 +8373,7 @@ star(2) statistic.
 </p>
 </td>
 <td>
-directed, valued
+undirected, valued
 </td>
 </tr>
 <tr>
@@ -9088,23 +9087,25 @@ directed, undirected, binary
 exclusivity. For example, a term marked as ‘directed’ can not be used
 with an undirected network, but a term not marked with either ‘directed’
 or ‘undirected’ can be used with both. (rename to ‘directed-only’ ?)</p>
-Jump to keyword: <a href="#cat_operator">operator</a>
-<a href="#cat_valued">valued</a> <a href="#cat_binary">binary</a>
-<a href="#cat_bipartite">bipartite</a>
-<a href="#cat_directed">directed</a>
-<a href="#cat_dyad-independent">dyad-independent</a>
-<a href="#cat_quantitative_nodal_attribute">quantitative nodal
-attribute</a> <a href="#cat_undirected">undirected</a>
-<a href="#cat_categorical_nodal_attribute">categorical nodal
-attribute</a> <a href="#cat_curved">curved</a>
-<a href="#cat_triad-related">triad-related</a>
-<a href="#cat_frequently-used">frequently-used</a>
-<a href="#cat_nonnegative">nonnegative</a>
-<a href="#cat_quantitative_dyadic_attribute">quantitative dyadic
-attribute</a> <a href="#cat_categorical_dyadic_attribute">categorical
+Jump to keyword: <a href="#cat_ergmTerm_operator">operator</a>
+<a href="#cat_ergmTerm_valued">valued</a>
+<a href="#cat_ergmTerm_binary">binary</a>
+<a href="#cat_ergmTerm_bipartite">bipartite</a>
+<a href="#cat_ergmTerm_directed">directed</a>
+<a href="#cat_ergmTerm_dyad-independent">dyad-independent</a>
+<a href="#cat_ergmTerm_quantitative_nodal_attribute">quantitative nodal
+attribute</a> <a href="#cat_ergmTerm_undirected">undirected</a>
+<a href="#cat_ergmTerm_categorical_nodal_attribute">categorical nodal
+attribute</a> <a href="#cat_ergmTerm_curved">curved</a>
+<a href="#cat_ergmTerm_triad-related">triad-related</a>
+<a href="#cat_ergmTerm_frequently-used">frequently-used</a>
+<a href="#cat_ergmTerm_nonnegative">nonnegative</a>
+<a href="#cat_ergmTerm_quantitative_dyadic_attribute">quantitative
 dyadic attribute</a>
+<a href="#cat_ergmTerm_categorical_dyadic_attribute">categorical dyadic
+attribute</a>
 <h3>
-<a id="cat_operator">operator</a>
+<a id="cat_ergmTerm_operator">operator</a>
 </h3>
 <a href="#B-ergmTerm-1e2e5333">B</a>
 <a href="#Curve-ergmTerm-a37fe1f0">Curve</a>
@@ -9121,7 +9122,7 @@ dyadic attribute</a>
 <a href="#Sum-ergmTerm-fe08cb7f">Sum</a>
 <a href="#Symmetrize-ergmTerm-61cab8ac">Symmetrize</a>
 <h3>
-<a id="cat_valued">valued</a>
+<a id="cat_ergmTerm_valued">valued</a>
 </h3>
 <a href="#B-ergmTerm-1e2e5333">B</a>
 <a href="#Curve-ergmTerm-a37fe1f0">Curve</a>
@@ -9172,7 +9173,7 @@ dyadic attribute</a>
 <a href="#sum-ergmTerm-304f882f">sum</a>
 <a href="#transitiveweights-ergmTerm-7797c57b">transitiveweights</a>
 <h3>
-<a id="cat_binary">binary</a>
+<a id="cat_ergmTerm_binary">binary</a>
 </h3>
 <a href="#Curve-ergmTerm-a37fe1f0">Curve</a>
 <a href="#Exp-ergmTerm-2a7372d1">Exp</a>
@@ -9299,7 +9300,7 @@ dyadic attribute</a>
 <a href="#ttriple-ergmTerm-db2252b3">ttriple</a>
 <a href="#twopath-ergmTerm-930ae8af">twopath</a>
 <h3>
-<a id="cat_bipartite">bipartite</a>
+<a id="cat_ergmTerm_bipartite">bipartite</a>
 </h3>
 <a href="#Project-ergmTerm-36962a06">Project</a>
 <a href="#b1concurrent-ergmTerm-b6d8305e">b1concurrent</a>
@@ -9338,7 +9339,7 @@ dyadic attribute</a>
 <a href="#gwb2dsp-ergmTerm-2d408a5d">gwb2dsp</a>
 <a href="#isolatededges-ergmTerm-78b32353">isolatededges</a>
 <h3>
-<a id="cat_directed">directed</a>
+<a id="cat_ergmTerm_directed">directed</a>
 </h3>
 <a href="#Symmetrize-ergmTerm-61cab8ac">Symmetrize</a>
 <a href="#absdiff-ergmTerm-9fc8de5a">absdiff</a>
@@ -9381,7 +9382,6 @@ dyadic attribute</a>
 <a href="#mutual-ergmTerm-22863009">mutual</a>
 <a href="#nearsimmelian-ergmTerm-ba85787e">nearsimmelian</a>
 <a href="#nodecov-ergmTerm-e6fb5c28">nodecov</a>
-<a href="#nodecovar-ergmTerm-35c93a8b">nodecovar</a>
 <a href="#nodecovrange-ergmTerm-7ae91499">nodecovrange</a>
 <a href="#nodefactor-ergmTerm-6bea11f2">nodefactor</a>
 <a href="#nodefactordistinct-ergmTerm-3445048c">nodefactordistinct</a>
@@ -9418,7 +9418,7 @@ dyadic attribute</a>
 <a href="#ttriple-ergmTerm-db2252b3">ttriple</a>
 <a href="#twopath-ergmTerm-930ae8af">twopath</a>
 <h3>
-<a id="cat_dyad-independent">dyad-independent</a>
+<a id="cat_ergmTerm_dyad-independent">dyad-independent</a>
 </h3>
 <a href="#absdiff-ergmTerm-9fc8de5a">absdiff</a>
 <a href="#absdiffcat-ergmTerm-5b2a4b77">absdiffcat</a>
@@ -9458,7 +9458,7 @@ dyadic attribute</a>
 <a href="#smallerthan-ergmTerm-33549cdd">smallerthan</a>
 <a href="#sociality-ergmTerm-ecb55eaa">sociality</a>
 <h3>
-<a id="cat_quantitative_nodal_attribute">quantitative nodal
+<a id="cat_ergmTerm_quantitative_nodal_attribute">quantitative nodal
 attribute</a>
 </h3>
 <a href="#absdiff-ergmTerm-9fc8de5a">absdiff</a>
@@ -9475,7 +9475,7 @@ attribute</a>
 <a href="#nodeocovrange-ergmTerm-382e45c5">nodeocovrange</a>
 <a href="#smalldiff-ergmTerm-11cc89ad">smalldiff</a>
 <h3>
-<a id="cat_undirected">undirected</a>
+<a id="cat_ergmTerm_undirected">undirected</a>
 </h3>
 <a href="#absdiff-ergmTerm-9fc8de5a">absdiff</a>
 <a href="#absdiffcat-ergmTerm-5b2a4b77">absdiffcat</a>
@@ -9540,6 +9540,7 @@ attribute</a>
 <a href="#meandeg-ergmTerm-f81357a5">meandeg</a>
 <a href="#mm-ergmTerm-0264ed3f">mm</a>
 <a href="#nodecov-ergmTerm-e6fb5c28">nodecov</a>
+<a href="#nodecovar-ergmTerm-35c93a8b">nodecovar</a>
 <a href="#nodecovrange-ergmTerm-7ae91499">nodecovrange</a>
 <a href="#nodefactor-ergmTerm-6bea11f2">nodefactor</a>
 <a href="#nodefactordistinct-ergmTerm-3445048c">nodefactordistinct</a>
@@ -9558,7 +9559,8 @@ attribute</a>
 <a href="#tripercent-ergmTerm-a932d91a">tripercent</a>
 <a href="#twopath-ergmTerm-930ae8af">twopath</a>
 <h3>
-<a id="cat_categorical_nodal_attribute">categorical nodal attribute</a>
+<a id="cat_ergmTerm_categorical_nodal_attribute">categorical nodal
+attribute</a>
 </h3>
 <a href="#absdiffcat-ergmTerm-5b2a4b77">absdiffcat</a>
 <a href="#altkstar-ergmTerm-201bf7a6">altkstar</a>
@@ -9604,7 +9606,7 @@ attribute</a>
 <a href="#tripercent-ergmTerm-a932d91a">tripercent</a>
 <a href="#ttriple-ergmTerm-db2252b3">ttriple</a>
 <h3>
-<a id="cat_curved">curved</a>
+<a id="cat_ergmTerm_curved">curved</a>
 </h3>
 <a href="#altkstar-ergmTerm-201bf7a6">altkstar</a>
 <a href="#gwb1degree-ergmTerm-847064c5">gwb1degree</a>
@@ -9615,7 +9617,7 @@ attribute</a>
 <a href="#gwidegree-ergmTerm-b37ed894">gwidegree</a>
 <a href="#gwodegree-ergmTerm-276e606c">gwodegree</a>
 <h3>
-<a id="cat_triad-related">triad-related</a>
+<a id="cat_ergmTerm_triad-related">triad-related</a>
 </h3>
 <a href="#asymmetric-ergmTerm-da585369">asymmetric</a>
 <a href="#balance-ergmTerm-9111bd77">balance</a>
@@ -9635,7 +9637,7 @@ attribute</a>
 <a href="#tripercent-ergmTerm-a932d91a">tripercent</a>
 <a href="#ttriple-ergmTerm-db2252b3">ttriple</a>
 <h3>
-<a id="cat_frequently-used">frequently-used</a>
+<a id="cat_ergmTerm_frequently-used">frequently-used</a>
 </h3>
 <a href="#b1cov-ergmTerm-a16e8340">b1cov</a>
 <a href="#b1degree-ergmTerm-b23eca4d">b1degree</a>
@@ -9663,59 +9665,64 @@ attribute</a>
 <a href="#odegree-ergmTerm-12c180fc">odegree</a>
 <a href="#triangle-ergmTerm-9b49a585">triangle</a>
 <h3>
-<a id="cat_nonnegative">nonnegative</a>
+<a id="cat_ergmTerm_nonnegative">nonnegative</a>
 </h3>
 <a href="#cyclicalweights-ergmTerm-994a6687">cyclicalweights</a>
 <a href="#transitiveweights-ergmTerm-7797c57b">transitiveweights</a>
 <h3>
-<a id="cat_quantitative_dyadic_attribute">quantitative dyadic
+<a id="cat_ergmTerm_quantitative_dyadic_attribute">quantitative dyadic
 attribute</a>
 </h3>
 <a href="#dyadcov-ergmTerm-5fba5404">dyadcov</a>
 <a href="#edgecov-ergmTerm-1fb5ef19">edgecov</a>
 <h3>
-<a id="cat_categorical_dyadic_attribute">categorical dyadic
+<a id="cat_ergmTerm_categorical_dyadic_attribute">categorical dyadic
 attribute</a>
 </h3>
 <p><a href="#localtriangle-ergmTerm-8ca12415">localtriangle</a></p>
 <hr />
 <p>This documentation was built with..</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code></pre></div>
-<pre><code>## R Under development (unstable) (2025-08-24 r88690)
-## Platform: aarch64-apple-darwin24.6.0
-## Running under: macOS Sequoia 15.6.1
+<pre><code>## R Under development (unstable) (2025-08-25 r88700)
+## Platform: x86_64-pc-linux-gnu
+## Running under: Debian GNU/Linux 13 (trixie)
 ## 
 ## Matrix products: default
-## BLAS:   /Users/ripley/R/R-devel/lib/libRblas.dylib 
-## LAPACK: /Users/ripley/R/R-devel/lib/libRlapack.dylib;  LAPACK version 3.12.1
+## BLAS:   /home/pavel/Documents/Research/Software/R-trunk/lib/libRblas.so 
+## LAPACK: /usr/lib/x86_64-linux-gnu/lapack/liblapack.so.3.12.1;  LAPACK version 3.12.0
 ## 
 ## locale:
-## [1] C/en_GB.UTF-8/en_GB.UTF-8/C/en_GB.UTF-8/en_GB.UTF-8
+##  [1] LC_CTYPE=en_AU.UTF-8      LC_NUMERIC=C             
+##  [3] LC_TIME=en_AU.utf8        LC_COLLATE=C             
+##  [5] LC_MONETARY=en_AU.utf8    LC_MESSAGES=en_AU.UTF-8  
+##  [7] LC_PAPER=en_AU.utf8       LC_NAME=C                
+##  [9] LC_ADDRESS=C              LC_TELEPHONE=C           
+## [11] LC_MEASUREMENT=en_AU.utf8 LC_IDENTIFICATION=C      
 ## 
-## time zone: Europe/London
-## tzcode source: internal
+## time zone: Australia/Sydney
+## tzcode source: system (glibc)
 ## 
 ## attached base packages:
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-## [1] ergm_4.9.0.1   network_1.19.0
+## [1] ergm_4.10.1    network_1.19.0
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] trust_0.1-8              jsonlite_2.0.0           compiler_4.6.0          
-##  [4] stringr_1.5.1            parallel_4.6.0           jquerylib_0.1.4         
-##  [7] yaml_2.3.10              fastmap_1.2.0            lattice_0.22-7          
-## [10] coda_0.19-4.1            R6_2.6.1                 robustbase_0.99-4-1     
-## [13] knitr_1.50               rbibutils_2.3            tibble_3.3.0            
-## [16] rle_0.10.0               statnet.common_4.12.0    bslib_0.9.0             
-## [19] pillar_1.11.0            rlang_1.1.6              stringi_1.8.7           
-## [22] cachem_1.1.0             xfun_0.53                sass_0.4.10             
-## [25] memoise_2.0.1            cli_3.6.5                magrittr_2.0.3          
-## [28] Rdpack_2.6.4             digest_0.6.37            grid_4.6.0              
-## [31] lpSolveAPI_5.5.2.0-17.14 lifecycle_1.0.4          DEoptimR_1.1-4          
-## [34] vctrs_0.6.5              evaluate_1.0.4           glue_1.8.0              
-## [37] rmarkdown_2.29           purrr_1.1.0              tools_4.6.0             
-## [40] pkgconfig_2.0.3          htmltools_0.5.8.1</code></pre>
+##  [1] Matrix_1.7-3             trust_0.1-8              jsonlite_2.0.0          
+##  [4] compiler_4.6.0           stringr_1.5.1            parallel_4.6.0          
+##  [7] jquerylib_0.1.4          yaml_2.3.10              fastmap_1.2.0           
+## [10] lattice_0.22-7           coda_0.19-4.1            R6_2.6.1                
+## [13] robustbase_0.99-4-1      knitr_1.50               rbibutils_2.3           
+## [16] tibble_3.3.0             rle_0.10.0               statnet.common_4.12.0   
+## [19] bslib_0.9.0              pillar_1.11.0            rlang_1.1.6             
+## [22] cachem_1.1.0             stringi_1.8.7            xfun_0.53               
+## [25] sass_0.4.10              memoise_2.0.1            cli_3.6.5               
+## [28] magrittr_2.0.3           Rdpack_2.6.4             digest_0.6.37           
+## [31] grid_4.6.0               lpSolveAPI_5.5.2.0-17.14 lifecycle_1.0.4         
+## [34] DEoptimR_1.1-4           vctrs_0.6.5              evaluate_1.0.4          
+## [37] glue_1.8.0               rmarkdown_2.29           purrr_1.1.0             
+## [40] tools_4.6.0              pkgconfig_2.0.3          htmltools_0.5.8.1</code></pre>
 </div>
 
 

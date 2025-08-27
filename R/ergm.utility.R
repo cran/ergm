@@ -16,25 +16,6 @@ is.ergm <- function(object)
     is(object,"ergm")
 }
 
-###############################################################################
-# The <degreedist> function computes and returns the degree distribution for
-# a given network
-#
-# --PARAMETERS--
-#   g    : a network object
-#   print: whether to print the degree distribution; default=TRUE
-#
-# --RETURNED--
-#   degrees:
-#      if directed  -- a matrix of the distributions of in and out degrees;
-#                      this is row bound and only contains degrees for which
-#                      one of the in or out distributions has a positive count
-#      if bipartite -- a list containing the degree distributions of b1 and b2
-#      otherwise    -- a vector of the positive values in the degree
-#                      distribution
-###############################################################################
-
-
 
 #' Computes and Returns the Degree Distribution Information for a Given Network
 #' 
@@ -80,8 +61,8 @@ degreedist.network <- function(object, print=TRUE, ...)
    degrees <- rbind(indegrees, outdegrees)
  }else{
   if(is.bipartite(g)){
-   nb1 <- get.network.attribute(g,"bipartite")
-   nb2 <- network.size(g) - nb1
+   nb1 <- b1.size(g)
+   nb2 <- b2.size(g)
    mesp <- paste("c(",paste(0:nb2,collapse=","),")",sep="")
    b1degrees <- summary(as.formula(paste('g ~ b1degree(',mesp,')',sep="")))
    mesp <- paste("c(",paste(0:nb1,collapse=","),")",sep="")
@@ -241,10 +222,11 @@ single.impute.dyads <- function(nw, constraints=NULL, constraints.obs=NULL, min_
   nw
 }
 
-## A is a matrix. V is a column vector that may contain Infs
-## computes A %*% V, counting 0*Inf as 0
-.multiply.with.inf <- function(A,V) {
-  cbind(colSums(t(A)*c(V), na.rm=TRUE))
+## A is a matrix. x is a column vector that may contain Infs, NaNs,
+## and NAs. This function computes A %*% x, treating 0*Inf, 0*NA, and
+## 0*NaN as 0.
+mat_by_coef <- function(A, x) {
+  .Call("mat_by_coef", A, x)
 }
 
 trim_env_const_formula <- function(x, keep=NULL){
@@ -291,6 +273,8 @@ packageBuiltABI <- memoise(function(client = "ergm", lib = "ergm"){
       NA_integer_)
 })
 
+message_once <- once(message)
+
 #' ABI version checking
 #'
 #' Check if package `client` was built under the same ABI version of
@@ -329,20 +313,28 @@ check_ABI <- once(function(client = "ergm", lib  = "ergm", action = getOption("e
 
     if(is.na(libABI)) return(TRUE)
 
-    msg <- if(is.na(clientABI)) sprintf("Package %s was compiled with an older version of %s that did not save its C application binary interface (ABI) version information at the time. Inconsistent ABI versions may cause malfunctions ranging from incorrect results to R crashing. Please rebuild the package against the current %s version. If you believe message to be spurious, you can override by changing %s (See %s for possible values.) and proceed at your own risk.",
-                                     sQuote(client), sQuote(lib), sQuote(lib), sQuote("options(ergm.ABI.action = ...)"), sQuote("options?ergm"))
-                                     else if(clientABI != libABI) sprintf("Package %s was compiled with %s that had one C application binary interface (ABI), but it is being loaded with %s that has a different C ABI version. (Respectively, %s and %s; note that the ABI version is not the same as the package version and may lag behind it.) Inconsistent versions may result in malfunctions ranging from incorrect results to R crashing. Please rebuild the package with the current %s version. If you believe message to be spurious, you can override by changing %s (See %s for possible values.) and proceed at your own risk.",
-                                                sQuote(client), sQuote(lib), sQuote(lib), clientABI, libABI, sQuote(lib), sQuote("options(ergm.ABI.action = ...)"), sQuote("options?ergm"))
+    if(action %in% c("inform", "message")) {
+      msg <- if(is.na(clientABI)) sprintf("NOTE: Possible C application binary interface (ABI) version mismatch between %s and %s detected. If you experience mysterious crashes and errors, rebuilding %s may help. You can silence this message by setting %s. (See %s for possible values.)",
+                                          sQuote(client), sQuote(lib), sQuote(client), sQuote("options(ergm.ABI.action = ...)"), sQuote("options?ergm"))
+             else if(clientABI != libABI) sprintf("NOTE: Possible C application binary interface (ABI) version mismatch in %s detected (compiled against %s %s, running against %s). If you experience mysterious crashes and errors, rebuilding %s may help. You can silence this message by setting %s. (See %s for possible values.)",
+                                                  sQuote(client), sQuote(lib), clientABI, libABI, sQuote(client), sQuote("options(ergm.ABI.action = ...)"), sQuote("options?ergm"))
+      msg <- NVL3(msg, paste(strwrap(., indent = 0, exdent = 2), collapse = "\n"))
+    } else {
+      msg <- if(is.na(clientABI)) sprintf("Package %s was compiled with an older version of %s that did not save its C application binary interface (ABI) version information at the time. Inconsistent ABI versions may cause malfunctions ranging from incorrect results to R crashing. Please rebuild the package against the current %s version. If you believe message to be spurious, you can override by changing %s (See %s for possible values.) and proceed at your own risk.",
+                                          sQuote(client), sQuote(lib), sQuote(lib), sQuote("options(ergm.ABI.action = ...)"), sQuote("options?ergm"))
+             else if(clientABI != libABI) sprintf("Package %s was compiled with %s that had one C application binary interface (ABI), but it is being loaded with %s that has a different C ABI version. (Respectively, %s and %s; note that the ABI version is not the same as the package version and may lag behind it.) Inconsistent versions may result in malfunctions ranging from incorrect results to R crashing. Please rebuild the package with the current %s version. If you believe message to be spurious, you can override by changing %s (See %s for possible values.) and proceed at your own risk.",
+                                                  sQuote(client), sQuote(lib), sQuote(lib), clientABI, libABI, sQuote(lib), sQuote("options(ergm.ABI.action = ...)"), sQuote("options?ergm"))
+      msg <- NVL3(msg, paste(c("", strwrap(., indent = 2, exdent = 2)), collapse = "\n"))
+    }
 
-    msg <- NVL3(msg, paste(c("", strwrap(., indent = 2, exdent = 2)), collapse = "\n"))
 
     if(!is.null(msg)){
       switch(action,
              abort =,
              stop = stop(msg, call. = FALSE),
-             warning = warning(msg, call. = FALSE, immediate. = TRUE),
+             warning = warning_once(msg, call. = FALSE, immediate. = TRUE),
              inform =,
-             message = message(msg))
+             message = message_once(msg))
       FALSE
     }else TRUE
   }else TRUE
@@ -431,3 +423,17 @@ split_len <- function(x, l) {
   stopifnot(length(x) == sum(l))
   unname(split(x, factor(rep.int(seq_along(l), l), levels = seq_along(l))))
 }
+
+dbl_along <- function(x) numeric(length(x))
+int_along <- function(x) integer(length(x))
+chr_along <- function(x) character(length(x))
+lgl_along <- function(x) logical(length(x))
+
+## This should be in 'network'.
+
+b1.size <- function(x) if(is.bipartite(x)) x %n% "bipartite" else FALSE
+b2.size <- function(x) if(is.bipartite(x)) network.size(x) - b1.size(x) else FALSE
+
+## For handling skipping statistics.
+
+is.NA <- function(x) is.na(x) & !is.nan(x)

@@ -210,7 +210,6 @@ InitErgmTerm.Label <- function(nw, arglist, ...){
                   append = list(paste0(cu, a$label), paste0(ca, a$label))
                   )
   }else{
-    #' @importFrom purrr as_mapper
     renamer <- as_mapper(a$label)
     new <- list(cu,ca) %>% map(renamer)
   }
@@ -583,7 +582,9 @@ ergm_symmetrize.network <- function(x, rule=c("weak","strong","upper","lower"), 
       }, NULL)
   }
   
-  o <- network.initialize(network.size(x), directed=FALSE, bipartite=x%n%"bipartite", loops=has.loops(x), hyper=is.hyper(x), multiple=is.multiplex(x))
+  o <- network.initialize(network.size(x), directed = FALSE,
+                          bipartite = b1.size(x), loops = has.loops(x),
+                          hyper = is.hyper(x), multiple = is.multiplex(x))
   add.edges(o, elle$.tail, elle$.head)
   for(attr in c(setdiff(names(el), METACOLS), "na")){
     set.edge.attribute(o, attr, elle[[attr]])
@@ -715,7 +716,9 @@ InitErgmTerm.Sum <- function(nw, arglist,...){
   if(!all_identical(nparams)) ergm_Init_stop("Specified models and weights appear to differ in lengths of output statistics.")
   nparam <- nparams[1]
 
-  inputs <- unlist(wl%>%map(t))
+  #' @importClassesFrom Matrix dgCMatrix
+  #' @importFrom methods as
+  wmat <- as(do.call(cbind, wl), "dgCMatrix")
 
   if(is.function(a$label)){
     cns <- lapply(ms, param_names, canonical=TRUE)
@@ -769,7 +772,7 @@ InitErgmTerm.Sum <- function(nw, arglist,...){
     }
   }else offset <- FALSE
   
-  c(list(name="Sum", coef.names = coef.names, inputs=inputs, iinputs=nf, submodels=ms, emptynwstats=gs,
+  c(list(name="Sum", coef.names = coef.names, weights = wmat, iinputs = nf, submodels = ms, emptynwstats = gs,
          dependence=dependence, offset=offset,
          ext.encode = if(ms %>% map("terms") %>% unlist(FALSE) %>% map("ext.encode") %>% compact %>% length)
                         function(el, nw0)
@@ -817,7 +820,7 @@ InitErgmTerm.S <- function(nw, arglist, ...){
 
   # Obtain the boolean indicators or numeric indices. If the network
   # is bipartite in the first place, expect bipartite indices.
-  bip <- as.integer(NVL(nw %n% "bipartite", 0L))
+  bip <- as.integer(b1.size(nw))
 
   tailsel <- ergm_get_vattr(tailspec, nw, accept="index", bip="b1")
   tailname <- attr(tailsel, "name")
@@ -851,7 +854,9 @@ InitErgmTerm.S <- function(nw, arglist, ...){
   snw <- nw
   snw[,] <- 0
   snw <- get.inducedSubgraph(snw, tailsel, if(type=="bipartite") headsel)
-  if(NVL(snw%n%"bipartite", FALSE)) snw %n% "directed" <- FALSE # Need to do this because snw is a "directed bipartite" network. I hope it doesn't break anything.
+  # Need to do this because snw is a "directed bipartite" network. I
+  # hope it doesn't break anything.
+  if (is.bipartite(snw)) snw %n% "directed" <- FALSE
 
   m <- ergm_model(a$formula, snw, ..., offset.decorate=FALSE)
   ergm_no_ext.encode(m)
