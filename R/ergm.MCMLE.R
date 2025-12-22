@@ -200,8 +200,8 @@ ergm.MCMLE <- function(init, s, s.obs,
   for(iteration in 1:control$MCMLE.maxit){
     if(verbose){
       message("\nIteration ",iteration," of at most ", control$MCMLE.maxit,
-          " with parameter:")
-      message_print(mcmc.init)
+              " with free parameter vector:")
+      message_print(mcmc.init[!model$etamap$offsettheta])
     }else{
       message("Iteration ",iteration," of at most ", control$MCMLE.maxit,":")
     }
@@ -247,10 +247,10 @@ ergm.MCMLE <- function(init, s, s.obs,
     if(is.const.sample(esteq) && !all(esteq==0))
       stop("Unconstrained MCMC sampling did not mix at all. Optimization cannot continue.")
 
-    check_nonidentifiability(esteq, NULL, model,
-                             tol = control$MCMLE.nonident.tol, type="statistics",
-                             nonident_action = control$MCMLE.nonident,
-                             nonvar_action = control$MCMLE.nonvar)
+    nonident <- check_nonidentifiability(esteq, NULL, model,
+                                         tol = control$MCMLE.nonident.tol, type="statistics",
+                                         nonident_action = control$MCMLE.nonident,
+                                         nonvar_action = control$MCMLE.nonvar)
 
     ##  Do the same, if observation process:
     if(obs){
@@ -314,8 +314,8 @@ ergm.MCMLE <- function(init, s, s.obs,
 
     # These are only nontrivial when the model is curved or when there are missing data.
     if(verbose){
-      message("Average estimating function values:")
-      message_print(if(obs) colMeans(esteq.obs)-colMeans(esteq) else -colMeans(esteq))
+      message("Estimated gradient of the log-likelihood:")
+      message_print(if (obs) colMeans(esteq) - colMeans(esteq.obs) else colMeans(esteq))
     }
 
     if(!estimate){
@@ -329,7 +329,8 @@ ergm.MCMLE <- function(init, s, s.obs,
                 gradient=rep(NA,length=length(mcmc.init)), #acf=NULL,
                 samplesize=control$MCMC.samplesize, failure=TRUE,
                 newnetwork = s.returned[[1]],
-                newnetworks = s.returned)
+                newnetworks = s.returned,
+                lindep = nonident$lindep)
       return(l)
     } 
 
@@ -615,6 +616,7 @@ ergm.MCMLE <- function(init, s, s.obs,
   
   v$etamap <- model$etamap
   v$MCMCflag <- TRUE
+  v$lindep <- nonident$lindep
   v
 }
 

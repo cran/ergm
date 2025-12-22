@@ -13,6 +13,10 @@
 #include "ergm_MHproposal.h"
 #include "ergm_Rutil.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct DegreeBoundstruct {
   int attrcount;
   int fBoundDegByAttr;
@@ -34,6 +38,10 @@ void DegreeBoundDestroy(DegreeBound *bd);
 int CheckTogglesValid(DegreeBound *bd, MHProposal *MHp, Network *nwp);
 int CheckConstrainedTogglesValid(DegreeBound *bd, MHProposal *MHp, Network *nwp);
 
+#ifdef __cplusplus
+}
+#endif
+
 #define BD_LOOP(bd, proc) BD_COND_LOOP(bd, {proc}, TRUE, 1)
 
 #define BD_COND_LOOP(bd, proc, cond, tryfactor)				\
@@ -48,6 +56,13 @@ int CheckConstrainedTogglesValid(DegreeBound *bd, MHProposal *MHp, Network *nwp)
   }else	if(!CheckTogglesValid(bd, MHp, nwp)){				\
     MHp->toggletail[0]=MH_FAILED;					\
     MHp->togglehead[0]=MH_CONSTRAINT;                                   \
+  }
+
+#define CHECK_BD(bd)                                                    \
+  if (!CheckTogglesValid(bd, MHp, nwp)) {                               \
+    MHp->toggletail[0] = MH_FAILED;                                     \
+    MHp->togglehead[0] = MH_CONSTRAINT;                                 \
+    return;                                                             \
   }
 
 #endif

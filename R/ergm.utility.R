@@ -419,16 +419,6 @@ rowcolnames <- function(x, ...) {
   x
 }
 
-split_len <- function(x, l) {
-  stopifnot(length(x) == sum(l))
-  unname(split(x, factor(rep.int(seq_along(l), l), levels = seq_along(l))))
-}
-
-dbl_along <- function(x) numeric(length(x))
-int_along <- function(x) integer(length(x))
-chr_along <- function(x) character(length(x))
-lgl_along <- function(x) logical(length(x))
-
 ## This should be in 'network'.
 
 b1.size <- function(x) if(is.bipartite(x)) x %n% "bipartite" else FALSE
@@ -437,3 +427,17 @@ b2.size <- function(x) if(is.bipartite(x)) network.size(x) - b1.size(x) else FAL
 ## For handling skipping statistics.
 
 is.NA <- function(x) is.na(x) & !is.nan(x)
+
+## Enclose variable names with nonalphanumeric characters in them in
+## backticks.
+quote_var_name <- function(x) ifelse(grepl("[^a-zA-Z0-9._]", x), paste0("`", x, "`"), x)
+
+##
+
+strwrppst <- function(x, ..., parsep = "") {
+  paste0(
+    sapply(lapply(x, strwrap, ...),
+           paste0, "\n", collapse = ""),
+    collapse = parsep
+  )
+}

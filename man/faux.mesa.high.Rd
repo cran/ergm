@@ -20,7 +20,7 @@ Native American, and Other (non-Hisp.)
 }
 \source{
 The data set is based upon a model fit to data from one school
-community from the AddHealth Study, Wave I (Resnick et al., 1997). It was
+community from the AddHealth Study, Wave I \insertCite{ReGa97p}{ergm}. It was
 constructed as follows:
 
 A vector representing the sex of each student in the school was randomly
@@ -42,7 +42,7 @@ the permuted attributes and with the same number of edges as in the original
 data.
 
 The processes for handling missing data and defining the race attribute are
-described in Hunter, Goodreau & Handcock (2008).
+described in \insertCite{HuGo08g;textual}{ergm}.
 }
 \usage{
 data(faux.mesa.high)
@@ -59,7 +59,7 @@ specified otherwise, this data set is protected by the Creative Commons
 License \url{https://creativecommons.org/licenses/by-nc-nd/2.5/}.
 
 When publishing results obtained using this data set, the original authors
-(Resnick et al, 1997) should be cited. In addition this package should be
+\insertCite{ReGa97p}{ergm} should be cited. In addition this package should be
 cited as:
 
 Mark S. Handcock, David R. Hunter, Carter T. Butts, Steven M. Goodreau, and
@@ -68,14 +68,7 @@ Modeling of Network Data} \cr \url{https://statnet.org}.
 }
 
 \references{
-Hunter D.R., Goodreau S.M. and Handcock M.S. (2008). \emph{Goodness of Fit
-of Social Network Models}, \emph{Journal of the American Statistical
-Association}.
-
-Resnick M.D., Bearman, P.S., Blum R.W. et al. (1997). \emph{Protecting
-adolescents from harm. Findings from the National Longitudinal Study on
-Adolescent Health}, \emph{Journal of the American Medical Association}, 278:
-823-32.
+\insertAllCited{}
 }
 \seealso{
 \code{\link[network:network]{network}},

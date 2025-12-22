@@ -70,11 +70,6 @@ ETYPE(C_CHANGESTAT_FN)(SVARIANT(c_attrcov)) {
   CHANGE_STAT[0] += ECHANGE(sto->mat[sto->nodecov[head]][sto->nodecov[tail]]);
 }
 
-ETYPE(F_CHANGESTAT_FN)(SVARIANT(f_attrcov)) {
-  GET_STORAGE(SVARIANT(attrcov_storage), sto);
-  R_Free(sto->mat);
-}
-
 /*****************
  changestat: d_b2cov
 *****************/
@@ -114,11 +109,11 @@ ETYPE(C_CHANGESTAT_FN)(SVARIANT(c_density)) {
  changestat: d_diff
 *****************/
 ETYPE(C_CHANGESTAT_FN)(SVARIANT(c_diff)) {
-  double p = INPUT_PARAM[0], *x = INPUT_PARAM+2;
-  int mul = INPUT_PARAM[1], sign_code = INPUT_PARAM[2];
+  double p = INPUT_PARAM[0]; // Conveniently, nodal covariate starts at 1.
+  int mul = IINPUT_PARAM[0], sign_code = IINPUT_PARAM[1];
 
   /* *** don't forget tail -> head */
-    double change = (x[tail] - x[head])*mul;
+    double change = (INPUT_PARAM[tail] - INPUT_PARAM[head])*mul;
     switch(sign_code){
     case 1: // identity
       break;
@@ -307,11 +302,6 @@ ETYPE(C_CHANGESTAT_FN)(SVARIANT(c_nodemix)) {
   if(index >= 0) {
     CHANGE_STAT[index] += ECHANGE1;
   }
-}
-
-ETYPE(F_CHANGESTAT_FN)(SVARIANT(f_nodemix)) {
-  GET_STORAGE(SVARIANT(nodemix_storage), sto);
-  R_Free(sto->indmat);
 }
 
 /*****************

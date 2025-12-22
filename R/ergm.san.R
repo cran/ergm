@@ -12,9 +12,10 @@
 #' 
 #' This function attempts to find a network or networks whose statistics match
 #' those passed in via the `target.stats` vector.
+#'
+#' \insertNoCite{KrHu23e}{ergm}
 #' 
-#' @details The following description is an exegesis of section 4 of Krivitsky
-#'   et al. (2022).
+#' @details The following description is an exegesis of section 4 of \insertCite{KrHu23e;textual}{ergm}.
 #' 
 #'   Let \eqn{\mathbf{g}}{g} be a vector of target statistics for the
 #'   network we wish to construct. That is, we are given an arbitrary network
@@ -94,8 +95,7 @@
 #'   are provided about their probability distribution. Additionally,
 #'   [attr()]-style attributes `formula` and `stats` are included.
 #' 
-#' @references Krivitsky, P. N., Hunter, D. R., Morris, M., & Klumb, C. (2022).
-#'   ergm 4: Computational Improvements. arXiv preprint arXiv:2203.08198.
+#' @references \insertAllCited{}
 #' 
 #' 
 #' @keywords models
@@ -375,7 +375,7 @@ san.ergm_model <- function(object, reference=~Bernoulli, constraints=~., target.
                               edgelist=as.edgelist(state)
                               )
     }else{
-      if(i<control$SAN.maxit && isTRUE(all.equal(unname(stats), dbl_along(stats)))){
+      if(i<control$SAN.maxit && isTRUE(all.equal(unname(stats), rep_along(stats, 0)))){
         if(verbose) message("Target statistics matched exactly.")
         break
       }

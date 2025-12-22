@@ -10,8 +10,8 @@
 #' Approximate MPLE standard errors in dyad-dependent models
 #'
 #' Function to approximate the MPLE covariance matrix in a dyad dependence model
-#' using the Godambe matrix as described in Schmid and Hunter (2020) or by parametric bootstrap
-#' as described by Schmid and Desmarais (2017).
+#' using the Godambe matrix as described by \insertCite{ScHu23c;textual}{ergm} or by parametric bootstrap
+#' as described by \insertCite{ScDe17e;textual}{ergm}.
 #'
 #' @param pl An [`ergm.pl`] object.
 #' @param init a vector a vector of initial theta coefficients
@@ -27,11 +27,7 @@
 #' @return \code{ergm_mplecov} returns a list either
 #'   containing a Godambe covariance matrix or a diagonal matrix with bootstrap variances.
 #'
-#' @references Schmid CS and Desmarais BA (2017). "Exponential random graph
-#' models with big networks: Maximum pseudolikelihood estimation and the parametric bootstrap"
-#' _IEEE International Conference on Big Data (Big Data)_, pp. 116-121.
-#'
-#' Schmid CS and Hunter DR (2023).  "Computing Pseudolikelihood Estimators for Exponential-Family Random Graph Models" _Journal of Data Science_.
+#' @references \insertAllCited{}
 #' @noRd
 #'
 #' @examples

@@ -152,8 +152,8 @@ ergm.mple<-function(s, s.obs, init=NULL,
    covar <- array(0,dim=c(1,1))
    hess <- array(0,dim=c(1,1))
   }else{
-   covar <- diag(dbl_along(theta))
-   hess <- diag(dbl_along(theta))
+   covar <- diag(rep_along(theta, 0))
+   hess <- diag(rep_along(theta, 0))
   }
 
   covar %[.,.]% (!is.NA(theta) & !m$etamap$offsettheta) <- real.cov
@@ -183,10 +183,10 @@ ergm.mple<-function(s, s.obs, init=NULL,
 
   message("Finished MPLE.")
 
-  check_nonidentifiability(pl$xmat.full, theta, m,
-                           tol = control$MPLE.nonident.tol, type="covariates",
-                           nonident_action = control$MPLE.nonident,
-                           nonvar_action = control$MPLE.nonvar)
+  nonident <- check_nonidentifiability(pl$xmat.full, theta, m,
+                              tol = control$MPLE.nonident.tol, type="covariates",
+                              nonident_action = control$MPLE.nonident,
+                              nonvar_action = control$MPLE.nonvar)
 
   # Output results as ergm-class object
   structure(list(coefficients=theta,
@@ -198,7 +198,8 @@ ergm.mple<-function(s, s.obs, init=NULL,
         nobs = nobs, df = df, class="logLik"),
       mple.lik.null = structure(
         ERRVL2(logLik(mplefit.null), -mplefit.null$deviance/2),
-        nobs = nobs, df = df, class="logLik")
+        nobs = nobs, df = df, class="logLik"),
+      lindep = nonident$lindep
       ),
       class="ergm")
 }
@@ -206,7 +207,9 @@ ergm.mple<-function(s, s.obs, init=NULL,
 #' Test whether the MPLE exists
 #'
 #' The \code{mple.existence} function tests whether the MPLE actually exists. The code
-#' applies the approach introduced by Konis (2007).
+#' applies the approach introduced by \insertCite{Ko07l;textual}{ergm}.
+#'
+#' \insertNoCite{Ko07l}{ergm}
 #'
 #' Konis shows that the MPLE doesn't exist if data may be separated in the sense that
 #' there exists a vector beta such that
@@ -224,9 +227,7 @@ ergm.mple<-function(s, s.obs, init=NULL,
 #'
 #' @param pl An ergm.pl-object
 #'
-#' @references Konis K (2007).  "Linear Programming Algorithms for Detecting Separated
-#' Data in Binary LogisticRegression Models (Ph.D. Thesis)." _Worcester College, Oxford University_.
-#' \url{https://ora.ox.ac.uk/objects/uuid:8f9ee0d0-d78e-4101-9ab4-f9cbceed2a2a}
+#' @references \insertAllCited{}
 #' @noRd
 mple.existence <- function(pl) {
 #' @importFrom lpSolveAPI make.lp set.column set.objfn set.constr.type set.rhs set.bounds lp.control

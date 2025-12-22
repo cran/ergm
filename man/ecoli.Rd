@@ -7,8 +7,8 @@
 \alias{ecoli2}
 \title{Two versions of an E. Coli network dataset}
 \source{
-The data set is based on the RegulonDB network (Salgado et al, 2001)
-and was modified by Shen-Orr et al (2002).
+The data set is based on the RegulonDB network of \insertCite{SaSu01r;textual}{ergm}
+and was modified by \insertCite{ShSh02n;textual}{ergm}.
 }
 \usage{
 data(ecoli)
@@ -28,17 +28,12 @@ nodes.
 }
 \section{Licenses and Citation}{
  When publishing results obtained using this
-data set, the original authors (Salgado et al, 2001; Shen-Orr et al, 2002)
+data set, the original authors \insertCite{SaSu01r,ShSh02n}{ergm}
 should be cited, along with this \code{R} package.
 }
 
 \references{
-Salgado et al (2001), Regulondb (version 3.2): Transcriptional Regulation
-and Operon Organization in Escherichia Coli K-12, \emph{Nucleic Acids
-Research}, 29(1): 72-74.
-
-Shen-Orr et al (2002), Network Motifs in the Transcriptional Regulation
-Network of Escerichia Coli, \emph{Nature Genetics}, 31(1): 64-68.
+\insertAllCited{}
 
 \%Saul and Filkov (2007)
 

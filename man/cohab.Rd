@@ -51,15 +51,11 @@ with more than one person.  That is, each node must have degree zero or one.  Th
 is: \code{~ edges + nodefactor("sex.ident", levels = 3) + nodecov("age") + nodecov("agesq") + nodefactor("race", levels = -5) + nodefactor("othr.net.deg", levels = -1) + nodematch("race", diff = TRUE) + absdiff("sqrt.age.adj")}
 }
 }
+
+\insertNoCite{KrHu23e,NCHS20n}{ergm}
 }
 \references{
-Krivitsky, P.N., Hunter, D.R., Morris, M., and Klumb, C. (2021).
-\emph{ergm 4.0: New Features and Improvements}. arXiv
-
-National Center for Health Statistics (NCHS). (2020). 2006-2015 National
-Survey of Family Growth Public-Use Data and Documentation. Hyattsville, MD:
-CDC National Center for Health Statistics.
-Retrieved from \url{https://www.cdc.gov/nchs/nsfg/index.htm}
+\insertAllCited{}
 }
 \seealso{
 ergm

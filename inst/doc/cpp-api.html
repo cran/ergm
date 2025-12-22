@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>A C++ shim for ergm</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">A C++ shim for ergm</h1>
+
+
+
+<p>This vignette documents the C++ convenience wrappers for developing
+ERGM terms and proposals using modern C++ while interfacing with ergm’s
+core C data structures.</p>
+<p>The API partially wraps the Terms and Proposals APIs and focuses on
+lightweight wrappers (no ownership) around existing C structs to
+provide: range-based iteration, safer array handling, and access to
+<code>-&gt;R</code> list elements/attributes.</p>
+<p><strong>WARNING:</strong> This API is <em>experimental</em> and is
+subject to change in response to evolving needs and user feedback, but
+some effort will be made to maintain backwards compatibility. In
+particular, see the item about namespace versioning below.</p>
+<div id="overview" class="section level2">
+<h2>Overview</h2>
+<ul>
+<li>Headers live in <code>inst/include/cpp/</code> and complement the C
+headers in <code>inst/include/</code>.</li>
+<li>Wrappers are header-only and intended to be used in compiled code
+within <code>src/</code>, typically via
+<code>#include &quot;cpp/ergm_network.h&quot;</code>,
+<code>#include &quot;cpp/ergm_changestat.h&quot;</code>, etc.</li>
+<li>All C++ wrappers, aliases, and helper macros live in the
+<code>ergm</code> namespace (e.g., <code>ergm::ErgmCppNetwork</code>);
+either qualify their names or add <code>using</code> declarations in
+your translation units.</li>
+<li>The API is versioned via an inline namespace <code>ergm::v1</code>
+(currently defaulted); pin explicitly with
+<code>ergm::v1::ErgmCppNetwork</code> if you need to avoid future
+breaking changes.</li>
+<li>All classes are thin wrappers around existing C pointers; they do
+not allocate or free memory.</li>
+</ul>
+</div>
+<div id="core-concepts" class="section level2">
+<h2>Core Concepts</h2>
+<ul>
+<li>Arrays you write/read: <code>mt.stat</code>, <code>mt.dinput</code>,
+<code>mt.iinput</code>, <code>mt.dattrib</code>, <code>mt.iattrib</code>
+and, for proposals, <code>p.dinput</code>, <code>p.iinput</code>. Treat
+these as array-like: use <code>[]</code> for access and
+<code>.size()</code> for length.</li>
+<li>Network iteration: use <code>nw.nodes()</code>,
+<code>nw.out_neighbors(i)</code>, <code>nw.in_neighbors(i)</code>,
+<code>nw.neighbors(i)</code>, and <code>nw.edges()</code> with
+range-based <code>for</code> loops; for weighted networks, neighbor/edge
+values include weights.</li>
+<li>Term/proposal storage: <code>mt.storage</code> /
+<code>p.storage</code> let you keep a user-defined pointer across calls;
+<code>mt.aux_storage[i]</code> / <code>p.aux_storage[i]</code> access
+auxiliaries at position <code>i</code>. (Cast to your type before
+use.)</li>
+<li>The elements of the R list returned by the <code>Init*Ergm*()</code>
+function can be accessed as <code>mt.R[&quot;name&quot;]</code>, its attributes as
+<code>mt.R.attr[&quot;name&quot;]</code>, and analogously for
+<code>mt.ext_state</code>. They return <code>SEXP</code> values; use the
+standard R API to handle them as needed.</li>
+</ul>
+</div>
+<div id="network-wrappers-ergmcppnetwork-and-ergmcppwtnetwork" class="section level2">
+<h2>Network Wrappers: <code>ErgmCppNetwork</code> and
+<code>ErgmCppWtNetwork</code></h2>
+<p>Headers: <code>#include &quot;cpp/ergm_network.h&quot;</code>,
+<code>#include &quot;cpp/ergm_wtnetwork.h&quot;</code></p>
+<p>These wrap <code>Network</code> (unweighted) and
+<code>WtNetwork</code> (weighted) to provide edge queries, degree
+access, and simple iteration.</p>
+<ul>
+<li>Construction: <code>ErgmCppNetwork nw(nwp);</code> and
+<code>ErgmCppWtNetwork nw(nwp);</code></li>
+<li>Edge query: <code>nw(tail, head)</code> returns presence
+(<code>Rboolean</code>) or <code>double</code> weight (0 for no
+edge).</li>
+<li>Node ranges: <code>nw.nodes()</code>, bipartite halves:
+<code>nw.b1()</code>, <code>nw.b2()</code>.</li>
+<li>Neighbor ranges: <code>nw.out_neighbors(i)</code>,
+<code>nw.in_neighbors(i)</code>, <code>nw.neighbors(i)</code>.</li>
+<li>Degree access: <code>nw.out_degree(i)</code>,
+<code>nw.in_degree(i)</code>, <code>nw.degree(i)</code>.</li>
+<li>Edge range over all edges: <code>for (auto e : nw.edges())</code>
+yields <code>(tail, head)</code>.</li>
+<li>Directed accessors starting with <code>in_</code> and
+<code>out_</code> automatically fall back to the undirected network if
+<code>nw</code> is undirected.</li>
+<li>Valued neighbor iteration yields pairs
+<code>(neighbor, weight)</code>; <code>edges()</code> yields
+<code>(tail, head, weight)</code>.</li>
+</ul>
+<p>Example:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="co">// You can also use nw.edges(), though for an undirected network, the following</span></span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="co">// code will visit each edge twice, once from each end.</span></span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>ErgmCppNetwork nw<span class="op">(</span>nwp<span class="op">);</span></span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="cf">for</span><span class="op">(</span>Vertex i <span class="op">:</span> nw<span class="op">.</span>nodes<span class="op">())</span> <span class="op">{</span></span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a>  <span class="cf">for</span><span class="op">(</span>Vertex j <span class="op">:</span> nw<span class="op">.</span>out_neighbors<span class="op">(</span>i<span class="op">))</span> <span class="op">{</span></span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a>    <span class="co">// process edge i-&gt;j</span></span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>ErgmCppWtNetwork nw<span class="op">(</span>nwp<span class="op">);</span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="cf">for</span><span class="op">(</span><span class="kw">auto</span> <span class="op">[</span>j<span class="op">,</span> w<span class="op">]</span> <span class="op">:</span> nw<span class="op">.</span>neighbors<span class="op">(</span>i<span class="op">))</span> <span class="op">{</span></span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>  <span class="co">// weighted edge i-&gt;j of weight w</span></span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a><span class="cf">for</span><span class="op">(</span><span class="kw">auto</span> <span class="op">[</span>i<span class="op">,</span> j<span class="op">,</span> w<span class="op">]</span> <span class="op">:</span> nw<span class="op">.</span>edges<span class="op">())</span> <span class="op">{</span></span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>  <span class="co">// weighted edge i-&gt;j of weight w</span></span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+</div>
+<div id="model-terms-ergmcppmodelterm-and-ergmcppwtmodelterm" class="section level2">
+<h2>Model Terms: <code>ErgmCppModelTerm</code> and
+<code>ErgmCppWtModelTerm</code></h2>
+<p>Headers: <code>#include &quot;cpp/ergm_changestat.h&quot;</code>,
+<code>#include &quot;cpp/ergm_wtchangestat.h&quot;</code></p>
+<ul>
+<li>Constructed from <code>ModelTerm*</code> (or
+<code>WtModelTerm*</code>).</li>
+<li>Arrays (use <code>.size()</code> to get lengths):
+<ul>
+<li><code>stat</code>: writable stats (<code>double</code>); length via
+<code>mt.stat.size()</code>.</li>
+<li><code>dinput</code>, <code>iinput</code>: numeric and integer
+inputs; lengths via <code>mt.dinput.size()</code> /
+<code>mt.iinput.size()</code>.</li>
+<li><code>dattrib</code>, <code>iattrib</code>: attribute slices of
+inputs if present; lengths via <code>.size()</code>.</li>
+</ul></li>
+<li><code>storage</code>: user-defined pointer you manage across calls
+(<code>mt.storage</code>).</li>
+<li><code>aux_storage</code>: access auxiliary storage by index, e.g.,
+<code>auto* my_aux = static_cast&lt;MyType*&gt;(mt.aux_storage[0])</code>.</li>
+<li><code>R</code> and <code>ext_state</code>: access term and extended
+state via <code>mt.R[&quot;name&quot;]</code> / <code>mt.ext_state[&quot;name&quot;]</code>,
+their attributes via <code>mt.R.attr[&quot;name&quot;]</code> and
+<code>mt.ext_state.attr[&quot;name&quot;]</code></li>
+</ul>
+</div>
+<div id="proposals-ergmcppproposal-and-ergmcppwtproposal" class="section level2">
+<h2>Proposals: <code>ErgmCppProposal</code> and
+<code>ErgmCppWtProposal</code></h2>
+<p>Headers: <code>#include &quot;cpp/ergm_proposal.h&quot;</code>,
+<code>#include &quot;cpp/ergm_wtproposal.h&quot;</code></p>
+<ul>
+<li>Constructed from <code>MHProposal*</code>.</li>
+<li>Direct members:
+<ul>
+<li><code>size</code> (<code>Edge&amp;</code>): number of toggles
+(<code>ntoggles</code>).</li>
+<li><code>tail</code>, <code>head</code> (<code>Vertex*</code>),
+<code>weight</code> (<code>double*</code>, for valued networks): toggle
+arrays.</li>
+<li><code>logratio</code> (<code>double&amp;</code>).</li>
+</ul></li>
+<li>Inputs: <code>dinput</code>, <code>iinput</code> are array-like; use
+<code>.size()</code> for lengths.</li>
+<li><code>storage</code>: user-managed pointer reference
+(<code>p.storage</code>).</li>
+<li><code>aux_storage</code>: access by index if present, e.g.,
+<code>p.aux_storage[0]</code>.</li>
+<li><code>R</code>: access proposal list elements if needed.</li>
+</ul>
+</div>
+<div id="helper-macros" class="section level2">
+<h2>Helper macros</h2>
+<p>The following macros define the C entry point and construct network
+and model term handles named <code>nw</code> and <code>mt</code> for use
+in <code>impl</code>:</p>
+<ul>
+<li><code>C_CHANGESTAT_CPP(name, StorageType, impl)</code></li>
+<li><code>S_CHANGESTAT_CPP(name, StorageType, impl)</code></li>
+<li><code>D_CHANGESTAT_CPP(name, StorageType, impl)</code></li>
+<li><code>I_CHANGESTAT_CPP(name, StorageType, impl)</code></li>
+<li><code>U_CHANGESTAT_CPP(name, StorageType, impl)</code></li>
+<li><code>F_CHANGESTAT_CPP(name, StorageType, impl)</code></li>
+<li><code>W_CHANGESTAT_CPP(name, StorageType, impl)</code> (returns
+<code>SEXP</code>)</li>
+<li><code>X_CHANGESTAT_CPP(name, StorageType, impl)</code></li>
+<li><code>Z_CHANGESTAT_CPP(name, StorageType, impl)</code></li>
+</ul>
+<p><code>StorageType</code> can be omitted (i.e., passing only 2
+arguments) if no private storage is used.</p>
+<p>Weighted counterparts in <code>ergm_wtchangestat.h</code> are
+prefixed with <code>Wt</code> (e.g.,
+<code>WtC_CHANGESTAT_CPP</code>).</p>
+</div>
+<div id="examples" class="section level2">
+<h2>Examples</h2>
+<p>Binary terms: triangle and cycle counts in
+<code>src/cpp_changestats.cpp</code>.</p>
+<p>Valued terms: transitive weights in
+<code>src/cpp_wtchangestats.cpp</code>.</p>
+<p>Proposal: <code>src/MHproposals_triadic.cpp</code>.</p>
+</div>
+<div id="notes-and-best-practices" class="section level2">
+<h2>Notes and Best Practices</h2>
+<ul>
+<li>All wrappers are non-owning; manage lifetimes via the usual ergm
+mechanisms.</li>
+<li>Prefer range-based loops for clarity and correctness.</li>
+<li>Use <code>FixedArray::size()</code> to avoid out-of-bounds when
+iterating inputs and stats.</li>
+<li>Cast <code>aux_storage</code> elements to the correct type before
+use.</li>
+</ul>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

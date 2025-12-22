@@ -17,6 +17,8 @@ gof(object, ...)
   ...,
   coef = coefficients(object),
   GOF = NULL,
+  response = object$network \%ergmlhs\% "response",
+  reference = object$reference,
   constraints = object$constraints,
   control = control.gof.ergm(),
   verbose = FALSE
@@ -27,7 +29,9 @@ gof(object, ...)
   ...,
   coef = NULL,
   GOF = NULL,
-  constraints = ~.,
+  response = NULL,
+  reference = NULL,
+  constraints = NULL,
   basis = eval_lhs.formula(object),
   control = NULL,
   unconditional = TRUE,
@@ -75,27 +79,29 @@ undirected graphs}
 
 \item{triad census}{\code{triadcensus}}
 
+\item{the cumulative distribution function of edge
+values}{\code{cdf(min, max, step, margin, nmax)}, which will be
+autodetected from the observed network (using \code{margin} and \code{nmax} if possible)}
+
 \item{terms of the original model}{\code{model}}
 
 }
 
-The default formula for undirected networks is
-\code{~ degree + espartners + distance + model}, and the default
-formula for directed networks is \code{~ idegree + odegree +
-  espartners + distance + model}. By default a \code{model} term
-is added to the formula.  It is a very useful overall validity
-check and a reminder of the statistical variation in the
-estimates of the mean value parameters.  To omit the
-\code{model} term, add \code{- model} to the formula.
+The default formula for undirected networks is \code{~ degree +
+  espartners + distance + model}, for directed networks \code{~
+  idegree + odegree + espartners + distance + model}, and for
+bipartite \code{~b1degree + b2degree + dspartners +
+  distance}. For valued networks, only \code{~cdf} is calculated,
+regardless of directedness. By default a \code{model} term is
+added to the formula.  It is a very useful overall validity check
+and a reminder of the statistical variation in the estimates of
+the mean value parameters.  To omit the \code{model} term, add
+\code{- model} to the formula.
 
-Note that if ordinary \code{ergm()} terms are given on the formula,
-they will be returned as a part of \code{model} statistics.}
+Ordinary \code{ergm()} terms can also be given on the formula; if
+present, they will be returned as "user" statistics.}
 
-\item{constraints}{A one-sided formula specifying one or more constraints on
-the support of the distribution of the networks being modeled. See the help
-for similarly-named argument in \code{\link[=ergm]{ergm()}} for more information. For
-\code{gof.formula}, defaults to unconstrained. For \code{gof.ergm}, defaults
-to the constraints with which \code{object} was fitted.}
+\item{response, reference, constraints}{See analogous arguments for \code{\link[=simulate.ergm]{simulate.ergm()}}.}
 
 \item{control}{A list of control parameters for algorithm tuning,
 typically constructed with \code{\link[=control.gof.formula]{control.gof.formula()}} or \code{\link[=control.gof.ergm]{control.gof.ergm()}}, which have different
@@ -140,10 +146,11 @@ is a list of the tables of statistics and \eqn{p}-values.  This is typically
 plotted using \code{\link[=plot.gof]{plot.gof()}}.
 }
 \description{
-\code{\link[=gof]{gof()}} calculates \eqn{p}-values for geodesic distance, degree,
-and reachability summaries to diagnose the goodness-of-fit of exponential
-family random graph models.  See \code{\link[=ergm]{ergm()}} for more information on
-these models.
+\code{\link[=gof]{gof()}} calculates \eqn{p}-values for a variety of network features
+to diagnose the goodness-of-fit of exponential family random graph
+models. For binary networks, these default to geodesic distance,
+degree, and reachability summaries. See \code{\link[=ergm]{ergm()}} for more
+information on these models.
 }
 \details{
 A sample of graphs is randomly drawn from the specified model.  The first
@@ -182,13 +189,6 @@ reachability for the goodness-of-fit of exponential family random graph
 models.
 
 }}
-\note{
-For \code{gof.ergm} and \code{gof.formula}, default behavior depends on the
-directedness of the network involved; if undirected then degree, espartners,
-and distance are used as default properties to examine.  If the network in
-question is directed, \code{degree} in the above is replaced by idegree
-and odegree.
-}
 \examples{
 
 \donttest{

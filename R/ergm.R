@@ -24,15 +24,16 @@
 #' estimate, an approximate maximum likelihood estimate based on a Monte
 #' Carlo scheme, or an approximate contrastive divergence estimate based
 #' on a similar scheme.
-#' (For an overview of the package \insertCite{HuHa08e,KrHu23e}{ergm}, see \CRANpkg{ergm}.)
-#' 
+#' (For an overview of the package \CRANpkg{ergm}, see \insertCite{HuHa08e;textual}{ergm} and \insertCite{KrHu23e;textual}{ergm}.)
+#' \insertNoCite{AdHa07n,BeMo08p,Bu08sna,Bu08net,GoHa08s,GoKi09b,Ha03a,Ha03deg,HaGi10m,HaHu08s,HuHa06i,KaKr16s,Kr12e,MoHa08s,Sn02m}{ergm}
+#'
 #' @param formula An \R [`formula`], of the form
 #'   \code{y ~ <model terms>}, where \code{y} is a
 #'   [`network`] object or a matrix that can be
 #'   coerced to a [`network`] object.  For the
 #'   details on the possible \code{<model terms>}, see
-#'   [`ergmTerm`] and Morris, Handcock and Hunter (2008)
-#'   for binary ERGM terms and Krivitsky (2012) for valued ERGM terms
+#'   [`ergmTerm`] and \insertCite{MoHa08s}{ergm}
+#'   for binary ERGM terms and \insertCite{Kr12e}{ergm} for valued ERGM terms
 #'   (terms for weighted edges).  To create a
 #'   [`network`] object in \R, use the
 #'   \code{network()} function, then add nodal attributes to it using
@@ -52,8 +53,8 @@
 #'   `constraints` argument.
 #'
 #'   This allows the domain of the integral in the numerator of the
-#'   partially obseved network face-value likelihoods of Handcock and
-#'   Gile (2010) and Karwa et al. (2017) to be specified explicitly.
+#'   partially obseved network face-value likelihoods of
+#'   \insertCite{HaGi10m}{ergm} and \insertCite{KaKr16s}{ergm} to be specified explicitly.
 #'
 #'   The default is to constrain the integral to only integrate over
 #'   the missing dyads (if present), after incorporating constraints
@@ -237,99 +238,6 @@
 #' proposal types. 
 #' 
 #' @references \insertAllCited{}
-#'
-#' Admiraal R, Handcock MS (2007).
-#' \CRANpkg{networksis}: Simulate bipartite graphs with fixed
-#' marginals through sequential importance sampling.
-#' Statnet Project, Seattle, WA.
-#' Version 1. \url{https://statnet.org}.
-#' 
-#' Bender-deMoll S, Morris M, Moody J (2008).
-#' Prototype Packages for Managing and Animating Longitudinal
-#' Network Data: \pkg{dynamicnetwork} and \pkg{rSoNIA}.
-#' \emph{Journal of Statistical Software}, 24(7).
-#' \doi{10.18637/jss.v024.i07}
-#' 
-#' 
-#' Butts CT (2007).
-#' \CRANpkg{sna}: Tools for Social Network Analysis.
-#' R package version 2.3-2. \url{https://cran.r-project.org/package=sna}.
-#' 
-#' Butts CT (2008).
-#' \CRANpkg{network}: A Package for Managing Relational Data in \R.
-#' \emph{Journal of Statistical Software}, 24(2).
-#' \doi{10.18637/jss.v024.i02}
-#' 
-#' Butts C (2015).
-#' \CRANpkg{network}: The Statnet Project (https://statnet.org). R package version 1.12.0, \url{https://cran.r-project.org/package=network}.
-#' 
-#' Goodreau SM, Handcock MS, Hunter DR, Butts CT, Morris M (2008a).
-#' A \CRANpkg{statnet} Tutorial.
-#' \emph{Journal of Statistical Software}, 24(8).
-#' \doi{10.18637/jss.v024.i08}
-#' 
-#' Goodreau SM, Kitts J, Morris M (2008b).
-#' Birds of a Feather, or Friend of a Friend? Using Exponential
-#' Random Graph Models to Investigate Adolescent Social Networks.
-#' \emph{Demography}, 45, in press.
-#' 
-#' Handcock, M. S. (2003)
-#' \emph{Assessing Degeneracy in Statistical Models of Social Networks},
-#' Working Paper #39,
-#' Center for Statistics and the Social Sciences,
-#' University of Washington.
-#' \url{https://csss.uw.edu/research/working-papers/assessing-degeneracy-statistical-models-social-networks}
-#' 
-#' Handcock MS (2003b).
-#' \CRANpkg{degreenet}: Models for Skewed Count Distributions Relevant
-#' to Networks.
-#' Statnet Project, Seattle, WA.
-#' Version 1.0, \url{https://statnet.org}.
-#' 
-#' Handcock MS and Gile KJ (2010). Modeling Social Networks from Sampled Data. \emph{Annals of Applied Statistics}, 4(1), 5-25. \doi{10.1214/08-AOAS221}
-#' 
-#' Handcock MS, Hunter DR, Butts CT, Goodreau SM, Morris M (2003a).
-#' \CRANpkg{ergm}: A Package to Fit, Simulate and Diagnose
-#' Exponential-Family Models for Networks.
-#' Statnet Project, Seattle, WA.
-#' Version 2, \url{https://statnet.org}.
-#' 
-#' Handcock MS, Hunter DR, Butts CT, Goodreau SM, Morris M (2003b).
-#' \CRANpkg{statnet}: Software Tools for the Statistical Modeling of
-#' Network Data.
-#' Statnet Project, Seattle, WA.
-#' Version 2, \url{https://statnet.org}.
-#' 
-#' Hunter, D. R. and Handcock, M. S. (2006)
-#' \emph{Inference in curved exponential family models for networks},
-#' Journal of Computational and Graphical Statistics.
-#' 
-#' Hunter DR, Handcock MS, Butts CT, Goodreau SM, Morris M (2008b).
-#' \CRANpkg{ergm}: A Package to Fit, Simulate and Diagnose
-#' Exponential-Family Models for Networks.
-#' \emph{Journal of Statistical Software}, 24(3).
-#' \doi{10.18637/jss.v024.i03}
-#'
-#' Karwa V, Krivitsky PN, and Slavkovi\'c AB (2017). Sharing Social Network
-#' Data: Differentially Private Estimation of Exponential-Family Random
-#' Graph Models. \emph{Journal of the Royal Statistical Society, Series
-#' C}, 66(3):481--500. \doi{10.1111/rssc.12185}
-#' 
-#' Krivitsky PN (2012). Exponential-Family Random Graph Models for Valued
-#' Networks. \emph{Electronic Journal of Statistics}, 2012, 6,
-#' 1100-1128. \doi{10.1214/12-EJS696}
-#' 
-#' Morris M, Handcock MS, Hunter DR (2008).
-#' Specification of Exponential-Family Random Graph Models:
-#' Terms and Computational Aspects.
-#' \emph{Journal of Statistical Software}, 24(4).
-#' \doi{10.18637/jss.v024.i04}
-#' 
-#' Snijders, T.A.B. (2002),
-#' Markov Chain Monte Carlo Estimation of Exponential Random Graph Models.
-#' Journal of Social Structure.
-#' Available from 
-#' \url{https://www.cmu.edu/joss/content/articles/volume3/Snijders.pdf}.
 #' 
 #' @seealso [`network`], [`%v%`], [`%n%`], [`ergmTerm`], [`ergmMPLE`],
 #' [summary.ergm()]

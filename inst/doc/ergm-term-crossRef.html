@@ -12,7 +12,7 @@
 
 <meta name="author" content="statnet.org" />
 
-<meta name="date" content="2025-08-26" />
+<meta name="date" content="2025-12-22" />
 
 <title>ERGM terms cross-reference</title>
 
@@ -340,7 +340,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 <h1 class="title toc-ignore">ERGM terms cross-reference</h1>
 <h4 class="author">statnet.org</h4>
-<h4 class="date">2025-08-26</h4>
+<h4 class="date">2025-12-22</h4>
 
 
 
@@ -1162,6 +1162,25 @@ undir
 </tr>
 <tr>
 <td style="text-align:left;">
+<a href="#I-ergmTerm-ca2567ac">I</a>
+</td>
+<td style="text-align:left;">
+✔
+</td>
+<td style="text-align:left;">
+</td>
+<td style="text-align:left;">
+</td>
+<td style="text-align:left;">
+</td>
+<td style="text-align:left;">
+✔
+</td>
+<td style="text-align:left;">
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
 <a href="#Label-ergmTerm-6de33f4e">Label</a>
 </td>
 <td style="text-align:left;">
@@ -1545,6 +1564,44 @@ cat dyad attr
 <tr>
 <td style="text-align:left;">
 <a href="#For-ergmTerm-f403b433">For</a>
+</td>
+<td style="text-align:left;">
+✔
+</td>
+<td style="text-align:left;">
+✔
+</td>
+<td style="text-align:left;">
+✔
+</td>
+<td style="text-align:left;">
+</td>
+<td style="text-align:left;">
+</td>
+<td style="text-align:left;">
+</td>
+<td style="text-align:left;">
+</td>
+<td style="text-align:left;">
+</td>
+<td style="text-align:left;">
+</td>
+<td style="text-align:left;">
+</td>
+<td style="text-align:left;">
+</td>
+<td style="text-align:left;">
+</td>
+<td style="text-align:left;">
+</td>
+<td style="text-align:left;">
+</td>
+<td style="text-align:left;">
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<a href="#I-ergmTerm-ca2567ac">I</a>
 </td>
 <td style="text-align:left;">
 ✔
@@ -3330,6 +3387,45 @@ cat dyad attr
 </td>
 <td style="text-align:left;">
 ✔
+</td>
+<td style="text-align:left;">
+</td>
+<td style="text-align:left;">
+</td>
+<td style="text-align:left;">
+</td>
+<td style="text-align:left;">
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<a href="#cdf-ergmTerm-66ced489">cdf</a>
+</td>
+<td style="text-align:left;">
+</td>
+<td style="text-align:left;">
+✔
+</td>
+<td style="text-align:left;">
+</td>
+<td style="text-align:left;">
+</td>
+<td style="text-align:left;">
+✔
+</td>
+<td style="text-align:left;">
+✔
+</td>
+<td style="text-align:left;">
+</td>
+<td style="text-align:left;">
+✔
+</td>
+<td style="text-align:left;">
+</td>
+<td style="text-align:left;">
+</td>
+<td style="text-align:left;">
 </td>
 <td style="text-align:left;">
 </td>
@@ -6840,6 +6936,18 @@ operator, binary, valued
 </tr>
 <tr>
 <td>
+<a id="I-ergmTerm-ca2567ac">I(formula)
+I(formula)</a><br /><em>Substitute a formula into the model
+formula</em>: This is a convenience operator that can be used to paste
+terms constructed elsewhere into a formula.
+</p>
+</td>
+<td>
+operator, binary, valued
+</td>
+</tr>
+<tr>
+<td>
 <a id="Label-ergmTerm-6de33f4e">Label(formula, label, pos)
 Label(formula, label, pos)</a><br /><em>Modify terms’ coefficient
 names</em>: This operator evaluates formula without modification, but
@@ -7236,11 +7344,12 @@ bipartite, undirected, binary
 keep=NULL, alpha=1, beta=1, byb2attr=NULL,
 levels=NULL)</a><br /><em>Nodal attribute-based homophily effect for the
 first mode in a bipartite network</em>: This term is introduced in
-Bomiriya et al (2014). With the default alpha and beta values, this term
-will simply be a homophily based two-star statistic. This term adds one
-statistic to the model unless diff is set to TRUE , in which case the
-term adds multiple network statistics to the model, one for each of (a
-subset of) the unique values of the attr attribute.
+BoBa23m;textualergmBomiriya et al. (2023). With the default alpha and
+beta values, this term will simply be a homophily based two-star
+statistic. This term adds one statistic to the model unless diff is set
+to TRUE , in which case the term adds multiple network statistics to the
+model, one for each of (a subset of) the unique values of the attr
+attribute.
 </p>
 </td>
 <td>
@@ -7460,12 +7569,13 @@ bipartite, undirected, binary
 <a id="b2nodematch-ergmTerm-126ff8a2">b2nodematch(attr, diff=FALSE,
 keep=NULL, alpha=1, beta=1, byb1attr=NULL,
 levels=NULL)</a><br /><em>Nodal attribute-based homophily effect for the
-second mode in a bipartite network</em>: This term is introduced in
-Bomiriya et al (2014). With the default alpha and beta values, this term
-will simply be a homophily based two-star statistic. This term adds one
-statistic to the model unless diff is set to TRUE , in which case the
-term adds multiple network statistics to the model, one for each of (a
-subset of) the unique values of the attr attribute.
+second mode in a bipartite network</em>: This term is introduced by
+BoBa23m;textualergmBomiriya et al. (2023). With the default alpha and
+beta values, this term will simply be a homophily based two-star
+statistic. This term adds one statistic to the model unless diff is set
+to TRUE , in which case the term adds multiple network statistics to the
+model, one for each of (a subset of) the unique values of the attr
+attribute.
 </p>
 </td>
 <td>
@@ -7534,14 +7644,30 @@ bipartite, categorical nodal attribute, undirected, binary
 <a id="balance-ergmTerm-9111bd77">balance</a><br /><em>Balanced
 triads</em>: This term adds one network statistic to the model equal to
 the number of triads in the network that are balanced. The balanced
-triads are those of type 102 or 300 in the categorization of Davis and
-Leinhardt (1972). For details on the 16 possible triad types, see
-?triad.classify in the {sna} package. For an undirected network, the
-balanced triads are those with an odd number of ties (i.e., 1 and 3).
+triads are those of type 102 or 300 in the categorization of
+DaLe72s;textualergmDavis and Leinhardt (1972). For details on the 16
+possible triad types, see ?triad.classify in the {sna} package. For an
+undirected network, the balanced triads are those with an odd number of
+ties (i.e., 1 and 3).
 </p>
 </td>
 <td>
 directed, triad-related, undirected, binary
+</td>
+</tr>
+<tr>
+<td>
+<a id="cdf-ergmTerm-66ced489">cdf(min = NULL, max = NULL, by = NULL,
+margin = 0.1, nmax = 100)</a><br /><em>Empirical cumulative distribution
+function (unnormalized) of the network’s dyad values</em>: For every
+value x in seq(min, max, by), compute the number of dyads whose value is
+less than or equal than x. If not given, the range is autodetected based
+on the values in the LHS network, subject to adjustment via margin and
+nmax.
+</p>
+</td>
+<td>
+directed, dyad-independent, undirected, valued
 </td>
 </tr>
 <tr>
@@ -7643,10 +7769,10 @@ directed, undirected, binary, valued
 <a id="cyclicalweights-ergmTerm-994a6687">cyclicalweights(twopath=“min”,
 combine=“max”, affect=“min”)</a><br /><em>Cyclical weights</em>: This
 statistic implements the cyclical weights statistic, like that defined
-by Krivitsky (2012), Equation 13, but with the focus dyad being y_{j,i}
-rather than y_{i,j} . For each option, the first (and the default) is
-more stable but also more conservative, while the second is more
-sensitive but more likely to induce a multimodal distribution of
+by Kr12e;textualergmKrivitsky (2012), Equation 13, but with the focus
+dyad being y_{j,i} rather than y_{i,j} . For each option, the first (and
+the default) is more stable but also more conservative, while the second
+is more sensitive but more likely to induce a multimodal distribution of
 networks.
 </p>
 </td>
@@ -7712,8 +7838,9 @@ categorical nodal attribute, frequently-used, undirected, binary
 3/2 power</em>: This term adds one network statistic to the model
 equaling the sum over the actors of each actor’s degree taken to the 3/2
 power (or, equivalently, multiplied by its square root). This term is an
-undirected analog to the terms of Snijders et al. (2010), equations (11)
-and (12). This term can only be used with undirected networks.
+undirected analog to the terms of SnVa10i;textualergmSnijders et
+al. (2010), equations (11) and (12). This term can only be used with
+undirected networks.
 </p>
 </td>
 <td>
@@ -8138,8 +8265,8 @@ categorical nodal attribute, directed, frequently-used, binary
 the 3/2 power</em>: This term adds one network statistic to the model
 equaling the sum over the actors of each actor’s indegree taken to the
 3/2 power (or, equivalently, multiplied by its square root). This term
-is analogous to the term of Snijders et al. (2010), equation (12). This
-term can only be used with directed networks.
+is analogous to the term of SnVa10i;textualergmSnijders et al. (2010),
+equation (12). This term can only be used with directed networks.
 </p>
 </td>
 <td>
@@ -8164,8 +8291,8 @@ directed, dyad-independent, undirected, valued
 triads</em>: This term adds one statistic to the model, equal to the
 number of triads in the network that are intransitive. The intransitive
 triads are those of type 111D , 201 , 111U , 021C , or 030C in the
-categorization of Davis and Leinhardt (1972). For details on the 16
-possible triad types, see triad.classify in the
+categorization of DaLe72s;textualergmDavis and Leinhardt (1972). For
+details on the 16 possible triad types, see triad.classify in the
 snahttps://CRAN.R-project.org/package=snasna package. Note the
 distinction from the ctriple term.
 </p>
@@ -8310,9 +8437,9 @@ ERGMs, equal to the number of pairs of actors i and j for which
 <p>For valued ERGMs, equal to <em>{i&lt;j} m(y</em>{i,j},y_{j,i}) ,
 where m is determined by form argument: “min” for (y_{i,j},y_{j,i}),
 “nabsdiff” for -|y_{i,j},y_{j,i}|, “product” for y_{i,j}y_{j,i}, and
-“geometric” for . See Krivitsky (2012) for a discussion of these
-statistics. form=“threshold” simply computes the binary mutuality after
-thresholding at threshold.</p>
+“geometric” for . See Kr12e;textualergmKrivitsky (2012) for a discussion
+of these statistics. form=“threshold” simply computes the binary
+mutuality after thresholding at threshold.</p>
 This term can only be used with directed networks.
 </p>
 </td>
@@ -8324,9 +8451,9 @@ directed, frequently-used, binary, valued
 <td>
 <a id="nearsimmelian-ergmTerm-ba85787e">nearsimmelian</a><br /><em>Near
 simmelian triads</em>: This term adds one statistic to the model equal
-to the number of near Simmelian triads, as defined by Krackhardt and
-Handcock (2007). This is a sub-graph of size three which is exactly one
-tie short of being complete.
+to the number of near Simmelian triads, as defined by
+KrHa07h;textualergmKrackhardt and Handcock (2007). This is a sub-graph
+of size three which is exactly one tie short of being complete.
 </p>
 </td>
 <td>
@@ -8697,8 +8824,8 @@ categorical nodal attribute, directed, frequently-used, binary
 to the 3/2 power</em>: This term adds one network statistic to the model
 equaling the sum over the actors of each actor’s outdegree taken to the
 3/2 power (or, equivalently, multiplied by its square root). This term
-is analogous to the term of Snijders et al. (2010), equation (12). This
-term can only be used with directed networks.
+is analogous to the term of SnVa10i;textualergmSnijders et al. (2010),
+equation (12). This term can only be used with directed networks.
 </p>
 </td>
 <td>
@@ -8775,8 +8902,8 @@ directed, dyad-independent, binary, valued
 <td>
 <a id="simmelian-ergmTerm-15e60325">simmelian</a><br /><em>Simmelian
 triads</em>: This term adds one statistic to the model equal to the
-number of Simmelian triads, as defined by Krackhardt and Handcock
-(2007). This is a complete sub-graph of size three.
+number of Simmelian triads, as defined by KrHa07h;textualergmKrackhardt
+and Handcock (2007). This is a complete sub-graph of size three.
 </p>
 </td>
 <td>
@@ -8788,12 +8915,12 @@ directed, triad-related, binary
 <a id="simmelianties-ergmTerm-3361aef9">simmelianties</a><br /><em>Ties
 in simmelian triads</em>: This term adds one statistic to the model
 equal to the number of ties in the network that are associated with
-Simmelian triads, as defined by Krackhardt and Handcock (2007). Each
-Simmelian has six ties in it but, because Simmelians can overlap in
-terms of nodes (and associated ties), the total number of ties in these
-Simmelians is less than six times the number of Simmelians. Hence this
-is a measure of the clustering of Simmelians (given the number of
-Simmelians).
+Simmelian triads, as defined by KrHa07h;textualergmKrackhardt and
+Handcock (2007). Each Simmelian has six ties in it but, because
+Simmelians can overlap in terms of nodes (and associated ties), the
+total number of ties in these Simmelians is less than six times the
+number of Simmelians. Hence this is a measure of the clustering of
+Simmelians (given the number of Simmelians).
 </p>
 </td>
 <td>
@@ -8913,8 +9040,8 @@ directed, triad-related, undirected, binary
 triads</em>: This term adds one statistic to the model, equal to the
 number of triads in the network that are transitive. The transitive
 triads are those of type 120D , 030T , 120U , or 300 in the
-categorization of Davis and Leinhardt (1972). For details on the 16
-possible triad types, see ?triad.classify in the
+categorization of DaLe72s;textualergmDavis and Leinhardt (1972). For
+details on the 16 possible triad types, see ?triad.classify in the
 snahttps://CRAN.R-project.org/package=snasna package. Note the
 distinction from the ttriple term. This term can only be used with
 directed networks.
@@ -8941,10 +9068,10 @@ categorical nodal attribute, directed, triad-related, undirected, binary
 <a id="transitiveweights-ergmTerm-7797c57b">transitiveweights(twopath=“min”,
 combine=“max”, affect=“min”)</a><br /><em>Transitive weights</em>: This
 statistic implements the transitive weights statistic defined by
-Krivitsky (2012), Equation 13. For each of these options, the first (and
-the default) is more stable but also more conservative, while the second
-is more sensitive but more likely to induce a multimodal distribution of
-networks.
+Kr12e;textualergmKrivitsky (2012), Equation 13. For each of these
+options, the first (and the default) is more stable but also more
+conservative, while the second is more sensitive but more likely to
+induce a multimodal distribution of networks.
 </p>
 </td>
 <td>
@@ -8956,19 +9083,19 @@ directed, nonnegative, triad-related, undirected, valued
 <a id="triadcensus-ergmTerm-6a6bbd87">triadcensus(levels)</a><br /><em>Triad
 census</em>: For a directed network, this term adds one network
 statistic for each of an arbitrary subset of the 16 possible types of
-triads categorized by Davis and Leinhardt (1972) as 003, 012, 102, 021D,
-021U, 021C, 111D, 111U, 030T, 030C, 201, 120D, 120U, 120C, 210, and 300
-. Note that at least one category should be dropped; otherwise a linear
-dependency will exist among the 16 statistics, since they must sum to
-the total number of three-node sets. By default, the category 003 ,
-which is the category of completely empty three-node sets, is dropped.
-This is considered category zero, and the others are numbered 1 through
-15 in the order given above. Each statistic is the count of the
-corresponding triad type in the network. For details on the 16 types,
-see ?triad.classify in the snahttps://CRAN.R-project.org/package=snasna
-package, on which this code is based. For an undirected network, the
-triad census is over the four types defined by the number of ties (i.e.,
-0, 1, 2, and 3).
+triads categorized by DaLe72s;textualergmDavis and Leinhardt (1972) as
+003, 012, 102, 021D, 021U, 021C, 111D, 111U, 030T, 030C, 201, 120D,
+120U, 120C, 210, and 300 . Note that at least one category should be
+dropped; otherwise a linear dependency will exist among the 16
+statistics, since they must sum to the total number of three-node sets.
+By default, the category 003 , which is the category of completely empty
+three-node sets, is dropped. This is considered category zero, and the
+others are numbered 1 through 15 in the order given above. Each
+statistic is the count of the corresponding triad type in the network.
+For details on the 16 types, see ?triad.classify in the
+snahttps://CRAN.R-project.org/package=snasna package, on which this code
+is based. For an undirected network, the triad census is over the four
+types defined by the number of ties (i.e., 0, 1, 2, and 3).
 </p>
 </td>
 <td>
@@ -9112,6 +9239,7 @@ attribute</a>
 <a href="#Exp-ergmTerm-2a7372d1">Exp</a>
 <a href="#F-ergmTerm-1029798a">F</a>
 <a href="#For-ergmTerm-f403b433">For</a>
+<a href="#I-ergmTerm-ca2567ac">I</a>
 <a href="#Label-ergmTerm-6de33f4e">Label</a>
 <a href="#Log-ergmTerm-f1bed869">Log</a>
 <a href="#NodematchFilter-ergmTerm-8bd022b9">NodematchFilter</a>
@@ -9128,6 +9256,7 @@ attribute</a>
 <a href="#Curve-ergmTerm-a37fe1f0">Curve</a>
 <a href="#Exp-ergmTerm-2a7372d1">Exp</a>
 <a href="#For-ergmTerm-f403b433">For</a>
+<a href="#I-ergmTerm-ca2567ac">I</a>
 <a href="#Label-ergmTerm-6de33f4e">Label</a>
 <a href="#Log-ergmTerm-f1bed869">Log</a>
 <a href="#Prod-ergmTerm-1bd03b4f">Prod</a>
@@ -9145,6 +9274,7 @@ attribute</a>
 <a href="#b2cov-ergmTerm-abbfac55">b2cov</a>
 <a href="#b2factor-ergmTerm-bed2c507">b2factor</a>
 <a href="#b2sociality-ergmTerm-ae7e4336">b2sociality</a>
+<a href="#cdf-ergmTerm-66ced489">cdf</a>
 <a href="#cyclicalties-ergmTerm-636eecc3">cyclicalties</a>
 <a href="#cyclicalweights-ergmTerm-994a6687">cyclicalweights</a>
 <a href="#diff-ergmTerm-0b65ee46">diff</a>
@@ -9179,6 +9309,7 @@ attribute</a>
 <a href="#Exp-ergmTerm-2a7372d1">Exp</a>
 <a href="#F-ergmTerm-1029798a">F</a>
 <a href="#For-ergmTerm-f403b433">For</a>
+<a href="#I-ergmTerm-ca2567ac">I</a>
 <a href="#Label-ergmTerm-6de33f4e">Label</a>
 <a href="#Log-ergmTerm-f1bed869">Log</a>
 <a href="#NodematchFilter-ergmTerm-8bd022b9">NodematchFilter</a>
@@ -9349,6 +9480,7 @@ attribute</a>
 <a href="#atmost-ergmTerm-145d3def">atmost</a>
 <a href="#attrcov-ergmTerm-a2d6aeef">attrcov</a>
 <a href="#balance-ergmTerm-9111bd77">balance</a>
+<a href="#cdf-ergmTerm-66ced489">cdf</a>
 <a href="#ctriple-ergmTerm-9ad4f7cd">ctriple</a>
 <a href="#cycle-ergmTerm-20398683">cycle</a>
 <a href="#cyclicalties-ergmTerm-636eecc3">cyclicalties</a>
@@ -9434,6 +9566,7 @@ attribute</a>
 <a href="#b2factor-ergmTerm-bed2c507">b2factor</a>
 <a href="#b2nodematch-ergmTerm-126ff8a2">b2nodematch</a>
 <a href="#b2sociality-ergmTerm-ae7e4336">b2sociality</a>
+<a href="#cdf-ergmTerm-66ced489">cdf</a>
 <a href="#density-ergmTerm-9f4752d0">density</a>
 <a href="#diff-ergmTerm-0b65ee46">diff</a>
 <a href="#dyadcov-ergmTerm-5fba5404">dyadcov</a>
@@ -9508,6 +9641,7 @@ attribute</a>
 <a href="#b2starmix-ergmTerm-391186eb">b2starmix</a>
 <a href="#b2twostar-ergmTerm-ca7ec3bb">b2twostar</a>
 <a href="#balance-ergmTerm-9111bd77">balance</a>
+<a href="#cdf-ergmTerm-66ced489">cdf</a>
 <a href="#coincidence-ergmTerm-58ca78cc">coincidence</a>
 <a href="#concurrent-ergmTerm-a0121891">concurrent</a>
 <a href="#concurrentties-ergmTerm-8ccb08e6">concurrentties</a>
@@ -9683,21 +9817,21 @@ attribute</a>
 <hr />
 <p>This documentation was built with..</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code></pre></div>
-<pre><code>## R Under development (unstable) (2025-08-25 r88700)
+<pre><code>## R Under development (unstable) (2025-12-21 r89216)
 ## Platform: x86_64-pc-linux-gnu
-## Running under: Debian GNU/Linux 13 (trixie)
+## Running under: Debian GNU/Linux forky/sid
 ## 
 ## Matrix products: default
 ## BLAS:   /home/pavel/Documents/Research/Software/R-trunk/lib/libRblas.so 
 ## LAPACK: /usr/lib/x86_64-linux-gnu/lapack/liblapack.so.3.12.1;  LAPACK version 3.12.0
 ## 
 ## locale:
-##  [1] LC_CTYPE=en_AU.UTF-8      LC_NUMERIC=C             
-##  [3] LC_TIME=en_AU.utf8        LC_COLLATE=C             
-##  [5] LC_MONETARY=en_AU.utf8    LC_MESSAGES=en_AU.UTF-8  
-##  [7] LC_PAPER=en_AU.utf8       LC_NAME=C                
-##  [9] LC_ADDRESS=C              LC_TELEPHONE=C           
-## [11] LC_MEASUREMENT=en_AU.utf8 LC_IDENTIFICATION=C      
+##  [1] LC_CTYPE=en_AU.UTF-8       LC_NUMERIC=C              
+##  [3] LC_TIME=en_AU.UTF-8        LC_COLLATE=C              
+##  [5] LC_MONETARY=en_AU.UTF-8    LC_MESSAGES=en_AU.UTF-8   
+##  [7] LC_PAPER=en_AU.UTF-8       LC_NAME=C                 
+##  [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+## [11] LC_MEASUREMENT=en_AU.UTF-8 LC_IDENTIFICATION=C       
 ## 
 ## time zone: Australia/Sydney
 ## tzcode source: system (glibc)
@@ -9706,23 +9840,24 @@ attribute</a>
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-## [1] ergm_4.10.1    network_1.19.0
+## [1] ergm_4.11.0    network_1.19.0
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] Matrix_1.7-3             trust_0.1-8              jsonlite_2.0.0          
-##  [4] compiler_4.6.0           stringr_1.5.1            parallel_4.6.0          
-##  [7] jquerylib_0.1.4          yaml_2.3.10              fastmap_1.2.0           
+##  [1] Matrix_1.7-4             trust_0.1-8              jsonlite_2.0.0          
+##  [4] compiler_4.6.0           stringr_1.6.0            parallel_4.6.0          
+##  [7] jquerylib_0.1.4          yaml_2.3.12              fastmap_1.2.0           
 ## [10] lattice_0.22-7           coda_0.19-4.1            R6_2.6.1                
-## [13] robustbase_0.99-4-1      knitr_1.50               rbibutils_2.3           
-## [16] tibble_3.3.0             rle_0.10.0               statnet.common_4.12.0   
-## [19] bslib_0.9.0              pillar_1.11.0            rlang_1.1.6             
-## [22] cachem_1.1.0             stringi_1.8.7            xfun_0.53               
-## [25] sass_0.4.10              memoise_2.0.1            cli_3.6.5               
-## [28] magrittr_2.0.3           Rdpack_2.6.4             digest_0.6.37           
-## [31] grid_4.6.0               lpSolveAPI_5.5.2.0-17.14 lifecycle_1.0.4         
-## [34] DEoptimR_1.1-4           vctrs_0.6.5              evaluate_1.0.4          
-## [37] glue_1.8.0               rmarkdown_2.29           purrr_1.1.0             
-## [40] tools_4.6.0              pkgconfig_2.0.3          htmltools_0.5.8.1</code></pre>
+## [13] robustbase_0.99-6        knitr_1.51               rbibutils_2.4           
+## [16] MASS_7.3-65              tibble_3.3.0             rle_0.10.0              
+## [19] statnet.common_4.13.0    bslib_0.9.0              pillar_1.11.1           
+## [22] rlang_1.1.6              stringi_1.8.7            cachem_1.1.0            
+## [25] xfun_0.55                sass_0.4.10              otel_0.2.0              
+## [28] memoise_2.0.1            cli_3.6.5                magrittr_2.0.4          
+## [31] Rdpack_2.6.4             digest_0.6.39            grid_4.6.0              
+## [34] lpSolveAPI_5.5.2.0-17.14 lifecycle_1.0.4          DEoptimR_1.1-4          
+## [37] vctrs_0.6.5              evaluate_1.0.5           glue_1.8.0              
+## [40] rmarkdown_2.30           purrr_1.2.0              tools_4.6.0             
+## [43] pkgconfig_2.0.3          htmltools_0.5.9</code></pre>
 </div>
 
 

@@ -61,10 +61,9 @@
 
 #' @title Curved settings for geometric weights for the `gw*` terms
 #'
-#' @description This is a list containing `map` and `gradient` for the weights described by Hunter (2007).
+#' @description This is a list containing `map` and `gradient` for the weights described by \insertCite{Hu07c;textual}{ergm}.
 #'
-#' @references
-#' David R. Hunter (2007) Curved Exponential Family Models for Social Networks. *Social Networks*, 29: 216-230. \doi{10.1016/j.socnet.2006.08.005}
+#' @references \insertAllCited{}
 #' @keywords internal
 #' @name ergm_GWDECAY
 #' @export ergm_GWDECAY
@@ -222,7 +221,7 @@ decay_vs_fixed <- function(a, name, no_curved_attrarg=TRUE){
   } else {
     if (any(from == 0)) {
       emptynwstats <-
-        replace(dbl_along(from), from == 0,
+        replace(rep_along(from, 0), from == 0,
                 switch(deg,
                        b1 = b1.size(nw),
                        b2 = b2.size(nw),
@@ -296,7 +295,7 @@ decay_vs_fixed <- function(a, name, no_curved_attrarg=TRUE){
   } else {
     if (any(d == 0)) {
       emptynwstats <-
-        replace(dbl_along(d), d == 0,
+        replace(rep_along(d, 0), d == 0,
                 switch(deg,
                        b1 = b1.size(nw),
                        b2 = b2.size(nw),
@@ -527,13 +526,13 @@ InitErgmTerm.absdiffcat <- function(nw, arglist, ..., version=packageVersion("er
 #' @title Alternating \eqn{k}-star
 #' @description Add one network statistic to the model equal to a weighted alternating
 #'   sequence of \eqn{k}-star statistics with weight parameter `lambda`.
-#' @details This is the version given in Snijders et al. (2006). The `gwdegree` and
+#' @details This is the version given by \insertCite{SnPa06n;textual}{ergm}. The `gwdegree` and
 #'   `altkstar` produce mathematically equivalent models, as long as they are used
 #'   together with the `edges` (or `kstar(1)`) term, yet the interpretation of the
 #'   `gwdegree` parameters is slightly more straightforward than the interpretation
 #'   of the `altkstar` parameters. For this reason, we recommend the use of the
 #'   `gwdegree` instead of `altkstar`. See Section 3 and especially equation (13)
-#'   of Hunter (2007) for details.
+#'   of \insertCite{Hu07c;textual}{ergm} for details.
 #'
 #' @usage
 #' # binary: altkstar(lambda,
@@ -542,7 +541,7 @@ InitErgmTerm.absdiffcat <- function(nw, arglist, ..., version=packageVersion("er
 #' @param lambda weight parameter to model
 #' @param fixed indicates whether the `decay` parameter is
 #'   fixed at the given value, or is to be fit as a curved exponential family model
-#'   (see Hunter and Handcock, 2006).  The default is `FALSE`, which means the scale
+#'   (see \insertCite{HuHa06i;nobrackets}{ergm}).  The default is `FALSE`, which means the scale
 #'   parameter is not fixed and thus the model is a CEF model.
 #'
 #' @template ergmTerm-general
@@ -954,7 +953,7 @@ InitErgmTerm.b1degree <- function(nw, arglist, ..., version=packageVersion("ergm
 #' @concept undirected
 InitErgmTerm.b1dsp <- function(nw, arglist, cache.sp=TRUE, ...){
   .d_sp_impl("b1", nw, arglist, cache.sp,
-             function(d, nw, ...) replace(dbl_along(d), d == 0, choose(b1.size(nw), 2)),
+             function(d, nw, ...) replace(rep_along(d, 0), d == 0, choose(b1.size(nw), 2)),
              ...)
 }
 
@@ -1539,7 +1538,7 @@ InitErgmTerm.b2degree <- function(nw, arglist, ..., version=packageVersion("ergm
 #' @concept undirected
 InitErgmTerm.b2dsp <- function(nw, arglist, cache.sp=TRUE, ...){
   .d_sp_impl("b2", nw, arglist, cache.sp,
-             function(d, nw, ...) replace(dbl_along(d), d==0, (b2.size(nw))*(b2.size(nw)-1)/2),
+             function(d, nw, ...) replace(rep_along(d, 0), d==0, (b2.size(nw))*(b2.size(nw)-1)/2),
              ...)
 }
 
@@ -1911,7 +1910,7 @@ InitErgmTerm.b2twostar <- function(nw, arglist, ..., version=packageVersion("erg
 #' @title Balanced triads
 #' @description This term adds one network statistic to the model equal to the number of
 #'   triads in the network that are balanced. The balanced triads are those of
-#'   type `102` or `300` in the categorization of Davis and Leinhardt (1972). For details on the 16 possible triad types, see
+#'   type `102` or `300` in the categorization of \insertCite{DaLe72s;textual}{ergm}. For details on the 16 possible triad types, see
 #'   `?triad.classify` in the `{sna}` package. For an undirected
 #'   network, the balanced triads are those with an odd number of ties (i.e., 1
 #'   and 3).
@@ -2277,7 +2276,7 @@ InitErgmTerm.degree<-function(nw, arglist, ..., version=packageVersion("ergm")) 
 #' @description This term adds one network statistic to the model equaling the sum over
 #'   the actors of each actor's degree taken to the 3/2 power (or,
 #'   equivalently, multiplied by its square root). This term is an
-#'   undirected analog to the terms of Snijders et al. (2010), equations
+#'   undirected analog to the terms of \insertCite{SnVa10i;textual}{ergm}, equations
 #'   (11) and (12). This term can only be used with undirected networks.
 #'
 #' @usage
@@ -2418,7 +2417,8 @@ InitErgmTerm.diff <- function(nw, arglist, ..., version=packageVersion("ergm")) 
   ### Construct the list to return
   list(name="diff",                                     #name: required
        coef.names = paste0("diff", if(a$pow!=1) a$pow else "", if(sign.action!="identity") paste0(".", sign.action), if(sign.action!="abs") paste0(".", dir), ".", attrname), #coef.names: required
-       inputs = c(a$pow, dir.mul, sign.code, nodecov),  # We need to include the nodal covariate for this term
+       iinputs = c(dir.mul, sign.code),
+       inputs = c(a$pow, nodecov),
        dependence = FALSE # So we don't use MCMC if not necessary
        )
 }
@@ -2953,7 +2953,7 @@ InitErgmTerm.idegree<-function(nw, arglist, ..., version=packageVersion("ergm"))
 #' @description This term adds one network statistic to the model equaling the sum
 #'   over the actors of each actor's indegree taken to the 3/2 power
 #'   (or, equivalently, multiplied by its square root). This term is
-#'   analogous to the term of Snijders et al. (2010), equation (12). This
+#'   analogous to the term of \insertCite{SnVa10i;textual}{ergm}, equation (12). This
 #'   term can only be used with directed networks.
 #'
 #' @usage
@@ -2980,7 +2980,7 @@ InitErgmTerm.idegree1.5<-function (nw, arglist, ...) {
 #' @description This term adds one statistic to the model, equal to the number of triads in
 #'   the network that are intransitive. The intransitive triads are those of type
 #'   `111D` , `201` , `111U` , `021C` , or `030C` in the
-#'   categorization of Davis and Leinhardt (1972). For details on the 16 possible
+#'   categorization of \insertCite{DaLe72s;textual}{ergm}. For details on the 16 possible
 #'   triad types, see `triad.classify` in the
 #'   \CRANpkg{sna} package. Note the distinction from the `ctriple`
 #'   term.
@@ -3600,7 +3600,7 @@ InitErgmTerm.mutual<-function (nw, arglist, ..., version=packageVersion("ergm"))
 #' @templateVar name nearsimmelian
 #' @title Near simmelian triads
 #' @description This term adds one statistic to the model equal to the number of near
-#'   Simmelian triads, as defined by Krackhardt and Handcock (2007). This is a
+#'   Simmelian triads, as defined by \insertCite{KrHa07h;textual}{ergm}. This is a
 #'   sub-graph of size three which is exactly one tie short of being complete.
 #'
 #' @usage
@@ -4383,7 +4383,7 @@ InitErgmTerm.odegree<-function(nw, arglist, ..., version=packageVersion("ergm"))
 #' @description This term adds one network statistic to the model equaling the sum
 #'   over the actors of each actor's outdegree taken to the 3/2 power
 #'   (or, equivalently, multiplied by its square root). This term is
-#'   analogous to the term of Snijders et al. (2010), equation (12). This
+#'   analogous to the term of \insertCite{SnVa10i;textual}{ergm}, equation (12). This
 #'   term can only be used with directed networks.
 #'
 #' @usage
@@ -4554,7 +4554,7 @@ InitErgmTerm.receiver<-function(nw, arglist, ..., version=packageVersion("ergm")
   ld<-length(d)
   if(ld==0){return(NULL)}
   list(name="receiver", coef.names=paste("receiver",d,sep=""),
-       inputs=c(d), emptynwstats=dbl_along(d), dependence=FALSE, minval=0, maxval=network.size(nw)-1, conflicts.constraints="idegrees")
+       inputs=c(d), emptynwstats=rep_along(d, 0), dependence=FALSE, minval=0, maxval=network.size(nw)-1, conflicts.constraints="idegrees")
 }
 
 
@@ -4611,7 +4611,7 @@ InitErgmTerm.sender<-function(nw, arglist, ..., version=packageVersion("ergm")) 
   ld<-length(d)
   if(ld==0){return(NULL)}
   list(name="sender", coef.names=paste("sender",d,sep=""),
-       inputs=c(d), emptynwstats=dbl_along(d), dependence=FALSE, minval=0, maxval=network.size(nw)-1, conflicts.constraints="odegrees")
+       inputs=c(d), emptynwstats=rep_along(d, 0), dependence=FALSE, minval=0, maxval=network.size(nw)-1, conflicts.constraints="odegrees")
 }
 
 ################################################################################
@@ -4620,7 +4620,7 @@ InitErgmTerm.sender<-function(nw, arglist, ..., version=packageVersion("ergm")) 
 #' @title Simmelian triads
 #' @description This term adds one
 #'   statistic to the model equal to the number of Simmelian triads, as defined
-#'   by Krackhardt and Handcock (2007). This is a complete sub-graph of size
+#'   by \insertCite{KrHa07h;textual}{ergm}. This is a complete sub-graph of size
 #'   three.
 #'
 #' @usage
@@ -4648,8 +4648,8 @@ InitErgmTerm.simmelian<-function (nw, arglist, ...) {
 #' @title Ties in simmelian triads
 #' @description This term adds
 #'   one statistic to the model equal to the number of ties in the network that
-#'   are associated with Simmelian triads, as defined by Krackhardt and Handcock
-#'   (2007). Each Simmelian has six ties in it but, because Simmelians can
+#'   are associated with Simmelian triads, as defined by \insertCite{KrHa07h;textual}{ergm}.
+#'   Each Simmelian has six ties in it but, because Simmelians can
 #'   overlap in terms of nodes (and associated ties), the total number of ties in
 #'   these Simmelians is less than six times the number of Simmelians. Hence this
 #'   is a measure of the clustering of Simmelians (given the number of
@@ -4904,7 +4904,7 @@ InitErgmTerm.threepath <- function(nw, arglist, ..., version=packageVersion("erg
 #' @description This term adds one statistic to the model, equal to the number of triads in
 #'   the network that are transitive. The transitive triads are those of type
 #'   `120D` , `030T` , `120U` , or `300` in the categorization
-#'   of Davis and Leinhardt (1972). For details on the 16 possible triad types,
+#'   of \insertCite{DaLe72s;textual}{ergm}. For details on the 16 possible triad types,
 #'   see `?triad.classify` in the \CRANpkg{sna} package.
 #'   Note the distinction from the `ttriple` term. This term can only be
 #'   used with directed networks.
@@ -4931,7 +4931,7 @@ InitErgmTerm.transitive<-function (nw, arglist, ...) {
 #' @title Triad census
 #' @description For a directed network, this term adds one network statistic for each of
 #'   an arbitrary subset of the 16 possible types of triads categorized by
-#'   Davis and Leinhardt (1972) as `003, 012, 102, 021D, 021U, 021C, 111D,
+#'   \insertCite{DaLe72s;textual}{ergm} as `003, 012, 102, 021D, 021U, 021C, 111D,
 #'   ` `	111U, 030T, 030C, 201, 120D, 120U, 120C, 210,` and `300` . Note that at
 #'   least one category should be dropped; otherwise a linear dependency will
 #'   exist among the 16 statistics, since they must sum to the total number of
@@ -4994,7 +4994,7 @@ InitErgmTerm.triadcensus<-function (nw, arglist, ..., version=packageVersion("er
   d <- match(d, tcn) - 1
   
   if (any(d==0)) {
-    emptynwstats <- dbl_along(d)
+    emptynwstats <- rep_along(d, 0)
     nwsize <- network.size(nw)
     # SEARCH_ON_THIS_TO_TRACK_DOWN_TRIADCENSUS_CHANGE
     # to undo triadcensus change, comment out next line:

@@ -7,7 +7,6 @@
 #
 #  Copyright 2003-2025 Statnet Commons
 ################################################################################
-# Tests of gof()
 
 ctrl4 <- control.gof.ergm(nsim=4)
 
@@ -17,7 +16,7 @@ test_that("gof() defaults are correct for bipartite networks", {
   expect_silent(gof <- gof(fit, control=ctrl4))
   expect_silent(plot(gof))
   expect_setequal(which_gof(gof),
-                  c("b1degree", "b2degree", "espartners", "distance", "model"))
+                  c("b1degree", "b2degree", "dspartners", "distance", "model"))
 })
 
 
@@ -51,4 +50,28 @@ test_that("gof() defaults and GOF handling is correct for directed networks", {
   expect_silent(plot(gof))
   expect_setequal(which_gof(gof),
                   c("idegree"))
+
+  expect_silent(gof <- gof(fit, GOF=~model+triadcensus, control=ctrl4))
+  expect_silent(plot(gof))
+  expect_setequal(which_gof(gof),
+                  c("triadcensus", "model"))
+})
+
+
+
+test_that("gof() is correct for valued networks", {
+  data(sampson)
+  fit <- ergm(samplike~sum + nonzero + nodematch("group",diff=TRUE,form="sum"),
+              response="nominations", reference=~DiscUnif(0, 3),
+              control = control.ergm(MCMLE.maxit = 2), eval.loglik = FALSE)
+
+  gof <- gof(fit)
+  expect_no_error(expect_no_warning(print(gof)))
+  expect_no_error(expect_no_warning(plot(gof)))
+  expect_setequal(which_gof(gof), c("model", "cdf"))
+
+  gof <- gof(fit, GOF = ~For(v = -1:4, ~atmost(v)))
+  expect_no_error(expect_no_warning(print(gof)))
+  expect_no_error(expect_no_warning(plot(gof)))
+  expect_setequal(which_gof(gof), c("model", "user"))
 })

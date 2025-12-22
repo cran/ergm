@@ -10,10 +10,13 @@
  *  Copyright 2003-2025 Statnet Commons
  */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* *** don't forget, edges are now given by tails -> heads, and as
        such, the function definitions now require tails to be passed
        in before heads */
-
 /*****************
  Edge ETYPE(EdgetreeSearch)
 
@@ -144,3 +147,16 @@ static inline EWTTYPE ETYPE(GetEdge) (Vertex tail, Vertex head, ETYPE(Network) *
   return IFELSEEWT(oe ? nwp->outedges[oe].weight : 0,
                    oe != 0 ? TRUE : FALSE);
 }
+
+/*****************
+ int ETYPE(NetworkInitializeLike)
+
+ Construct an empty network with the same settings (size, etc.) to the given network; simple enough to be static inline.
+*****************/
+static inline ETYPE(Network)* ETYPE(NetworkInitializeLike)(ETYPE(Network) *nwp) {
+  return ETYPE(NetworkInitialize_noLT)(NULL, NULL, IFEWT(NULL,) 0, nwp->nnodes, nwp->directed_flag, nwp->bipartite);
+}
+
+#ifdef __cplusplus
+}
+#endif

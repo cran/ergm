@@ -203,7 +203,7 @@ the network(s) themselves. Deprecated in favor of \verb{output=}.}
 \item{esteq}{Logical: If TRUE, compute the sample estimating equations of an
 ERGM: if the model is non-curved, all non-offset statistics are returned
 either way, but if the model is curved, the score estimating function values
-(3.1) by Hunter and Handcock (2006) are returned instead.}
+(3.1) by \insertCite{HuHa06i;textual}{ergm} are returned instead.}
 
 \item{output}{Normally character, one of \code{"network"} (default),
 \code{"stats"}, \code{"edgelist"}, or \code{"ergm_state"}: determines the output
@@ -407,6 +407,9 @@ g.use <- network(16,density=0.1,directed=FALSE)
 # Starting from this network let's draw 3 realizations
 # of a edges and 2-star network
 #
+# Here, we also use control.simulate() to specify some MCMC
+# settings. We could also use more explicitly
+# control.simulate.formula() or snctrl().
 g.sim <- simulate(~edges+kstar(2), nsim=3, coef=c(-1.8,0.03),
                basis=g.use, control=control.simulate(
                  MCMC.burnin=1000,

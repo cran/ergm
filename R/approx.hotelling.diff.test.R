@@ -30,6 +30,7 @@
 #' A multivariate hypothesis test for a single population mean or a
 #' difference between them. This version attempts to adjust for
 #' multivariate autocorrelation in the samples.
+#' \insertNoCite{Ho47m}{ergm}
 #'
 #' @param x a numeric matrix of data values with cases in rows and
 #'   variables in columns.
@@ -65,11 +66,7 @@
 #' @seealso [t.test()]
 #' @note For [`mcmc.list`] input, the variance for this test is
 #'   estimated with unpooled means. This is not strictly correct.
-#' @references
-#' 
-#' Hotelling, H. (1947). Multivariate Quality Control. In C. Eisenhart, M. W.
-#' Hastay, and W. A. Wallis, eds. Techniques of Statistical Analysis. New York:
-#' McGraw-Hill.
+#' @references \insertAllCited{}
 #'
 #' @export approx.hotelling.diff.test
 approx.hotelling.diff.test<-function(x,y=NULL, mu0=0, assume.indep=FALSE, var.equal=FALSE, ...){
@@ -293,7 +290,7 @@ geweke.diag.mv <- function(x, frac1 = 0.1, frac2 = 0.5, split.mcmc.list = FALSE,
 #' @return A square matrix with dimension equalling to the number of
 #'   columns of `x`, with an additional attribute `"infl"` giving the
 #'   factor by which the effective sample size is reduced due to
-#'   autocorrelation, according to the Vats, Flegal, and Jones (2015)
+#'   autocorrelation, according to the \insertCite{VaFl15m;textual}{ergm}
 #'   estimate for ESS.
 #' 
 #' @note [ar()] fails if `crossprod(x)` is singular. This is

@@ -8,6 +8,8 @@
 #  Copyright 2003-2025 Statnet Commons
 ################################################################################
 
+skip_if_not_checking()
+
 library(ergm.count)
 
 test_that("check initialisation functions", {
@@ -42,7 +44,7 @@ test_that("test search ergm term", {
   expect_equal(length(search.ergmTerms(keywords = 'bipartite', packages='ergm')), 36)
 
   ## expect_gt(length(search.ergmTerms(keywords = 'valued')), 44)
-  expect_equal(length(search.ergmTerms(keywords = 'valued', packages='ergm')), 48)
+  expect_equal(length(search.ergmTerms(keywords = 'valued', packages='ergm')), 50)
   ## expect_gt(length(search.ergmTerms(keywords = 'valued', packages=c('ergm', 'ergm.count'))), 44)
 })
 
@@ -62,7 +64,7 @@ test_that("test search ergm constraint", {
 
   ## expect_equal(length(search.ergmConstraints(keywords = 'directed')), 16)
   expect_equal(length(search.ergmConstraints(keywords = 'directed', packages='blah')), 0)
-  expect_equal(length(search.ergmConstraints(keywords = 'directed', packages='ergm')), 16)
+  expect_equal(length(search.ergmConstraints(keywords = 'directed', packages='ergm')), 17)
 
   expect_gt(length(search.ergmConstraints(name = 'b1degrees', packages='ergm')), 0)
   expect_equal(length(search.ergmConstraints(name = 'b3degrees', packages='ergm')), 0)

@@ -9,6 +9,8 @@
 ################################################################################
 
 GOF_TERMS <- c(model = "model",
+               user = "user",
+               cdf = "cdf",
                distance = "dist",
                odegree = "odeg",
                idegree = "ideg",
@@ -27,11 +29,11 @@ sub_gof <- function(x) {
   # either no "model"s or "-model"s don't outnumber "model"s
   has_model <- sum(msigns[mnames == "model"]) >= 0
   terms <- terms[mnames != "model"]
+  mnames <- mnames[mnames != "model"]
 
   for (i in seq_along(terms))
     if (!is.null(rname <- as.list(GOF_TERMS)[[mnames[i], exact = FALSE]]))
       terms[[i]] <- as.name(paste0(".gof.", rname))
-    else has_mode <- TRUE
 
   structure(terms, model = has_model)
 }
@@ -44,10 +46,11 @@ which_gof <- function(x) {
 #' Conduct Goodness-of-Fit Diagnostics on a Exponential Family Random Graph
 #' Model
 #'
-#' [gof()] calculates \eqn{p}-values for geodesic distance, degree,
-#' and reachability summaries to diagnose the goodness-of-fit of exponential
-#' family random graph models.  See [ergm()] for more information on
-#' these models.
+#' [gof()] calculates \eqn{p}-values for a variety of network features
+#' to diagnose the goodness-of-fit of exponential family random graph
+#' models. For binary networks, these default to geodesic distance,
+#' degree, and reachability summaries. See [ergm()] for more
+#' information on these models.
 #'
 #' A sample of graphs is randomly drawn from the specified model.  The first
 #' argument is typically the output of a call to [ergm()] and the
@@ -88,27 +91,29 @@ which_gof <- function(x) {
 #'
 #'   \item{triad census}{\code{triadcensus}}
 #'
+#'   \item{the cumulative distribution function of edge
+#'     values}{`cdf(min, max, step, margin, nmax)`, which will be
+#'     autodetected from the observed network (using `margin` and `nmax` if possible)}
+#'
 #'   \item{terms of the original model}{\code{model}}
 #'
 #'   }
 #'
-#'   The default formula for undirected networks is
-#'   \code{~ degree + espartners + distance + model}, and the default
-#'   formula for directed networks is \code{~ idegree + odegree +
-#'   espartners + distance + model}. By default a \code{model} term
-#'   is added to the formula.  It is a very useful overall validity
-#'   check and a reminder of the statistical variation in the
-#'   estimates of the mean value parameters.  To omit the
-#'   \code{model} term, add \code{- model} to the formula.
+#'   The default formula for undirected networks is \code{~ degree +
+#'   espartners + distance + model}, for directed networks \code{~
+#'   idegree + odegree + espartners + distance + model}, and for
+#'   bipartite \code{~b1degree + b2degree + dspartners +
+#'   distance}. For valued networks, only \code{~cdf} is calculated,
+#'   regardless of directedness. By default a \code{model} term is
+#'   added to the formula.  It is a very useful overall validity check
+#'   and a reminder of the statistical variation in the estimates of
+#'   the mean value parameters.  To omit the \code{model} term, add
+#'   \code{- model} to the formula.
 #'
-#'   Note that if ordinary `ergm()` terms are given on the formula,
-#'   they will be returned as a part of \code{model} statistics.
+#'   Ordinary `ergm()` terms can also be given on the formula; if
+#'   present, they will be returned as "user" statistics.
 #'
-#' @param constraints A one-sided formula specifying one or more constraints on
-#' the support of the distribution of the networks being modeled. See the help
-#' for similarly-named argument in [ergm()] for more information. For
-#' \code{gof.formula}, defaults to unconstrained. For \code{gof.ergm}, defaults
-#' to the constraints with which \code{object} was fitted.
+#' @param response,reference,constraints See analogous arguments for [simulate.ergm()].
 #'
 #' @templateVar mycontrols [control.gof.formula()] or [control.gof.ergm()]
 #' @template control2
@@ -169,25 +174,18 @@ gof.default <- function(object,...) {
 #' @describeIn gof Perform simulation to evaluate goodness-of-fit for
 #'   a specific [ergm()] fit.
 #'
-#' @note For \code{gof.ergm} and \code{gof.formula}, default behavior depends on the
-#' directedness of the network involved; if undirected then degree, espartners,
-#' and distance are used as default properties to examine.  If the network in
-#' question is directed, \code{degree} in the above is replaced by idegree
-#' and odegree.
-#'
 #' @export
 gof.ergm <- function (object, ...,
                       coef = coefficients(object),
                       GOF = NULL,
+                      response=object$network%ergmlhs%"response",
+                      reference=object$reference,
                       constraints = object$constraints,
                       control = control.gof.ergm(),
                       verbose = FALSE) {
   check_dots_used(error = unused_dots_warning)
   check.control.class(c("gof.ergm","gof.formula"), "gof.ergm")
   handle.control.toplevel("gof.ergm", ...)
-
-  if(is.valued(object)) stop("GoF for valued ERGMs is not implemented at this time.")
-  NVL(coef) <- coefficients(object)
 
   # If both the passed control and the object's control are NULL (such as if MPLE was estimated), overwrite with simulate.formula()'s defaults.
   formula.control <- control.simulate.formula()
@@ -206,6 +204,8 @@ gof.ergm <- function (object, ...,
   control <- set.control.class("control.gof.formula")
 
   gof.formula(object=object$formula, coef=coef,
+              response = response,
+              reference = reference,
               GOF=GOF,
               constraints=constraints,
               control=control,
@@ -221,29 +221,41 @@ gof.ergm <- function (object, ...,
 gof.formula <- function(object, ..., 
                         coef=NULL,
                         GOF=NULL,
-                        constraints=~.,
+                        response=NULL,
+                        reference = NULL,
+                        constraints = NULL,
                         basis=eval_lhs.formula(object),
                         control=NULL,
                         unconditional=TRUE,
                         verbose=FALSE) {
-  if("response" %in% ...names()) stop("GoF for valued ERGMs is not implemented at this time.")
-
   if(!is.null(control$seed)){
     set.seed(as.integer(control$seed))
   }
   if (verbose) message("Starting GOF for the given ERGM formula.")
 
   if(is.ergm(basis)){ # Kick it back to gof.ergm().
-    NVL(GOF) <- nonsimp_update.formula(object, ~.) # Remove LHS from formula.
+    NVL(GOF) <- nonsimp_update.formula(object, base_env(~.)) # Remove LHS from formula.
     NVL(control) <- control.gof.ergm()
+    NVL(coef) <- coefficients(basis)
+    NVL(constraints) <- basis$constraints
+    NVL(response) <- basis$network %ergmlhs% "response"
+    NVL(reference) <- basis$reference
     
     return(
-      gof(basis, GOF = GOF, coef = coef, control = control, verbose = verbose, ...)
+      gof(basis, GOF = GOF, coef = coef, response = response,
+          reference = reference, constraints = constraints, control = control,
+          verbose = verbose, ...)
     )
+  } else {
+    NVL(coef, stop(sQuote("gof"), " ", sQuote("formula"), " method given a ",
+                   sQuote("NULL"), " ", sQuote("coef")))
+    NVL(constraints) <- base_env(~.)
+    NVL(reference) <- base_env(~Bernoulli)
   }
 
   # Otherwise, LHS/basis must be a network.
   nw <- ensure_network(basis)
+  ergm_preprocess_response(nw, response)
   NVL(control) <- control.gof.formula()
 
   check_dots_used(error = unused_dots_warning)
@@ -253,9 +265,11 @@ gof.formula <- function(object, ...,
   #Set up the defaults, if called with GOF==NULL
   if(is.null(GOF)){
     GOF <-
-      if(is.directed(nw)) ~idegree + odegree + espartners + distance + model
-      else if(is.bipartite(nw)) ~b1degree + b2degree + espartners + distance + model
-      else ~degree + espartners + distance + model
+      if (is.valued(nw)) {
+        ~model + cdf
+      } else if (is.directed(nw)) ~idegree + odegree + espartners + distance
+      else if(is.bipartite(nw)) ~b1degree + b2degree + dspartners + distance
+      else ~degree + espartners + distance
   }
 
   # Expand specially named terms.
@@ -266,7 +280,8 @@ gof.formula <- function(object, ...,
    if(verbose){message("Conditional simulations for missing fit")}
    constraints.obs<-nonsimp_update.formula(constraints,~.+observed)
    SimCond <- gof(object=object, coef=coef,
-                  GOF=GOF, 
+                  GOF=GOF,
+                  reference=reference,
                   constraints=constraints.obs,
                   control=control,
                   basis=basis,
@@ -276,36 +291,46 @@ gof.formula <- function(object, ...,
 
   # Calculate network statistics for the observed graph
   # Set up the output arrays of sim variables
-  if(verbose)
-    message("Calculating observed network statistics.")
 
-  obs <- summary(suppressWarnings(append_rhs.formula(object, GOFtrms, keep.onesided = TRUE)),
-                 basis = nw, term.options = control$term.options)
+  if(verbose) message("Setting up.")
+  sim_setup <- simulate(object, monitor = GOFtrms,
+                        nsim = control$nsim, coef = coef,
+                        reference = reference,
+                        constraints = constraints,
+                        control = set.control.class("control.simulate.formula", control),
+                        output = "stats",
+                        basis = nw,
+                        verbose = verbose, ...,
+                        return.args = "ergm_state")
 
-  if(verbose)
-    message("Starting simulations.")
+  if(verbose) message("Calculating observed network statistics.")
 
-  sim <- simulate(object, monitor = GOFtrms, nsim=control$nsim, coef=coef,
-                  constraints = constraints,
-                  control = set.control.class("control.simulate.formula", control),
-                  output = "stats",
-                  basis = nw,
-                  verbose = verbose, ...)
+  obs <- summary(sim_setup$object)
+  mon <- attr(sim_setup, "monitored")
+
+  if(verbose) message("Starting simulations.")
+
+  sim <- do.call(simulate, replace(sim_setup, "return.args", NULL))
 
   if(!attr(GOFtrms, "model")) {
-    mon <- attr(sim, "monitored")
     if (length(obs) > sum(mon)) obs <- obs[mon]
     sim <- sim[, mon, drop = FALSE]
+    mon <- mon[mon]
   }
 
-  gofs <- str_match(names(obs), "^\\.gof\\.([^#]+)#(.*)$")
-  gof_groups <- split(seq_len(nrow(gofs)), replace(gofs[, 2], is.na, "model"))
+  gofs <- names(obs) |>
+    replace(function(x) !mon & !startsWith(x, ".gof."),
+            function(x) paste0(".gof.model#", x)) |>
+    replace(function(x) mon & !startsWith(x, ".gof."),
+            function(x) paste0(".gof.user#", x)) |>
+    str_match("^\\.gof\\.([^#]+)#(.*)$")
+  gof_groups <- split(seq_len(nrow(gofs)), gofs[, 2])
 
   out <- imap(gof_groups, function(i, name) {
     val <- gofs[i, 3]
     obs <- obs[i]
     sim <- sim[, i, drop = FALSE]
-    if(name != "model") names(obs) <- colnames(sim) <- val
+    names(obs) <- colnames(sim) <- val
     d <- sweep(sim, 2, obs)
 
     pval <- cbind(obs, apply(sim, 2, min), apply(sim, 2, mean),
@@ -313,13 +338,20 @@ gof.formula <- function(object, ...,
                   pmin(1, 2 * pmin(colMeans(d >= 0), colMeans(d <= 0))))
     colnames(pval) <- c("obs","min","mean","max","MC p-value")
 
-    pobs <- if(name == "model") colMeans(d >= 0) else obs / sum(obs)
     if(name == "model") {
       psim <- apply(sim, 2, rank) / nrow(sim)
       psim <- matrix(psim, ncol = ncol(sim)) # Guard against the case of sim having only one row.
+      pobs <- colMeans(d >= 0)
+    } else if (name == "user") {
+      psim <- sim
+      pobs <- obs
+    } else if (name == "cdf") {
+      psim <- sim / ult(obs)
+      pobs <- obs / ult(obs)
     } else {
       psim <- sweep(sim, 1, rowSums(sim), "/")
       psim %[f]% is.na <- 1
+      pobs <- obs / sum(obs)
     }
 
     bds <- apply(psim, 2, quantile, probs = c(0.025, 0.975))
@@ -363,6 +395,8 @@ print.gof <- function(x, ...){
   # match variables
   goftypes <- matrix( c(
       "model", "model statistics", "summary.model",
+      "user", "user statistics", "summary.user",
+      "cdf", "cumulative distribution function", "summary.cdf",
       "distance", "minimum geodesic distance", "summary.dist",
       "idegree", "in-degree", "summary.ideg",
       "odegree", "out-degree", "summary.odeg",
@@ -487,13 +521,15 @@ plot.gof <- function(x, ...,
       out.obs <- odds.obs
       out.bds <- odds.bds
 
-      ylab <- paste0("log-odds for a ", unit)
+      ylab <- if(is(unit, "AsIs")) unit
+              else paste0("log-odds for ", unit)
     }
     else {
       out <- psim
       out.obs <- pobs
       out.bds <- bds
-      ylab <- paste0("proportion of ", unit, "s")
+      ylab <- if(is(unit, "AsIs")) unit
+              else paste0("proportion of ", unit)
     }
     pnames <- colnames(sim)[i]
 
@@ -526,16 +562,18 @@ plot.gof <- function(x, ...,
 
   ###model####
 
-  GVMAP <- list(model = list('model', 'statistic', 'n', 'model statistics', identity),
-                degree = list('deg', 'node', 'f', 'degree', identity),
-                b1degree = list('b1deg', 'node', 'f', 'b1degree', identity),
-                b2degree = list('b2deg', 'node', 'f', 'b2degree', identity),
-                odegree = list('odeg', 'node', 'f', 'odegree', identity),
-                idegree = list('ideg', 'node', 'f', 'idegree', identity),
-                espartners = list('espart', 'edge', 'f', 'edge-wise shared partners', identity),
-                dspartners = list('dspart', 'dyad', 'f', 'dyad-wise shared partners', identity),
-                triadcensus = list('triadcensus', 'triad', 'n', 'triad census', identity),
-                distance = list('dist', 'dyad', 'i', 'minimum geodesic distance', function(gc){
+  GVMAP <- list(model = list('model', 'statistics', 'n', 'model statistic', identity),
+                user = list("user", I("value"), "n", "user statistic", identity),
+                cdf = list("cdf", I(expression("values" <= x)), "n", "x", identity),
+                degree = list('deg', 'nodes', 'f', 'degree', identity),
+                b1degree = list('b1deg', 'nodes', 'f', 'b1degree', identity),
+                b2degree = list('b2deg', 'nodes', 'f', 'b2degree', identity),
+                odegree = list('odeg', 'nodes', 'f', 'odegree', identity),
+                idegree = list('ideg', 'nodes', 'f', 'idegree', identity),
+                espartners = list('espart', 'edges', 'f', 'edge-wise shared partners', identity),
+                dspartners = list('dspart', 'dyads', 'f', 'dyad-wise shared partners', identity),
+                triadcensus = list('triadcensus', 'triads', 'n', 'triad census', identity),
+                distance = list('dist', 'dyads', 'i', 'minimum geodesic distance', function(gc){
                   ult(gc$pnames) <- "NR"
                   if(normalize.reachability){
                     gc <- within(gc,
@@ -642,6 +680,76 @@ InitErgmTerm..gof.triadcensus <- function(nw, arglist, ...) {
   arglist <- list(triadcensus)
   f <- InitErgmTerm.triadcensus
   term <- f(nw, arglist, ...)
-  term$coef.names <- paste0("triadcensus#", namestriadcensus)
+  term$coef.names <- paste0(".gof.triadcensus#", namestriadcensus)
+  term
+}
+
+
+#' @templateVar name cdf
+#' @aliases InitWtErgmTerm.cdf
+#' @title Empirical cumulative distribution function (unnormalized) of
+#'   the network's dyad values
+#' @description For every value \eqn{x} in [`seq`]`(min, max, by)`,
+#'   compute the number of dyads whose value is less than or equal
+#'   than \eqn{x}. If not given, the range is autodetected based on
+#'   the values in the LHS network, subject to adjustment via `margin`
+#'   and `nmax`.
+#'
+#' @usage
+#' # valued: cdf(min = NULL, max = NULL, by = NULL, margin = 0.1, nmax = 100)
+#'
+#' @param min,max,by range and step size for values at which to compute the CDF
+#' @param margin,nmax autodetection of the range and step size; see Details.
+#'
+#' @details If `min`, `max`, and/or `by` is missing, it is
+#'   automatically computed based on the LHS network's nonzero edge
+#'   values, specifically their range and resolution (smallest
+#'   observed difference between distinct values). Minimum and maximum
+#'   are taken from the minimal and the maximal edge values, and then
+#'   expanded by `margin` multiplied by their range, and rounded up to
+#'   the nearest multiple of the resolution. The step is set to the
+#'   smallest multiple of the resolution such that the total number of
+#'   statistics is no more than `nmax`.
+#'
+#' @note This term is intended to be used in a [gof()]'s `GOF`
+#'   formula, so its coefficient names are specially formatted to be
+#'   interpreted by `gof()` rather than for readability.
+#'
+#' @seealso \ergmTerm{ergm}{atmost}{()}
+#'
+#' @template ergmTerm-general
+#'
+#' @concept directed
+#' @concept undirected
+#' @concept dyad-independent
+InitWtErgmTerm..gof.cdf <- InitWtErgmTerm.cdf <- function(nw, arglist, ...) {
+  a <- check.ErgmTerm(nw, arglist,
+                      varnames = c("min", "max", "by", "margin", "nmax"),
+                      vartypes = c("numeric", "numeric", "numeric", "numeric", "numeric"),
+                      defaultvalues = list(NULL, NULL, NULL, 0.1, 100),
+                      required = c(FALSE, FALSE, FALSE, FALSE, FALSE))
+
+  nzvals <- sort(unique(nw %e% (nw %ergmlhs% "response")))
+  if (!length(nzvals) && (is.null(a$min) || is.null(a$max) || is.null(a$by))) ergm_Init_stop("LHS network does not appear to have nonzero values: minimum, maximum, and step size cannot be autodetected.")
+
+  d <- diff(nzvals)
+  res <- suppressWarnings(min(d[d > sqrt(.Machine$double.eps)]))
+  if (res == -Inf) ergm_Init_stop("LHS network does not appear to have nonzero values: minimum, maximum, and step size cannot be autodetected.")
+
+  nzmin <- nzvals[1]
+  nzmax <- ult(nzvals)
+
+  ceiling_res <- function(x, res) ceiling(x / res) * res
+  margin <- ceiling_res((nzmax - nzmin) * a$margin, res)
+
+  NVL(a$min) <- nzmin - margin
+  NVL(a$max) <- nzmax + margin
+  NVL(a$by) <- max(res, ceiling_res((a$max - a$min) / (a$nmax - 1), res))
+
+  x <- seq(a$min, a$max, a$by)
+  arglist <- list(x)
+  f <- InitWtErgmTerm.atmost
+  term <- f(nw, arglist, ...)
+  term$coef.names <- paste0(".gof.cdf#", x)
   term
 }

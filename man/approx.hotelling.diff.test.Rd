@@ -55,15 +55,14 @@ It has a print method \code{\link[=print.htest]{print.htest()}}.
 A multivariate hypothesis test for a single population mean or a
 difference between them. This version attempts to adjust for
 multivariate autocorrelation in the samples.
+\insertNoCite{Ho47m}{ergm}
 }
 \note{
 For \code{\link[coda:mcmc.list]{mcmc.list}} input, the variance for this test is
 estimated with unpooled means. This is not strictly correct.
 }
 \references{
-Hotelling, H. (1947). Multivariate Quality Control. In C. Eisenhart, M. W.
-Hastay, and W. A. Wallis, eds. Techniques of Statistical Analysis. New York:
-McGraw-Hill.
+\insertAllCited{}
 }
 \seealso{
 \code{\link[=t.test]{t.test()}}

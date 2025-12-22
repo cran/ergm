@@ -11,9 +11,9 @@ An object of class \code{list} of length 3.
 ergm_GWDECAY
 }
 \description{
-This is a list containing \code{map} and \code{gradient} for the weights described by Hunter (2007).
+This is a list containing \code{map} and \code{gradient} for the weights described by \insertCite{Hu07c;textual}{ergm}.
 }
 \references{
-David R. Hunter (2007) Curved Exponential Family Models for Social Networks. \emph{Social Networks}, 29: 216-230. \doi{10.1016/j.socnet.2006.08.005}
+\insertAllCited{}
 }
 \keyword{internal}
