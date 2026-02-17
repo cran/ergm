@@ -412,7 +412,8 @@ access, and simple iteration.</p>
 (<code>Rboolean</code>) or <code>double</code> weight (0 for no
 edge).</li>
 <li>Node ranges: <code>nw.nodes()</code>, bipartite halves:
-<code>nw.b1()</code>, <code>nw.b2()</code>.</li>
+<code>nw.b1()</code>, <code>nw.b2()</code>; node ranges support
+<code>.size()</code> for O(1) range size.</li>
 <li>Neighbor ranges: <code>nw.out_neighbors(i)</code>,
 <code>nw.in_neighbors(i)</code>, <code>nw.neighbors(i)</code>.</li>
 <li>Degree access: <code>nw.out_degree(i)</code>,

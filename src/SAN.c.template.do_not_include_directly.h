@@ -5,8 +5,10 @@
  *  source, and has the attribution requirements (GPL Section 7) at
  *  https://statnet.org/attribution .
  *
- *  Copyright 2003-2025 Statnet Commons
+ *  Copyright 2003-2026 Statnet Commons
  */
+
+#include <ergm_cli.h>
 
 /*****************
  Note on undirected networks:  For j<k, edge {j,k} should be stored
@@ -93,12 +95,14 @@ MCMCStatus ETYPE(SANSample)(ETYPE(ErgmState) *s,
   unsigned int interval = nsteps / samplesize; // Integer division: rounds down.
   unsigned int burnin = nsteps - (samplesize-1)*interval;
 
-  if(ETYPE(SANMetropolisHastings)(s, invcov, tau, networkstatistics, prop_networkstatistics, burnin, &staken,
-                                    nstats, statindices, noffsets, offsetindices, offsets, deltainvsig,
-                             verbose)!=MCMC_OK)
+  if (ETYPE(SANMetropolisHastings)(s, invcov, tau, networkstatistics, prop_networkstatistics, burnin, &staken,
+                                   nstats, statindices, noffsets, offsetindices, offsets, deltainvsig,
+                                   VERBOSE_ENCODE_CLI_BAR(verbose)) != MCMC_OK)
     return MCMC_MH_FAILED;
 
   if (samplesize>1){
+    CLI_BAR(bar, samplesize, "Sampling");
+
     staken = 0;
     tottaken = 0;
     ptottaken = 0;
@@ -119,15 +123,13 @@ MCMCStatus ETYPE(SANSample)(ETYPE(ErgmState) *s,
       prop_networkstatistics += nstats;
       /* This then adds the change statistics to these values */
       
-      if(ETYPE(SANMetropolisHastings)(s, invcov, tau, networkstatistics, prop_networkstatistics,
-                                 interval, &staken, nstats, statindices, noffsets, offsetindices, offsets,
-                                        deltainvsig, verbose)!=MCMC_OK)
+      if (ETYPE(SANMetropolisHastings)(s, invcov, tau, networkstatistics, prop_networkstatistics,
+                                       interval, &staken, nstats, statindices, noffsets, offsetindices, offsets,
+                                       deltainvsig, verbose)!=MCMC_OK) {
+        CLI_BAR_FINISH(bar);
 	return MCMC_MH_FAILED;
-      tottaken += staken;
-      if (verbose){
-        if( ((3*i) % samplesize)==0 && samplesize > 500){
-        Rprintf("Sampled %d from SAN Metropolis-Hastings\n", i);}
       }
+      tottaken += staken;
       
       if( ((3*i) % samplesize)==0 && tottaken == ptottaken){
         ptottaken = tottaken; 
@@ -142,7 +144,11 @@ MCMCStatus ETYPE(SANSample)(ETYPE(ErgmState) *s,
     	R_ProcessEvents();
       }
 #endif
+
+      CLI_BAR_SET(bar, i);
     }
+    CLI_BAR_FINISH(bar);
+
     /*********************
     Below is an extremely crude device for letting the user know
     when the chain doesn't accept many of the proposed steps.
@@ -182,6 +188,9 @@ MCMCStatus ETYPE(SANMetropolisHastings)(ETYPE(ErgmState) *s,
                                    double *offsets,
                                           double *deltainvsig,
                                    int verbose){
+
+  CLI_BAR_IF_VERBOSE(bar, nsteps, "Burning in");
+
   ETYPE(Network) *nwp = s->nwp;
   ETYPE(Model) *m = s->m;
   ETYPE(MHProposal) *MHp = s->MHp;
@@ -197,9 +206,11 @@ MCMCStatus ETYPE(SANMetropolisHastings)(ETYPE(ErgmState) *s,
     if(MHp->toggletail[0]==MH_FAILED){
       switch(MHp->togglehead[0]){
       case MH_UNRECOVERABLE:
+        CLI_BAR_FINISH(bar);
 	error("Something very bad happened during proposal. Memory has not been deallocated, so restart R soon.");
 	
       case MH_IMPOSSIBLE:
+        CLI_BAR_FINISH(bar);
 	Rprintf("MH MHProposal function encountered a configuration from which no toggle(s) can be proposed.\n");
 	return MCMC_MH_FAILED;
 	
@@ -207,6 +218,7 @@ MCMCStatus ETYPE(SANMetropolisHastings)(ETYPE(ErgmState) *s,
 	warning("MH MHProposal function failed to find a valid proposal.");
 	unsuccessful++;
 	if(unsuccessful>taken*MH_QUIT_UNSUCCESSFUL){
+          CLI_BAR_FINISH(bar);
 	  Rprintf("Too many MH MHProposal function failures.\n");
 	  return MCMC_MH_FAILED;
 	}
@@ -280,7 +292,11 @@ MCMCStatus ETYPE(SANMetropolisHastings)(ETYPE(ErgmState) *s,
 
       PROP_CHANGESTATS_UNDO;
     }
+
+    CLI_BAR_SET(bar, step);
   }
+
+  CLI_BAR_FINISH(bar);
 
   *staken = taken;
   return MCMC_OK;

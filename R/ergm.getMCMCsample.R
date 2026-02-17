@@ -5,7 +5,7 @@
 #  source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2025 Statnet Commons
+#  Copyright 2003-2026 Statnet Commons
 ################################################################################
 
 #' Internal Function to Sample Networks and Network Statistics
@@ -195,7 +195,12 @@ ergm_MCMC_sample <- function(state, control, theta=NULL,
     #################################
     ######### Adaptive MCMC #########
     #################################
-    if(verbose) message("Starting adaptive MCMC with target ESS ", format(control.parallel$MCMC.effectiveSize), "...")
+    if (verbose) {
+      if (is.matrix(control.parallel$MCMC.effectiveSize))
+        message("Starting adaptive MCMC with target ESS ", format(control.parallel$MCMC.effectiveSize), "...")
+      else
+        message("Starting variance-based adaptive MCMC...")
+    }
 
     howmuchmore <- function(target.ess, current.ss, current.ess, current.burnin){
       (target.ess-current.ess)*(current.ss-current.burnin)/current.ess

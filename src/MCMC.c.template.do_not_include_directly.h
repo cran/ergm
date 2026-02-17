@@ -5,8 +5,9 @@
  *  source, and has the attribution requirements (GPL Section 7) at
  *  https://statnet.org/attribution .
  *
- *  Copyright 2003-2025 Statnet Commons
+ *  Copyright 2003-2026 Statnet Commons
  */
+#include <ergm_cli.h>
 #include "ergm_etamap.h"
 #include "ergm_util.h"
 /*****************
@@ -106,11 +107,10 @@ MCMCStatus ETYPE(MCMCSample)(ETYPE(ErgmState) *s,
    Burn in step.
    *********************/
 /*  Catch more edges than we can return */
-  if(ETYPE(MetropolisHastings)(s, eta, networkstatistics, burnin, &staken,verbose)!=MCMC_OK)
+  if (ETYPE(MetropolisHastings)(s, eta, networkstatistics, burnin, &staken, VERBOSE_ENCODE_CLI_BAR(verbose))!=MCMC_OK)
     return MCMC_MH_FAILED;
-  if(nmax!=0 && EDGECOUNT(nwp) >= nmax-1){
-    return MCMC_TOO_MANY_EDGES;
-  }
+
+  if(nmax!=0 && EDGECOUNT(nwp) >= nmax-1) return MCMC_TOO_MANY_EDGES;
 
   if(s->save){
     s->stats = networkstatistics;
@@ -122,6 +122,8 @@ MCMCStatus ETYPE(MCMCSample)(ETYPE(ErgmState) *s,
      } */
 
   if (samplesize>1){
+    CLI_BAR(bar, samplesize, "Sampling");
+
     staken = 0;
     tottaken = 0;
 
@@ -133,10 +135,14 @@ MCMCStatus ETYPE(MCMCSample)(ETYPE(ErgmState) *s,
       /* This then adds the change statistics to these values */
 
       /* Catch massive number of edges caused by degeneracy */
-      if(ETYPE(MetropolisHastings)(s, eta, networkstatistics, interval, &staken,
-			    verbose)!=MCMC_OK)
+      if (ETYPE(MetropolisHastings)(s, eta, networkstatistics, interval, &staken,
+                                    verbose)!=MCMC_OK) {
+        CLI_BAR_FINISH(bar);
 	return MCMC_MH_FAILED;
+      }
+
       if(nmax!=0 && EDGECOUNT(nwp) >= nmax-1){
+        CLI_BAR_FINISH(bar);
 	return MCMC_TOO_MANY_EDGES;
       }
 
@@ -154,7 +160,10 @@ MCMCStatus ETYPE(MCMCSample)(ETYPE(ErgmState) *s,
     	R_ProcessEvents();
       }
 #endif
+      CLI_BAR_SET(bar, i);
     }
+    CLI_BAR_FINISH(bar);
+
     /*********************
     Below is an extremely crude device for letting the user know
     when the chain doesn't accept many of the proposed steps.
@@ -196,6 +205,8 @@ MCMCStatus ETYPE(MetropolisHastings) (ETYPE(ErgmState) *s,
 				 int nsteps, int *staken,
 				 int verbose) {
 
+  CLI_BAR_IF_VERBOSE(bar, nsteps, "Burning in");
+
   ETYPE(Network) *nwp = s->nwp;
   ETYPE(Model) *m = s->m;
   ETYPE(MHProposal) *MHp = s->MHp;
@@ -212,9 +223,11 @@ MCMCStatus ETYPE(MetropolisHastings) (ETYPE(ErgmState) *s,
     if(MHp->toggletail[0]==MH_FAILED){
       switch(MHp->togglehead[0]){
       case MH_UNRECOVERABLE:
+        CLI_BAR_FINISH(bar);
 	error("Something very bad happened during proposal. Memory has not been deallocated, so restart R soon.");
 
       case MH_IMPOSSIBLE:
+        CLI_BAR_FINISH(bar);
 	Rprintf("MH MHProposal function encountered a configuration from which no toggle(s) can be proposed.\n");
 	return MCMC_MH_FAILED;
 
@@ -222,6 +235,7 @@ MCMCStatus ETYPE(MetropolisHastings) (ETYPE(ErgmState) *s,
 	warning("MH MHProposal function failed to find a valid proposal.");
 	unsuccessful++;
 	if(unsuccessful>taken*MH_QUIT_UNSUCCESSFUL){
+          CLI_BAR_FINISH(bar);
 	  Rprintf("Too many MH MHProposal function failures.\n");
 	  return MCMC_MH_FAILED;
 	}
@@ -235,6 +249,7 @@ MCMCStatus ETYPE(MetropolisHastings) (ETYPE(ErgmState) *s,
           }
         }
 
+        CLI_BAR_SET(bar, step);
 	continue;
       }
     }
@@ -288,7 +303,10 @@ MCMCStatus ETYPE(MetropolisHastings) (ETYPE(ErgmState) *s,
         Rprintf("Skipping.\n");
       }
     }
+
+    CLI_BAR_SET(bar, step);
   }
+  CLI_BAR_FINISH(bar);
 
   /* Calculate and update summary-only statistics */
   m->workspace = networkstatistics;

@@ -5,7 +5,7 @@
 #  source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2025 Statnet Commons
+#  Copyright 2003-2026 Statnet Commons
 ################################################################################
 
 ## FIXME: There is almost certainly a better way to do this.
@@ -47,20 +47,25 @@
 #'   the network. Only dyads \eqn{(i,j)} for which
 #'   `attr(i)==attr(j)` can have edges.
 #'
-#'   Note that the current implementation requires that blocks be
-#'   contiguous for unipartite graphs, and for bipartite
-#'   graphs, they must be contiguous within a partition and must have
-#'   the same ordering in both partitions. (They do not, however,
-#'   require that all blocks be represented in both partitions, but
-#'   those that overlap must have the same order.)
+#' @details For bipartite graphs, blocks must be have the same
+#'   ordering in both partitions. (They do not, however, require that
+#'   all blocks be represented in both partitions, but those that
+#'   overlap must have the same order.)
 #'
 #'   If multiple block-diagonal constraints are given, or if
 #'   `attr` is a vector with multiple attribute names, blocks
 #'   will be constructed on all attributes matching.
 #'
 #' @usage
-#' # blockdiag(attr)
+#' # blockdiag(attr, noncontig = "merge")
 #' @template ergmTerm-attr
+#' @param noncontig character: what to do if the blocks are not contiguous? \describe{
+#'
+#' \item{`"merge"`}{A placeholder option, to treat them as the same block. It may be implemented in the future, and an explicit `"stop"` option added later.}
+#'
+#' \item{`"split"`}{Treat them as separate blocks.}
+#'
+#' }
 #'
 #' @template ergmConstraint-general
 #'
@@ -70,23 +75,28 @@
 #' @import rle
 InitErgmConstraint.blockdiag<-function(nw, arglist, ...){
   a <- check.ErgmTerm(nw, arglist,
-                      varnames = c("attr"),
-                      vartypes = c(ERGM_VATTR_SPEC),
-                      defaultvalues = list(NULL),
-                      required = c(TRUE))
+                      varnames = c("attr", "noncontig"),
+                      vartypes = c(ERGM_VATTR_SPEC, "character"),
+                      defaultvalues = list(NULL, "merge"),
+                      required = c(TRUE, FALSE))
 
-  contigmsg <- paste0("Current implementation of the block-diagonal constraint requires that the blocks be contiguous. See ", sQuote("ergmConstraint?blockdiag"), " for more information.")
+  a$noncontig <- match.arg(a$noncontig, c("merge", "split"))
 
-  list(attr=a$attr,
+  contigmsg <- paste0("Current implementation of the block-diagonal constraint requires that either the blocks be contiguous or be treated as separate; this may change in the future. See ", sQuote("ergmConstraint?blockdiag"), " for more information.")
+
+  list(attr=a$attr, warn_noncontig = a$warn_noncontig,
        free_dyads = {
          n <- network.size(nw)
          storage.mode(n) <- "integer"
+         check_noncontig <- a$noncontig == "merge"
          a <- c(ergm_get_vattr(a$attr, nw)) # Strip attributes, which confuse rle().
          if (is.bipartite(nw)) {
            bip <- b1.size(nw)
            ea <- a[seq_len(bip)]
            aa <- a[bip+seq_len(n-bip)]
-           if(anyDuplicated(rle(ea)$values) || anyDuplicated(rle(aa)$values)) stop(contigmsg)
+           if (check_noncontig &&
+               (anyDuplicated(rle(ea)$values) || anyDuplicated(rle(aa)$values)))
+             ergm_Init_stop(contigmsg)
 
            tmp <- .double.rle(ea, aa)
            el <- tmp$lengths1
@@ -110,7 +120,8 @@ InitErgmConstraint.blockdiag<-function(nw, arglist, ...){
            compress(o | ot)
          }else{
            a <- rle(a)
-           if(anyDuplicated(a$values)) stop(contigmsg)
+           if (check_noncontig && anyDuplicated(a$values))
+             ergm_Init_stop(contigmsg)
            rlebdm(compress(do.call(c,rep(
                                        Map(function(blen,bend){rep(rle(c(FALSE,TRUE,FALSE)), c(bend-blen, blen, n-bend), scale="run")},
                                            a$lengths, cumsum(a$lengths)),

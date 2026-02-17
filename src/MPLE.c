@@ -5,9 +5,10 @@
  *  source, and has the attribution requirements (GPL Section 7) at
  *  https://statnet.org/attribution .
  *
- *  Copyright 2003-2025 Statnet Commons
+ *  Copyright 2003-2026 Statnet Commons
  */
 #include "MPLE.h"
+#include <ergm_cli.h>
 #include "ergm_changestat.h"
 #include "ergm_rlebdm.h"
 
@@ -146,6 +147,8 @@ StoreDVecMapENE *MpleInit_hash_wl_RLE(ErgmState *s, RLEBDM1D *wl, Edge maxNumDya
     GetRandRLEBDM1D_RS(&t,&h, wl); // Find a random starting point.
     Dyad d = TH2Dyad(nwp->nnodes, t,h);
     RLERun r=0;
+
+    CLI_BAR(bar, MIN(maxNumDyads,dc), "Change stats");
     
     for(Dyad i = 0; i < MIN(maxNumDyads,dc); i++, d=NextRLEBDM1D(d, step, wl, &r)){
       R_CheckUserInterruptEvery(1024u, i);
@@ -160,7 +163,9 @@ StoreDVecMapENE *MpleInit_hash_wl_RLE(ErgmState *s, RLEBDM1D *wl, Edge maxNumDya
       }
 
       insCovMatRow(covfreq, m->workspace, response);
+      CLI_BAR_SET(bar, i);
     }
+    CLI_BAR_FINISH(bar);
   } // End scope for loop variables.
 
   return covfreq;

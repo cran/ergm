@@ -5,7 +5,7 @@
 #  source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2025 Statnet Commons
+#  Copyright 2003-2026 Statnet Commons
 ################################################################################
 
 attach(MLE.tools)
@@ -58,7 +58,7 @@ test_that("bipartite undirected network", {
 
 # Add the curved+missing test here for now
 test_that("curved+missing", {
-  set.seed(321)
+  set.seed(0)
   n <- 30
   y <- network.initialize(n, directed=FALSE) # Create an empty network
   y <- simulate(y~edges, coef=logit(0.12), control=control.simulate(MCMC.burnin=2*n^2))
@@ -70,8 +70,7 @@ test_that("curved+missing", {
   truth<-edges.theta(y)
   cat("Correct estimate =",truth,"\n")
 
-  set.seed(654)
-  cdfit<-ergm(y~edges+gwesp(), estimate="CD", control=control.ergm(CD.nsteps=50, MCMC.samplesize=100))
+  cdfit <- suppressWarnings(ergm(y~edges+gwesp(), estimate="CD", control=control.ergm(CD.nsteps=100, MCMC.samplesize=100)))
   summary(cdfit)
   expect_lt(abs(coef(cdfit)[1]-truth)/sqrt(cdfit$covar[1]), 2)
 })

@@ -5,7 +5,7 @@
  *  source, and has the attribution requirements (GPL Section 7) at
  *  https://statnet.org/attribution .
  *
- *  Copyright 2003-2025 Statnet Commons
+ *  Copyright 2003-2026 Statnet Commons
  */
 #ifndef _ERGM_CONSTANTS_H_
 #define _ERGM_CONSTANTS_H_
@@ -15,7 +15,7 @@
    'ergm' version. They should be updated with every minor version
    update. */
 #define ERGM_API_MAJOR 4
-#define ERGM_API_MINOR 11
+#define ERGM_API_MINOR 12
 
 /* ABI version: this should be updated only when the ABI changes, even
    if the change is 100% source-compatible. This includes, for

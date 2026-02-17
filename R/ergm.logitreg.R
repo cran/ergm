@@ -5,7 +5,7 @@
 #  source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2025 Statnet Commons
+#  Copyright 2003-2026 Statnet Commons
 ################################################################################
 #============================================================================
 # This file contains the following 2 functions for logistic regression
@@ -67,7 +67,7 @@ ergm.logitreg <- function(x, y, wt = rep(1, length(y)),
     etamap <- identity
     etagrad <- function(theta) diag(1,length(theta),length(theta))
     dn <- dimnames(x)[[2]]
-    if(!length(dn)) dn <- paste("Var", 1:ncol(x), sep="")
+    if(!length(dn)) dn <- paste("Var", seq_len(ncol(x)), sep="")
     p <- ncol(x)
   }else{
     etamap <- function(theta) ergm.eta(theta,m$etamap)

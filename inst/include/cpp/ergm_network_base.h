@@ -5,7 +5,7 @@
  *  source, and has the attribution requirements (GPL Section 7) at
  *  https://statnet.org/attribution .
  *
- *  Copyright 2003-2025 Statnet Commons
+ *  Copyright 2003-2026 Statnet Commons
  */
 #pragma once
 
@@ -188,6 +188,7 @@ public:
     NodeRange(Vertex start, Vertex end) : start_(start), end_(end) {}
     NodeIterator begin() const { return NodeIterator(start_); }
     NodeIterator end() const { return NodeIterator(end_); }
+    Vertex size() const { return end_ - start_; }
   private:
     Vertex start_;
     Vertex end_;

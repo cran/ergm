@@ -12,7 +12,7 @@
 
 <meta name="author" content="The Statnet Team" />
 
-<meta name="date" content="2025-12-22" />
+<meta name="date" content="2026-02-17" />
 
 <title>Nodal Attribute Specification in ERGM Terms</title>
 
@@ -341,7 +341,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <h1 class="title toc-ignore">Nodal Attribute Specification in ERGM
 Terms</h1>
 <h4 class="author">The Statnet Team</h4>
-<h4 class="date">2025-12-22</h4>
+<h4 class="date">2026-02-17</h4>
 
 
 
@@ -377,19 +377,21 @@ columns will be recycled as needed.)</p>
 </dd>
 <dt>formula</dt>
 <dd>
-<p>Borrowing the interface from , the expression on the right hand side
-of the formula is evaluated in an environment of the vertex attributes
-of the network, expected to return a vector or matrix of appropriate
-dimension. (Shorter vectors and matrix columns will be recycled as
-needed.) Within this expression, the network itself accessible as either
-or . For example, in the example below, would return the absolute
-difference of each actor’s “Grade” attribute from its network-wide mean,
-divided by the network size.</p>
+<p>Borrowing the interface from {tidyverse}, the expression on the right
+hand side of the formula is evaluated in an environment of the vertex
+attributes of the network, expected to return a vector or matrix of
+appropriate dimension. (Shorter vectors and matrix columns will be
+recycled as needed.) Within this expression, the network itself
+accessible as either <code>.</code> or <code>.nw</code>. For example, in
+the example below,
+<code>nodecov(~abs(Grade-mean(Grade))/network.size(.))</code> would
+return the absolute difference of each actor’s “Grade” attribute from
+its network-wide mean, divided by the network size.</p>
 </dd>
-<dt> object created by </dt>
+<dt><code>AsIs</code> object created by <code>I()</code></dt>
 <dd>
 <p>Use as is, checking only for correct length and type, with optional
-attribute indicating the predictor’s name.</p>
+attribute <code>&quot;name&quot;</code> indicating the predictor’s name.</p>
 </dd>
 </dl>
 <p>Any of these arguments may also be wrapped in
@@ -463,12 +465,16 @@ attribute “name” gives it a label:</p>
 <div id="level-selection" class="section level2">
 <h2>Level selection</h2>
 <p>For categorical attributes, to select which levels are of interest
-and their ordering, use the argument . Selection of nodes (from the
-appropriate vector of nodal indices) is likewise handled as the
-selection of levels, using the argument . These arguments are
+and their ordering, use the argument <code>levels</code>. Selection of
+nodes (from the appropriate vector of nodal indices) is likewise handled
+as the selection of levels, using the argument <code>nodes</code>. For
+mixing matrix effects such as <code>nodemix()</code> and
+<code>mm()</code>, first, the nodal attribute selection is performed
+using <code>levels</code>, then the cells of the resulting mixing matrix
+can be selected using <code>levels2</code>. These arguments are
 interpreted as follows:</p>
 <dl>
-<dt> object created by </dt>
+<dt><code>AsIs</code> object created by <code>I()</code></dt>
 <dd>
 <p>Use the given list of levels as is.</p>
 </dd>
@@ -486,9 +492,12 @@ if there are ties in frequencies, they will be broken arbitrarily. To
 specify numeric or logical levels literally, wrap in
 <code>I()</code>.</p>
 </dd>
-<dt></dt>
+<dt><code>NULL</code></dt>
 <dd>
-<p>Retain all possible levels; usually equivalent to passing .</p>
+<p>(Not recommended.) Retain all possible levels; usually equivalent to
+passing <code>TRUE</code>. Note that this is <em>not</em> the same as
+passing a numeric or logical vector of length 0, which will be
+interpreted as excluding all levels.</p>
 </dd>
 <dt>character vector</dt>
 <dd>
@@ -503,13 +512,30 @@ depending on its arity. Its return value is interpreted as above.</p>
 <dt>formula</dt>
 <dd>
 <p>The expression on the right hand side of the formula is evaluated in
-an environment in which the network itself is accessible as , the list
-of unique values of the attribute as or as , and the attribute vector
-itself as . Its return value is interpreted as above.</p>
+an environment in which the network itself is accessible as
+<code>.nw</code>, the list of unique values of the attribute as
+<code>.</code> or as <code>.levels</code>, and the attribute vector
+itself as <code>.attr</code>. Its return value is interpreted as
+above.</p>
 </dd>
 </dl>
-<p>Note that or often has a default that is sensible for the term in
-question.</p>
+<p>Note that <code>levels</code> or <code>nodes</code> often has a
+default that is sensible for the term in question.</p>
+<div id="aside-base-and-keep-arguments" class="section level3">
+<h3>Aside: <code>base</code> and <code>keep</code> arguments:</h3>
+<p>Earlier versions of many of the terms had arguments <code>base</code>
+and <code>keep</code> for selecting categorical attribute levels. They
+have been superseded since {ergm} 3.9.4 and will be removed soon.</p>
+<p>In general, <code>keep = X</code> can be replaced by
+<code>levels = X</code>, as both typically have the same semantics.</p>
+<p>The effect of <code>base</code> is opposite that of
+<code>levels</code>, <code>nodes</code>, and <code>levels2</code>:
+<code>levels</code> specify which levels to include, whereas
+<code>base</code> specifies which levels to exclude. Thus, if
+<code>X</code> is not 0 or <code>NULL</code>, <code>base = X</code> can
+be replaced with <code>levels = -X</code>. If <code>X</code> is 0 or
+<code>NULL</code>, <code>base = X</code> means to include all levels, so
+it should be replaced with <code>levels = TRUE</code>.</p>
 <p>Returning to the <code>faux.mesa.high</code> example, and treating
 <code>Grade</code> as a categorical variable, we can use a number of
 combinations:</p>
@@ -648,6 +674,7 @@ formula with different attributes:</p>
 ##                      37                      53                      25 
 ## mm[Grade=10,Race=NatAm] mm[Grade=11,Race=NatAm] mm[Grade=12,Race=NatAm] 
 ##                      16                      15                      10</code></pre>
+</div>
 </div>
 
 

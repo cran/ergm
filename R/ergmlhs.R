@@ -5,7 +5,7 @@
 #  source, and has the attribution requirements (GPL Section 7) at
 #  https://statnet.org/attribution .
 #
-#  Copyright 2003-2025 Statnet Commons
+#  Copyright 2003-2026 Statnet Commons
 ################################################################################
 #' @name ergmlhs
 #' @title An API for specifying aspects of an [`ergm`] model in the
@@ -69,13 +69,15 @@
 `%ergmlhs%<-.network` <- function(lhs, setting, value){
   settings <- NVL(lhs %n% "ergm", structure(list(), class="ergm_lhs"))
   settings[[setting]] <- value
-  lhs %n% "ergm" <- settings
+  lhs %n% "ergm" <- EVL(settings, NULL)
   lhs
 }
 
-#' @describeIn ergmlhs `convert_ergmlhs` converts old-style settings to new-style settings.
+#' @describeIn ergm-deprecated `convert_ergmlhs` converts old-style settings to new-style settings.
 #' @export
 convert_ergmlhs <- function(lhs){
+  ## TODO: Remove in ergm 4.13.
+  .Deprecated(msg = "It is unlikely that any more of the old-style objects remain in the wild, so this will be removed soon.")
   for(attr in c("response","constraints","obs.constraints")){
     NVL(lhs%ergmlhs%attr) <- lhs %n% attr
     lhs %n% attr <- NULL

@@ -5,7 +5,7 @@
 %  source, and has the attribution requirements (GPL Section 7) at
 %  https://statnet.org/attribution .
 %
-%  Copyright 2003-2025 Statnet Commons
+%  Copyright 2003-2026 Statnet Commons
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \name{NEWS}
 \title{NEWS file for the \code{\link[=ergm-package]{ergm}} package}
@@ -73,6 +73,85 @@
   % }
 
 %% }
+
+
+
+\section{Changes in version 4.12.0}{
+
+  \subsection{NEW FEATURES}{
+    \itemize{
+      \item{
+        \ergmConstraint{ergm}{blockdiag}{()} constraint now supports handles noncontiguous attributes in a user-specified manner via a \code{noncontig=} argument. At this time, only treating separate runs as separate blocks \code{"split"} is supported.
+      }
+      \item{
+        MCMC, CD, SAN, and MPLE sampling now produce \CRANpkg{cli} progress bars.
+      }
+      \item{
+        \ergmTerm{ergm}{I}{()} (\code{AsIs}) operator can now handle character strings containing lists of terms.
+      }
+      \item{
+        \code{\link{nodal_attributes}} help and the Nodal Attribute Specification in ERGM Terms vignette now contain instructions for how to converting from \code{base=} and \code{keep=} arguments deprecated since \pkg{ergm} 3.9.4.
+      }
+    }
+  }
+
+
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item{
+        Some fixes to inadvertent partial matching and more uses of \code{\link{seq_len}(n)} instead of \code{1:n}. (Thanks, Chung-hong Chan \code{GitHub:@chainsawriot}!)
+      }
+      \item{
+        \code{esteq} argument to the \code{\link{simulate.ergm}()} family of functions has been fixed.
+      }
+      \item{
+        Some typographical problems in the Nodal Attribute Specification in ERGM Terms vignette have been fixed.
+      }
+    }
+  }
+
+
+  \subsection{OTHER USER-VISIBLE CHANGES}{
+    \itemize{
+      \item{
+        If an \code{\link{\%ergmlhs\%}} list is emptied out, it is now removed.
+      }
+      \item{
+        \code{convert_ergmlhs()} has been deprecated.
+      }
+      \item{
+        Verbose printing for variance-based adaptive MCMC no longer creates a wall of text.
+      }
+    }
+  }
+
+  \subsection{C-LEVEL FACILITIES}{
+    \itemize{
+      \item{
+        The C++ shim edge ranges now have a \code{size()} method.
+      }
+    }
+  }
+
+  % \subsection{UTILITIES}{
+  %   \itemize{
+  %     \item Likewise, "UTILITIES" is probably unnecessary.
+  %   }
+  % }
+
+  % \subsection{INSTALLATION}{
+  %   \itemize{
+  %     \item ... as is "INSTALLATION".
+  %   }
+  % }
+
+  % \subsection{PACKAGE INSTALLATION}{
+  %   \itemize{
+  %     \item ditto.
+  %   }
+  % }
+
+}
 
 
 
@@ -170,7 +249,7 @@
         New function, \code{NetworkInitializeLike(nwp)} (and its valued analogue) to construct an empty \code{Network} copying attributes (size, etc.) from the specified network.
       }
       \item{
-        New helper function, \code{findListElement(list, str)}, to performs a linear search of a named list to find an element with a given name.
+        New helper function, \code{findListElement(list, str)}, to perform a linear search of a named list to find an element with a given name.
       }
       \item{
         Deprecated helper macros \code{MH_GET_AUX_STORAGE_NUM()} and \code{GET_AUX_STORAGE_NUM()} have been removed.

@@ -89,10 +89,14 @@ overridden by setting a an \code{\link[=attr]{attr()}}-style attribute \code{"na
 
 
 For categorical attributes, to select which levels are of interest
-and their ordering, use the argument \code{levels}.  Selection of nodes (from
-the appropriate vector of nodal indices) is likewise handled as the
-selection of levels, using the argument \code{nodes}.  These arguments are interpreted
-as follows: \describe{
+and their ordering, use the argument \code{levels}.  Selection of nodes
+(from the appropriate vector of nodal indices) is likewise handled
+as the selection of levels, using the argument \code{nodes}.  For mixing
+matrix effects such as \ergmTerm{ergm}{nodemix}{()} and
+\ergmTerm{ergm}{mm}{()}, first, the nodal attribute selection is
+performed using \code{levels}, then the cells of the resulting mixing
+matrix can be selected using \code{levels2}.  These arguments are
+interpreted as follows: \describe{
 
 \item{an expression wrapped in \code{\link[=I]{I()}}}{Use the given list of levels
 as is.}
@@ -110,8 +114,10 @@ in frequencies, they will be broken in lexicographic order, and a
 warning will be issued. To specify numeric or logical levels
 literally, wrap in \code{\link[=I]{I()}}.}
 
-\item{\code{\link{NULL}}}{Retain all possible levels; usually equivalent to
-passing \code{TRUE}.}
+\item{\code{\link{NULL}}}{(Not recommended.) Retain all possible levels,
+equivalent to passing \code{TRUE}. Note that this is \emph{not} the same as
+passing a numeric or logical vector of length 0, which will be
+interpreted as excluding all levels.}
 
 \item{a character vector}{Use as is.}
 
@@ -135,8 +141,26 @@ cells to be used.}
 
 }
 
-Note that \code{levels}, \code{nodes}, and others often have a default that is sensible for the
-term in question.
+Note that \code{levels}, \code{nodes}, and others often have a default that
+is sensible for the term in question.
+}
+
+\section{\code{base} and \code{keep} arguments}{
+
+
+Earlier versions of many of the terms had arguments \code{base} and
+\code{keep} for selecting categorical attribute levels. They have been
+superseded since \pkg{ergm} 3.9.4 and will be removed soon.
+
+In general, \code{keep = X} can be replaced by \code{levels = X}, as both
+typically have the same semantics.
+
+The effect of \code{base} is opposite that of \code{levels}, \code{nodes}, and
+\code{levels2}: \code{levels} specify which levels to include, whereas \code{base}
+specifies which levels to exclude. Thus, if \code{X} is not 0 or \code{NULL},
+\code{base = X} can be replaced with \code{levels = -X}. If \code{X} is 0 or
+\code{NULL}, \code{base = X} means to include all levels, so it should be
+replaced with \code{levels = TRUE}.
 }
 
 \examples{
